@@ -69,9 +69,9 @@
     <div class="navbar-user" *ngIf="currentUser$ | async as user">
       <div class="user-info">
         <div class="user-avatar">
-          {{ user.name.charAt(0) }}
+          <p>Usuario</p>>
         </div>
-        <span class="user-name">{{ user.name }}</span>
+        <span class="user-name">Nombre</span>
       </div>
       <button class="logout-btn" (click)="logout()" title="Cerrar Sesión">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

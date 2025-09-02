@@ -1,33 +1,28 @@
-import { Component } from "@angular/core"
-import { CommonModule } from "@angular/common"
-import { type Router, RouterModule } from "@angular/router"
-import type { AuthService } from "../../../services/auth.service"
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 @Component({
-  selector: "app-navbar",
+  selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
-  templateUrl: "./navbar.component.html",
-  styleUrls: ["./navbar.component.css"],
+  templateUrl: './navbar.component.html',
+  styleUrls: ['./navbar.component.css'],
+  imports: [CommonModule, RouterModule]  // 👈 necesarios
 })
 export class NavbarComponent {
-  currentUser$ = this.authService.currentUser$
-  isMobileMenuOpen = false
+  isMobileMenuOpen = false;
+  currentUser$ = null; // Aquí luego inyectas tu AuthService
 
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-  ) {}
-
-  logout(): void {
-    this.authService.logout()
+  toggleMobileMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
   }
 
-  toggleMobileMenu(): void {
-    this.isMobileMenuOpen = !this.isMobileMenuOpen
+  closeMobileMenu() {
+    this.isMobileMenuOpen = false;
   }
 
-  closeMobileMenu(): void {
-    this.isMobileMenuOpen = false
+  logout() {
+    console.log('Cerrar sesión');
+    // aquí va la lógica real de logout
   }
 }

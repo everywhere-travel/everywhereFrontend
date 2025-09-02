@@ -1,322 +1,135 @@
-import { Component, type OnInit } from "@angular/core"
-import { CommonModule } from "@angular/common"
-import { FormsModule, ReactiveFormsModule, type FormBuilder, type FormGroup, Validators } from "@angular/forms"
-import { RouterModule } from "@angular/router"
-import type { CotizacionService } from "../../services/cotizacion.service"
-import type { PersonaService } from "../../services/persona.service"
-import type { Cotizacion, DetalleCotizacion, GrupoHotel, Hotel } from "../../models/cotizacion.model"
-import type { PersonaNatural } from "../../models/persona.model"
-import type { Producto } from "../../models/producto.model"
+import { Component, OnInit } from '@angular/core';
+import { CommonModule, CurrencyPipe, TitleCasePipe, DatePipe } from '@angular/common';
+import { FormBuilder, FormGroup, ReactiveFormsModule,FormsModule } from '@angular/forms';
+import { Cotizacion } from '../../models/cotizacion.model';
+import { NavbarComponent } from "../shared/navbar/navbar.component";
 
 @Component({
-  selector: "app-cotizaciones",
+  selector: 'app-cotizaciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
-  templateUrl: "./cotizaciones.component.html",
-  styleUrls: ["./cotizaciones.component.css"],
+  templateUrl: './cotizaciones.component.html',
+  styleUrls: ['./cotizaciones.component.css'],
+  imports: [CommonModule, ReactiveFormsModule, CurrencyPipe, TitleCasePipe, DatePipe, FormsModule, NavbarComponent]
 })
 export class CotizacionesComponent implements OnInit {
-  // UI State
-  showForm = false
-  editingId: number | null = null
-  loading = false
-  searchQuery = ""
 
-  // Forms
-  cotizacionForm: FormGroup
-  searchForm: FormGroup
+  // 🔹 Variables principales
+  loading = false;
+  showForm = false;
+  editingId: number | null = null;
 
-  // Data
-  cotizaciones: Cotizacion[] = []
-  personas: PersonaNatural[] = []
-  productosDisponibles: Producto[] = []
-  gruposHoteles: GrupoHotel[] = []
+  // 🔹 Formularios
+  searchForm!: FormGroup;
+  cotizacionForm!: FormGroup;
 
-  // Quotation Details
-  productosSeleccionados: DetalleCotizacion[] = []
-  gruposSeleccionados: GrupoHotel[] = []
-
-  // Configuration
-  monedas = [
-    { value: "PEN", label: "Soles (PEN)" },
-    { value: "USD", label: "Dólares (USD)" },
-    { value: "EUR", label: "Euros (EUR)" },
-  ]
-
-  formasPago = [
-    { value: "efectivo", label: "Efectivo" },
-    { value: "tarjeta", label: "Tarjeta de Crédito" },
-    { value: "transferencia", label: "Transferencia Bancaria" },
-    { value: "deposito", label: "Depósito Bancario" },
-  ]
-
+  // 🔹 Datos
+  cotizaciones: Cotizacion[] = [];
+  personas: any[] = [];
   estados = [
-    { value: "borrador", label: "Borrador" },
-    { value: "enviada", label: "Enviada" },
-    { value: "aprobada", label: "Aprobada" },
-    { value: "rechazada", label: "Rechazada" },
-    { value: "vencida", label: "Vencida" },
-  ]
+    { value: 'pendiente', label: 'Pendiente' },
+    { value: 'completada', label: 'Completada' },
+    { value: 'anulada', label: 'Anulada' }
+  ];
+  monedas = [
+    { value: 'PEN', label: 'Soles (PEN)' },
+    { value: 'USD', label: 'Dólares (USD)' }
+  ];
+  formasPago = [
+    { value: 'contado', label: 'Contado' },
+    { value: 'tarjeta', label: 'Tarjeta' }
+  ];
 
-  constructor(
-    private cotizacionService: CotizacionService,
-    private personaService: PersonaService,
-    private fb: FormBuilder,
-  ) {
-    this.cotizacionForm = this.createCotizacionForm()
-    this.searchForm = this.createSearchForm()
-  }
+  // 🔹 Productos y hoteles seleccionados
+  productosSeleccionados: any[] = [];
+  gruposHoteles: any[] = [];
+  gruposSeleccionados: any[] = [];
 
-  ngOnInit() {
-    this.loadData()
-  }
+  constructor(private fb: FormBuilder) {}
 
-  private createCotizacionForm(): FormGroup {
-    return this.fb.group({
-      numero: ["", Validators.required],
-      fechaCotizacion: [new Date().toISOString().split("T")[0], Validators.required],
-      fechaViaje: [""],
-      fechaRetorno: [""],
-      personaId: ["", Validators.required],
-      numeroAdultos: [1, [Validators.required, Validators.min(1)]],
-      numeroNinos: [0, [Validators.min(0)]],
-      moneda: ["PEN", Validators.required],
-      tipoCambio: [1, [Validators.required, Validators.min(0.01)]],
-      formaPago: ["efectivo", Validators.required],
-      estado: ["borrador", Validators.required],
-      observaciones: [""],
-    })
-  }
+  ngOnInit(): void {
+    console.log('CotizacionesComponent inicializado');
 
-  private createSearchForm(): FormGroup {
-    return this.fb.group({
-      searchType: ["numero"],
-      searchValue: [""],
-    })
-  }
+    // Inicializar forms
+    this.searchForm = this.fb.group({
+      searchType: ['numero'],
+      searchValue: ['']
+    });
 
-  loadData() {
-    this.loading = true
+    this.cotizacionForm = this.fb.group({
+      numero: [''],
+      personaId: [''],
+      fechaCotizacion: [''],
+      estado: [''],
+      fechaViaje: [''],
+      fechaRetorno: [''],
+      numeroAdultos: [1],
+      numeroNinos: [0],
+      moneda: ['PEN'],
+      tipoCambio: [3.8],
+      formaPago: [''],
+      observaciones: ['']
+    });
 
-    // Load quotations
-    this.cotizacionService.getCotizaciones().subscribe({
-      next: (data) => (this.cotizaciones = data),
-      error: (error) => console.error("Error loading cotizaciones:", error),
-    })
+    // Datos simulados
+    this.personas = [
+      { id: 1, nombre: 'Juan', apellido: 'Pérez' },
+      { id: 2, nombre: 'María', apellido: 'Gómez' }
+    ];
 
-    // Load personas
-    this.personaService.getPersonasNaturales().subscribe({
-      next: (data) => (this.personas = data),
-      error: (error) => console.error("Error loading personas:", error),
-    })
-
-    // Load hotel groups
-    this.cotizacionService.getGruposHoteles().subscribe({
-      next: (data) => {
-        this.gruposHoteles = data
-        this.loading = false
+    this.cotizaciones = [
+      {
+        id: 1,
+        numero: 'COT-001',
+        fechaCotizacion: new Date(),
+        personaId: 1,
+        numeroAdultos: 2,
+        numeroNinos: 1,
+        moneda: 'PEN',
+        tipoCambio: 3.8,
+        formaPago: 'contado',
+        estado: 'pendiente',
+        subtotal: 2000,
+        impuestos: 360,
+        total: 2360
       },
-      error: (error) => {
-        console.error("Error loading grupos hoteles:", error)
-        this.loading = false
-      },
-    })
-  }
-
-  toggleForm() {
-    this.showForm = !this.showForm
-    this.editingId = null
-    if (this.showForm) {
-      this.generateQuotationNumber()
-      this.resetForm()
-    }
-  }
-
-  resetForm() {
-    this.cotizacionForm.reset({
-      numero: "",
-      fechaCotizacion: new Date().toISOString().split("T")[0],
-      numeroAdultos: 1,
-      numeroNinos: 0,
-      moneda: "PEN",
-      tipoCambio: 1,
-      formaPago: "efectivo",
-      estado: "borrador",
-    })
-    this.productosSeleccionados = []
-    this.gruposSeleccionados = []
-  }
-
-  generateQuotationNumber() {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, "0")
-    const day = String(now.getDate()).padStart(2, "0")
-    const random = Math.floor(Math.random() * 1000)
-      .toString()
-      .padStart(3, "0")
-
-    const numero = `COT-${year}${month}${day}-${random}`
-    this.cotizacionForm.patchValue({ numero })
-  }
-
-  onSubmit() {
-    if (this.cotizacionForm.valid) {
-      const formData = this.cotizacionForm.value
-      const cotizacion: Cotizacion = {
-        ...formData,
-        subtotal: this.calculateSubtotal(),
-        impuestos: this.calculateTaxes(),
-        total: this.calculateTotal(),
+      {
+        id: 2,
+        numero: 'COT-002',
+        fechaCotizacion: new Date(),
+        personaId: 2,
+        numeroAdultos: 1,
+        numeroNinos: 0,
+        moneda: 'USD',
+        tipoCambio: 3.8,
+        formaPago: 'tarjeta',
+        estado: 'completada',
+        subtotal: 1000,
+        impuestos: 180,
+        total: 1180
       }
-
-      if (this.editingId) {
-        this.cotizacionService.updateCotizacion(this.editingId, cotizacion).subscribe({
-          next: () => {
-            this.loadData()
-            this.showForm = false
-            this.editingId = null
-          },
-          error: (error) => console.error("Error updating cotizacion:", error),
-        })
-      } else {
-        this.cotizacionService.createCotizacion(cotizacion).subscribe({
-          next: (newCotizacion) => {
-            // Save product details
-            this.saveProductDetails(newCotizacion.id!)
-            this.loadData()
-            this.showForm = false
-          },
-          error: (error) => console.error("Error creating cotizacion:", error),
-        })
-      }
-    }
+    ];
   }
 
-  private saveProductDetails(cotizacionId: number) {
-    this.productosSeleccionados.forEach((detalle) => {
-      const detalleToSave: DetalleCotizacion = {
-        ...detalle,
-        cotizacionId,
-      }
-      this.cotizacionService.addDetalleCotizacion(detalleToSave).subscribe({
-        error: (error) => console.error("Error saving product detail:", error),
-      })
-    })
-  }
+  getGrupoIndex(id: number): number {
+  return this.gruposSeleccionados.findIndex(g => g.id === id);
+}
 
-  editCotizacion(cotizacion: Cotizacion) {
-    this.editingId = cotizacion.id!
-    this.showForm = true
-    this.cotizacionForm.patchValue(cotizacion)
 
-    // Load product details
-    this.cotizacionService.getDetalleCotizacion(cotizacion.id!).subscribe({
-      next: (detalles) => (this.productosSeleccionados = detalles),
-      error: (error) => console.error("Error loading product details:", error),
-    })
-  }
-
-  deleteCotizacion(id: number) {
-    if (confirm("¿Está seguro de eliminar esta cotización?")) {
-      this.cotizacionService.deleteCotizacion(id).subscribe({
-        next: () => this.loadData(),
-        error: (error) => console.error("Error deleting cotizacion:", error),
-      })
-    }
-  }
-
-  searchCotizaciones() {
-    const searchData = this.searchForm.value
-    if (searchData.searchValue.trim()) {
-      this.cotizacionService.searchCotizaciones(searchData.searchValue).subscribe({
-        next: (results) => (this.cotizaciones = results),
-        error: (error) => console.error("Error searching cotizaciones:", error),
-      })
-    } else {
-      this.loadData()
-    }
-  }
-
-  // Product Management
-  addProduct() {
-    const newProduct: DetalleCotizacion = {
-      cotizacionId: 0, // Will be set when saving
-      productoId: 0,
-      cantidad: 1,
-      precioUnitario: 0,
-      subtotal: 0,
-      descripcion: "",
-    }
-    this.productosSeleccionados.push(newProduct)
-  }
-
-  removeProduct(index: number) {
-    this.productosSeleccionados.splice(index, 1)
-  }
-
-  updateProductSubtotal(index: number) {
-    const producto = this.productosSeleccionados[index]
-    producto.subtotal = producto.cantidad * producto.precioUnitario
-  }
-
-  // Hotel Group Management
-  toggleGrupoHotel(grupo: GrupoHotel) {
-    const index = this.gruposSeleccionados.findIndex((g) => g.id === grupo.id)
-    if (index > -1) {
-      this.gruposSeleccionados.splice(index, 1)
-    } else {
-      this.gruposSeleccionados.push({ ...grupo, seleccionado: true })
-    }
-  }
-
-  isGrupoSelected(grupoId: number): boolean {
-    return this.gruposSeleccionados.some((g) => g.id === grupoId)
-  }
-
-  toggleHotelInGroup(grupoIndex: number, hotel: Hotel) {
-    const grupo = this.gruposSeleccionados[grupoIndex]
-    const hotelIndex = grupo.hoteles.findIndex((h) => h.id === hotel.id)
-
-    if (hotelIndex > -1) {
-      grupo.hoteles[hotelIndex].seleccionado = !grupo.hoteles[hotelIndex].seleccionado
-    }
-  }
-
-  // Calculations
-  calculateSubtotal(): number {
-    const productosTotal = this.productosSeleccionados.reduce((sum, p) => sum + p.subtotal, 0)
-    const hotelesTotal = this.gruposSeleccionados.reduce((sum, grupo) => {
-      return (
-        sum + grupo.hoteles.filter((h) => h.seleccionado).reduce((hotelSum, hotel) => hotelSum + hotel.precioNoche, 0)
-      )
-    }, 0)
-    return productosTotal + hotelesTotal
-  }
-
-  calculateTaxes(): number {
-    return this.calculateSubtotal() * 0.18 // 18% IGV
-  }
-
-  calculateTotal(): number {
-    return this.calculateSubtotal() + this.calculateTaxes()
-  }
-
-  getPersonaName(personaId: number): string {
-    const persona = this.personas.find((p) => p.id === personaId)
-    return persona ? `${persona.nombre} ${persona.apellido}` : "N/A"
-  }
-
-  getEstadoBadgeClass(estado: string): string {
-    switch (estado) {
-      case "aprobada":
-        return "badge-success"
-      case "enviada":
-        return "badge-warning"
-      case "rechazada":
-        return "badge-error"
-      default:
-        return "badge-secondary"
-    }
-  }
+  // Métodos de prueba
+  searchCotizaciones(): void { console.log('Buscar cotizaciones'); }
+  toggleForm(): void { console.log('Mostrar/Ocultar formulario'); }
+  onSubmit(): void { console.log('Formulario enviado'); }
+  addProduct(): void { console.log('Agregar producto'); }
+  updateProductSubtotal(i: number): void { console.log('Actualizar subtotal producto', i); }
+  removeProduct(i: number): void { console.log('Eliminar producto', i); }
+  isGrupoSelected(id: number): boolean { console.log('Grupo seleccionado', id); return false; }
+  toggleGrupoHotel(grupo: any): void { console.log('Toggle grupo hotel', grupo); }
+  toggleHotelInGroup(grupoIndex: number, hotel: any): void { console.log('Toggle hotel en grupo', grupoIndex, hotel); }
+  calculateSubtotal(): number { return 0; }
+  calculateTaxes(): number { return 0; }
+  calculateTotal(): number { return 0; }
+  getPersonaName(id: number): string { return this.personas.find(p => p.id === id)?.nombre || ''; }
+  getEstadoBadgeClass(estado: string): string { return estado === 'completada' ? 'badge-success' : 'badge-warning'; }
+  editCotizacion(c: Cotizacion): void { console.log('Editar cotización', c); }
+  deleteCotizacion(id: number): void { console.log('Eliminar cotización', id); }
 }

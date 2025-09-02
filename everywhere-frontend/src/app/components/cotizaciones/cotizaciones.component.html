@@ -1,10 +1,12 @@
+<app-navbar></app-navbar>
+
 <div class="container">
   <div class="page-header">
     <h1>Gestión de Cotizaciones</h1>
     <p>Administra cotizaciones de paquetes turísticos</p>
   </div>
 
-   Search Section 
+   Search Section
   <div class="search-section">
     <form [formGroup]="searchForm" class="search-container">
       <select formControlName="searchType" class="form-input search-select">
@@ -27,15 +29,15 @@
     </form>
   </div>
 
-   Form Section 
+   Form Section
   <div *ngIf="showForm" class="form-section">
     <div class="card">
       <h3>{{ editingId ? 'Editar' : 'Nueva' }} Cotización</h3>
-      
+
       <form [formGroup]="cotizacionForm" (ngSubmit)="onSubmit()">
-         Basic Information 
+         Basic Information
         <div class="form-section-title">Información Básica</div>
-        
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Número de Cotización *</label>
@@ -67,9 +69,9 @@
           </div>
         </div>
 
-         Travel Information 
+         Travel Information
         <div class="form-section-title">Información del Viaje</div>
-        
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Fecha de Viaje</label>
@@ -92,9 +94,9 @@
           </div>
         </div>
 
-         Financial Information 
+         Financial Information
         <div class="form-section-title">Información Financiera</div>
-        
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Moneda *</label>
@@ -121,9 +123,9 @@
           </div>
         </div>
 
-         Products Section 
+         Products Section
         <div class="form-section-title">Productos y Servicios</div>
-        
+
         <div class="products-section">
           <div class="section-header">
             <h4>Productos Fijos</h4>
@@ -191,7 +193,7 @@
           </table>
         </div>
 
-         Hotel Groups Section 
+         Hotel Groups Section
         <div class="hotel-groups-section">
           <div class="section-header">
             <h4>Grupos de Hoteles (Dinámico)</h4>
@@ -219,7 +221,8 @@
                   <input
                     type="checkbox"
                     [checked]="hotel.seleccionado"
-                    (change)="toggleHotelInGroup(gruposSeleccionados.findIndex(g => g.id === grupo.id), hotel)"
+                    (change)="toggleHotelInGroup(getGrupoIndex(grupo.id), hotel)"
+
                   />
                   <div class="hotel-info">
                     <div class="hotel-name">{{ hotel.nombre }}</div>
@@ -235,7 +238,7 @@
           </div>
         </div>
 
-         Summary Section 
+         Summary Section
         <div class="summary-section">
           <div class="summary-card">
             <h4>Resumen Financiero</h4>
@@ -254,7 +257,7 @@
           </div>
         </div>
 
-         Observations 
+         Observations
         <div class="form-group">
           <label class="form-label">Observaciones</label>
           <textarea formControlName="observaciones" class="form-input" rows="3" placeholder="Observaciones adicionales..."></textarea>
@@ -272,7 +275,7 @@
     </div>
   </div>
 
-   Quotations List 
+   Quotations List
   <div class="table-section">
     <div class="card">
       <h3>Lista de Cotizaciones</h3>

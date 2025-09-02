@@ -1,10 +1,11 @@
+<app-navbar></app-navbar>
 <div class="container">
   <div class="page-header">
     <h1>Gestión de Productos y Servicios</h1>
     <p>Administra productos, proveedores, operadores y hoteles</p>
   </div>
 
-   Search Section 
+   Search Section
   <div class="search-section">
     <div class="search-container">
       <input
@@ -23,7 +24,7 @@
     </div>
   </div>
 
-   Tabs 
+   Tabs
   <div class="tabs-container">
     <div class="tabs">
       <button
@@ -53,12 +54,12 @@
     </div>
   </div>
 
-   Form Section 
+   Form Section
   <div *ngIf="showForm" class="form-section">
     <div class="card">
       <h3>{{ editingId ? 'Editar' : 'Nuevo' }} {{ activeTab | titlecase }}</h3>
-      
-       Product Form 
+
+       Product Form
       <form *ngIf="activeTab === 'productos'" [formGroup]="productoForm" (ngSubmit)="onSubmit()">
         <div class="form-row">
           <div class="form-group">
@@ -144,7 +145,7 @@
         </div>
       </form>
 
-       Provider Form 
+       Provider Form
       <form *ngIf="activeTab === 'proveedores'" [formGroup]="proveedorForm" (ngSubmit)="onSubmit()">
         <div class="form-row">
           <div class="form-group">
@@ -183,7 +184,7 @@
         </div>
       </form>
 
-       Operator Form 
+       Operator Form
       <form *ngIf="activeTab === 'operadores'" [formGroup]="operadorForm" (ngSubmit)="onSubmit()">
         <div class="form-row">
           <div class="form-group">
@@ -222,7 +223,7 @@
         </div>
       </form>
 
-       Hotel Form 
+       Hotel Form
       <form *ngIf="activeTab === 'hoteles'" [formGroup]="hotelForm" (ngSubmit)="onSubmit()">
         <div class="form-row">
           <div class="form-group">
@@ -274,7 +275,7 @@
     </div>
   </div>
 
-   Data Table 
+   Data Table
   <div class="table-section">
     <div class="card">
       <div *ngIf="loading" class="loading-message">
@@ -286,7 +287,7 @@
       </div>
 
       <table *ngIf="!loading && currentData.length > 0" class="table">
-         Products Table 
+         Products Table
         <thead *ngIf="activeTab === 'productos'">
           <tr>
             <th>Código</th>
@@ -323,7 +324,7 @@
           </tr>
         </tbody>
 
-         Providers Table 
+         Providers Table
         <thead *ngIf="activeTab === 'proveedores'">
           <tr>
             <th>Nombre</th>
@@ -350,7 +351,7 @@
           </tr>
         </tbody>
 
-         Operators Table 
+         Operators Table
         <thead *ngIf="activeTab === 'operadores'">
           <tr>
             <th>Nombre</th>
@@ -379,7 +380,7 @@
           </tr>
         </tbody>
 
-         Hotels Table 
+         Hotels Table
         <thead *ngIf="activeTab === 'hoteles'">
           <tr>
             <th>Nombre</th>

@@ -1,53 +1,47 @@
-import { Component } from "@angular/core"
-import { CommonModule } from "@angular/common"
-import { type FormBuilder, type FormGroup, Validators, ReactiveFormsModule } from "@angular/forms"
-import type { Router } from "@angular/router"
-import type { AuthService } from "../../services/auth.service"
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: "app-login",
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: "./login.component.html",
-  styleUrls: ["./login.component.css"],
+  selector: 'app-login',
+  standalone: true, // 🚀 importante en standalone
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css'],
+  imports: [
+    CommonModule,        // para directivas como *ngIf, *ngFor
+    ReactiveFormsModule  // para formGroup y formControlName
+  ]
 })
-export class LoginComponent {
-  loginForm: FormGroup
-  isLoading = false
-  errorMessage = ""
+export class LoginComponent implements OnInit {
+  loginForm!: FormGroup;
+  isLoading = false;
+  errorMessage = '';
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router,
-  ) {
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit(): void {
     this.loginForm = this.fb.group({
-      username: ["", [Validators.required]],
-      password: ["", [Validators.required]],
-    })
+      username: ['', Validators.required],
+      password: ['', Validators.required]
+    });
   }
 
   onSubmit(): void {
-    if (this.loginForm.valid) {
-      this.isLoading = true
-      this.errorMessage = ""
-
-      const { username, password } = this.loginForm.value
-
-      this.authService.login(username, password).subscribe({
-        next: (success) => {
-          this.isLoading = false
-          if (success) {
-            this.router.navigate(["/dashboard"])
-          } else {
-            this.errorMessage = "Credenciales incorrectas. Use admin/adminadmin"
-          }
-        },
-        error: (error) => {
-          this.isLoading = false
-          this.errorMessage = "Error al iniciar sesión"
-        },
-      })
+    if (this.loginForm.invalid) {
+      this.errorMessage = 'Por favor complete todos los campos';
+      return;
     }
+
+    this.isLoading = true;
+    const { username, password } = this.loginForm.value;
+
+    setTimeout(() => {
+      if (username === 'admin' && password === 'adminadmin') {
+        console.log('✅ Login exitoso');
+      } else {
+        this.errorMessage = 'Usuario o contraseña incorrectos';
+      }
+      this.isLoading = false;
+    }, 1000);
   }
 }

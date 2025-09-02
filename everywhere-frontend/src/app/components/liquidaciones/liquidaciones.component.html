@@ -1,10 +1,11 @@
+<app-navbar></app-navbar>
 <div class="container">
   <div class="page-header">
     <h1>Gestión de Liquidaciones</h1>
     <p>Procesa liquidaciones y facturación de paquetes turísticos</p>
   </div>
 
-   Search Section 
+   Search Section
   <div class="search-section">
     <form [formGroup]="searchForm" class="search-container">
       <select formControlName="searchType" class="form-input search-select">
@@ -28,15 +29,15 @@
     </form>
   </div>
 
-   Form Section 
+   Form Section
   <div *ngIf="showForm" class="form-section">
     <div class="card">
       <h3>{{ editingId ? 'Editar' : 'Nueva' }} Liquidación</h3>
-      
+
       <form [formGroup]="liquidacionForm" (ngSubmit)="onSubmit()">
-         Basic Information 
+         Basic Information
         <div class="form-section-title">Información Básica</div>
-        
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Número de Liquidación *</label>
@@ -68,7 +69,7 @@
           </div>
         </div>
 
-         Quotation Summary 
+         Quotation Summary
         <div *ngIf="selectedCotizacion" class="quotation-summary">
           <h4>Resumen de Cotización</h4>
           <div class="summary-grid">
@@ -91,9 +92,9 @@
           </div>
         </div>
 
-         Traveler and Service Information 
+         Traveler and Service Information
         <div class="form-section-title">Información del Viajero y Servicios</div>
-        
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Viajero Principal *</label>
@@ -131,9 +132,9 @@
           </div>
         </div>
 
-         Financial Information 
+         Financial Information
         <div class="form-section-title">Información Financiera</div>
-        
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Costo del Servicio *</label>
@@ -163,9 +164,9 @@
           </div>
         </div>
 
-         Invoice Information 
+         Invoice Information
         <div class="form-section-title">Información de Facturación</div>
-        
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Número de Factura</label>
@@ -177,9 +178,9 @@
           </div>
         </div>
 
-         Payment Information 
+         Payment Information
         <div class="form-section-title">Información de Pagos</div>
-        
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Pago en Soles (PEN)</label>
@@ -198,7 +199,7 @@
           </div>
         </div>
 
-         Payment Summary 
+         Payment Summary
         <div class="payment-summary">
           <div class="summary-card">
             <h4>Resumen de Pagos</h4>
@@ -219,10 +220,10 @@
           </div>
         </div>
 
-         Service Details 
+         Service Details
         <div class="details-section">
           <h4>Detalles de Servicios</h4>
-          
+
           <div *ngIf="detallesLiquidacion.length === 0" class="empty-message">
             No hay detalles de servicios
           </div>
@@ -276,7 +277,7 @@
           </table>
         </div>
 
-         Observations 
+         Observations
         <div class="form-group">
           <label class="form-label">Observaciones</label>
           <textarea formControlName="observaciones" class="form-input" rows="4" placeholder="Observaciones adicionales sobre la liquidación..."></textarea>
@@ -294,7 +295,7 @@
     </div>
   </div>
 
-   Liquidations List 
+   Liquidations List
   <div class="table-section">
     <div class="card">
       <h3>Lista de Liquidaciones</h3>

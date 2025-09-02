@@ -17,6 +17,8 @@ export interface Cotizacion {
   total: number
   fechaCreacion?: Date
   fechaActualizacion?: Date
+  detalles?: DetalleCotizacion[]
+
 }
 
 export interface DetalleCotizacion {
@@ -26,7 +28,7 @@ export interface DetalleCotizacion {
   cantidad: number
   precioUnitario: number
   subtotal: number
-  descripcion?: string
+observaciones?: string
 }
 
 export interface GrupoHotel {

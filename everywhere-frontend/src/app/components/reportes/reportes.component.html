@@ -7,8 +7,8 @@
       <p>Genera reportes detallados y análisis de rendimiento</p>
     </div>
     <div class="export-buttons">
-      <button 
-        class="export-btn pdf" 
+      <button
+        class="export-btn pdf"
         (click)="exportarReporte('pdf')"
         [disabled]="isExporting"
       >
@@ -18,8 +18,8 @@
         </svg>
         {{ isExporting ? 'Exportando...' : 'Exportar PDF' }}
       </button>
-      <button 
-        class="export-btn excel" 
+      <button
+        class="export-btn excel"
         (click)="exportarReporte('excel')"
         [disabled]="isExporting"
       >
@@ -34,29 +34,29 @@
 
   <!-- Report Type Tabs -->
   <div class="report-tabs">
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="tipoReporte === 'cotizaciones'"
       (click)="cambiarTipoReporte('cotizaciones')"
     >
       Cotizaciones
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="tipoReporte === 'liquidaciones'"
       (click)="cambiarTipoReporte('liquidaciones')"
     >
       Liquidaciones
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="tipoReporte === 'rentabilidad'"
       (click)="cambiarTipoReporte('rentabilidad')"
     >
       Rentabilidad
     </button>
-    <button 
-      class="tab-btn" 
+    <button
+      class="tab-btn"
       [class.active]="tipoReporte === 'tendencias'"
       (click)="cambiarTipoReporte('tendencias')"
     >

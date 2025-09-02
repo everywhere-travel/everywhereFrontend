@@ -1,137 +1,99 @@
-import { Component, type OnInit } from "@angular/core"
-import { CommonModule } from "@angular/common"
-import { type FormBuilder, type FormGroup, ReactiveFormsModule } from "@angular/forms"
-import { NavbarComponent } from "../shared/navbar/navbar.component"
-import type {
-  ReportesService,
-  FiltrosReporte,
-  ReporteCotizaciones,
-  ReporteLiquidaciones,
-  AnalisisRentabilidad,
-  TendenciasVentas,
-} from "../../services/reportes.service"
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { NavbarComponent } from '../shared/navbar/navbar.component';
 
 @Component({
-  selector: "app-reportes",
+  selector: 'app-reportes',
+  templateUrl: './reportes.component.html',
+  styleUrls: ['./reportes.component.css'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, NavbarComponent],
-  templateUrl: "./reportes.component.html",
-  styleUrls: ["./reportes.component.css"],
+  imports: [CommonModule, ReactiveFormsModule, NavbarComponent]
 })
 export class ReportesComponent implements OnInit {
-  filtrosForm: FormGroup
-  tipoReporte: "cotizaciones" | "liquidaciones" | "rentabilidad" | "tendencias" = "cotizaciones"
 
-  cotizacionesData: ReporteCotizaciones[] = []
-  liquidacionesData: ReporteLiquidaciones[] = []
-  rentabilidadData: AnalisisRentabilidad[] = []
-  tendenciasData: TendenciasVentas[] = []
+  // Formularios
+  filtrosForm!: FormGroup;
 
-  isLoading = false
-  isExporting = false
+  // Variables de control
+  isLoading = false;
+  isExporting = false;
+  tipoReporte: string = 'cotizaciones';
 
-  estadosDisponibles = ["Todos", "Pendiente", "En Proceso", "Aprobada", "Completada", "Cancelada"]
-  monedasDisponibles = ["Todas", "USD", "EUR", "PEN", "COP"]
+  // Filtros
+  estadosDisponibles = ['Pendiente', 'Completada', 'Anulada'];
+  monedasDisponibles = ['PEN', 'USD', 'EUR'];
 
-  constructor(
-    private fb: FormBuilder,
-    private reportesService: ReportesService,
-  ) {
-    this.filtrosForm = this.fb.group({
-      fechaInicio: ["2024-01-01"],
-      fechaFin: ["2024-12-31"],
-      estado: ["Todos"],
-      moneda: ["Todas"],
-      cliente: [""],
-      producto: [""],
-    })
-  }
+  // Datos simulados
+  cotizacionesData: any[] = [];
+  liquidacionesData: any[] = [];
+  rentabilidadData: any[] = [];
+  tendenciasData: any[] = [];
+
+  constructor(private fb: FormBuilder) {}
 
   ngOnInit(): void {
-    this.generarReporte()
+    console.log('ReportesComponent inicializado');
+
+    this.filtrosForm = this.fb.group({
+      fechaInicio: [''],
+      fechaFin: [''],
+      estado: [''],
+      moneda: [''],
+      cliente: ['']
+    });
   }
 
-  cambiarTipoReporte(tipo: "cotizaciones" | "liquidaciones" | "rentabilidad" | "tendencias"): void {
-    this.tipoReporte = tipo
-    this.generarReporte()
+  exportarReporte(tipo: string): void {
+    console.log('Exportar reporte en formato:', tipo);
+  }
+
+  cambiarTipoReporte(tipo: string): void {
+    this.tipoReporte = tipo;
+    console.log('Tipo de reporte cambiado a:', tipo);
   }
 
   generarReporte(): void {
-    this.isLoading = true
-    const filtros: FiltrosReporte = this.filtrosForm.value
-
-    switch (this.tipoReporte) {
-      case "cotizaciones":
-        this.reportesService.getCotizacionesReporte(filtros).subscribe((data) => {
-          this.cotizacionesData = data
-          this.isLoading = false
-        })
-        break
-      case "liquidaciones":
-        this.reportesService.getLiquidacionesReporte(filtros).subscribe((data) => {
-          this.liquidacionesData = data
-          this.isLoading = false
-        })
-        break
-      case "rentabilidad":
-        this.reportesService.getAnalisisRentabilidad().subscribe((data) => {
-          this.rentabilidadData = data
-          this.isLoading = false
-        })
-        break
-      case "tendencias":
-        this.reportesService.getTendenciasVentas().subscribe((data) => {
-          this.tendenciasData = data
-          this.isLoading = false
-        })
-        break
-    }
-  }
-
-  exportarReporte(formato: "pdf" | "excel"): void {
-    this.isExporting = true
-    const filtros: FiltrosReporte = this.filtrosForm.value
-
-    this.reportesService
-      .exportarReporte(this.tipoReporte as "cotizaciones" | "liquidaciones", formato, filtros)
-      .subscribe((fileName) => {
-        this.isExporting = false
-        alert(`Reporte exportado: ${fileName}`)
-      })
-  }
-
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat("es-PE", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
-
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString("es-PE")
-  }
-
-  formatPercentage(value: number): string {
-    return `${value.toFixed(1)}%`
+    console.log('Generar reporte con filtros:', this.filtrosForm.value);
   }
 
   getTotalCotizaciones(): number {
-    return this.cotizacionesData.reduce((sum, item) => sum + item.total, 0)
+    console.log('Calcular total de cotizaciones');
+    return 0;
   }
 
   getTotalComisiones(): number {
-    return this.cotizacionesData.reduce((sum, item) => sum + item.comision, 0)
+    console.log('Calcular total de comisiones');
+    return 0;
   }
 
   getTotalLiquidaciones(): number {
-    return this.liquidacionesData.reduce((sum, item) => sum + item.total, 0)
+    console.log('Calcular total de liquidaciones');
+    return 0;
   }
 
   getTotalPagado(): number {
-    return this.liquidacionesData.reduce((sum, item) => sum + item.pagado, 0)
+    console.log('Calcular total pagado');
+    return 0;
   }
 
   getTotalPendiente(): number {
-    return this.liquidacionesData.reduce((sum, item) => sum + item.pendiente, 0)
+    console.log('Calcular total pendiente');
+    return 0;
+  }
+
+  formatCurrency(value: number): string {
+    console.log('Formatear moneda:', value);
+    return `S/ ${value}`;
+  }
+
+  formatDate(value: Date): string {
+    console.log('Formatear fecha:', value);
+    return value.toLocaleDateString();
+  }
+
+  formatPercentage(value: number): string {
+    console.log('Formatear porcentaje:', value);
+    return `${value}%`;
   }
 }

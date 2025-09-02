@@ -1,118 +1,118 @@
-import { Component, type OnInit } from "@angular/core"
-import { CommonModule } from "@angular/common"
-import { RouterModule } from "@angular/router"
-import { NavbarComponent } from "../shared/navbar/navbar.component"
-import type {
-  EstadisticasService,
-  EstadisticasGenerales,
-  VentasPorMes,
-  EstadoCotizaciones,
-  TopProductos,
-} from "../../services/estadisticas.service"
+import { Component, OnInit } from '@angular/core';
+import { RouterModule } from '@angular/router';
+import { NavbarComponent } from '../shared/navbar/navbar.component';
 
 @Component({
-  selector: "app-dashboard",
+  selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, NavbarComponent],
-  templateUrl: "./dashboard.component.html",
-  styleUrls: ["./dashboard.component.css"],
+  templateUrl: './dashboard.component.html',
+  styleUrls: ['./dashboard.component.css'],
+  imports: [RouterModule, NavbarComponent]
 })
 export class DashboardComponent implements OnInit {
-  estadisticasGenerales: EstadisticasGenerales | null = null
-  ventasPorMes: VentasPorMes[] = []
-  estadoCotizaciones: EstadoCotizaciones[] = []
-  topProductos: TopProductos[] = []
-  ingresosPorMoneda: { moneda: string; monto: number }[] = []
-  isLoading = true
 
-  quickActions = [
-    {
-      title: "Gestión de Personas",
-      description: "Administra personas naturales, jurídicas y viajeros",
-      icon: "👥",
-      route: "/personas",
-      color: "primary",
-    },
-    {
-      title: "Cotizaciones",
-      description: "Crea y gestiona cotizaciones de paquetes turísticos",
-      icon: "📋",
-      route: "/cotizaciones",
-      color: "secondary",
-    },
-    {
-      title: "Liquidaciones",
-      description: "Procesa liquidaciones y facturación",
-      icon: "💰",
-      route: "/liquidaciones",
-      color: "accent",
-    },
-    {
-      title: "Productos",
-      description: "Gestiona productos y servicios turísticos",
-      icon: "🏨",
-      route: "/productos",
-      color: "success",
-    },
-  ]
+  // Estado de carga
+  isLoading = false;
 
-  constructor(private estadisticasService: EstadisticasService) {}
+  // Datos principales
+  estadisticasGenerales: any;
+
+  ventasPorMes: { mes: string, ventas: number }[] = [];
+  estadoCotizaciones: { estado: string, cantidad: number, porcentaje: number }[] = [];
+  topProductos: { nombre: string, ventas: number, ingresos: number }[] = [];
+  ingresosPorMoneda: { moneda: string, monto: number }[] = [];
+
+  quickActions: { title: string, description: string, icon: string, route: string, color: string }[] = [];
+
+  constructor() {}
 
   ngOnInit(): void {
-    this.loadDashboardData()
-    setInterval(() => {
-      this.loadDashboardData()
-    }, 30000)
+    this.cargarDatos();
   }
 
-  private loadDashboardData(): void {
-    this.isLoading = true
+  // Simulación de carga de datos (puedes cambiarlo a un servicio real)
+  cargarDatos(): void {
+    this.isLoading = true;
 
-    // Load all statistics data
-    this.estadisticasService.getEstadisticasGenerales().subscribe((data) => {
-      this.estadisticasGenerales = data
-    })
+    setTimeout(() => {
+      this.estadisticasGenerales = {
+        cotizacionesActivas: 12,
+        cotizacionesCompletadas: 34,
+        liquidacionesPendientes: 8,
+        ventasMensual: 48200
+      };
 
-    this.estadisticasService.getVentasPorMes().subscribe((data) => {
-      this.ventasPorMes = data
-    })
+      this.ventasPorMes = [
+        { mes: 'Enero', ventas: 30000 },
+        { mes: 'Febrero', ventas: 45000 },
+        { mes: 'Marzo', ventas: 60000 },
+        { mes: 'Abril', ventas: 80000 },
+        { mes: 'Mayo', ventas: 70000 }
+      ];
 
-    this.estadisticasService.getEstadoCotizaciones().subscribe((data) => {
-      this.estadoCotizaciones = data
-    })
+      this.estadoCotizaciones = [
+        { estado: 'Activas', cantidad: 12, porcentaje: 25 },
+        { estado: 'Completadas', cantidad: 34, porcentaje: 60 },
+        { estado: 'Pendientes', cantidad: 8, porcentaje: 15 }
+      ];
 
-    this.estadisticasService.getTopProductos().subscribe((data) => {
-      this.topProductos = data
-    })
+      this.topProductos = [
+        { nombre: 'Paquete Cancún', ventas: 120, ingresos: 24000 },
+        { nombre: 'Tour Machu Picchu', ventas: 90, ingresos: 18000 },
+        { nombre: 'Crucero Caribe', ventas: 45, ingresos: 15000 }
+      ];
 
-    this.estadisticasService.getIngresosPorMoneda().subscribe((data) => {
-      this.ingresosPorMoneda = data
-      this.isLoading = false
-    })
+      this.ingresosPorMoneda = [
+        { moneda: 'USD', monto: 50000 },
+        { moneda: 'EUR', monto: 32000 },
+        { moneda: 'PEN', monto: 120000 }
+      ];
+
+      this.quickActions = [
+        {
+          title: 'Nueva Cotización',
+          description: 'Crear una cotización para un cliente',
+          icon: '➕',
+          route: '/cotizaciones/nueva',
+          color: 'primary'
+        },
+        {
+          title: 'Ver Reportes',
+          description: 'Accede a los reportes detallados',
+          icon: '📊',
+          route: '/reportes',
+          color: 'accent'
+        },
+        {
+          title: 'Gestión de Productos',
+          description: 'Administra los productos disponibles',
+          icon: '🛒',
+          route: '/productos',
+          color: 'warning'
+        }
+      ];
+
+      this.isLoading = false;
+    }, 1200);
   }
 
-  formatCurrency(amount: number): string {
-    return new Intl.NumberFormat("es-PE", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
-
-  formatNumber(num: number): string {
-    return new Intl.NumberFormat("es-PE").format(num)
-  }
-
+  // Refrescar datos (simula actualización)
   refreshData(): void {
-    this.loadDashboardData()
+    this.cargarDatos();
   }
 
+  // Formatear moneda
+  formatCurrency(value: number): string {
+    return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(value);
+  }
+
+  // Colores según estado
   getStatusColor(estado: string): string {
-    const colors: { [key: string]: string } = {
-      Pendiente: "#f59e0b",
-      "En Proceso": "#3b82f6",
-      Aprobada: "#10b981",
-      Completada: "#6b7280",
+    switch (estado) {
+      case 'Activas': return '#3b82f6';   // azul
+      case 'Completadas': return '#10b981'; // verde
+      case 'Pendientes': return '#f59e0b'; // amarillo
+      default: return '#6b7280'; // gris
     }
-    return colors[estado] || "#6b7280"
   }
 }
