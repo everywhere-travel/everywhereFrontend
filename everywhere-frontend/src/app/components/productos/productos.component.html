@@ -1,0 +1,419 @@
+<div class="container">
+  <div class="page-header">
+    <h1>Gestión de Productos y Servicios</h1>
+    <p>Administra productos, proveedores, operadores y hoteles</p>
+  </div>
+
+   Search Section 
+  <div class="search-section">
+    <div class="search-container">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="searchItems()"
+        placeholder="Buscar..."
+        class="form-input search-input"
+      />
+      <button (click)="searchItems()" class="btn btn-primary">
+        Buscar
+      </button>
+      <button (click)="toggleForm()" class="btn btn-secondary">
+        {{ showForm ? 'Cancelar' : 'Nuevo ' + (activeTab | titlecase) }}
+      </button>
+    </div>
+  </div>
+
+   Tabs 
+  <div class="tabs-container">
+    <div class="tabs">
+      <button
+        [class]="'tab ' + (activeTab === 'productos' ? 'active' : '')"
+        (click)="setActiveTab('productos')"
+      >
+        Productos
+      </button>
+      <button
+        [class]="'tab ' + (activeTab === 'proveedores' ? 'active' : '')"
+        (click)="setActiveTab('proveedores')"
+      >
+        Proveedores
+      </button>
+      <button
+        [class]="'tab ' + (activeTab === 'operadores' ? 'active' : '')"
+        (click)="setActiveTab('operadores')"
+      >
+        Operadores
+      </button>
+      <button
+        [class]="'tab ' + (activeTab === 'hoteles' ? 'active' : '')"
+        (click)="setActiveTab('hoteles')"
+      >
+        Hoteles
+      </button>
+    </div>
+  </div>
+
+   Form Section 
+  <div *ngIf="showForm" class="form-section">
+    <div class="card">
+      <h3>{{ editingId ? 'Editar' : 'Nuevo' }} {{ activeTab | titlecase }}</h3>
+      
+       Product Form 
+      <form *ngIf="activeTab === 'productos'" [formGroup]="productoForm" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Código *</label>
+            <input type="text" formControlName="codigo" class="form-input" placeholder="PRD001" />
+            <div *ngIf="productoForm.get('codigo')?.invalid && productoForm.get('codigo')?.touched" class="error-message">
+              El código es requerido (mínimo 3 caracteres)
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nombre *</label>
+            <input type="text" formControlName="nombre" class="form-input" placeholder="Nombre del producto" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descripción</label>
+          <textarea formControlName="descripcion" class="form-input" rows="3" placeholder="Descripción detallada del producto"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Categoría *</label>
+            <select formControlName="categoria" class="form-input">
+              <option value="">Seleccionar categoría...</option>
+              <option *ngFor="let categoria of categorias" [value]="categoria.value">
+                {{ categoria.label }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estado</label>
+            <select formControlName="activo" class="form-input">
+              <option [value]="true">Activo</option>
+              <option [value]="false">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Precio *</label>
+            <input type="number" formControlName="precio" step="0.01" min="0" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Moneda *</label>
+            <select formControlName="moneda" class="form-input">
+              <option *ngFor="let moneda of monedas" [value]="moneda.value">
+                {{ moneda.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Proveedor</label>
+            <select formControlName="proveedorId" class="form-input">
+              <option value="">Seleccionar proveedor...</option>
+              <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
+                {{ proveedor.nombre }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Operador</label>
+            <select formControlName="operadorId" class="form-input">
+              <option value="">Seleccionar operador...</option>
+              <option *ngFor="let operador of operadores" [value]="operador.id">
+                {{ operador.nombre }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" [disabled]="!productoForm.valid" class="btn btn-primary">
+            {{ editingId ? 'Actualizar' : 'Guardar' }}
+          </button>
+          <button type="button" (click)="toggleForm()" class="btn btn-outline">
+            Cancelar
+          </button>
+        </div>
+      </form>
+
+       Provider Form 
+      <form *ngIf="activeTab === 'proveedores'" [formGroup]="proveedorForm" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre *</label>
+            <input type="text" formControlName="nombre" class="form-input" placeholder="Nombre del proveedor" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contacto</label>
+            <input type="text" formControlName="contacto" class="form-input" placeholder="Persona de contacto" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" formControlName="telefono" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" formControlName="email" class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Dirección</label>
+          <textarea formControlName="direccion" class="form-input" rows="2"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" [disabled]="!proveedorForm.valid" class="btn btn-primary">
+            Guardar
+          </button>
+          <button type="button" (click)="toggleForm()" class="btn btn-outline">
+            Cancelar
+          </button>
+        </div>
+      </form>
+
+       Operator Form 
+      <form *ngIf="activeTab === 'operadores'" [formGroup]="operadorForm" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre *</label>
+            <input type="text" formControlName="nombre" class="form-input" placeholder="Nombre del operador" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Código</label>
+            <input type="text" formControlName="codigo" class="form-input" placeholder="OP001" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Contacto</label>
+            <input type="text" formControlName="contacto" class="form-input" placeholder="Persona de contacto" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" formControlName="telefono" class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" formControlName="email" class="form-input" />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" [disabled]="!operadorForm.valid" class="btn btn-primary">
+            Guardar
+          </button>
+          <button type="button" (click)="toggleForm()" class="btn btn-outline">
+            Cancelar
+          </button>
+        </div>
+      </form>
+
+       Hotel Form 
+      <form *ngIf="activeTab === 'hoteles'" [formGroup]="hotelForm" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nombre *</label>
+            <input type="text" formControlName="nombre" class="form-input" placeholder="Nombre del hotel" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Categoría *</label>
+            <select formControlName="categoria" class="form-input">
+              <option value="1">1 Estrella</option>
+              <option value="2">2 Estrellas</option>
+              <option value="3">3 Estrellas</option>
+              <option value="4">4 Estrellas</option>
+              <option value="5">5 Estrellas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Ubicación *</label>
+            <input type="text" formControlName="ubicacion" class="form-input" placeholder="Ciudad, País" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Precio por Noche *</label>
+            <input type="number" formControlName="precioNoche" step="0.01" min="0" class="form-input" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descripción</label>
+          <textarea formControlName="descripcion" class="form-input" rows="3" placeholder="Descripción del hotel"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Servicios</label>
+          <textarea formControlName="servicios" class="form-input" rows="2" placeholder="WiFi, Piscina, Desayuno, etc."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" [disabled]="!hotelForm.valid" class="btn btn-primary">
+            Guardar
+          </button>
+          <button type="button" (click)="toggleForm()" class="btn btn-outline">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+   Data Table 
+  <div class="table-section">
+    <div class="card">
+      <div *ngIf="loading" class="loading-message">
+        Cargando datos...
+      </div>
+
+      <div *ngIf="!loading && currentData.length === 0" class="empty-message">
+        No hay registros para mostrar
+      </div>
+
+      <table *ngIf="!loading && currentData.length > 0" class="table">
+         Products Table 
+        <thead *ngIf="activeTab === 'productos'">
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Proveedor</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="activeTab === 'productos'">
+          <tr *ngFor="let producto of productos">
+            <td>{{ producto.codigo }}</td>
+            <td>{{ producto.nombre }}</td>
+            <td>
+              <span class="badge badge-secondary">{{ getCategoriaLabel(producto.categoria) }}</span>
+            </td>
+            <td>{{ producto.precio | currency:producto.moneda:'symbol':'1.2-2' }}</td>
+            <td>{{ getProveedorName(producto.proveedorId!) }}</td>
+            <td>
+              <span [class]="'badge ' + (producto.activo ? 'badge-success' : 'badge-error')">
+                {{ producto.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td>
+              <button (click)="editItem(producto)" class="btn btn-sm btn-outline">
+                Editar
+              </button>
+              <button (click)="deleteItem(producto.id!)" class="btn btn-sm btn-error">
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+
+         Providers Table 
+        <thead *ngIf="activeTab === 'proveedores'">
+          <tr>
+            <th>Nombre</th>
+            <th>Contacto</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="activeTab === 'proveedores'">
+          <tr *ngFor="let proveedor of proveedores">
+            <td>{{ proveedor.nombre }}</td>
+            <td>{{ proveedor.contacto || '-' }}</td>
+            <td>{{ proveedor.telefono || '-' }}</td>
+            <td>{{ proveedor.email || '-' }}</td>
+            <td>
+              <button (click)="editItem(proveedor)" class="btn btn-sm btn-outline">
+                Editar
+              </button>
+              <button (click)="deleteItem(proveedor.id!)" class="btn btn-sm btn-error">
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+
+         Operators Table 
+        <thead *ngIf="activeTab === 'operadores'">
+          <tr>
+            <th>Nombre</th>
+            <th>Código</th>
+            <th>Contacto</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="activeTab === 'operadores'">
+          <tr *ngFor="let operador of operadores">
+            <td>{{ operador.nombre }}</td>
+            <td>{{ operador.codigo || '-' }}</td>
+            <td>{{ operador.contacto || '-' }}</td>
+            <td>{{ operador.telefono || '-' }}</td>
+            <td>{{ operador.email || '-' }}</td>
+            <td>
+              <button (click)="editItem(operador)" class="btn btn-sm btn-outline">
+                Editar
+              </button>
+              <button (click)="deleteItem(operador.id!)" class="btn btn-sm btn-error">
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+
+         Hotels Table 
+        <thead *ngIf="activeTab === 'hoteles'">
+          <tr>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Ubicación</th>
+            <th>Precio/Noche</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="activeTab === 'hoteles'">
+          <tr *ngFor="let hotel of hoteles">
+            <td>{{ hotel.nombre }}</td>
+            <td>
+              <span class="star-rating">{{ getStarRating(hotel.categoria) }}</span>
+            </td>
+            <td>{{ hotel.ubicacion }}</td>
+            <td>{{ hotel.precioNoche | currency:'PEN':'symbol':'1.2-2' }}</td>
+            <td>
+              <span [class]="'badge ' + (hotel.activo ? 'badge-success' : 'badge-error')">
+                {{ hotel.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td>
+              <button (click)="editItem(hotel)" class="btn btn-sm btn-outline">
+                Editar
+              </button>
+              <button (click)="deleteItem(hotel.id!)" class="btn btn-sm btn-error">
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

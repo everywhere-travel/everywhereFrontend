@@ -1,0 +1,259 @@
+<app-navbar></app-navbar>
+
+<div class="container">
+  <div class="reportes-header">
+    <div class="header-content">
+      <h1>Reportes y Análisis</h1>
+      <p>Genera reportes detallados y análisis de rendimiento</p>
+    </div>
+    <div class="export-buttons">
+      <button 
+        class="export-btn pdf" 
+        (click)="exportarReporte('pdf')"
+        [disabled]="isExporting"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2"/>
+          <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        {{ isExporting ? 'Exportando...' : 'Exportar PDF' }}
+      </button>
+      <button 
+        class="export-btn excel" 
+        (click)="exportarReporte('excel')"
+        [disabled]="isExporting"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2"/>
+          <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        {{ isExporting ? 'Exportando...' : 'Exportar Excel' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Report Type Tabs -->
+  <div class="report-tabs">
+    <button 
+      class="tab-btn" 
+      [class.active]="tipoReporte === 'cotizaciones'"
+      (click)="cambiarTipoReporte('cotizaciones')"
+    >
+      Cotizaciones
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="tipoReporte === 'liquidaciones'"
+      (click)="cambiarTipoReporte('liquidaciones')"
+    >
+      Liquidaciones
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="tipoReporte === 'rentabilidad'"
+      (click)="cambiarTipoReporte('rentabilidad')"
+    >
+      Rentabilidad
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="tipoReporte === 'tendencias'"
+      (click)="cambiarTipoReporte('tendencias')"
+    >
+      Tendencias
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <form [formGroup]="filtrosForm" class="filters-form">
+      <div class="filter-group">
+        <label>Fecha Inicio</label>
+        <input type="date" formControlName="fechaInicio">
+      </div>
+      <div class="filter-group">
+        <label>Fecha Fin</label>
+        <input type="date" formControlName="fechaFin">
+      </div>
+      <div class="filter-group">
+        <label>Estado</label>
+        <select formControlName="estado">
+          <option *ngFor="let estado of estadosDisponibles" [value]="estado">
+            {{ estado }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Moneda</label>
+        <select formControlName="moneda">
+          <option *ngFor="let moneda of monedasDisponibles" [value]="moneda">
+            {{ moneda }}
+          </option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Cliente</label>
+        <input type="text" formControlName="cliente" placeholder="Buscar cliente...">
+      </div>
+      <button type="button" class="generate-btn" (click)="generarReporte()">
+        Generar Reporte
+      </button>
+    </form>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Generando reporte...</p>
+  </div>
+
+  <!-- Cotizaciones Report -->
+  <div *ngIf="!isLoading && tipoReporte === 'cotizaciones'" class="report-content">
+    <div class="summary-cards">
+      <div class="summary-card">
+        <h3>Total Cotizaciones</h3>
+        <div class="summary-value">{{ formatCurrency(getTotalCotizaciones()) }}</div>
+      </div>
+      <div class="summary-card">
+        <h3>Total Comisiones</h3>
+        <div class="summary-value">{{ formatCurrency(getTotalComisiones()) }}</div>
+      </div>
+      <div class="summary-card">
+        <h3>Cantidad</h3>
+        <div class="summary-value">{{ cotizacionesData.length }}</div>
+      </div>
+    </div>
+
+    <div class="report-table">
+      <div class="table-header">
+        <div>Número</div>
+        <div>Cliente</div>
+        <div>Fecha</div>
+        <div>Estado</div>
+        <div>Moneda</div>
+        <div>Total</div>
+        <div>Comisión</div>
+      </div>
+      <div *ngFor="let item of cotizacionesData" class="table-row">
+        <div class="cell-numero">{{ item.numero }}</div>
+        <div class="cell-cliente">{{ item.cliente }}</div>
+        <div class="cell-fecha">{{ formatDate(item.fecha) }}</div>
+        <div class="cell-estado">
+          <span class="status-badge" [attr.data-status]="item.estado.toLowerCase()">
+            {{ item.estado }}
+          </span>
+        </div>
+        <div class="cell-moneda">{{ item.moneda }}</div>
+        <div class="cell-total">{{ formatCurrency(item.total) }}</div>
+        <div class="cell-comision">{{ formatCurrency(item.comision) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liquidaciones Report -->
+  <div *ngIf="!isLoading && tipoReporte === 'liquidaciones'" class="report-content">
+    <div class="summary-cards">
+      <div class="summary-card">
+        <h3>Total Liquidaciones</h3>
+        <div class="summary-value">{{ formatCurrency(getTotalLiquidaciones()) }}</div>
+      </div>
+      <div class="summary-card">
+        <h3>Total Pagado</h3>
+        <div class="summary-value">{{ formatCurrency(getTotalPagado()) }}</div>
+      </div>
+      <div class="summary-card">
+        <h3>Total Pendiente</h3>
+        <div class="summary-value">{{ formatCurrency(getTotalPendiente()) }}</div>
+      </div>
+    </div>
+
+    <div class="report-table">
+      <div class="table-header">
+        <div>Número</div>
+        <div>Cotización</div>
+        <div>Cliente</div>
+        <div>Fecha</div>
+        <div>Total</div>
+        <div>Pagado</div>
+        <div>Pendiente</div>
+        <div>Estado</div>
+      </div>
+      <div *ngFor="let item of liquidacionesData" class="table-row">
+        <div class="cell-numero">{{ item.numero }}</div>
+        <div class="cell-cotizacion">{{ item.cotizacion }}</div>
+        <div class="cell-cliente">{{ item.cliente }}</div>
+        <div class="cell-fecha">{{ formatDate(item.fecha) }}</div>
+        <div class="cell-total">{{ formatCurrency(item.total) }}</div>
+        <div class="cell-pagado">{{ formatCurrency(item.pagado) }}</div>
+        <div class="cell-pendiente">{{ formatCurrency(item.pendiente) }}</div>
+        <div class="cell-estado">
+          <span class="status-badge" [attr.data-status]="item.estado.toLowerCase()">
+            {{ item.estado }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rentabilidad Analysis -->
+  <div *ngIf="!isLoading && tipoReporte === 'rentabilidad'" class="report-content">
+    <div class="analysis-chart">
+      <h3>Análisis de Rentabilidad</h3>
+      <div class="rentability-chart">
+        <div *ngFor="let item of rentabilidadData" class="rentability-item">
+          <div class="period">{{ item.periodo }}</div>
+          <div class="metrics">
+            <div class="metric">
+              <span class="label">Ingresos:</span>
+              <span class="value income">{{ formatCurrency(item.ingresos) }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">Costos:</span>
+              <span class="value cost">{{ formatCurrency(item.costos) }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">Utilidad:</span>
+              <span class="value profit">{{ formatCurrency(item.utilidad) }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">Margen:</span>
+              <span class="value margin">{{ formatPercentage(item.margen) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tendencias Analysis -->
+  <div *ngIf="!isLoading && tipoReporte === 'tendencias'" class="report-content">
+    <div class="trends-chart">
+      <h3>Tendencias de Ventas</h3>
+      <div class="trends-grid">
+        <div *ngFor="let item of tendenciasData" class="trend-item">
+          <div class="trend-month">{{ item.mes }}</div>
+          <div class="trend-metrics">
+            <div class="trend-metric">
+              <span class="trend-label">Cotizaciones</span>
+              <span class="trend-value">{{ item.cotizaciones }}</span>
+            </div>
+            <div class="trend-metric">
+              <span class="trend-label">Liquidaciones</span>
+              <span class="trend-value">{{ item.liquidaciones }}</span>
+            </div>
+            <div class="trend-metric">
+              <span class="trend-label">Ingresos</span>
+              <span class="trend-value">{{ formatCurrency(item.ingresos) }}</span>
+            </div>
+            <div class="trend-metric">
+              <span class="trend-label">Crecimiento</span>
+              <span class="trend-value" [class.positive]="item.crecimiento > 0" [class.negative]="item.crecimiento < 0">
+                {{ formatPercentage(item.crecimiento) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
