@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { NavbarComponent } from '../shared/navbar/navbar.component';
 
 @Component({
@@ -7,7 +8,7 @@ import { NavbarComponent } from '../shared/navbar/navbar.component';
   standalone: true,
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
-  imports: [RouterModule, NavbarComponent]
+  imports: [RouterModule, CommonModule, NavbarComponent]
 })
 export class DashboardComponent implements OnInit {
 
