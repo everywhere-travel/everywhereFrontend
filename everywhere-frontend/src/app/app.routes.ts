@@ -1,21 +1,66 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './components/auth/login/login.component';
-import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { PersonasComponent } from './components/personas/personas.component';
-import { CotizacionesComponent } from './components/cotizaciones/cotizaciones.component';
-import { CotizacionDetailComponent } from './components/cotizaciones/cotizacion-detail/cotizacion-detail.component';
-import { LiquidacionesComponent } from './components/liquidaciones/liquidaciones.component';
-import { ProductosComponent } from './components/productos/productos.component';
-import { ReportesComponent } from './components/reportes/reportes.component';
+import { authGuard } from './core/guards/auth/auth.guard';
+import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { PersonasComponent } from './pages/personas/personas.component';
+import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.component';
+import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
+import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.component';
+import { ProductosComponent } from './pages/productos/productos.component';
+import { ReportesComponent } from './pages/reportes/reportes.component';
+import { EstadisticaComponent } from './pages/estadistica/estadistica.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' }, // Página por defecto
-  { path: 'login', component: LoginComponent },
-  { path: 'dashboard', component: DashboardComponent }, // Nueva ruta para el dashboard
-  { path: 'personas', component: PersonasComponent }, // Nueva ruta para personas
-  { path: 'cotizaciones', component: CotizacionesComponent },
-  { path: 'cotizaciones/detail', component: CotizacionDetailComponent }, // Nueva ruta para cotización
-  { path: 'liquidacion', component: LiquidacionesComponent }, // Nueva ruta para liquidación
-  { path: 'productos', component: ProductosComponent }, // Nueva ruta para productos
-  { path: 'reportes', component: ReportesComponent }, // Nueva ruta para reportes
+  {
+    path: 'auth',
+    loadChildren: () => import("./pages/auth/auth.routes").then(a => a.authRoutes),
+    canActivate: [authInverseGuard]
+  },
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'personas',
+    component: PersonasComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'cotizaciones',
+    component: CotizacionesComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'cotizaciones/detail',
+    component: CotizacionDetailComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'cotizaciones/detail/:id',
+    component: CotizacionDetailComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'liquidaciones',
+    component: LiquidacionesComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'productos',
+    component: ProductosComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'reportes',
+    component: ReportesComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'estadisticas',
+    component: EstadisticaComponent,
+    canActivate: [authGuard]
+  },
+  { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
+  { path: '**', redirectTo: '/auth/login' }
 ];
