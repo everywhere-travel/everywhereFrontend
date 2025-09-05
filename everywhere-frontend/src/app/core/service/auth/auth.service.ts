@@ -1,10 +1,10 @@
 import { inject, Injectable, Injector } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { StorageService } from '../../services/storage.service';
-import { AuthRequest } from '../../../models/auth/auth-request-model';
+import { StorageService } from '../storage.service';
+import { AuthRequest } from '../../../shared/models/auth/auth-request-model';
 import { Observable, tap } from 'rxjs';
-import { AuthResponse } from '../../../models/auth/auth-response-model';
+import { AuthResponse } from '../../../shared/models/auth/auth-response-model';
 
 @Injectable({
   providedIn: 'root'
