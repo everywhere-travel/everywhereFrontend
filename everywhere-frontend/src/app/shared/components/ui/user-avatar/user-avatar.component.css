@@ -69,7 +69,23 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .user-profile {
+    gap: 0.5rem;
+  }
+  
   .user-info {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-profile {
+    gap: 0.25rem;
+  }
+  
+  .user-avatar-medium {
+    width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
   }
 }

@@ -1,7 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { NavbarComponent } from "../../shared/components/navbar/navbar.component";
+import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
+import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
+import { PersonaNaturalRequest, PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
+import { PersonaJuridicaRequest, PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
+
+// Interface simplificada para la tabla - NO incluye personas base
+export interface PersonaTabla {
+  id: number;
+  tipo: 'natural' | 'juridica';
+  nombre: string;
+  nombres?: string;  // Para compatibilidad con el HTML
+  apellidos?: string; // Para compatibilidad con el HTML
+  razonSocial?: string; // Para compatibilidad con el HTML
+  documento: string;
+  ruc?: string; // Para compatibilidad con el HTML
+  email?: string;
+  telefono?: string;
+  direccion?: string;
+}
 
 @Component({
   selector: 'app-personas',
@@ -11,8 +29,7 @@ import { NavbarComponent } from "../../shared/components/navbar/navbar.component
   imports: [
     CommonModule,
     FormsModule, 
-    ReactiveFormsModule,
-    NavbarComponent
+    ReactiveFormsModule
 ]
 })
 export class PersonasComponent implements OnInit {
@@ -21,67 +38,944 @@ export class PersonasComponent implements OnInit {
   personaNaturalForm!: FormGroup;
   personaJuridicaForm!: FormGroup;
   viajeroForm!: FormGroup;
+  viajeroFrecuenteForm!: FormGroup;
 
-  // Variables de control
+  // Variables de control para la tabla
+  searchTerm: string = '';
   searchQuery: string = '';
-  showForm: boolean = false;
-  activeTab: string = 'natural';
-  editingId: number | null = null;
+  selectedType: 'todos' | 'natural' | 'juridica' = 'todos';
+  filtroTipo: 'todos' | 'natural' | 'juridica' = 'todos';
+  filterType: 'all' | 'natural' | 'juridica' = 'all';
   loading: boolean = false;
+  isLoading: boolean = false;
+  isSubmitting: boolean = false;
 
-  // Datos simulados
-  currentData: any[] = [];
-  personasNaturales: any[] = [];
-  personasJuridicas: any[] = [];
+  // Variables para modales
+  showPersonaNaturalModal: boolean = false;
+  showPersonaJuridicaModal: boolean = false;
+  mostrarModalNatural: boolean = false;
+  mostrarModalJuridica: boolean = false;
+  mostrarModalCrearCliente: boolean = false;
+  isEditMode: boolean = false;
+  editandoPersona: boolean = false;
+  editingId: number | null = null;
+  currentPersonaId: number | null = null;
+
+  // Variables para tabs
+  activeTab: 'natural' | 'juridica' | 'viajero' = 'natural';
+
+  // Variables para ordenamiento y UX
+  sortDirection: 'asc' | 'desc' = 'asc';
+  sortColumn: string = 'nombre';
+
+  // Variables para selección múltiple
+  selectedItems: number[] = [];
+  allSelected: boolean = false;
+  someSelected: boolean = false;
+
+  // Variables para paginación
+  pageSize: number = 25;
+  currentPage: number = 1;
+  totalPages: number = 1;
+
+  // Variables para menú de acciones
+  showActionMenu: number | null = null;
+
+  // Variables adicionales para otras funcionalidades
+  selectedViajeroId: number | null = null;
   viajeros: any[] = [];
+  nacionalidades: string[] = ['Peruana', 'Extranjera'];
+  tiposDocumento = [
+    { value: 'DNI', label: 'DNI' },
+    { value: 'PASAPORTE', label: 'Pasaporte' },
+    { value: 'CARNET_EXTRANJERIA', label: 'Carnet de Extranjería' }
+  ];
 
-  constructor(private fb: FormBuilder) {}
+  // Variables de sidebar
+  sidebarOpen: boolean = false;
+  activeSection: string = 'clientes';
+
+  // Estadísticas
+  estadisticas = {
+    totalNaturales: 0,
+    totalJuridicas: 0,
+    totalViajeros: 0
+  };
+
+  // Datos - solo naturales y jurídicas
+  personas: PersonaTabla[] = [];
+  filteredPersonas: PersonaTabla[] = [];
+  personasFiltradas: PersonaTabla[] = [];
+
+  constructor(
+    private fb: FormBuilder,
+    private personaNaturalService: PersonaNaturalService,
+    private personaJuridicaService: PersonaJuridicaService
+  ) {
+    this.initializeForms();
+  }
 
   ngOnInit(): void {
-    console.log('PersonasComponent inicializado');
+    this.loadPersonas();
+    this.calcularEstadisticas();
+  }
 
-    // Inicializar formularios
+  // Métodos de compatibilidad con el HTML
+
+  // Métodos de modal principal con tabs
+  abrirModalCrearCliente(): void {
+    this.editandoPersona = false;
+    this.mostrarModalCrearCliente = true;
+    this.activeTab = 'natural';
+    this.resetAllForms();
+  }
+
+  cerrarModalCrearCliente(): void {
+    this.mostrarModalCrearCliente = false;
+    this.editandoPersona = false;
+    this.activeTab = 'natural';
+    this.resetAllForms();
+  }
+
+  setActiveTab(tab: 'natural' | 'juridica' | 'viajero'): void {
+    this.activeTab = tab;
+  }
+
+  resetAllForms(): void {
+    this.personaNaturalForm.reset();
+    this.personaJuridicaForm.reset();
+    this.viajeroForm.reset();
+  }
+
+  onSubmitViajero(): void {
+    if (this.viajeroForm.valid) {
+      console.log('Guardar viajero:', this.viajeroForm.value);
+      // Implementar lógica de guardado para viajeros
+      this.cerrarModalCrearCliente();
+    }
+  }
+
+  // Métodos para mejorar UX/UI
+  exportarDatos(): void {
+    // Implementar exportación de datos
+    console.log('Exportar datos');
+  }
+
+  sortBy(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  isClienteVIP(persona: PersonaTabla): boolean {
+    return persona.tipo === 'natural' && (persona as any).categoria === 'VIP';
+  }
+
+  getDocumentType(persona: PersonaTabla): string {
+    if (persona.tipo === 'natural') {
+      return 'DNI/Documento';
+    } else {
+      return 'RUC';
+    }
+  }
+
+  confirmarEliminar(persona: PersonaTabla): void {
+    if (confirm(`¿Está seguro de eliminar a ${this.getPersonaDisplayName(persona)}?\n\nEsta acción no se puede deshacer.`)) {
+      this.eliminarPersona(persona.id);
+    }
+  }
+
+  getEmptyStateTitle(): string {
+    if (this.searchQuery) {
+      return 'No se encontraron resultados';
+    }
+    if (this.filtroTipo !== 'todos') {
+      return `No hay ${this.getPersonaTypeLabel(this.filtroTipo)}s registrados`;
+    }
+    return 'No hay clientes registrados';
+  }
+
+  getEmptyStateMessage(): string {
+    if (this.searchQuery) {
+      return `No hay resultados para "${this.searchQuery}". Intenta con otros términos de búsqueda.`;
+    }
+    if (this.filtroTipo !== 'todos') {
+      return `Aún no tienes ${this.getPersonaTypeLabel(this.filtroTipo)}s registrados. ¡Crea el primero!`;
+    }
+    return 'Comienza creando tu primer cliente. Puedes agregar personas naturales o jurídicas.';
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(this.searchQuery || this.filtroTipo !== 'todos');
+  }
+
+  clearAllFilters(): void {
+    this.searchQuery = '';
+    this.searchTerm = '';
+    this.filtroTipo = 'todos';
+    this.selectedType = 'todos';
+    this.applyFilters();
+  }
+
+  // Métodos para selección múltiple
+  toggleAllSelection(): void {
+    if (this.allSelected) {
+      this.selectedItems = [];
+    } else {
+      this.selectedItems = this.personasFiltradas.map(p => p.id);
+    }
+    this.updateSelectionState();
+  }
+
+  toggleSelection(id: number): void {
+    const index = this.selectedItems.indexOf(id);
+    if (index > -1) {
+      this.selectedItems.splice(index, 1);
+    } else {
+      this.selectedItems.push(id);
+    }
+    this.updateSelectionState();
+  }
+
+  isSelected(id: number): boolean {
+    return this.selectedItems.includes(id);
+  }
+
+  updateSelectionState(): void {
+    const totalItems = this.personasFiltradas.length;
+    const selectedCount = this.selectedItems.length;
+    
+    this.allSelected = selectedCount === totalItems && totalItems > 0;
+    this.someSelected = selectedCount > 0 && selectedCount < totalItems;
+  }
+
+  // Métodos para el menú de acciones
+  toggleActionMenu(id: number): void {
+    this.showActionMenu = this.showActionMenu === id ? null : id;
+  }
+
+  duplicarPersona(persona: PersonaTabla): void {
+    // Implementar duplicación
+    console.log('Duplicar persona:', persona);
+  }
+
+  // Métodos para paginación
+  onPageSizeChange(): void {
+    this.currentPage = 1;
+    this.calculatePagination();
+  }
+
+  goToPage(page: number): void {
+    this.currentPage = page;
+    this.calculatePagination();
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.calculatePagination();
+    }
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.calculatePagination();
+    }
+  }
+
+  getPageInfo(): string {
+    const start = (this.currentPage - 1) * this.pageSize + 1;
+    const end = Math.min(this.currentPage * this.pageSize, this.personasFiltradas.length);
+    return `${start}-${end} de ${this.personasFiltradas.length}`;
+  }
+
+  getVisiblePages(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxVisible - 1);
+
+    if (endPage - startPage + 1 < maxVisible) {
+      startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  calculatePagination(): void {
+    this.totalPages = Math.ceil(this.personasFiltradas.length / this.pageSize);
+    if (this.currentPage > this.totalPages) {
+      this.currentPage = 1;
+    }
+  }
+
+  // Métodos de utilidad
+  getClientInitials(persona: PersonaTabla): string {
+    if (persona.tipo === 'natural') {
+      const nombres = persona.nombres || '';
+      const apellidos = persona.apellidos || '';
+      return (nombres.charAt(0) + apellidos.charAt(0)).toUpperCase();
+    } else {
+      const razon = persona.razonSocial || '';
+      return razon.substring(0, 2).toUpperCase();
+    }
+  }
+
+  refreshData(): void {
+    this.loadPersonas();
+  }
+
+  // Métodos de modal
+  abrirModalPersonaNatural(): void {
+    this.editandoPersona = false;
+    this.activeTab = 'natural';
+    this.mostrarModalCrearCliente = true;
+    this.personaNaturalForm.reset();
+  }
+
+  abrirModalPersonaJuridica(): void {
+    this.editandoPersona = false;
+    this.activeTab = 'juridica';
+    this.mostrarModalCrearCliente = true;
+    this.personaJuridicaForm.reset();
+  }
+
+  cerrarModalNatural(): void {
+    this.cerrarModalCrearCliente();
+  }
+
+  cerrarModalJuridica(): void {
+    this.cerrarModalCrearCliente();
+  }
+
+  onSubmitNatural(): void {
+    this.onSubmitPersonaNatural();
+  }
+
+  onSubmitJuridica(): void {
+    this.onSubmitPersonaJuridica();
+  }
+
+  // Métodos de filtros
+  aplicarFiltro(tipo: 'todos' | 'natural' | 'juridica'): void {
+    this.filtroTipo = tipo;
+    this.selectedType = tipo;
+    this.applyFilters();
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.searchTerm = '';
+    this.applyFilters();
+  }
+
+  // Métodos de acciones de tabla
+  editarPersona(persona: PersonaTabla): void {
+    this.editandoPersona = true;
+    if (persona.tipo === 'natural') {
+      this.activeTab = 'natural';
+      this.openEditPersonaNaturalModal(persona);
+      this.mostrarModalCrearCliente = true;
+    } else {
+      this.activeTab = 'juridica';
+      this.openEditPersonaJuridicaModal(persona);
+      this.mostrarModalCrearCliente = true;
+    }
+  }
+
+  verPersona(persona: PersonaTabla): void {
+    // Implementar vista de detalle si es necesario
+    console.log('Ver persona:', persona);
+  }
+
+  eliminarPersona(id: number): void {
+    const persona = this.personas.find(p => p.id === id);
+    if (persona) {
+      this.deletePersona(persona);
+    }
+  }
+
+  // Métodos de sidebar (compatibilidad)
+  toggleSidebar(): void {
+    this.sidebarOpen = !this.sidebarOpen;
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen = false;
+  }
+
+  setActiveSection(section: string): void {
+    this.activeSection = section;
+  }
+
+  getSectionTitle(): string {
+    switch (this.activeSection) {
+      case 'clientes': return 'Gestión de Personas';
+      case 'viajero-frecuente': return 'Viajeros Frecuentes';
+      default: return 'Panel de Control';
+    }
+  }
+
+  getSectionType(): string {
+    return this.filtroTipo === 'natural' ? 'Persona Natural' : 
+           this.filtroTipo === 'juridica' ? 'Persona Jurídica' : 'Persona';
+  }
+
+  canCreate(): boolean {
+    return this.activeSection === 'clientes';
+  }
+
+  toggleForm(): void {
+    if (this.filtroTipo === 'natural') {
+      this.abrirModalPersonaNatural();
+    } else if (this.filtroTipo === 'juridica') {
+      this.abrirModalPersonaJuridica();
+    } else {
+      this.abrirModalPersonaNatural(); // Por defecto
+    }
+  }
+
+  // Calcular estadísticas
+  calcularEstadisticas(): void {
+    this.estadisticas.totalNaturales = this.personas.filter(p => p.tipo === 'natural').length;
+    this.estadisticas.totalJuridicas = this.personas.filter(p => p.tipo === 'juridica').length;
+    this.estadisticas.totalViajeros = 0; // No implementado aún
+  }
+
+  // Métodos adicionales para compatibilidad con HTML
+  searchPersonas(): void {
+    this.applyFilters();
+  }
+
+  setFilter(type: 'all' | 'natural' | 'juridica'): void {
+    this.filterType = type;
+    if (type === 'all') {
+      this.filtroTipo = 'todos';
+      this.selectedType = 'todos';
+    } else {
+      this.filtroTipo = type;
+      this.selectedType = type;
+    }
+    this.applyFilters();
+  }
+
+  getPersonaTypeBadgeClass(tipo: string): string {
+    return this.getPersonaTypeClass(tipo);
+  }
+
+  viewPersona(persona: PersonaTabla): void {
+    this.verPersona(persona);
+  }
+
+  editPersona(persona: PersonaTabla): void {
+    this.editarPersona(persona);
+  }
+
+  onSubmit(): void {
+    if (this.activeSection === 'viajero-frecuente') {
+      this.submitViajeroFrecuente();
+    } else if (this.mostrarModalNatural) {
+      this.onSubmitNatural();
+    } else if (this.mostrarModalJuridica) {
+      this.onSubmitJuridica();
+    }
+  }
+
+  resetForm(): void {
+    if (this.mostrarModalNatural) {
+      this.personaNaturalForm.reset();
+    } else if (this.mostrarModalJuridica) {
+      this.personaJuridicaForm.reset();
+    } else if (this.viajeroForm) {
+      this.viajeroForm.reset();
+    }
+  }
+
+  // Métodos para viajeros
+  selectViajero(id: number): void {
+    this.selectedViajeroId = id;
+  }
+
+  getSelectedViajeroName(): string {
+    const viajero = this.viajeros.find(v => v.id === this.selectedViajeroId);
+    return viajero ? `${viajero.nombres} ${viajero.apellidoPaterno}` : '';
+  }
+
+  clearViajeroSelection(): void {
+    this.selectedViajeroId = null;
+  }
+
+  submitViajeroFrecuente(): void {
+    if (this.viajeroFrecuenteForm.valid) {
+      console.log('Guardar viajero frecuente:', this.viajeroFrecuenteForm.value);
+      // Implementar lógica de guardado
+    }
+  }
+
+  // Método para trackBy en ngFor
+  trackByPersonaId(index: number, persona: PersonaTabla): number {
+    return persona.id;
+  }
+
+  // Métodos auxiliares para formularios anidados
+  isPersonaFieldInvalid(formType: 'natural' | 'juridica', fieldName: string): boolean {
+    const form = formType === 'natural' ? this.personaNaturalForm : this.personaJuridicaForm;
+    const personaGroup = form.get('persona') as FormGroup;
+    const field = personaGroup?.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  getPersonaFieldError(formType: 'natural' | 'juridica', fieldName: string): string {
+    const form = formType === 'natural' ? this.personaNaturalForm : this.personaJuridicaForm;
+    const personaGroup = form.get('persona') as FormGroup;
+    const field = personaGroup?.get(fieldName);
+    if (field && field.errors && (field.dirty || field.touched)) {
+      if (field.errors['required']) {
+        return 'Este campo es obligatorio';
+      }
+      if (field.errors['email']) {
+        return 'Ingrese un email válido';
+      }
+      if (field.errors['minlength']) {
+        return `Mínimo ${field.errors['minlength'].requiredLength} caracteres`;
+      }
+    }
+    return '';
+  }
+
+  // Inicialización de formularios
+  private initializeForms(): void {
     this.personaNaturalForm = this.fb.group({
-      nombre: ['', [Validators.required, Validators.minLength(2)]],
-      apellido: ['', Validators.required],
-      tipoDocumento: ['', Validators.required],
-      numeroDocumento: ['', Validators.required],
-      telefono: [''],
-      email: [''],
-      direccion: [''],
-      fechaNacimiento: [''],
-      nacionalidad: ['']
+      nombres: ['', [Validators.required, Validators.minLength(2)]],
+      apellidos: ['', [Validators.required, Validators.minLength(2)]],
+      documento: ['', [Validators.required]],
+      cliente: [false],
+      categoria: [''],
+      persona: this.fb.group({
+        telefono: ['', [Validators.required]],
+        email: ['', [Validators.required, Validators.email]],
+        direccion: ['', [Validators.required]]
+      })
     });
 
     this.personaJuridicaForm = this.fb.group({
-      ruc: ['', Validators.required],
-      razonSocial: ['', Validators.required],
-      representanteLegal: [''],
-      tipoEmpresa: [''],
-      telefono: [''],
-      email: [''],
-      direccion: ['']
+      razonSocial: ['', [Validators.required, Validators.minLength(2)]],
+      ruc: ['', [Validators.required]],
+      persona: this.fb.group({
+        telefono: ['', [Validators.required]],
+        email: ['', [Validators.required, Validators.email]],
+        direccion: ['', [Validators.required]]
+      })
     });
 
     this.viajeroForm = this.fb.group({
-      nombre: ['', Validators.required],
-      apellido: ['', Validators.required],
-      telefono: [''],
-      email: [''],
-      direccion: [''],
-      pasaporte: [''],
-      fechaVencimientoPasaporte: [''],
-      paisEmisionPasaporte: [''],
-      contactoEmergencia: [''],
-      telefonoEmergencia: ['']
+      nombres: ['', [Validators.required]],
+      apellidos: ['', [Validators.required]],
+      documento: ['', [Validators.required]],
+      numeroTarjeta: ['', [Validators.required]],
+      aerolinea: ['', [Validators.required]],
+      categoria: ['', [Validators.required]]
+    });
+
+    this.viajeroFrecuenteForm = this.fb.group({
+      numeroTarjeta: ['', [Validators.required]],
+      aerolinea: ['', [Validators.required]],
+      categoria: ['', [Validators.required]]
     });
   }
 
-  // Métodos vacíos con console.log
-  searchPersonas(): void { console.log('Buscar personas:', this.searchQuery); }
-  setActiveTab(tab: string): void { this.activeTab = tab; console.log('Tab activo:', tab); }
-  toggleForm(): void { this.showForm = !this.showForm; console.log('Mostrar formulario:', this.showForm); }
-  onSubmit(): void { console.log('Formulario enviado, tab activo:', this.activeTab); }
-  editPersona(persona: any): void { this.editingId = persona.id; this.showForm = true; console.log('Editar persona:', persona); }
-  deletePersona(id: number): void { console.log('Eliminar persona con ID:', id); }
+  // Carga de datos - solo personas naturales y jurídicas
+  async loadPersonas(): Promise<void> {
+    try {
+      this.loading = true;
+      this.isLoading = true;
+      
+      const [naturales, juridicas] = await Promise.all([
+        this.personaNaturalService.findAll().toPromise(),
+        this.personaJuridicaService.findAll().toPromise()
+      ]);
+
+      const personasTabla: PersonaTabla[] = [];
+
+      // Agregar personas naturales
+      if (naturales) {
+        naturales.forEach(natural => {
+          personasTabla.push({
+            id: natural.id,
+            tipo: 'natural',
+            nombre: `${natural.nombres || ''} ${natural.apellidos || ''}`.trim(),
+            nombres: natural.nombres,
+            apellidos: natural.apellidos,
+            documento: natural.documento || '',
+            email: natural.persona?.email,
+            telefono: natural.persona?.telefono,
+            direccion: natural.persona?.direccion
+          });
+        });
+      }
+
+      // Agregar personas jurídicas
+      if (juridicas) {
+        juridicas.forEach(juridica => {
+          personasTabla.push({
+            id: juridica.id,
+            tipo: 'juridica',
+            nombre: juridica.razonSocial || '',
+            razonSocial: juridica.razonSocial,
+            documento: juridica.ruc || '',
+            ruc: juridica.ruc,
+            email: juridica.persona?.email,
+            telefono: juridica.persona?.telefono,
+            direccion: juridica.persona?.direccion
+          });
+        });
+      }
+
+      this.personas = personasTabla;
+      this.applyFilters();
+      
+    } catch (error) {
+      console.error('Error al cargar personas:', error);
+    } finally {
+      this.loading = false;
+      this.isLoading = false;
+    }
+  }
+
+  // Filtros y búsqueda
+  applyFilters(): void {
+    let filtered = [...this.personas];
+
+    // Filtro por tipo
+    if (this.selectedType !== 'todos') {
+      filtered = filtered.filter(persona => persona.tipo === this.selectedType);
+    }
+
+    // Filtro por búsqueda - usar ambas variables
+    const searchText = this.searchTerm || this.searchQuery;
+    if (searchText.trim()) {
+      const term = searchText.toLowerCase();
+      filtered = filtered.filter(persona => {
+        const searchableText = `${persona.nombre} ${persona.documento} ${persona.email || ''} ${persona.telefono || ''}`.toLowerCase();
+        return searchableText.includes(term);
+      });
+    }
+
+    this.filteredPersonas = filtered;
+    this.personasFiltradas = filtered;
+    
+    // Aplicar ordenamiento
+    this.applySorting();
+    
+    this.calcularEstadisticas();
+  }
+
+  private applySorting(): void {
+    if (!this.personasFiltradas.length) return;
+    
+    this.personasFiltradas.sort((a, b) => {
+      let valueA: any;
+      let valueB: any;
+
+      switch (this.sortColumn) {
+        case 'tipo':
+          valueA = a.tipo;
+          valueB = b.tipo;
+          break;
+        case 'nombre':
+          valueA = a.nombre.toLowerCase();
+          valueB = b.nombre.toLowerCase();
+          break;
+        case 'documento':
+          valueA = a.documento || '';
+          valueB = b.documento || '';
+          break;
+        default:
+          return 0;
+      }
+
+      if (valueA < valueB) {
+        return this.sortDirection === 'asc' ? -1 : 1;
+      }
+      if (valueA > valueB) {
+        return this.sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+
+  onSearchChange(): void {
+    this.searchTerm = this.searchQuery; // Sincronizar las variables
+    this.applyFilters();
+  }
+
+  onTypeFilterChange(): void {
+    this.applyFilters();
+  }
+
+  // Métodos de utilidad para mostrar datos
+  getPersonaDisplayName(persona: PersonaTabla): string {
+    return persona.nombre || 'Sin nombre';
+  }
+
+  getPersonaTypeLabel(tipo: string): string {
+    return tipo === 'natural' ? 'Natural' : 'Jurídica';
+  }
+
+  getPersonaTypeClass(tipo: string): string {
+    return tipo === 'natural' ? 'badge-natural' : 'badge-juridica';
+  }
+
+  // Gestión de modales - Persona Natural
+  openPersonaNaturalModal(): void {
+    this.isEditMode = false;
+    this.currentPersonaId = null;
+    this.activeTab = 'natural';
+    this.personaNaturalForm.reset();
+    this.personaNaturalForm.patchValue({
+      cliente: false,
+      categoria: ''
+    });
+    this.mostrarModalCrearCliente = true;
+  }
+
+  openEditPersonaNaturalModal(persona: PersonaTabla): void {
+    if (persona.tipo !== 'natural') return;
+    
+    this.isEditMode = true;
+    this.currentPersonaId = persona.id;
+    
+    // Cargar datos completos para edición
+    this.personaNaturalService.findById(persona.id).subscribe({
+      next: (personaCompleta) => {
+        this.personaNaturalForm.patchValue({
+          nombres: personaCompleta.nombres || '',
+          apellidos: personaCompleta.apellidos || '',
+          documento: personaCompleta.documento || '',
+          cliente: personaCompleta.cliente || false,
+          categoria: personaCompleta.categoria || '',
+          persona: {
+            telefono: personaCompleta.persona?.telefono || '',
+            email: personaCompleta.persona?.email || '',
+            direccion: personaCompleta.persona?.direccion || ''
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error al cargar persona natural:', error);
+      }
+    });
+  }
+
+  closePersonaNaturalModal(): void {
+    this.cerrarModalCrearCliente();
+  }
+
+  // Gestión de modales - Persona Jurídica
+  openPersonaJuridicaModal(): void {
+    this.isEditMode = false;
+    this.currentPersonaId = null;
+    this.activeTab = 'juridica';
+    this.personaJuridicaForm.reset();
+    this.mostrarModalCrearCliente = true;
+  }
+
+  openEditPersonaJuridicaModal(persona: PersonaTabla): void {
+    if (persona.tipo !== 'juridica') return;
+    
+    this.isEditMode = true;
+    this.currentPersonaId = persona.id;
+    
+    // Cargar datos completos para edición
+    this.personaJuridicaService.findById(persona.id).subscribe({
+      next: (personaCompleta) => {
+        this.personaJuridicaForm.patchValue({
+          razonSocial: personaCompleta.razonSocial || '',
+          ruc: personaCompleta.ruc || '',
+          persona: {
+            telefono: personaCompleta.persona?.telefono || '',
+            email: personaCompleta.persona?.email || '',
+            direccion: personaCompleta.persona?.direccion || ''
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error al cargar persona jurídica:', error);
+      }
+    });
+  }
+
+  closePersonaJuridicaModal(): void {
+    this.cerrarModalCrearCliente();
+  }
+
+  // CRUD Operations - Persona Natural
+  async onSubmitPersonaNatural(): Promise<void> {
+    if (this.personaNaturalForm.invalid) {
+      this.markFormGroupTouched(this.personaNaturalForm);
+      return;
+    }
+
+    try {
+      this.loading = true;
+      const formData = this.personaNaturalForm.value;
+      const request: PersonaNaturalRequest = {
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        documento: formData.documento,
+        cliente: formData.cliente,
+        categoria: formData.categoria,
+        persona: formData.persona
+      };
+
+      if (this.isEditMode && this.currentPersonaId) {
+        this.personaNaturalService.update(this.currentPersonaId, request).subscribe({
+          next: () => {
+            this.loadPersonas();
+            this.cerrarModalCrearCliente();
+          },
+          error: (error) => {
+            console.error('Error al actualizar persona natural:', error);
+            this.loading = false;
+          }
+        });
+      } else {
+        this.personaNaturalService.save(request).subscribe({
+          next: () => {
+            this.loadPersonas();
+            this.cerrarModalCrearCliente();
+          },
+          error: (error) => {
+            console.error('Error al crear persona natural:', error);
+            this.loading = false;
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error al guardar persona natural:', error);
+      this.loading = false;
+    }
+  }
+
+  // CRUD Operations - Persona Jurídica
+  async onSubmitPersonaJuridica(): Promise<void> {
+    if (this.personaJuridicaForm.invalid) {
+      this.markFormGroupTouched(this.personaJuridicaForm);
+      return;
+    }
+
+    try {
+      this.loading = true;
+      const formData = this.personaJuridicaForm.value;
+      const request: PersonaJuridicaRequest = {
+        razonSocial: formData.razonSocial,
+        ruc: formData.ruc,
+        persona: formData.persona
+      };
+
+      if (this.isEditMode && this.currentPersonaId) {
+        this.personaJuridicaService.update(this.currentPersonaId, request).subscribe({
+          next: () => {
+            this.loadPersonas();
+            this.cerrarModalCrearCliente();
+          },
+          error: (error) => {
+            console.error('Error al actualizar persona jurídica:', error);
+            this.loading = false;
+          }
+        });
+      } else {
+        this.personaJuridicaService.save(request).subscribe({
+          next: () => {
+            this.loadPersonas();
+            this.cerrarModalCrearCliente();
+          },
+          error: (error) => {
+            console.error('Error al crear persona jurídica:', error);
+            this.loading = false;
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error al guardar persona jurídica:', error);
+      this.loading = false;
+    }
+  }
+
+  // Eliminar persona
+  async deletePersona(persona: PersonaTabla): Promise<void> {
+    if (!confirm(`¿Está seguro de eliminar a ${this.getPersonaDisplayName(persona)}?`)) {
+      return;
+    }
+
+    try {
+      this.loading = true;
+      
+      if (persona.tipo === 'natural') {
+        this.personaNaturalService.deleteById(persona.id).subscribe({
+          next: () => {
+            this.loadPersonas();
+          },
+          error: (error) => {
+            console.error('Error al eliminar persona natural:', error);
+            this.loading = false;
+          }
+        });
+      } else {
+        this.personaJuridicaService.deleteById(persona.id).subscribe({
+          next: () => {
+            this.loadPersonas();
+          },
+          error: (error) => {
+            console.error('Error al eliminar persona jurídica:', error);
+            this.loading = false;
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error al eliminar persona:', error);
+      this.loading = false;
+    }
+  }
+
+  // Métodos de utilidad para formularios
+  isFieldInvalid(form: FormGroup, fieldName: string): boolean {
+    const field = form.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  getFieldError(form: FormGroup, fieldName: string): string {
+    const field = form.get(fieldName);
+    if (field && field.errors && (field.dirty || field.touched)) {
+      if (field.errors['required']) {
+        return 'Este campo es obligatorio';
+      }
+      if (field.errors['email']) {
+        return 'Ingrese un email válido';
+      }
+      if (field.errors['minlength']) {
+        return `Mínimo ${field.errors['minlength'].requiredLength} caracteres`;
+      }
+    }
+    return '';
+  }
+
+  private markFormGroupTouched(formGroup: FormGroup): void {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsTouched();
+
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      }
+    });
+  }
 }
