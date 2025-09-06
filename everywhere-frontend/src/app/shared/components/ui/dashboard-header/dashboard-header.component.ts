@@ -1,7 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UserAvatarComponent, UserData } from '../user-avatar/user-avatar.component';
-import { StatusIndicatorComponent, StatusData } from '../status-indicator/status-indicator.component';
 
 export interface DashboardHeaderData {
   logoSrc: string;
@@ -10,7 +9,6 @@ export interface DashboardHeaderData {
     secondary: string;
   };
   subtitle: string;
-  statusData: StatusData;
   userData: UserData;
   isLoading?: boolean;
 }
@@ -18,7 +16,7 @@ export interface DashboardHeaderData {
 @Component({
   selector: 'app-dashboard-header',
   standalone: true,
-  imports: [CommonModule, UserAvatarComponent, StatusIndicatorComponent],
+  imports: [CommonModule, UserAvatarComponent],
   templateUrl: './dashboard-header.component.html',
   styleUrls: ['./dashboard-header.component.css']
 })

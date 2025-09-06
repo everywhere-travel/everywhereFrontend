@@ -31,18 +31,12 @@ export class DashboardComponent implements OnInit {
 
   // Datos para componentes
   headerData: DashboardHeaderData = {
-    logoSrc: '/LOGO_fondo.jpg',
+    logoSrc: '/logo.png',
     title: {
       main: 'Everywhere',
       secondary: 'Travel'
     },
     subtitle: 'Panel de Administración',
-    statusData: {
-      status: 'operational',
-      text: 'Sistema Operativo',
-      subtext: 'Todos los servicios funcionando',
-      showTime: true
-    },
     userData: {
       name: '',
       role: ''
@@ -52,12 +46,7 @@ export class DashboardComponent implements OnInit {
 
   welcomeData: WelcomeBannerData = {
     title: '',
-    subtitle: '',
-    statusData: {
-      status: 'operational',
-      text: 'Sistema Operativo',
-      subtext: 'Todos los servicios funcionando correctamente'
-    }
+    subtitle: ''
   };
 
   modules: ModuleCardData[] = [
@@ -125,16 +114,16 @@ export class DashboardComponent implements OnInit {
     
     // Actualizar datos del welcome banner
     this.welcomeData.title = `¡Bienvenido, ${user.name}!`;
-    this.welcomeData.subtitle = this.getCurrentTime();
+    this.welcomeData.subtitle = `Hoy es ${this.getCurrentTime()} - Gestiona tu negocio desde aquí`;
   }
 
   // Métodos para el header
   getCurrentTime(): string {
-    return new Date().toLocaleString('es-PE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      day: '2-digit',
-      month: 'short'
+    return new Date().toLocaleDateString('es-PE', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   }
 
