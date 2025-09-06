@@ -5,3 +5,8 @@ export interface FormaPagoResponse {
   fechaCreacion?: string
   fechaActualizacion?: string
 }
+
+export interface FormaPagoRequest {
+  codigo?: number
+  descripcion?: string
+}
