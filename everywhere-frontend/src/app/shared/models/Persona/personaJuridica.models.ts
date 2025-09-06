@@ -1,11 +1,8 @@
 import { PersonaRequest, PersonaResponse } from './persona.model'
 
 export interface PersonaJuridicaRequest {
-  documento?: string
-  nombres?: string
-  apellidos?: string
-  cliente?: boolean
-  categoria?: string
+  ruc?: string
+  razonSocial?: string
   persona?: PersonaRequest
 }
 
