@@ -1,0 +1,9 @@
+<div class="live-status">
+  <div [class]="getStatusClass()"></div>
+  <span class="status-text">{{ data.text }}</span>
+  <span class="last-update" *ngIf="data.showTime">{{ getCurrentTime() }}</span>
+</div>
+
+<div class="health-metrics" *ngIf="data.subtext">
+  <span>{{ data.subtext }}</span>
+</div>

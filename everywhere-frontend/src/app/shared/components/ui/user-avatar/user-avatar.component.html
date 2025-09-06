@@ -1,0 +1,19 @@
+<div class="user-profile">
+  <div [class]="'user-avatar ' + getSizeClass()">
+    <img 
+      *ngIf="user.avatar" 
+      [src]="user.avatar" 
+      [alt]="user.name"
+      class="avatar-image">
+    <div 
+      *ngIf="!user.avatar" 
+      class="avatar-initials">
+      {{ getUserInitials() }}
+    </div>
+  </div>
+  
+  <div class="user-info" *ngIf="showInfo">
+    <span class="user-name">{{ user.name || 'Usuario' }}</span>
+    <span class="user-role">{{ user.role || 'Sin rol' }}</span>
+  </div>
+</div>

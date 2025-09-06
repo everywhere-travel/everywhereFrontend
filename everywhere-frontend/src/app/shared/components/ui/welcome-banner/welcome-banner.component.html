@@ -1,0 +1,12 @@
+<section class="welcome-section">
+  <div class="welcome-content">
+    <h2>{{ data.title }}</h2>
+    <p>{{ data.subtitle }}</p>
+  </div>
+  
+  <div class="system-health" *ngIf="data.statusData">
+    <div class="health-indicator">
+      <app-status-indicator [data]="data.statusData"></app-status-indicator>
+    </div>
+  </div>
+</section>

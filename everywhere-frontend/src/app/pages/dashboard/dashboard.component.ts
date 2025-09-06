@@ -2,54 +2,130 @@ import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { 
+  DashboardHeaderComponent, 
+  WelcomeBannerComponent, 
+  ModuleCardComponent,
+  ModuleCardData,
+  WelcomeBannerData,
+  DashboardHeaderData
+} from '../../shared/components/ui';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
-  imports: [RouterModule, CommonModule]
+  imports: [
+    RouterModule, 
+    CommonModule, 
+    DashboardHeaderComponent, 
+    WelcomeBannerComponent, 
+    ModuleCardComponent
+  ]
 })
 export class DashboardComponent implements OnInit {
 
   // Estado de carga
   isLoading = false;
 
-  // Datos principales
-  estadisticasGenerales: any;
+  // Datos para componentes
+  headerData: DashboardHeaderData = {
+    logoSrc: '/LOGO_fondo.jpg',
+    title: {
+      main: 'Everywhere',
+      secondary: 'Travel'
+    },
+    subtitle: 'Panel de Administración',
+    statusData: {
+      status: 'operational',
+      text: 'Sistema Operativo',
+      subtext: 'Todos los servicios funcionando',
+      showTime: true
+    },
+    userData: {
+      name: '',
+      role: ''
+    },
+    isLoading: false
+  };
 
-  ventasPorMes: { mes: string, ventas: number }[] = [];
-  estadoCotizaciones: { estado: string, cantidad: number, porcentaje: number }[] = [];
-  topProductos: { nombre: string, ventas: number, ingresos: number }[] = [];
-  ingresosPorMoneda: { moneda: string, monto: number }[] = [];
-  quickActions: { title: string, description: string, icon: string, route: string, color: string }[] = [];
+  welcomeData: WelcomeBannerData = {
+    title: '',
+    subtitle: '',
+    statusData: {
+      status: 'operational',
+      text: 'Sistema Operativo',
+      subtext: 'Todos los servicios funcionando correctamente'
+    }
+  };
 
-  // Datos para las nuevas funcionalidades
-  revenueSparkline: number[] = [30, 45, 35, 60, 55, 70, 65, 80, 75, 90];
-  performanceData = [
-    { value: 30, position: 10 },
-    { value: 45, position: 20 },
-    { value: 35, position: 30 },
-    { value: 60, position: 40 },
-    { value: 55, position: 50 },
-    { value: 70, position: 60 },
-    { value: 65, position: 70 },
-    { value: 80, position: 80 },
-    { value: 75, position: 90 }
-  ];
-
-  topDestinations = [
-    { name: 'Cusco - Machu Picchu', bookings: 125, revenue: 87500, percentage: 85 },
-    { name: 'Lima - City Tour', bookings: 98, revenue: 45200, percentage: 70 },
-    { name: 'Arequipa - Colca', bookings: 76, revenue: 32400, percentage: 60 },
-    { name: 'Iquitos - Amazonas', bookings: 54, revenue: 28900, percentage: 45 },
-    { name: 'Trujillo - Huacas', bookings: 43, revenue: 19800, percentage: 35 }
+  modules: ModuleCardData[] = [
+    {
+      title: 'Cotizaciones',
+      description: 'Gestiona las cotizaciones de viajes',
+      icon: 'fas fa-file-invoice-dollar',
+      route: '/cotizaciones',
+      iconType: 'cotizaciones',
+      status: { text: '12 Activas', type: 'active' },
+      action: { text: 'Gestionar' }
+    },
+    {
+      title: 'Liquidaciones',
+      description: 'Administra las liquidaciones',
+      icon: 'fas fa-calculator',
+      route: '/liquidaciones',
+      iconType: 'liquidaciones',
+      status: { text: '8 Pendientes', type: 'warning' },
+      action: { text: 'Procesar' }
+    },
+    {
+      title: 'Productos',
+      description: 'Catálogo de productos y servicios',
+      icon: 'fas fa-cube',
+      route: '/productos',
+      iconType: 'productos',
+      status: { text: '45 Disponibles', type: 'success' },
+      action: { text: 'Administrar' }
+    },
+    {
+      title: 'Personas',
+      description: 'Gestión de clientes y proveedores',
+      icon: 'fas fa-users',
+      route: '/personas',
+      iconType: 'clientes',
+      status: { text: '234 Registrados', type: 'neutral' },
+      action: { text: 'Ver Clientes' }
+    },
+    {
+      title: 'Reportes',
+      description: 'Reportes y estadísticas',
+      icon: 'fas fa-chart-bar',
+      route: '/reportes',
+      iconType: 'reportes',
+      status: { text: '56 Generados', type: 'success' },
+      action: { text: 'Generar' }
+    }
   ];
 
   constructor(private authService: AuthServiceService) {}
 
   ngOnInit(): void {
-    this.cargarDatos();
+    this.initializeData();
+  }
+
+  private initializeData(): void {
+    const user = this.getCurrentUser();
+    
+    // Actualizar datos del header
+    this.headerData.userData = {
+      name: user.name,
+      role: user.role
+    };
+    
+    // Actualizar datos del welcome banner
+    this.welcomeData.title = `¡Bienvenido, ${user.name}!`;
+    this.welcomeData.subtitle = this.getCurrentTime();
   }
 
   // Métodos para el header
@@ -89,125 +165,20 @@ export class DashboardComponent implements OnInit {
     return roleMap[role] || 'Usuario';
   }
 
-  // Métodos para KPIs
-  getCompletionRate(): number {
-    if (!this.estadisticasGenerales) return 0;
-    const total = this.estadisticasGenerales.cotizacionesActivas + this.estadisticasGenerales.cotizacionesCompletadas;
-    return total > 0 ? Math.round((this.estadisticasGenerales.cotizacionesCompletadas / total) * 100) : 0;
-  }
-
-  // Simulación de carga de datos (puedes cambiarlo a un servicio real)
-  cargarDatos(): void {
-    this.isLoading = true;
-
-    setTimeout(() => {
-      this.estadisticasGenerales = {
-        cotizacionesActivas: 89,
-        cotizacionesCompletadas: 247,
-        liquidacionesPendientes: 17,
-        ventasMensual: 892450
-      };
-
-      this.ventasPorMes = [
-        { mes: 'Enero', ventas: 685000 },
-        { mes: 'Febrero', ventas: 720000 },
-        { mes: 'Marzo', ventas: 892450 },
-        { mes: 'Abril', ventas: 754200 },
-        { mes: 'Mayo', ventas: 986300 }
-      ];
-
-      this.estadoCotizaciones = [
-        { estado: 'Activas', cantidad: 89, porcentaje: 26 },
-        { estado: 'Completadas', cantidad: 247, porcentaje: 74 },
-        { estado: 'Pendientes', cantidad: 17, porcentaje: 5 }
-      ];
-
-      this.topProductos = [
-        { nombre: 'Paquete Cusco Mágico', ventas: 156, ingresos: 487200 },
-        { nombre: 'Tour Amazonia Premium', ventas: 124, ingresos: 386800 },
-        { nombre: 'Lima Colonial + Moderna', ventas: 98, ingresos: 245600 },
-        { nombre: 'Arequipa & Colca Canyon', ventas: 87, ingresos: 304500 },
-        { nombre: 'Ica & Paracas Adventure', ventas: 76, ingresos: 228000 }
-      ];
-
-      this.ingresosPorMoneda = [
-        { moneda: 'USD', monto: 547890 },
-        { moneda: 'EUR', monto: 234567 },
-        { moneda: 'PEN', monto: 892450 },
-        { moneda: 'GBP', monto: 123456 }
-      ];
-
-      this.quickActions = [
-        {
-          title: 'Nueva Cotización',
-          description: 'Crear cotización personalizada',
-          icon: '📋',
-          route: '/cotizaciones',
-          color: 'primary'
-        },
-        {
-          title: 'Ver Reportes',
-          description: 'Análisis y estadísticas',
-          icon: '📊',
-          route: '/reportes',
-          color: 'accent'
-        },
-        {
-          title: 'Gestionar Productos',
-          description: 'Catálogo de servicios',
-          icon: '🎯',
-          route: '/productos',
-          color: 'warning'
-        },
-        {
-          title: 'Clientes',
-          description: 'Base de datos de clientes',
-          icon: '👥',
-          route: '/personas',
-          color: 'success'
-        },
-        {
-          title: 'Liquidaciones',
-          description: 'Procesar pagos pendientes',
-          icon: '�',
-          route: '/liquidaciones',
-          color: 'info'
-        },
-        {
-          title: 'Estadísticas',
-          description: 'Métricas avanzadas',
-          icon: '📈',
-          route: '/estadisticas',
-          color: 'purple'
-        }
-      ];
-
-      this.isLoading = false;
-    }, 1500);
-  }
-
   // Refrescar datos (simula actualización)
   refreshData(): void {
-    this.cargarDatos();
+    this.headerData.isLoading = true;
+    this.isLoading = true;
+    
+    setTimeout(() => {
+      this.initializeData();
+      this.headerData.isLoading = false;
+      this.isLoading = false;
+    }, 1000);
   }
 
-  // Formatear moneda
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('es-PE', { 
-      style: 'currency', 
-      currency: 'PEN',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value);
-  }
-
-  // Colores según estado
-  getStatusColor(estado: string): string {
-    switch (estado) {
-      case 'Activas': return 'var(--primary-color)';
-      case 'Completadas': return 'var(--success-color)';
-      case 'Pendientes': return 'var(--warning-color)';
-      default: return 'var(--text-secondary)';
-    }
+  // Manejar evento de refresh desde el header
+  onHeaderRefresh(): void {
+    this.refreshData();
   }
 }
