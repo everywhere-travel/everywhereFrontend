@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
@@ -139,6 +139,10 @@ export class PersonasComponent implements OnInit {
   viajeroForm!: FormGroup;
   viajeroFrecuenteForm!: FormGroup;
 
+  // Variables para campos dinámicos
+  showOtraNacionalidad: boolean = false;
+  showOtraResidencia: boolean = false;
+
   // Variables de control para la tabla
   searchTerm: string = '';
   searchQuery: string = '';
@@ -158,10 +162,19 @@ export class PersonasComponent implements OnInit {
   mostrarModalNatural: boolean = false;
   mostrarModalJuridica: boolean = false;
   mostrarModalCrearCliente: boolean = false;
+  mostrarModalDetalles: boolean = false;
   isEditMode: boolean = false;
   editandoPersona: boolean = false;
   editingId: number | null = null;
   currentPersonaId: number | null = null;
+  personaDetalles: PersonaTabla | null = null;
+
+  // Variables para menús de acciones
+  showQuickActions: number | null = null;
+
+  // Variables para modal de confirmación de eliminación
+  mostrarModalEliminar: boolean = false;
+  personaAEliminar: PersonaTabla | null = null;
 
   // Variables para tabs
   activeTab: 'natural' | 'juridica' | 'viajero' = 'natural';
@@ -238,9 +251,20 @@ export class PersonasComponent implements OnInit {
     this.editandoPersona = false;
     this.activeTab = 'natural';
     this.resetAllForms();
+    // Limpiar selecciones después de editar
+    if (this.isEditMode && this.currentPersonaId) {
+      this.selectedItems = this.selectedItems.filter(id => id !== this.currentPersonaId);
+      this.updateSelectionState();
+    }
+    this.isEditMode = false;
+    this.currentPersonaId = null;
   }
 
   setActiveTab(tab: 'natural' | 'juridica' | 'viajero'): void {
+    // No permitir cambio de tabs durante edición
+    if (this.editandoPersona) {
+      return;
+    }
     this.activeTab = tab;
   }
 
@@ -260,13 +284,24 @@ export class PersonasComponent implements OnInit {
       this.loading = true;
       this.isSubmitting = true;
       const formData = this.viajeroForm.value;
+      
+      // Determinar la nacionalidad final
+      const nacionalidadFinal = formData.nacionalidad === 'Otra' 
+        ? formData.otraNacionalidad 
+        : formData.nacionalidad;
+      
+      // Determinar la residencia final  
+      const residenciaFinal = formData.residencia === 'Otro'
+        ? formData.otraResidencia
+        : formData.residencia;
+      
       const request: ViajeroRequest = {
         nombres: formData.nombres,
         apellidoPaterno: formData.apellidoPaterno,
         apellidoMaterno: formData.apellidoMaterno,
         fechaNacimiento: formData.fechaNacimiento,
-        nacionalidad: formData.nacionalidad,
-        residencia: formData.residencia,
+        nacionalidad: nacionalidadFinal,
+        residencia: residenciaFinal,
         tipoDocumento: formData.tipoDocumento,
         numeroDocumento: formData.numeroDocumento,
         fechaEmisionDocumento: formData.fechaEmisionDocumento,
@@ -290,6 +325,25 @@ export class PersonasComponent implements OnInit {
       console.error('Error al procesar viajero:', error);
       this.loading = false;
       this.isSubmitting = false;
+    }
+  }
+
+  // Métodos para campos dinámicos
+  onNacionalidadChange(event: any): void {
+    const value = event.target.value;
+    this.showOtraNacionalidad = value === 'Otra';
+    
+    if (!this.showOtraNacionalidad) {
+      this.viajeroForm.get('otraNacionalidad')?.setValue('');
+    }
+  }
+
+  onResidenciaChange(event: any): void {
+    const value = event.target.value;
+    this.showOtraResidencia = value === 'Otro';
+    
+    if (!this.showOtraResidencia) {
+      this.viajeroForm.get('otraResidencia')?.setValue('');
     }
   }
 
@@ -322,9 +376,27 @@ export class PersonasComponent implements OnInit {
   }
 
   confirmarEliminar(persona: PersonaTabla): void {
-    if (confirm(`¿Está seguro de eliminar a ${this.getPersonaDisplayName(persona)}?\n\nEsta acción no se puede deshacer.`)) {
-      this.eliminarPersona(persona.id);
+    console.log('🔥🔥🔥 confirmarEliminar called for persona:', persona);
+    this.showActionMenu = null; // Cerrar menús
+    this.showQuickActions = null;
+    // Mostrar modal de confirmación en lugar de alert feo
+    this.personaAEliminar = persona;
+    this.mostrarModalEliminar = true;
+  }
+
+  // Nuevo método para confirmar eliminación desde el modal
+  confirmarEliminacionModal(): void {
+    if (this.personaAEliminar) {
+      console.log('🔥🔥🔥 Confirmando eliminación de:', this.personaAEliminar);
+      this.eliminarPersona(this.personaAEliminar.id);
+      this.cerrarModalEliminar();
     }
+  }
+
+  // Nuevo método para cerrar modal de eliminación
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.personaAEliminar = null;
   }
 
   getEmptyStateTitle(): string {
@@ -391,14 +463,113 @@ export class PersonasComponent implements OnInit {
     this.someSelected = selectedCount > 0 && selectedCount < totalItems;
   }
 
-  // Métodos para el menú de acciones
-  toggleActionMenu(id: number): void {
-    this.showActionMenu = this.showActionMenu === id ? null : id;
+  // Métodos para acciones masivas
+  clearSelection(): void {
+    this.selectedItems = [];
+    this.updateSelectionState();
   }
 
-  duplicarPersona(persona: PersonaTabla): void {
-    // Implementar duplicación
-    console.log('Duplicar persona:', persona);
+  editarSeleccionados(): void {
+    if (this.selectedItems.length === 0) return;
+    
+    if (this.selectedItems.length === 1) {
+      // Si solo hay uno seleccionado, abrir editor individual
+      const persona = this.personas.find(p => p.id === this.selectedItems[0]);
+      if (persona) {
+        this.editarPersona(persona);
+      }
+    } else {
+      // Para múltiples elementos, abrir el primer elemento
+      const persona = this.personas.find(p => p.id === this.selectedItems[0]);
+      if (persona) {
+        this.editarPersona(persona);
+        // Mostrar mensaje informativo
+        console.log(`Editando el primer elemento de ${this.selectedItems.length} seleccionados`);
+      }
+    }
+  }
+
+  eliminarSeleccionados(): void {
+    if (this.selectedItems.length === 0) return;
+    
+    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cliente${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
+    if (confirm(confirmMessage)) {
+      this.loading = true;
+      let eliminados = 0;
+      const total = this.selectedItems.length;
+      
+      this.selectedItems.forEach(id => {
+        const persona = this.personas.find(p => p.id === id);
+        if (persona) {
+          if (persona.tipo === 'natural') {
+            this.personaNaturalService.deleteById(id).subscribe({
+              next: () => {
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadPersonas();
+                  this.clearSelection();
+                  this.loading = false;
+                }
+              },
+              error: (error) => {
+                console.error('Error al eliminar persona natural:', error);
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadPersonas();
+                  this.clearSelection();
+                  this.loading = false;
+                }
+              }
+            });
+          } else {
+            this.personaJuridicaService.deleteById(id).subscribe({
+              next: () => {
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadPersonas();
+                  this.clearSelection();
+                  this.loading = false;
+                }
+              },
+              error: (error) => {
+                console.error('Error al eliminar persona jurídica:', error);
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadPersonas();
+                  this.clearSelection();
+                  this.loading = false;
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+  }
+
+  // Métodos para el menú de acciones
+  toggleActionMenu(id: number): void {
+    console.log('🔥🔥🔥 BOTÓN CLICKEADO - ID:', id);
+    console.log('🔥🔥🔥 ESTADO ACTUAL showActionMenu:', this.showActionMenu);
+    
+    // Siempre cerrar otros menús primero
+    this.showQuickActions = null;
+    
+    // Alternar el menú
+    if (this.showActionMenu === id) {
+      console.log('🔥🔥🔥 CERRANDO MENÚ');
+      this.showActionMenu = null;
+    } else {
+      console.log('🔥🔥🔥 ABRIENDO MENÚ PARA ID:', id);
+      this.showActionMenu = id;
+    }
+    
+    console.log('🔥🔥🔥 NUEVO ESTADO showActionMenu:', this.showActionMenu);
+  }
+
+  toggleQuickActions(id: number): void {
+    this.showQuickActions = this.showQuickActions === id ? null : id;
+    this.showActionMenu = null; // Cerrar el otro menú
   }
 
   // Métodos para paginación
@@ -471,6 +642,19 @@ export class PersonasComponent implements OnInit {
     this.loadPersonas();
   }
 
+  // Listener para cerrar menus al hacer click fuera
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    // NO CERRAR MENÚS - COMENTADO TEMPORALMENTE
+    /*
+    const target = event.target as HTMLElement;
+    if (!target.closest('.action-menu-container')) {
+      this.showActionMenu = null;
+      this.showQuickActions = null;
+    }
+    */
+  }
+
   // Métodos de modal
   abrirModalPersonaNatural(): void {
     this.editandoPersona = false;
@@ -516,6 +700,10 @@ export class PersonasComponent implements OnInit {
 
   // Función auxiliar para cambiar tab
   setActiveTabKey(key: string): void {
+    // No permitir cambio de tabs durante edición
+    if (this.editandoPersona) {
+      return;
+    }
     this.setActiveTab(key as 'natural' | 'juridica' | 'viajero');
   }
 
@@ -527,6 +715,9 @@ export class PersonasComponent implements OnInit {
 
   // Métodos de acciones de tabla
   editarPersona(persona: PersonaTabla): void {
+    console.log('🔥🔥🔥 EDITAR PERSONA LLAMADO:', persona.id);
+    this.showActionMenu = null; // Cerrar menús
+    this.showQuickActions = null;
     this.editandoPersona = true;
     if (persona.tipo === 'natural') {
       this.activeTab = 'natural';
@@ -540,8 +731,16 @@ export class PersonasComponent implements OnInit {
   }
 
   verPersona(persona: PersonaTabla): void {
-    // Implementar vista de detalle si es necesario
-    console.log('Ver persona:', persona);
+    console.log('🔥🔥🔥 VER PERSONA LLAMADO:', persona.id);
+    this.showActionMenu = null; // Cerrar menús
+    this.showQuickActions = null;
+    this.personaDetalles = persona;
+    this.mostrarModalDetalles = true;
+  }
+
+  cerrarModalDetalles(): void {
+    this.mostrarModalDetalles = false;
+    this.personaDetalles = null;
   }
 
   eliminarPersona(id: number): void {
@@ -718,43 +917,48 @@ export class PersonasComponent implements OnInit {
   // Inicialización de formularios
   private initializeForms(): void {
     this.personaNaturalForm = this.fb.group({
-      nombres: ['', [Validators.required, Validators.minLength(2)]],
-      apellidos: ['', [Validators.required, Validators.minLength(2)]],
-      documento: ['', [Validators.required]],
+      nombres: [''],
+      apellidos: [''],
+      documento: [''],
       cliente: [false],
       categoria: [''],
       persona: this.fb.group({
-        telefono: ['', [Validators.required]],
-        email: ['', [Validators.required, Validators.email]],
-        direccion: ['', [Validators.required]]
+        telefono: [''],
+        email: ['', [Validators.email]],
+        direccion: [''],
+        observacion: ['']
       })
     });
 
     this.personaJuridicaForm = this.fb.group({
-      razonSocial: ['', [Validators.required, Validators.minLength(2)]],
-      ruc: ['', [Validators.required]],
+      razonSocial: [''],
+      ruc: [''],
       persona: this.fb.group({
-        telefono: ['', [Validators.required]],
-        email: ['', [Validators.required, Validators.email]],
-        direccion: ['', [Validators.required]]
+        telefono: [''],
+        email: ['', [Validators.email]],
+        direccion: [''],
+        observacion: ['']
       })
     });
 
     this.viajeroForm = this.fb.group({
-      nombres: ['', [Validators.required]],
-      apellidoPaterno: ['', [Validators.required]],
-      apellidoMaterno: ['', [Validators.required]],
-      fechaNacimiento: ['', [Validators.required]],
-      nacionalidad: ['', [Validators.required]],
-      residencia: ['', [Validators.required]],
-      tipoDocumento: ['', [Validators.required]],
-      numeroDocumento: ['', [Validators.required]],
-      fechaEmisionDocumento: ['', [Validators.required]],
-      fechaVencimientoDocumento: ['', [Validators.required]],
+      nombres: [''],
+      apellidoPaterno: [''],
+      apellidoMaterno: [''],
+      fechaNacimiento: [''],
+      nacionalidad: [''],
+      otraNacionalidad: [''],
+      residencia: [''],
+      otraResidencia: [''],
+      tipoDocumento: [''],
+      numeroDocumento: [''],
+      fechaEmisionDocumento: [''],
+      fechaVencimientoDocumento: [''],
       persona: this.fb.group({
-        telefono: ['', [Validators.required]],
-        email: ['', [Validators.required, Validators.email]],
-        direccion: ['', [Validators.required]]
+        telefono: [''],
+        email: ['', [Validators.email]],
+        direccion: [''],
+        observacion: ['']
       })
     });
 
@@ -1012,6 +1216,9 @@ export class PersonasComponent implements OnInit {
       if (this.isEditMode && this.currentPersonaId) {
         this.personaNaturalService.update(this.currentPersonaId, request).subscribe({
           next: () => {
+            // Deseleccionar el elemento editado
+            this.selectedItems = this.selectedItems.filter(id => id !== this.currentPersonaId);
+            this.updateSelectionState();
             this.loadPersonas();
             this.cerrarModalCrearCliente();
           },
@@ -1057,6 +1264,9 @@ export class PersonasComponent implements OnInit {
       if (this.isEditMode && this.currentPersonaId) {
         this.personaJuridicaService.update(this.currentPersonaId, request).subscribe({
           next: () => {
+            // Deseleccionar el elemento editado
+            this.selectedItems = this.selectedItems.filter(id => id !== this.currentPersonaId);
+            this.updateSelectionState();
             this.loadPersonas();
             this.cerrarModalCrearCliente();
           },

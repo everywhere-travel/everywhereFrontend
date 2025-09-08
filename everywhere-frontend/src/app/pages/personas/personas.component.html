@@ -260,15 +260,20 @@
               selectedItems.length === 1 ? '' : 's' }}</span>
           </div>
           <div class="flex gap-3">
-            <button
+            <button (click)="editarSeleccionados()"
               class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
               <i class="fas fa-edit"></i>
-              Editar masivo
+              Editar
             </button>
-            <button
+            <button (click)="eliminarSeleccionados()"
               class="bg-white/20 border border-white/30 hover:bg-red-600 hover:border-red-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
               <i class="fas fa-trash"></i>
               Eliminar seleccionados
+            </button>
+            <button (click)="clearSelection()"
+              class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-times"></i>
+              Cancelar
             </button>
           </div>
         </div>
@@ -354,13 +359,6 @@
                     <div class="flex items-center gap-2">
                       <i class="fas fa-phone text-gray-500"></i>
                       <span>Contacto</span>
-                    </div>
-                  </th>
-
-                  <th class="p-5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
-                    <div class="flex items-center gap-2">
-                      <i class="fas fa-circle text-green-500"></i>
-                      <span>Estado</span>
                     </div>
                   </th>
 
@@ -467,45 +465,33 @@
                     </div>
                   </td>
 
-                  <!-- Estado -->
-                  <td class="p-5">
-                    <div
-                      class="flex items-center gap-2 px-3 py-2 bg-green-50 text-green-700 rounded-full font-semibold text-sm w-fit border-2 border-green-200">
-                      <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                      <span>Activo</span>
-                    </div>
-                  </td>
-
                   <!-- Acciones -->
                   <td class="p-5 text-center">
-                    <div class="relative inline-block" [class.z-10]="showActionMenu === persona.id">
+                    <div class="relative">
                       <button (click)="toggleActionMenu(persona.id)"
-                        class="w-9 h-9 border border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg flex items-center justify-center text-gray-600 transition-all duration-200">
+                        class="w-9 h-9 border border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg flex items-center justify-center text-gray-600 transition-all duration-200"
+                        type="button">
                         <i class="fas fa-ellipsis-v"></i>
                       </button>
-                      <div
-                        class="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl min-w-48 opacity-0 invisible transform -translate-y-2 transition-all duration-300 z-50"
-                        [class.opacity-100]="showActionMenu === persona.id"
-                        [class.visible]="showActionMenu === persona.id"
-                        [class.translate-y-0]="showActionMenu === persona.id">
+                      <div *ngIf="showActionMenu === persona.id"
+                        class="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl min-w-48 z-50"
+                        style="z-index: 9999;">
                         <button (click)="verPersona(persona)"
-                          class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium">
+                          class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                          type="button">
                           <i class="fas fa-eye text-blue-500"></i>
                           <span>Ver detalles</span>
                         </button>
                         <button (click)="editarPersona(persona)"
-                          class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium">
+                          class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                          type="button">
                           <i class="fas fa-edit text-green-500"></i>
                           <span>Editar</span>
                         </button>
-                        <button (click)="duplicarPersona(persona)"
-                          class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium">
-                          <i class="fas fa-copy text-purple-500"></i>
-                          <span>Duplicar</span>
-                        </button>
                         <div class="h-px bg-gray-200 my-1"></div>
                         <button (click)="confirmarEliminar(persona)"
-                          class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium">
+                          class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
+                          type="button">
                           <i class="fas fa-trash text-red-500"></i>
                           <span>Eliminar</span>
                         </button>
@@ -614,34 +600,58 @@
               <!-- Card Footer -->
               <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
                 <div class="flex items-center justify-between">
-                  <button (click)="verPersona(persona)"
-                    class="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center gap-2 transition-colors">
-                    <i class="fas fa-eye"></i>
-                    Ver detalles
-                  </button>
-                  <div class="relative inline-block" [class.z-10]="showActionMenu === persona.id">
-                    <button (click)="toggleActionMenu(persona.id)"
-                      class="w-8 h-8 border border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg flex items-center justify-center text-gray-600 transition-all duration-200">
-                      <i class="fas fa-ellipsis-v"></i>
+                  <div class="relative inline-block action-menu-container">
+                    <button (click)="toggleQuickActions(persona.id)"
+                      class="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center gap-2 transition-colors bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg">
+                      <i class="fas fa-eye"></i>
+                      Ver detalles
+                      <i class="fas fa-chevron-down text-xs"></i>
                     </button>
+                    
+                    <!-- Quick Actions Dropdown -->
                     <div
-                      class="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-xl shadow-xl min-w-48 opacity-0 invisible transform translate-y-2 transition-all duration-300 z-50"
-                      [class.opacity-100]="showActionMenu === persona.id"
-                      [class.visible]="showActionMenu === persona.id"
-                      [class.translate-y-0]="showActionMenu === persona.id">
+                      class="absolute bottom-full left-0 mb-2 bg-white border border-gray-200 rounded-xl shadow-xl min-w-48 opacity-0 invisible transform translate-y-2 transition-all duration-300 z-50"
+                      [class.opacity-100]="showQuickActions === persona.id"
+                      [class.visible]="showQuickActions === persona.id"
+                      [class.translate-y-0]="showQuickActions === persona.id">
+                      <button (click)="verPersona(persona)"
+                        class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium">
+                        <i class="fas fa-eye text-blue-500"></i>
+                        <span>Ver información completa</span>
+                      </button>
                       <button (click)="editarPersona(persona)"
                         class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium">
                         <i class="fas fa-edit text-green-500"></i>
-                        <span>Editar</span>
+                        <span>Editar cliente</span>
                       </button>
-                      <button (click)="duplicarPersona(persona)"
-                        class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium">
-                        <i class="fas fa-copy text-purple-500"></i>
-                        <span>Duplicar</span>
+                    </div>
+                  </div>
+                  
+                  <div class="relative">
+                    <button (click)="toggleActionMenu(persona.id)"
+                      class="w-8 h-8 border border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg flex items-center justify-center text-gray-600 transition-all duration-200"
+                      type="button">
+                      <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <div *ngIf="showActionMenu === persona.id"
+                      class="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-xl shadow-xl min-w-48 z-50"
+                      style="z-index: 9999;">
+                      <button (click)="verPersona(persona)"
+                        class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                        type="button">
+                        <i class="fas fa-eye text-blue-500"></i>
+                        <span>Ver detalles</span>
+                      </button>
+                      <button (click)="editarPersona(persona)"
+                        class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                        type="button">
+                        <i class="fas fa-edit text-green-500"></i>
+                        <span>Editar</span>
                       </button>
                       <div class="h-px bg-gray-200 my-1"></div>
                       <button (click)="confirmarEliminar(persona)"
-                        class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium">
+                        class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
+                        type="button">
                         <i class="fas fa-trash text-red-500"></i>
                         <span>Eliminar</span>
                       </button>
@@ -753,33 +763,56 @@
 
                   <!-- Actions -->
                   <div class="flex items-center gap-2">
-                    <button (click)="verPersona(persona)"
-                      class="w-8 h-8 border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg flex items-center justify-center text-gray-600 transition-all duration-200">
-                      <i class="fas fa-eye"></i>
-                    </button>
-                    <div class="relative inline-block" [class.z-10]="showActionMenu === persona.id">
-                      <button (click)="toggleActionMenu(persona.id)"
-                        class="w-8 h-8 border border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg flex items-center justify-center text-gray-600 transition-all duration-200">
-                        <i class="fas fa-ellipsis-v"></i>
+                    <div class="relative inline-block action-menu-container">
+                      <button (click)="toggleQuickActions(persona.id)"
+                        class="w-8 h-8 border border-gray-300 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg flex items-center justify-center text-gray-600 transition-all duration-200">
+                        <i class="fas fa-eye"></i>
                       </button>
+                      
+                      <!-- Quick Actions Dropdown -->
                       <div
                         class="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl min-w-48 opacity-0 invisible transform -translate-y-2 transition-all duration-300 z-50"
-                        [class.opacity-100]="showActionMenu === persona.id"
-                        [class.visible]="showActionMenu === persona.id"
-                        [class.translate-y-0]="showActionMenu === persona.id">
+                        [class.opacity-100]="showQuickActions === persona.id"
+                        [class.visible]="showQuickActions === persona.id"
+                        [class.translate-y-0]="showQuickActions === persona.id">
+                        <button (click)="verPersona(persona)"
+                          class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium">
+                          <i class="fas fa-eye text-blue-500"></i>
+                          <span>Ver información completa</span>
+                        </button>
                         <button (click)="editarPersona(persona)"
                           class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium">
                           <i class="fas fa-edit text-green-500"></i>
-                          <span>Editar</span>
+                          <span>Editar cliente</span>
                         </button>
-                        <button (click)="duplicarPersona(persona)"
-                          class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium">
-                          <i class="fas fa-copy text-purple-500"></i>
-                          <span>Duplicar</span>
+                      </div>
+                    </div>
+                    
+                    <div class="relative">
+                      <button (click)="toggleActionMenu(persona.id)"
+                        class="w-8 h-8 border border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg flex items-center justify-center text-gray-600 transition-all duration-200"
+                        type="button">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </button>
+                      <div *ngIf="showActionMenu === persona.id"
+                        class="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl min-w-48 z-50"
+                        style="z-index: 9999;">
+                        <button (click)="verPersona(persona)"
+                          class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                          type="button">
+                          <i class="fas fa-eye text-blue-500"></i>
+                          <span>Ver detalles</span>
+                        </button>
+                        <button (click)="editarPersona(persona)"
+                          class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                          type="button">
+                          <i class="fas fa-edit text-green-500"></i>
+                          <span>Editar</span>
                         </button>
                         <div class="h-px bg-gray-200 my-1"></div>
                         <button (click)="confirmarEliminar(persona)"
-                          class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium">
+                          class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
+                          type="button">
                           <i class="fas fa-trash text-red-500"></i>
                           <span>Eliminar</span>
                         </button>
@@ -892,11 +925,11 @@
       </div>
 
       <!-- Tabs Navigation -->
-      <div class="flex bg-gray-100 border-b border-gray-200">
+      <div class="flex bg-gray-100 border-b border-gray-200" *ngIf="!editandoPersona">
         <button *ngFor="let tab of [
           {key: 'natural', label: 'Persona Natural', icon: 'fa-user'},
           {key: 'juridica', label: 'Persona Jurídica', icon: 'fa-building'},
-          {key: 'viajero', label: 'Viajero Frecuente', icon: 'fa-plane'}
+          {key: 'viajero', label: 'Viajero', icon: 'fa-plane'}
         ]" [class.bg-white]="activeTab === tab.key" [class.text-red-600]="activeTab === tab.key"
           [class.border-b-4]="activeTab === tab.key" [class.border-red-600]="activeTab === tab.key"
           [class.text-gray-600]="activeTab !== tab.key" [class.hover:bg-red-50]="activeTab !== tab.key"
@@ -905,6 +938,25 @@
           <i class="fas" [class]="tab.icon"></i>
           <span>{{ tab.label }}</span>
         </button>
+      </div>
+
+      <!-- Header para modo edición -->
+      <div class="bg-gray-50 px-8 py-4 border-b border-gray-200" *ngIf="editandoPersona">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center text-white">
+            <i class="fas" 
+              [class.fa-user]="activeTab === 'natural'"
+              [class.fa-building]="activeTab === 'juridica'"
+              [class.fa-plane]="activeTab === 'viajero'"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-gray-900">
+              Editando {{ activeTab === 'natural' ? 'Persona Natural' : 
+                        activeTab === 'juridica' ? 'Persona Jurídica' : 'Viajero' }}
+            </h3>
+            <p class="text-sm text-gray-600">Modifica la información del cliente seleccionado</p>
+          </div>
+        </div>
       </div>
 
       <!-- Modal Body -->
@@ -960,7 +1012,7 @@
               <h3 class="text-lg font-bold text-gray-900 mb-6">Información de Contacto</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                  <label for="telefono" class="text-sm font-semibold text-gray-700">Teléfono *</label>
+                  <label for="telefono" class="text-sm font-semibold text-gray-700">Teléfono</label>
                   <input type="tel" id="telefono" formControlName="telefono" placeholder="Número de teléfono"
                     [class.border-red-500]="isPersonaFieldInvalid('natural', 'telefono')"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
@@ -970,7 +1022,7 @@
                 </div>
 
                 <div class="space-y-2">
-                  <label for="email" class="text-sm font-semibold text-gray-700">Email *</label>
+                  <label for="email" class="text-sm font-semibold text-gray-700">Email</label>
                   <input type="email" id="email" formControlName="email" placeholder="correo@ejemplo.com"
                     [class.border-red-500]="isPersonaFieldInvalid('natural', 'email')"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
@@ -980,12 +1032,22 @@
                 </div>
 
                 <div class="md:col-span-2 space-y-2">
-                  <label for="direccion" class="text-sm font-semibold text-gray-700">Dirección *</label>
+                  <label for="direccion" class="text-sm font-semibold text-gray-700">Dirección</label>
                   <textarea id="direccion" formControlName="direccion" rows="3" placeholder="Dirección completa"
                     [class.border-red-500]="isPersonaFieldInvalid('natural', 'direccion')"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white resize-none"></textarea>
                   <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('natural', 'direccion')">
                     {{ getPersonaFieldError('natural', 'direccion') }}
+                  </div>
+                </div>
+
+                <div class="md:col-span-2 space-y-2">
+                  <label for="observacion" class="text-sm font-semibold text-gray-700">Observaciones</label>
+                  <textarea id="observacion" formControlName="observacion" rows="3" placeholder="Observaciones adicionales (opcional)"
+                    [class.border-red-500]="isPersonaFieldInvalid('natural', 'observacion')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white resize-none"></textarea>
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('natural', 'observacion')">
+                    {{ getPersonaFieldError('natural', 'observacion') }}
                   </div>
                 </div>
               </div>
@@ -1047,7 +1109,7 @@
               <h3 class="text-lg font-bold text-gray-900 mb-6">Información de Contacto</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                  <label for="telefonoJuridica" class="text-sm font-semibold text-gray-700">Teléfono *</label>
+                  <label for="telefonoJuridica" class="text-sm font-semibold text-gray-700">Teléfono</label>
                   <input type="tel" id="telefonoJuridica" formControlName="telefono" placeholder="Número de teléfono"
                     [class.border-red-500]="isPersonaFieldInvalid('juridica', 'telefono')"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
@@ -1057,7 +1119,7 @@
                 </div>
 
                 <div class="space-y-2">
-                  <label for="emailJuridica" class="text-sm font-semibold text-gray-700">Email *</label>
+                  <label for="emailJuridica" class="text-sm font-semibold text-gray-700">Email</label>
                   <input type="email" id="emailJuridica" formControlName="email" placeholder="correo@empresa.com"
                     [class.border-red-500]="isPersonaFieldInvalid('juridica', 'email')"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
@@ -1067,12 +1129,22 @@
                 </div>
 
                 <div class="md:col-span-2 space-y-2">
-                  <label for="direccionJuridica" class="text-sm font-semibold text-gray-700">Dirección *</label>
+                  <label for="direccionJuridica" class="text-sm font-semibold text-gray-700">Dirección</label>
                   <textarea id="direccionJuridica" formControlName="direccion" rows="3" placeholder="Dirección de la empresa"
                     [class.border-red-500]="isPersonaFieldInvalid('juridica', 'direccion')"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white resize-none"></textarea>
                   <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('juridica', 'direccion')">
                     {{ getPersonaFieldError('juridica', 'direccion') }}
+                  </div>
+                </div>
+
+                <div class="md:col-span-2 space-y-2">
+                  <label for="observacionJuridica" class="text-sm font-semibold text-gray-700">Observaciones</label>
+                  <textarea id="observacionJuridica" formControlName="observacion" rows="3" placeholder="Observaciones adicionales (opcional)"
+                    [class.border-red-500]="isPersonaFieldInvalid('juridica', 'observacion')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white resize-none"></textarea>
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('juridica', 'observacion')">
+                    {{ getPersonaFieldError('juridica', 'observacion') }}
                   </div>
                 </div>
               </div>
@@ -1139,9 +1211,10 @@
               </div>
 
               <div class="space-y-2">
-                <label for="nacionalidad" class="text-sm font-semibold text-gray-700">Nacionalidad *</label>
+                <label for="nacionalidad" class="text-sm font-semibold text-gray-700">Nacionalidad</label>
                 <select id="nacionalidad" formControlName="nacionalidad"
                   [class.border-red-500]="isFieldInvalid(viajeroForm, 'nacionalidad')"
+                  (change)="onNacionalidadChange($event)"
                   class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
                   <option value="">Seleccionar nacionalidad</option>
                   <option value="Peruana">Peruana</option>
@@ -1167,12 +1240,24 @@
                 <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'nacionalidad')">
                   {{ getFieldError(viajeroForm, 'nacionalidad') }}
                 </div>
+                
+                <!-- Campo para "Otra nacionalidad" -->
+                <div *ngIf="showOtraNacionalidad" class="mt-2">
+                  <input type="text" id="otraNacionalidad" formControlName="otraNacionalidad" 
+                    placeholder="Especificar nacionalidad"
+                    [class.border-red-500]="isFieldInvalid(viajeroForm, 'otraNacionalidad')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'otraNacionalidad')">
+                    {{ getFieldError(viajeroForm, 'otraNacionalidad') }}
+                  </div>
+                </div>
               </div>
 
               <div class="space-y-2">
-                <label for="residencia" class="text-sm font-semibold text-gray-700">País de Residencia *</label>
+                <label for="residencia" class="text-sm font-semibold text-gray-700">País de Residencia</label>
                 <select id="residencia" formControlName="residencia"
                   [class.border-red-500]="isFieldInvalid(viajeroForm, 'residencia')"
+                  (change)="onResidenciaChange($event)"
                   class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
                   <option value="">Seleccionar país de residencia</option>
                   <option value="Perú">Perú</option>
@@ -1197,6 +1282,17 @@
                 </select>
                 <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'residencia')">
                   {{ getFieldError(viajeroForm, 'residencia') }}
+                </div>
+                
+                <!-- Campo para "Otra residencia" -->
+                <div *ngIf="showOtraResidencia" class="mt-2">
+                  <input type="text" id="otraResidencia" formControlName="otraResidencia" 
+                    placeholder="Especificar país de residencia"
+                    [class.border-red-500]="isFieldInvalid(viajeroForm, 'otraResidencia')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'otraResidencia')">
+                    {{ getFieldError(viajeroForm, 'otraResidencia') }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1258,10 +1354,13 @@
 
             <!-- Información de Contacto -->
             <div formGroupName="persona" class="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-              <h3 class="text-lg font-bold text-gray-900 mb-6">Información de Contacto</h3>
+              <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-address-book text-blue-600 mr-2"></i>
+                Información de Contacto
+              </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                  <label for="telefonoViajero" class="text-sm font-semibold text-gray-700">Teléfono *</label>
+                  <label for="telefonoViajero" class="text-sm font-semibold text-gray-700">Teléfono</label>
                   <input type="tel" id="telefonoViajero" formControlName="telefono" placeholder="Número de teléfono"
                     [class.border-red-500]="isPersonaFieldInvalid('viajero', 'telefono')"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
@@ -1271,7 +1370,7 @@
                 </div>
 
                 <div class="space-y-2">
-                  <label for="emailViajero" class="text-sm font-semibold text-gray-700">Email *</label>
+                  <label for="emailViajero" class="text-sm font-semibold text-gray-700">Email</label>
                   <input type="email" id="emailViajero" formControlName="email" placeholder="correo@ejemplo.com"
                     [class.border-red-500]="isPersonaFieldInvalid('viajero', 'email')"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
@@ -1281,12 +1380,22 @@
                 </div>
 
                 <div class="md:col-span-2 space-y-2">
-                  <label for="direccionViajero" class="text-sm font-semibold text-gray-700">Dirección *</label>
+                  <label for="direccionViajero" class="text-sm font-semibold text-gray-700">Dirección</label>
                   <textarea id="direccionViajero" formControlName="direccion" rows="3" placeholder="Dirección completa"
                     [class.border-red-500]="isPersonaFieldInvalid('viajero', 'direccion')"
                     class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white resize-none"></textarea>
                   <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('viajero', 'direccion')">
                     {{ getPersonaFieldError('viajero', 'direccion') }}
+                  </div>
+                </div>
+
+                <div class="md:col-span-2 space-y-2">
+                  <label for="observacionViajero" class="text-sm font-semibold text-gray-700">Observación</label>
+                  <textarea id="observacionViajero" formControlName="observacion" rows="3" placeholder="Observaciones adicionales (opcional)..."
+                    [class.border-red-500]="isPersonaFieldInvalid('viajero', 'observacion')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white resize-none"></textarea>
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('viajero', 'observacion')">
+                    {{ getPersonaFieldError('viajero', 'observacion') }}
                   </div>
                 </div>
               </div>
@@ -1314,4 +1423,205 @@
     </div>
 
   </div> <!-- /Main Content Area -->
+
+  <!-- Modal de Detalles -->
+  <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" 
+    *ngIf="mostrarModalDetalles" (click)="cerrarModalDetalles()">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" 
+      (click)="$event.stopPropagation()">
+      
+      <!-- Header del Modal -->
+      <div class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white p-6 rounded-t-2xl">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
+              {{ getClientInitials(personaDetalles!) }}
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold">
+                {{ personaDetalles?.tipo === 'natural' ? 
+                  ((personaDetalles?.nombres || '') + ' ' + (personaDetalles?.apellidos || '')) : 
+                  (personaDetalles?.razonSocial || '') }}
+              </h2>
+              <p class="text-red-100">
+                {{ getPersonaTypeLabel(personaDetalles?.tipo!) }}
+              </p>
+            </div>
+          </div>
+          <button (click)="cerrarModalDetalles()" 
+            class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenido del Modal -->
+      <div class="p-6 space-y-6" *ngIf="personaDetalles">
+        
+        <!-- Información Básica -->
+        <div class="bg-gray-50 rounded-xl p-4">
+          <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-user text-[#D9043D]"></i>
+            Información Básica
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <label class="text-sm font-semibold text-gray-600">ID Cliente</label>
+              <p class="text-gray-900 font-mono">#{{ personaDetalles.id }}</p>
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-semibold text-gray-600">Tipo</label>
+              <span class="inline-flex items-center gap-2 px-3 py-1 rounded-lg font-bold text-xs uppercase tracking-wide border-2"
+                [class.bg-green-50]="personaDetalles.tipo === 'natural'" 
+                [class.text-green-700]="personaDetalles.tipo === 'natural'"
+                [class.border-green-200]="personaDetalles.tipo === 'natural'"
+                [class.bg-blue-50]="personaDetalles.tipo === 'juridica'" 
+                [class.text-blue-700]="personaDetalles.tipo === 'juridica'"
+                [class.border-blue-200]="personaDetalles.tipo === 'juridica'">
+                <i class="fas" [class.fa-user]="personaDetalles.tipo === 'natural'"
+                  [class.fa-building]="personaDetalles.tipo === 'juridica'"></i>
+                {{ getPersonaTypeLabel(personaDetalles.tipo) }}
+              </span>
+            </div>
+            <div class="space-y-1">
+              <label class="text-sm font-semibold text-gray-600">
+                {{ getDocumentType(personaDetalles) }}
+              </label>
+              <p class="text-gray-900 font-mono">{{ personaDetalles.documento || personaDetalles.ruc }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información de Contacto -->
+        <div class="bg-blue-50 rounded-xl p-4" *ngIf="personaDetalles.email || personaDetalles.telefono || personaDetalles.direccion">
+          <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-address-book text-blue-600"></i>
+            Información de Contacto
+          </h3>
+          <div class="space-y-3">
+            <div *ngIf="personaDetalles.email" class="flex items-center gap-3">
+              <i class="fas fa-envelope text-gray-500 w-5"></i>
+              <span class="text-gray-900">{{ personaDetalles.email }}</span>
+            </div>
+            <div *ngIf="personaDetalles.telefono" class="flex items-center gap-3">
+              <i class="fas fa-phone text-gray-500 w-5"></i>
+              <span class="text-gray-900">{{ personaDetalles.telefono }}</span>
+            </div>
+            <div *ngIf="personaDetalles.direccion" class="flex items-start gap-3">
+              <i class="fas fa-map-marker-alt text-gray-500 w-5 mt-1"></i>
+              <span class="text-gray-900">{{ personaDetalles.direccion }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado del Cliente -->
+        <div class="bg-green-50 rounded-xl p-4">
+          <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-chart-line text-green-600"></i>
+            Estado del Cliente
+          </h3>
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full font-semibold text-sm border-2 border-green-200">
+              <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+              <span>Activo</span>
+            </div>
+            <span class="text-gray-600 text-sm">Cliente registrado en el sistema</span>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="flex justify-end gap-4 pt-4 border-t border-gray-200">
+          <button (click)="cerrarModalDetalles()" 
+            class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+            Cerrar
+          </button>
+          <button (click)="editarPersona(personaDetalles!); cerrarModalDetalles()" 
+            class="px-8 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white rounded-xl font-semibold hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            <i class="fas fa-edit mr-2"></i>
+            Editar Cliente
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación de Eliminación -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+    *ngIf="mostrarModalEliminar" (click)="cerrarModalEliminar()">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100"
+      (click)="$event.stopPropagation()">
+      
+      <!-- Header del Modal -->
+      <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-6 rounded-t-3xl">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+            <i class="fas fa-exclamation-triangle text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold">Confirmar Eliminación</h2>
+            <p class="text-red-100 text-sm">Esta acción no se puede deshacer</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenido del Modal -->
+      <div class="p-8" *ngIf="personaAEliminar">
+        <!-- Información del cliente a eliminar -->
+        <div class="bg-gray-50 rounded-2xl p-6 mb-6">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+              {{ getClientInitials(personaAEliminar) }}
+            </div>
+            <div class="flex-1">
+              <div class="font-bold text-gray-900 text-lg mb-1">
+                {{ getPersonaDisplayName(personaAEliminar) }}
+              </div>
+              <div class="text-gray-600 text-sm">
+                {{ getDocumentType(personaAEliminar) }}: {{ personaAEliminar.documento || personaAEliminar.ruc }}
+              </div>
+              <div class="flex items-center gap-2 mt-2">
+                <span class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-bold">
+                  {{ getPersonaTypeLabel(personaAEliminar.tipo) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje de advertencia -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-triangle text-amber-500 text-lg mt-1"></i>
+            <div>
+              <h4 class="font-bold text-amber-800 mb-2">¿Estás seguro de que quieres eliminar este cliente?</h4>
+              <p class="text-amber-700 text-sm">
+                Esta acción eliminará permanentemente todos los datos del cliente, incluyendo:
+              </p>
+              <ul class="list-disc list-inside text-amber-700 text-sm mt-2 space-y-1">
+                <li>Información personal y de contacto</li>
+                <li>Historial de cotizaciones</li>
+                <li>Historial de liquidaciones</li>
+                <li>Documentos asociados</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="flex gap-4">
+          <button (click)="cerrarModalEliminar()"
+            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3">
+            <i class="fas fa-times"></i>
+            <span>Cancelar</span>
+          </button>
+          <button (click)="confirmarEliminacionModal()"
+            class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 transform hover:scale-105">
+            <i class="fas fa-trash"></i>
+            <span>Sí, Eliminar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div> <!-- /Dashboard Layout -->
