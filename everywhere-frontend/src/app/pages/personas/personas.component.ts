@@ -169,8 +169,11 @@ export class PersonasComponent implements OnInit {
   currentPersonaId: number | null = null;
   personaDetalles: PersonaTabla | null = null;
 
-  // Variables para menús de acciones
-  showQuickActions: number | null = null;
+  // Variables para menú de acciones - separados por vista
+  showActionMenu: number | null = null; // Para vista de tabla
+  showActionMenuCards: number | null = null; // Para vista de tarjetas
+  showActionMenuList: number | null = null; // Para vista de lista
+  showQuickActions: number | null = null; // Para quick actions en cards/list
 
   // Variables para modal de confirmación de eliminación
   mostrarModalEliminar: boolean = false;
@@ -192,9 +195,6 @@ export class PersonasComponent implements OnInit {
   pageSize: number = 10;
   currentPage: number = 1;
   totalPages: number = 1;
-
-  // Variables para menú de acciones
-  showActionMenu: number | null = null;
 
   // Variables adicionales para otras funcionalidades
   selectedViajeroId: number | null = null;
@@ -377,8 +377,7 @@ export class PersonasComponent implements OnInit {
 
   confirmarEliminar(persona: PersonaTabla): void {
     console.log('🔥🔥🔥 confirmarEliminar called for persona:', persona);
-    this.showActionMenu = null; // Cerrar menús
-    this.showQuickActions = null;
+    this.closeAllMenus(); // Cerrar todos los menús
     // Mostrar modal de confirmación en lugar de alert feo
     this.personaAEliminar = persona;
     this.mostrarModalEliminar = true;
@@ -547,29 +546,88 @@ export class PersonasComponent implements OnInit {
     }
   }
 
-  // Métodos para el menú de acciones
+  // Métodos para el menú de acciones - separados por vista
   toggleActionMenu(id: number): void {
-    console.log('🔥🔥🔥 BOTÓN CLICKEADO - ID:', id);
-    console.log('🔥🔥🔥 ESTADO ACTUAL showActionMenu:', this.showActionMenu);
+    console.log('🔥🔥🔥 TABLE - BOTÓN CLICKEADO - ID:', id);
+    console.log('🔥🔥🔥 TABLE - ESTADO ACTUAL showActionMenu:', this.showActionMenu);
     
-    // Siempre cerrar otros menús primero
+    // Cerrar otros menús
     this.showQuickActions = null;
+    this.showActionMenuCards = null;
+    this.showActionMenuList = null;
     
-    // Alternar el menú
+    // Alternar el menú de tabla
     if (this.showActionMenu === id) {
-      console.log('🔥🔥🔥 CERRANDO MENÚ');
+      console.log('🔥🔥🔥 TABLE - CERRANDO MENÚ');
       this.showActionMenu = null;
     } else {
-      console.log('🔥🔥🔥 ABRIENDO MENÚ PARA ID:', id);
+      console.log('🔥🔥🔥 TABLE - ABRIENDO MENÚ PARA ID:', id);
       this.showActionMenu = id;
     }
     
-    console.log('🔥🔥🔥 NUEVO ESTADO showActionMenu:', this.showActionMenu);
+    console.log('🔥🔥🔥 TABLE - NUEVO ESTADO showActionMenu:', this.showActionMenu);
+  }
+
+  toggleActionMenuCards(id: number): void {
+    console.log('🔥🔥🔥 CARDS - BOTÓN CLICKEADO - ID:', id);
+    console.log('🔥🔥🔥 CARDS - ESTADO ACTUAL showActionMenuCards:', this.showActionMenuCards);
+    
+    // Cerrar otros menús
+    this.showQuickActions = null;
+    this.showActionMenu = null;
+    this.showActionMenuList = null;
+    
+    // Alternar el menú de cards
+    if (this.showActionMenuCards === id) {
+      console.log('🔥🔥🔥 CARDS - CERRANDO MENÚ');
+      this.showActionMenuCards = null;
+    } else {
+      console.log('🔥🔥🔥 CARDS - ABRIENDO MENÚ PARA ID:', id);
+      this.showActionMenuCards = id;
+    }
+    
+    console.log('🔥🔥🔥 CARDS - NUEVO ESTADO showActionMenuCards:', this.showActionMenuCards);
+  }
+
+  toggleActionMenuList(id: number): void {
+    console.log('🔥🔥🔥 LIST - BOTÓN CLICKEADO - ID:', id);
+    console.log('🔥🔥🔥 LIST - ESTADO ACTUAL showActionMenuList:', this.showActionMenuList);
+    
+    // Cerrar otros menús
+    this.showQuickActions = null;
+    this.showActionMenu = null;
+    this.showActionMenuCards = null;
+    
+    // Alternar el menú de list
+    if (this.showActionMenuList === id) {
+      console.log('🔥🔥🔥 LIST - CERRANDO MENÚ');
+      this.showActionMenuList = null;
+    } else {
+      console.log('🔥🔥🔥 LIST - ABRIENDO MENÚ PARA ID:', id);
+      this.showActionMenuList = id;
+    }
+    
+    console.log('🔥🔥🔥 LIST - NUEVO ESTADO showActionMenuList:', this.showActionMenuList);
   }
 
   toggleQuickActions(id: number): void {
+    console.log('🔥🔥🔥 QUICK - BOTÓN CLICKEADO - ID:', id);
+    
+    // Cerrar otros menús
+    this.showActionMenu = null;
+    this.showActionMenuCards = null;
+    this.showActionMenuList = null;
+    
     this.showQuickActions = this.showQuickActions === id ? null : id;
-    this.showActionMenu = null; // Cerrar el otro menú
+    console.log('🔥🔥🔥 QUICK - NUEVO ESTADO showQuickActions:', this.showQuickActions);
+  }
+
+  // Método auxiliar para cerrar todos los menús
+  closeAllMenus(): void {
+    this.showActionMenu = null;
+    this.showActionMenuCards = null;
+    this.showActionMenuList = null;
+    this.showQuickActions = null;
   }
 
   // Métodos para paginación
@@ -716,8 +774,7 @@ export class PersonasComponent implements OnInit {
   // Métodos de acciones de tabla
   editarPersona(persona: PersonaTabla): void {
     console.log('🔥🔥🔥 EDITAR PERSONA LLAMADO:', persona.id);
-    this.showActionMenu = null; // Cerrar menús
-    this.showQuickActions = null;
+    this.closeAllMenus(); // Cerrar todos los menús
     this.editandoPersona = true;
     if (persona.tipo === 'natural') {
       this.activeTab = 'natural';
@@ -732,8 +789,7 @@ export class PersonasComponent implements OnInit {
 
   verPersona(persona: PersonaTabla): void {
     console.log('🔥🔥🔥 VER PERSONA LLAMADO:', persona.id);
-    this.showActionMenu = null; // Cerrar menús
-    this.showQuickActions = null;
+    this.closeAllMenus(); // Cerrar todos los menús
     this.personaDetalles = persona;
     this.mostrarModalDetalles = true;
   }
