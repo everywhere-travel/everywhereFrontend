@@ -371,6 +371,16 @@ export class PersonasComponent implements OnInit {
     this.applyFilters();
   }
 
+  // Función auxiliar para el template
+  aplicarFiltroTipo(tipo: string): void {
+    this.aplicarFiltro(tipo as 'todos' | 'natural' | 'juridica');
+  }
+
+  // Función auxiliar para cambiar tab
+  setActiveTabKey(key: string): void {
+    this.setActiveTab(key as 'natural' | 'juridica' | 'viajero');
+  }
+
   clearSearch(): void {
     this.searchQuery = '';
     this.searchTerm = '';
