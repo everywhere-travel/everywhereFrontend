@@ -1017,6 +1017,297 @@
           </form>
         </div>
 
+        <!-- Tab Content: Persona Jurídica -->
+        <div *ngIf="activeTab === 'juridica'">
+          <form [formGroup]="personaJuridicaForm" (ngSubmit)="onSubmitJuridica()" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label for="razonSocial" class="text-sm font-semibold text-gray-700">Razón Social *</label>
+                <input type="text" id="razonSocial" formControlName="razonSocial" placeholder="Nombre de la empresa"
+                  [class.border-red-500]="isFieldInvalid(personaJuridicaForm, 'razonSocial')"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(personaJuridicaForm, 'razonSocial')">
+                  {{ getFieldError(personaJuridicaForm, 'razonSocial') }}
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label for="ruc" class="text-sm font-semibold text-gray-700">RUC *</label>
+                <input type="text" id="ruc" formControlName="ruc" placeholder="Número de RUC"
+                  [class.border-red-500]="isFieldInvalid(personaJuridicaForm, 'ruc')"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(personaJuridicaForm, 'ruc')">
+                  {{ getFieldError(personaJuridicaForm, 'ruc') }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Información de Contacto -->
+            <div formGroupName="persona" class="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+              <h3 class="text-lg font-bold text-gray-900 mb-6">Información de Contacto</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                  <label for="telefonoJuridica" class="text-sm font-semibold text-gray-700">Teléfono *</label>
+                  <input type="tel" id="telefonoJuridica" formControlName="telefono" placeholder="Número de teléfono"
+                    [class.border-red-500]="isPersonaFieldInvalid('juridica', 'telefono')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('juridica', 'telefono')">
+                    {{ getPersonaFieldError('juridica', 'telefono') }}
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <label for="emailJuridica" class="text-sm font-semibold text-gray-700">Email *</label>
+                  <input type="email" id="emailJuridica" formControlName="email" placeholder="correo@empresa.com"
+                    [class.border-red-500]="isPersonaFieldInvalid('juridica', 'email')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('juridica', 'email')">
+                    {{ getPersonaFieldError('juridica', 'email') }}
+                  </div>
+                </div>
+
+                <div class="md:col-span-2 space-y-2">
+                  <label for="direccionJuridica" class="text-sm font-semibold text-gray-700">Dirección *</label>
+                  <textarea id="direccionJuridica" formControlName="direccion" rows="3" placeholder="Dirección de la empresa"
+                    [class.border-red-500]="isPersonaFieldInvalid('juridica', 'direccion')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white resize-none"></textarea>
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('juridica', 'direccion')">
+                    {{ getPersonaFieldError('juridica', 'direccion') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+              <button type="button" (click)="cerrarModalCrearCliente()"
+                class="px-8 py-3 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 rounded-xl font-semibold transition-all">
+                Cancelar
+              </button>
+              <button type="submit" [disabled]="personaJuridicaForm.invalid || isSubmitting"
+                class="px-8 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl font-semibold flex items-center gap-3 transition-all">
+                <div class="w-4 h-4 border-2 border-transparent border-t-white rounded-full animate-spin"
+                  *ngIf="isSubmitting"></div>
+                {{ editandoPersona ? 'Actualizar' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Tab Content: Viajero -->
+        <div *ngIf="activeTab === 'viajero'">
+          <form [formGroup]="viajeroForm" (ngSubmit)="onSubmitViajero()" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label for="nombresViajero" class="text-sm font-semibold text-gray-700">Nombres *</label>
+                <input type="text" id="nombresViajero" formControlName="nombres" placeholder="Nombres del viajero"
+                  [class.border-red-500]="isFieldInvalid(viajeroForm, 'nombres')"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'nombres')">
+                  {{ getFieldError(viajeroForm, 'nombres') }}
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label for="apellidoPaterno" class="text-sm font-semibold text-gray-700">Apellido Paterno *</label>
+                <input type="text" id="apellidoPaterno" formControlName="apellidoPaterno" placeholder="Apellido paterno"
+                  [class.border-red-500]="isFieldInvalid(viajeroForm, 'apellidoPaterno')"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'apellidoPaterno')">
+                  {{ getFieldError(viajeroForm, 'apellidoPaterno') }}
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label for="apellidoMaterno" class="text-sm font-semibold text-gray-700">Apellido Materno *</label>
+                <input type="text" id="apellidoMaterno" formControlName="apellidoMaterno" placeholder="Apellido materno"
+                  [class.border-red-500]="isFieldInvalid(viajeroForm, 'apellidoMaterno')"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'apellidoMaterno')">
+                  {{ getFieldError(viajeroForm, 'apellidoMaterno') }}
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label for="fechaNacimiento" class="text-sm font-semibold text-gray-700">Fecha de Nacimiento *</label>
+                <input type="date" id="fechaNacimiento" formControlName="fechaNacimiento"
+                  [class.border-red-500]="isFieldInvalid(viajeroForm, 'fechaNacimiento')"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'fechaNacimiento')">
+                  {{ getFieldError(viajeroForm, 'fechaNacimiento') }}
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label for="nacionalidad" class="text-sm font-semibold text-gray-700">Nacionalidad *</label>
+                <select id="nacionalidad" formControlName="nacionalidad"
+                  [class.border-red-500]="isFieldInvalid(viajeroForm, 'nacionalidad')"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
+                  <option value="">Seleccionar nacionalidad</option>
+                  <option value="Peruana">Peruana</option>
+                  <option value="Argentina">Argentina</option>
+                  <option value="Boliviana">Boliviana</option>
+                  <option value="Brasileña">Brasileña</option>
+                  <option value="Chilena">Chilena</option>
+                  <option value="Colombiana">Colombiana</option>
+                  <option value="Ecuatoriana">Ecuatoriana</option>
+                  <option value="Paraguaya">Paraguaya</option>
+                  <option value="Uruguaya">Uruguaya</option>
+                  <option value="Venezolana">Venezolana</option>
+                  <option value="Estadounidense">Estadounidense</option>
+                  <option value="Canadiense">Canadiense</option>
+                  <option value="Mexicana">Mexicana</option>
+                  <option value="Española">Española</option>
+                  <option value="Francesa">Francesa</option>
+                  <option value="Italiana">Italiana</option>
+                  <option value="Alemana">Alemana</option>
+                  <option value="Británica">Británica</option>
+                  <option value="Otra">Otra</option>
+                </select>
+                <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'nacionalidad')">
+                  {{ getFieldError(viajeroForm, 'nacionalidad') }}
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label for="residencia" class="text-sm font-semibold text-gray-700">País de Residencia *</label>
+                <select id="residencia" formControlName="residencia"
+                  [class.border-red-500]="isFieldInvalid(viajeroForm, 'residencia')"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
+                  <option value="">Seleccionar país de residencia</option>
+                  <option value="Perú">Perú</option>
+                  <option value="Argentina">Argentina</option>
+                  <option value="Bolivia">Bolivia</option>
+                  <option value="Brasil">Brasil</option>
+                  <option value="Chile">Chile</option>
+                  <option value="Colombia">Colombia</option>
+                  <option value="Ecuador">Ecuador</option>
+                  <option value="Paraguay">Paraguay</option>
+                  <option value="Uruguay">Uruguay</option>
+                  <option value="Venezuela">Venezuela</option>
+                  <option value="Estados Unidos">Estados Unidos</option>
+                  <option value="Canadá">Canadá</option>
+                  <option value="México">México</option>
+                  <option value="España">España</option>
+                  <option value="Francia">Francia</option>
+                  <option value="Italia">Italia</option>
+                  <option value="Alemania">Alemania</option>
+                  <option value="Reino Unido">Reino Unido</option>
+                  <option value="Otro">Otro</option>
+                </select>
+                <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'residencia')">
+                  {{ getFieldError(viajeroForm, 'residencia') }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Información del Documento -->
+            <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+              <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <i class="fas fa-passport text-blue-600"></i>
+                Información del Documento
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                  <label for="tipoDocumento" class="text-sm font-semibold text-gray-700">Tipo de Documento *</label>
+                  <select id="tipoDocumento" formControlName="tipoDocumento"
+                    [class.border-red-500]="isFieldInvalid(viajeroForm, 'tipoDocumento')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
+                    <option value="">Seleccionar tipo</option>
+                    <option value="PASAPORTE">Pasaporte</option>
+                    <option value="DNI">DNI</option>
+                    <option value="CEDULA">Cédula</option>
+                    <option value="CARNET_EXTRANJERIA">Carnet de Extranjería</option>
+                  </select>
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'tipoDocumento')">
+                    {{ getFieldError(viajeroForm, 'tipoDocumento') }}
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <label for="numeroDocumentoViajero" class="text-sm font-semibold text-gray-700">Número de Documento *</label>
+                  <input type="text" id="numeroDocumentoViajero" formControlName="numeroDocumento" placeholder="Número del documento"
+                    [class.border-red-500]="isFieldInvalid(viajeroForm, 'numeroDocumento')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'numeroDocumento')">
+                    {{ getFieldError(viajeroForm, 'numeroDocumento') }}
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <label for="fechaEmisionDocumento" class="text-sm font-semibold text-gray-700">Fecha de Emisión *</label>
+                  <input type="date" id="fechaEmisionDocumento" formControlName="fechaEmisionDocumento"
+                    [class.border-red-500]="isFieldInvalid(viajeroForm, 'fechaEmisionDocumento')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'fechaEmisionDocumento')">
+                    {{ getFieldError(viajeroForm, 'fechaEmisionDocumento') }}
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <label for="fechaVencimientoDocumento" class="text-sm font-semibold text-gray-700">Fecha de Vencimiento *</label>
+                  <input type="date" id="fechaVencimientoDocumento" formControlName="fechaVencimientoDocumento"
+                    [class.border-red-500]="isFieldInvalid(viajeroForm, 'fechaVencimientoDocumento')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isFieldInvalid(viajeroForm, 'fechaVencimientoDocumento')">
+                    {{ getFieldError(viajeroForm, 'fechaVencimientoDocumento') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información de Contacto -->
+            <div formGroupName="persona" class="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+              <h3 class="text-lg font-bold text-gray-900 mb-6">Información de Contacto</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                  <label for="telefonoViajero" class="text-sm font-semibold text-gray-700">Teléfono *</label>
+                  <input type="tel" id="telefonoViajero" formControlName="telefono" placeholder="Número de teléfono"
+                    [class.border-red-500]="isPersonaFieldInvalid('viajero', 'telefono')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('viajero', 'telefono')">
+                    {{ getPersonaFieldError('viajero', 'telefono') }}
+                  </div>
+                </div>
+
+                <div class="space-y-2">
+                  <label for="emailViajero" class="text-sm font-semibold text-gray-700">Email *</label>
+                  <input type="email" id="emailViajero" formControlName="email" placeholder="correo@ejemplo.com"
+                    [class.border-red-500]="isPersonaFieldInvalid('viajero', 'email')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white">
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('viajero', 'email')">
+                    {{ getPersonaFieldError('viajero', 'email') }}
+                  </div>
+                </div>
+
+                <div class="md:col-span-2 space-y-2">
+                  <label for="direccionViajero" class="text-sm font-semibold text-gray-700">Dirección *</label>
+                  <textarea id="direccionViajero" formControlName="direccion" rows="3" placeholder="Dirección completa"
+                    [class.border-red-500]="isPersonaFieldInvalid('viajero', 'direccion')"
+                    class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all bg-white resize-none"></textarea>
+                  <div class="text-sm text-red-600 font-medium" *ngIf="isPersonaFieldInvalid('viajero', 'direccion')">
+                    {{ getPersonaFieldError('viajero', 'direccion') }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+              <button type="button" (click)="cerrarModalCrearCliente()"
+                class="px-8 py-3 border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 rounded-xl font-semibold transition-all">
+                Cancelar
+              </button>
+              <button type="submit" [disabled]="viajeroForm.invalid || isSubmitting"
+                class="px-8 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 disabled:opacity-60 disabled:cursor-not-allowed rounded-xl font-semibold flex items-center gap-3 transition-all">
+                <div class="w-4 h-4 border-2 border-transparent border-t-white rounded-full animate-spin"
+                  *ngIf="isSubmitting"></div>
+                {{ editandoPersona ? 'Actualizar' : 'Guardar' }}
+              </button>
+            </div>
+          </form>
+        </div>
+
         <!-- Similar structure for other tabs... -->
         <!-- This is just showing the Natural tab structure, other tabs would follow similar Tailwind patterns -->
       </div>

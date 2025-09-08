@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
+import { ViajeroService } from '../../core/service/viajero/viajero.service';
 import { PersonaNaturalRequest, PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaRequest, PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
+import { ViajeroRequest, ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 
 // Interface simplificada para la tabla - NO incluye personas base
@@ -210,7 +212,8 @@ export class PersonasComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private personaNaturalService: PersonaNaturalService,
-    private personaJuridicaService: PersonaJuridicaService
+    private personaJuridicaService: PersonaJuridicaService,
+    private viajeroService: ViajeroService
   ) {
     this.initializeForms();
   }
@@ -248,10 +251,45 @@ export class PersonasComponent implements OnInit {
   }
 
   onSubmitViajero(): void {
-    if (this.viajeroForm.valid) {
-      console.log('Guardar viajero:', this.viajeroForm.value);
-      // Implementar lógica de guardado para viajeros
-      this.cerrarModalCrearCliente();
+    if (this.viajeroForm.invalid) {
+      this.markFormGroupTouched(this.viajeroForm);
+      return;
+    }
+
+    try {
+      this.loading = true;
+      this.isSubmitting = true;
+      const formData = this.viajeroForm.value;
+      const request: ViajeroRequest = {
+        nombres: formData.nombres,
+        apellidoPaterno: formData.apellidoPaterno,
+        apellidoMaterno: formData.apellidoMaterno,
+        fechaNacimiento: formData.fechaNacimiento,
+        nacionalidad: formData.nacionalidad,
+        residencia: formData.residencia,
+        tipoDocumento: formData.tipoDocumento,
+        numeroDocumento: formData.numeroDocumento,
+        fechaEmisionDocumento: formData.fechaEmisionDocumento,
+        fechaVencimientoDocumento: formData.fechaVencimientoDocumento,
+        persona: formData.persona
+      };
+
+      this.viajeroService.save(request).subscribe({
+        next: () => {
+          this.loadPersonas();
+          this.cerrarModalCrearCliente();
+          this.isSubmitting = false;
+        },
+        error: (error: any) => {
+          console.error('Error al crear viajero:', error);
+          this.loading = false;
+          this.isSubmitting = false;
+        }
+      });
+    } catch (error: any) {
+      console.error('Error al procesar viajero:', error);
+      this.loading = false;
+      this.isSubmitting = false;
     }
   }
 
@@ -636,15 +674,31 @@ export class PersonasComponent implements OnInit {
   }
 
   // Métodos auxiliares para formularios anidados
-  isPersonaFieldInvalid(formType: 'natural' | 'juridica', fieldName: string): boolean {
-    const form = formType === 'natural' ? this.personaNaturalForm : this.personaJuridicaForm;
+  isPersonaFieldInvalid(formType: 'natural' | 'juridica' | 'viajero', fieldName: string): boolean {
+    let form: FormGroup;
+    if (formType === 'natural') {
+      form = this.personaNaturalForm;
+    } else if (formType === 'juridica') {
+      form = this.personaJuridicaForm;
+    } else {
+      form = this.viajeroForm;
+    }
+    
     const personaGroup = form.get('persona') as FormGroup;
     const field = personaGroup?.get(fieldName);
     return !!(field && field.invalid && (field.dirty || field.touched));
   }
 
-  getPersonaFieldError(formType: 'natural' | 'juridica', fieldName: string): string {
-    const form = formType === 'natural' ? this.personaNaturalForm : this.personaJuridicaForm;
+  getPersonaFieldError(formType: 'natural' | 'juridica' | 'viajero', fieldName: string): string {
+    let form: FormGroup;
+    if (formType === 'natural') {
+      form = this.personaNaturalForm;
+    } else if (formType === 'juridica') {
+      form = this.personaJuridicaForm;
+    } else {
+      form = this.viajeroForm;
+    }
+    
     const personaGroup = form.get('persona') as FormGroup;
     const field = personaGroup?.get(fieldName);
     if (field && field.errors && (field.dirty || field.touched)) {
@@ -688,11 +742,20 @@ export class PersonasComponent implements OnInit {
 
     this.viajeroForm = this.fb.group({
       nombres: ['', [Validators.required]],
-      apellidos: ['', [Validators.required]],
-      documento: ['', [Validators.required]],
-      numeroTarjeta: ['', [Validators.required]],
-      aerolinea: ['', [Validators.required]],
-      categoria: ['', [Validators.required]]
+      apellidoPaterno: ['', [Validators.required]],
+      apellidoMaterno: ['', [Validators.required]],
+      fechaNacimiento: ['', [Validators.required]],
+      nacionalidad: ['', [Validators.required]],
+      residencia: ['', [Validators.required]],
+      tipoDocumento: ['', [Validators.required]],
+      numeroDocumento: ['', [Validators.required]],
+      fechaEmisionDocumento: ['', [Validators.required]],
+      fechaVencimientoDocumento: ['', [Validators.required]],
+      persona: this.fb.group({
+        telefono: ['', [Validators.required]],
+        email: ['', [Validators.required, Validators.email]],
+        direccion: ['', [Validators.required]]
+      })
     });
 
     this.viajeroFrecuenteForm = this.fb.group({
