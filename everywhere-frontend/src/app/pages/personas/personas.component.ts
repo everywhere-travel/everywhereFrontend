@@ -5,6 +5,7 @@ import { PersonaNaturalService } from '../../core/service/natural/persona-natura
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
 import { PersonaNaturalRequest, PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaRequest, PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
+import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 
 // Interface simplificada para la tabla - NO incluye personas base
 export interface PersonaTabla {
@@ -29,10 +30,106 @@ export interface PersonaTabla {
   imports: [
     CommonModule,
     FormsModule, 
-    ReactiveFormsModule
-]
+    ReactiveFormsModule,
+    SidebarComponent
+  ]
 })
 export class PersonasComponent implements OnInit {
+
+  // Sidebar Configuration
+  sidebarCollapsed = false;
+  sidebarMenuItems: SidebarMenuItem[] = [
+    {
+      id: 'dashboard',
+      title: 'Dashboard',
+      icon: 'fas fa-chart-pie',
+      route: '/dashboard'
+    },
+    {
+      id: 'clientes',
+      title: 'Gestión de Clientes',
+      icon: 'fas fa-users',
+      active: true,
+      children: [
+        {
+          id: 'personas',
+          title: 'Personas',
+          icon: 'fas fa-address-card',
+          route: '/personas'
+        },
+        {
+          id: 'viajeros',
+          title: 'Viajeros',
+          icon: 'fas fa-passport',
+          route: '/viajero'
+        },
+        {
+          id: 'viajeros-frecuentes',
+          title: 'Viajeros Frecuentes',
+          icon: 'fas fa-crown',
+          route: '/viajero-frecuente'
+        }
+      ]
+    },
+    {
+      id: 'cotizaciones',
+      title: 'Cotizaciones',
+      icon: 'fas fa-file-invoice',
+      route: '/cotizaciones',
+      badge: '12',
+      badgeColor: 'blue'
+    },
+    {
+      id: 'liquidaciones',
+      title: 'Liquidaciones',
+      icon: 'fas fa-credit-card',
+      route: '/liquidaciones'
+    },
+    {
+      id: 'productos',
+      title: 'Productos y Servicios',
+      icon: 'fas fa-suitcase-rolling',
+      route: '/productos'
+    },
+    {
+      id: 'reportes',
+      title: 'Reportes y Analytics',
+      icon: 'fas fa-chart-bar',
+      children: [
+        {
+          id: 'estadisticas',
+          title: 'Estadísticas',
+          icon: 'fas fa-chart-line',
+          route: '/estadistica'
+        },
+        {
+          id: 'reportes-general',
+          title: 'Reportes Generales',
+          icon: 'fas fa-file-pdf',
+          route: '/reportes'
+        }
+      ]
+    },
+    {
+      id: 'configuracion',
+      title: 'Configuración',
+      icon: 'fas fa-cog',
+      children: [
+        {
+          id: 'usuarios',
+          title: 'Usuarios',
+          icon: 'fas fa-user-shield',
+          route: '/usuarios'
+        },
+        {
+          id: 'sistema',
+          title: 'Sistema',
+          icon: 'fas fa-server',
+          route: '/configuracion'
+        }
+      ]
+    }
+  ];
 
   // Formularios
   personaNaturalForm!: FormGroup;
@@ -49,6 +146,9 @@ export class PersonasComponent implements OnInit {
   loading: boolean = false;
   isLoading: boolean = false;
   isSubmitting: boolean = false;
+
+  // Variables de control para las vistas
+  currentView: 'table' | 'cards' | 'list' = 'table';
 
   // Variables para modales
   showPersonaNaturalModal: boolean = false;
@@ -74,7 +174,7 @@ export class PersonasComponent implements OnInit {
   someSelected: boolean = false;
 
   // Variables para paginación
-  pageSize: number = 25;
+  pageSize: number = 10;
   currentPage: number = 1;
   totalPages: number = 1;
 
@@ -987,5 +1087,24 @@ export class PersonasComponent implements OnInit {
         this.markFormGroupTouched(control);
       }
     });
+  }
+
+  // Métodos del Sidebar
+  onSidebarItemClick(item: SidebarMenuItem): void {
+    console.log('Sidebar item clicked:', item);
+    // Aquí puedes manejar la navegación o acciones específicas
+  }
+
+  onToggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
+  // Métodos para cambiar entre vistas
+  changeView(view: 'table' | 'cards' | 'list'): void {
+    this.currentView = view;
+  }
+
+  isActiveView(view: 'table' | 'cards' | 'list'): boolean {
+    return this.currentView === view;
   }
 }
