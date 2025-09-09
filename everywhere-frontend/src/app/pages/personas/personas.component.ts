@@ -1,10 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
+import { ViajeroService } from '../../core/service/viajero/viajero.service';
 import { PersonaNaturalRequest, PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaRequest, PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
+import { ViajeroRequest, ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
+import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 
 // Interface simplificada para la tabla - NO incluye personas base
 export interface PersonaTabla {
@@ -29,16 +32,116 @@ export interface PersonaTabla {
   imports: [
     CommonModule,
     FormsModule, 
-    ReactiveFormsModule
-]
+    ReactiveFormsModule,
+    SidebarComponent
+  ]
 })
 export class PersonasComponent implements OnInit {
+
+  // Sidebar Configuration
+  sidebarCollapsed = false;
+  sidebarMenuItems: SidebarMenuItem[] = [
+    {
+      id: 'dashboard',
+      title: 'Dashboard',
+      icon: 'fas fa-chart-pie',
+      route: '/dashboard'
+    },
+    {
+      id: 'clientes',
+      title: 'Gestión de Clientes',
+      icon: 'fas fa-users',
+      active: true,
+      children: [
+        {
+          id: 'personas',
+          title: 'Personas',
+          icon: 'fas fa-address-card',
+          route: '/personas'
+        },
+        {
+          id: 'viajeros',
+          title: 'Viajeros',
+          icon: 'fas fa-passport',
+          route: '/viajero'
+        },
+        {
+          id: 'viajeros-frecuentes',
+          title: 'Viajeros Frecuentes',
+          icon: 'fas fa-crown',
+          route: '/viajero-frecuente'
+        }
+      ]
+    },
+    {
+      id: 'cotizaciones',
+      title: 'Cotizaciones',
+      icon: 'fas fa-file-invoice',
+      route: '/cotizaciones',
+      badge: '12',
+      badgeColor: 'blue'
+    },
+    {
+      id: 'liquidaciones',
+      title: 'Liquidaciones',
+      icon: 'fas fa-credit-card',
+      route: '/liquidaciones'
+    },
+    {
+      id: 'productos',
+      title: 'Productos y Servicios',
+      icon: 'fas fa-suitcase-rolling',
+      route: '/productos'
+    },
+    {
+      id: 'reportes',
+      title: 'Reportes y Analytics',
+      icon: 'fas fa-chart-bar',
+      children: [
+        {
+          id: 'estadisticas',
+          title: 'Estadísticas',
+          icon: 'fas fa-chart-line',
+          route: '/estadistica'
+        },
+        {
+          id: 'reportes-general',
+          title: 'Reportes Generales',
+          icon: 'fas fa-file-pdf',
+          route: '/reportes'
+        }
+      ]
+    },
+    {
+      id: 'configuracion',
+      title: 'Configuración',
+      icon: 'fas fa-cog',
+      children: [
+        {
+          id: 'usuarios',
+          title: 'Usuarios',
+          icon: 'fas fa-user-shield',
+          route: '/usuarios'
+        },
+        {
+          id: 'sistema',
+          title: 'Sistema',
+          icon: 'fas fa-server',
+          route: '/configuracion'
+        }
+      ]
+    }
+  ];
 
   // Formularios
   personaNaturalForm!: FormGroup;
   personaJuridicaForm!: FormGroup;
   viajeroForm!: FormGroup;
   viajeroFrecuenteForm!: FormGroup;
+
+  // Variables para campos dinámicos
+  showOtraNacionalidad: boolean = false;
+  showOtraResidencia: boolean = false;
 
   // Variables de control para la tabla
   searchTerm: string = '';
@@ -50,16 +153,31 @@ export class PersonasComponent implements OnInit {
   isLoading: boolean = false;
   isSubmitting: boolean = false;
 
+  // Variables de control para las vistas
+  currentView: 'table' | 'cards' | 'list' = 'table';
+
   // Variables para modales
   showPersonaNaturalModal: boolean = false;
   showPersonaJuridicaModal: boolean = false;
   mostrarModalNatural: boolean = false;
   mostrarModalJuridica: boolean = false;
   mostrarModalCrearCliente: boolean = false;
+  mostrarModalDetalles: boolean = false;
   isEditMode: boolean = false;
   editandoPersona: boolean = false;
   editingId: number | null = null;
   currentPersonaId: number | null = null;
+  personaDetalles: PersonaTabla | null = null;
+
+  // Variables para menú de acciones - separados por vista
+  showActionMenu: number | null = null; // Para vista de tabla
+  showActionMenuCards: number | null = null; // Para vista de tarjetas
+  showActionMenuList: number | null = null; // Para vista de lista
+  showQuickActions: number | null = null; // Para quick actions en cards/list
+
+  // Variables para modal de confirmación de eliminación
+  mostrarModalEliminar: boolean = false;
+  personaAEliminar: PersonaTabla | null = null;
 
   // Variables para tabs
   activeTab: 'natural' | 'juridica' | 'viajero' = 'natural';
@@ -74,12 +192,9 @@ export class PersonasComponent implements OnInit {
   someSelected: boolean = false;
 
   // Variables para paginación
-  pageSize: number = 25;
+  pageSize: number = 10;
   currentPage: number = 1;
   totalPages: number = 1;
-
-  // Variables para menú de acciones
-  showActionMenu: number | null = null;
 
   // Variables adicionales para otras funcionalidades
   selectedViajeroId: number | null = null;
@@ -110,7 +225,8 @@ export class PersonasComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private personaNaturalService: PersonaNaturalService,
-    private personaJuridicaService: PersonaJuridicaService
+    private personaJuridicaService: PersonaJuridicaService,
+    private viajeroService: ViajeroService
   ) {
     this.initializeForms();
   }
@@ -135,9 +251,20 @@ export class PersonasComponent implements OnInit {
     this.editandoPersona = false;
     this.activeTab = 'natural';
     this.resetAllForms();
+    // Limpiar selecciones después de editar
+    if (this.isEditMode && this.currentPersonaId) {
+      this.selectedItems = this.selectedItems.filter(id => id !== this.currentPersonaId);
+      this.updateSelectionState();
+    }
+    this.isEditMode = false;
+    this.currentPersonaId = null;
   }
 
   setActiveTab(tab: 'natural' | 'juridica' | 'viajero'): void {
+    // No permitir cambio de tabs durante edición
+    if (this.editandoPersona) {
+      return;
+    }
     this.activeTab = tab;
   }
 
@@ -148,10 +275,75 @@ export class PersonasComponent implements OnInit {
   }
 
   onSubmitViajero(): void {
-    if (this.viajeroForm.valid) {
-      console.log('Guardar viajero:', this.viajeroForm.value);
-      // Implementar lógica de guardado para viajeros
-      this.cerrarModalCrearCliente();
+    if (this.viajeroForm.invalid) {
+      this.markFormGroupTouched(this.viajeroForm);
+      return;
+    }
+
+    try {
+      this.loading = true;
+      this.isSubmitting = true;
+      const formData = this.viajeroForm.value;
+      
+      // Determinar la nacionalidad final
+      const nacionalidadFinal = formData.nacionalidad === 'Otra' 
+        ? formData.otraNacionalidad 
+        : formData.nacionalidad;
+      
+      // Determinar la residencia final  
+      const residenciaFinal = formData.residencia === 'Otro'
+        ? formData.otraResidencia
+        : formData.residencia;
+      
+      const request: ViajeroRequest = {
+        nombres: formData.nombres,
+        apellidoPaterno: formData.apellidoPaterno,
+        apellidoMaterno: formData.apellidoMaterno,
+        fechaNacimiento: formData.fechaNacimiento,
+        nacionalidad: nacionalidadFinal,
+        residencia: residenciaFinal,
+        tipoDocumento: formData.tipoDocumento,
+        numeroDocumento: formData.numeroDocumento,
+        fechaEmisionDocumento: formData.fechaEmisionDocumento,
+        fechaVencimientoDocumento: formData.fechaVencimientoDocumento,
+        persona: formData.persona
+      };
+
+      this.viajeroService.save(request).subscribe({
+        next: () => {
+          this.loadPersonas();
+          this.cerrarModalCrearCliente();
+          this.isSubmitting = false;
+        },
+        error: (error: any) => {
+          console.error('Error al crear viajero:', error);
+          this.loading = false;
+          this.isSubmitting = false;
+        }
+      });
+    } catch (error: any) {
+      console.error('Error al procesar viajero:', error);
+      this.loading = false;
+      this.isSubmitting = false;
+    }
+  }
+
+  // Métodos para campos dinámicos
+  onNacionalidadChange(event: any): void {
+    const value = event.target.value;
+    this.showOtraNacionalidad = value === 'Otra';
+    
+    if (!this.showOtraNacionalidad) {
+      this.viajeroForm.get('otraNacionalidad')?.setValue('');
+    }
+  }
+
+  onResidenciaChange(event: any): void {
+    const value = event.target.value;
+    this.showOtraResidencia = value === 'Otro';
+    
+    if (!this.showOtraResidencia) {
+      this.viajeroForm.get('otraResidencia')?.setValue('');
     }
   }
 
@@ -184,9 +376,26 @@ export class PersonasComponent implements OnInit {
   }
 
   confirmarEliminar(persona: PersonaTabla): void {
-    if (confirm(`¿Está seguro de eliminar a ${this.getPersonaDisplayName(persona)}?\n\nEsta acción no se puede deshacer.`)) {
-      this.eliminarPersona(persona.id);
+    console.log('🔥🔥🔥 confirmarEliminar called for persona:', persona);
+    this.closeAllMenus(); // Cerrar todos los menús
+    // Mostrar modal de confirmación en lugar de alert feo
+    this.personaAEliminar = persona;
+    this.mostrarModalEliminar = true;
+  }
+
+  // Nuevo método para confirmar eliminación desde el modal
+  confirmarEliminacionModal(): void {
+    if (this.personaAEliminar) {
+      console.log('🔥🔥🔥 Confirmando eliminación de:', this.personaAEliminar);
+      this.eliminarPersona(this.personaAEliminar.id);
+      this.cerrarModalEliminar();
     }
+  }
+
+  // Nuevo método para cerrar modal de eliminación
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.personaAEliminar = null;
   }
 
   getEmptyStateTitle(): string {
@@ -253,14 +462,172 @@ export class PersonasComponent implements OnInit {
     this.someSelected = selectedCount > 0 && selectedCount < totalItems;
   }
 
-  // Métodos para el menú de acciones
-  toggleActionMenu(id: number): void {
-    this.showActionMenu = this.showActionMenu === id ? null : id;
+  // Métodos para acciones masivas
+  clearSelection(): void {
+    this.selectedItems = [];
+    this.updateSelectionState();
   }
 
-  duplicarPersona(persona: PersonaTabla): void {
-    // Implementar duplicación
-    console.log('Duplicar persona:', persona);
+  editarSeleccionados(): void {
+    if (this.selectedItems.length === 0) return;
+    
+    if (this.selectedItems.length === 1) {
+      // Si solo hay uno seleccionado, abrir editor individual
+      const persona = this.personas.find(p => p.id === this.selectedItems[0]);
+      if (persona) {
+        this.editarPersona(persona);
+      }
+    } else {
+      // Para múltiples elementos, abrir el primer elemento
+      const persona = this.personas.find(p => p.id === this.selectedItems[0]);
+      if (persona) {
+        this.editarPersona(persona);
+        // Mostrar mensaje informativo
+        console.log(`Editando el primer elemento de ${this.selectedItems.length} seleccionados`);
+      }
+    }
+  }
+
+  eliminarSeleccionados(): void {
+    if (this.selectedItems.length === 0) return;
+    
+    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cliente${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
+    if (confirm(confirmMessage)) {
+      this.loading = true;
+      let eliminados = 0;
+      const total = this.selectedItems.length;
+      
+      this.selectedItems.forEach(id => {
+        const persona = this.personas.find(p => p.id === id);
+        if (persona) {
+          if (persona.tipo === 'natural') {
+            this.personaNaturalService.deleteById(id).subscribe({
+              next: () => {
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadPersonas();
+                  this.clearSelection();
+                  this.loading = false;
+                }
+              },
+              error: (error) => {
+                console.error('Error al eliminar persona natural:', error);
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadPersonas();
+                  this.clearSelection();
+                  this.loading = false;
+                }
+              }
+            });
+          } else {
+            this.personaJuridicaService.deleteById(id).subscribe({
+              next: () => {
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadPersonas();
+                  this.clearSelection();
+                  this.loading = false;
+                }
+              },
+              error: (error) => {
+                console.error('Error al eliminar persona jurídica:', error);
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadPersonas();
+                  this.clearSelection();
+                  this.loading = false;
+                }
+              }
+            });
+          }
+        }
+      });
+    }
+  }
+
+  // Métodos para el menú de acciones - separados por vista
+  toggleActionMenu(id: number): void {
+    console.log('🔥🔥🔥 TABLE - BOTÓN CLICKEADO - ID:', id);
+    console.log('🔥🔥🔥 TABLE - ESTADO ACTUAL showActionMenu:', this.showActionMenu);
+    
+    // Cerrar otros menús
+    this.showQuickActions = null;
+    this.showActionMenuCards = null;
+    this.showActionMenuList = null;
+    
+    // Alternar el menú de tabla
+    if (this.showActionMenu === id) {
+      console.log('🔥🔥🔥 TABLE - CERRANDO MENÚ');
+      this.showActionMenu = null;
+    } else {
+      console.log('🔥🔥🔥 TABLE - ABRIENDO MENÚ PARA ID:', id);
+      this.showActionMenu = id;
+    }
+    
+    console.log('🔥🔥🔥 TABLE - NUEVO ESTADO showActionMenu:', this.showActionMenu);
+  }
+
+  toggleActionMenuCards(id: number): void {
+    console.log('🔥🔥🔥 CARDS - BOTÓN CLICKEADO - ID:', id);
+    console.log('🔥🔥🔥 CARDS - ESTADO ACTUAL showActionMenuCards:', this.showActionMenuCards);
+    
+    // Cerrar otros menús
+    this.showQuickActions = null;
+    this.showActionMenu = null;
+    this.showActionMenuList = null;
+    
+    // Alternar el menú de cards
+    if (this.showActionMenuCards === id) {
+      console.log('🔥🔥🔥 CARDS - CERRANDO MENÚ');
+      this.showActionMenuCards = null;
+    } else {
+      console.log('🔥🔥🔥 CARDS - ABRIENDO MENÚ PARA ID:', id);
+      this.showActionMenuCards = id;
+    }
+    
+    console.log('🔥🔥🔥 CARDS - NUEVO ESTADO showActionMenuCards:', this.showActionMenuCards);
+  }
+
+  toggleActionMenuList(id: number): void {
+    console.log('🔥🔥🔥 LIST - BOTÓN CLICKEADO - ID:', id);
+    console.log('🔥🔥🔥 LIST - ESTADO ACTUAL showActionMenuList:', this.showActionMenuList);
+    
+    // Cerrar otros menús
+    this.showQuickActions = null;
+    this.showActionMenu = null;
+    this.showActionMenuCards = null;
+    
+    // Alternar el menú de list
+    if (this.showActionMenuList === id) {
+      console.log('🔥🔥🔥 LIST - CERRANDO MENÚ');
+      this.showActionMenuList = null;
+    } else {
+      console.log('🔥🔥🔥 LIST - ABRIENDO MENÚ PARA ID:', id);
+      this.showActionMenuList = id;
+    }
+    
+    console.log('🔥🔥🔥 LIST - NUEVO ESTADO showActionMenuList:', this.showActionMenuList);
+  }
+
+  toggleQuickActions(id: number): void {
+    console.log('🔥🔥🔥 QUICK - BOTÓN CLICKEADO - ID:', id);
+    
+    // Cerrar otros menús
+    this.showActionMenu = null;
+    this.showActionMenuCards = null;
+    this.showActionMenuList = null;
+    
+    this.showQuickActions = this.showQuickActions === id ? null : id;
+    console.log('🔥🔥🔥 QUICK - NUEVO ESTADO showQuickActions:', this.showQuickActions);
+  }
+
+  // Método auxiliar para cerrar todos los menús
+  closeAllMenus(): void {
+    this.showActionMenu = null;
+    this.showActionMenuCards = null;
+    this.showActionMenuList = null;
+    this.showQuickActions = null;
   }
 
   // Métodos para paginación
@@ -333,6 +700,19 @@ export class PersonasComponent implements OnInit {
     this.loadPersonas();
   }
 
+  // Listener para cerrar menus al hacer click fuera
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    // NO CERRAR MENÚS - COMENTADO TEMPORALMENTE
+    /*
+    const target = event.target as HTMLElement;
+    if (!target.closest('.action-menu-container')) {
+      this.showActionMenu = null;
+      this.showQuickActions = null;
+    }
+    */
+  }
+
   // Métodos de modal
   abrirModalPersonaNatural(): void {
     this.editandoPersona = false;
@@ -378,6 +758,10 @@ export class PersonasComponent implements OnInit {
 
   // Función auxiliar para cambiar tab
   setActiveTabKey(key: string): void {
+    // No permitir cambio de tabs durante edición
+    if (this.editandoPersona) {
+      return;
+    }
     this.setActiveTab(key as 'natural' | 'juridica' | 'viajero');
   }
 
@@ -389,6 +773,8 @@ export class PersonasComponent implements OnInit {
 
   // Métodos de acciones de tabla
   editarPersona(persona: PersonaTabla): void {
+    console.log('🔥🔥🔥 EDITAR PERSONA LLAMADO:', persona.id);
+    this.closeAllMenus(); // Cerrar todos los menús
     this.editandoPersona = true;
     if (persona.tipo === 'natural') {
       this.activeTab = 'natural';
@@ -402,8 +788,15 @@ export class PersonasComponent implements OnInit {
   }
 
   verPersona(persona: PersonaTabla): void {
-    // Implementar vista de detalle si es necesario
-    console.log('Ver persona:', persona);
+    console.log('🔥🔥🔥 VER PERSONA LLAMADO:', persona.id);
+    this.closeAllMenus(); // Cerrar todos los menús
+    this.personaDetalles = persona;
+    this.mostrarModalDetalles = true;
+  }
+
+  cerrarModalDetalles(): void {
+    this.mostrarModalDetalles = false;
+    this.personaDetalles = null;
   }
 
   eliminarPersona(id: number): void {
@@ -536,15 +929,31 @@ export class PersonasComponent implements OnInit {
   }
 
   // Métodos auxiliares para formularios anidados
-  isPersonaFieldInvalid(formType: 'natural' | 'juridica', fieldName: string): boolean {
-    const form = formType === 'natural' ? this.personaNaturalForm : this.personaJuridicaForm;
+  isPersonaFieldInvalid(formType: 'natural' | 'juridica' | 'viajero', fieldName: string): boolean {
+    let form: FormGroup;
+    if (formType === 'natural') {
+      form = this.personaNaturalForm;
+    } else if (formType === 'juridica') {
+      form = this.personaJuridicaForm;
+    } else {
+      form = this.viajeroForm;
+    }
+    
     const personaGroup = form.get('persona') as FormGroup;
     const field = personaGroup?.get(fieldName);
     return !!(field && field.invalid && (field.dirty || field.touched));
   }
 
-  getPersonaFieldError(formType: 'natural' | 'juridica', fieldName: string): string {
-    const form = formType === 'natural' ? this.personaNaturalForm : this.personaJuridicaForm;
+  getPersonaFieldError(formType: 'natural' | 'juridica' | 'viajero', fieldName: string): string {
+    let form: FormGroup;
+    if (formType === 'natural') {
+      form = this.personaNaturalForm;
+    } else if (formType === 'juridica') {
+      form = this.personaJuridicaForm;
+    } else {
+      form = this.viajeroForm;
+    }
+    
     const personaGroup = form.get('persona') as FormGroup;
     const field = personaGroup?.get(fieldName);
     if (field && field.errors && (field.dirty || field.touched)) {
@@ -564,35 +973,49 @@ export class PersonasComponent implements OnInit {
   // Inicialización de formularios
   private initializeForms(): void {
     this.personaNaturalForm = this.fb.group({
-      nombres: ['', [Validators.required, Validators.minLength(2)]],
-      apellidos: ['', [Validators.required, Validators.minLength(2)]],
-      documento: ['', [Validators.required]],
+      nombres: [''],
+      apellidos: [''],
+      documento: [''],
       cliente: [false],
       categoria: [''],
       persona: this.fb.group({
-        telefono: ['', [Validators.required]],
-        email: ['', [Validators.required, Validators.email]],
-        direccion: ['', [Validators.required]]
+        telefono: [''],
+        email: ['', [Validators.email]],
+        direccion: [''],
+        observacion: ['']
       })
     });
 
     this.personaJuridicaForm = this.fb.group({
-      razonSocial: ['', [Validators.required, Validators.minLength(2)]],
-      ruc: ['', [Validators.required]],
+      razonSocial: [''],
+      ruc: [''],
       persona: this.fb.group({
-        telefono: ['', [Validators.required]],
-        email: ['', [Validators.required, Validators.email]],
-        direccion: ['', [Validators.required]]
+        telefono: [''],
+        email: ['', [Validators.email]],
+        direccion: [''],
+        observacion: ['']
       })
     });
 
     this.viajeroForm = this.fb.group({
-      nombres: ['', [Validators.required]],
-      apellidos: ['', [Validators.required]],
-      documento: ['', [Validators.required]],
-      numeroTarjeta: ['', [Validators.required]],
-      aerolinea: ['', [Validators.required]],
-      categoria: ['', [Validators.required]]
+      nombres: [''],
+      apellidoPaterno: [''],
+      apellidoMaterno: [''],
+      fechaNacimiento: [''],
+      nacionalidad: [''],
+      otraNacionalidad: [''],
+      residencia: [''],
+      otraResidencia: [''],
+      tipoDocumento: [''],
+      numeroDocumento: [''],
+      fechaEmisionDocumento: [''],
+      fechaVencimientoDocumento: [''],
+      persona: this.fb.group({
+        telefono: [''],
+        email: ['', [Validators.email]],
+        direccion: [''],
+        observacion: ['']
+      })
     });
 
     this.viajeroFrecuenteForm = this.fb.group({
@@ -849,6 +1272,9 @@ export class PersonasComponent implements OnInit {
       if (this.isEditMode && this.currentPersonaId) {
         this.personaNaturalService.update(this.currentPersonaId, request).subscribe({
           next: () => {
+            // Deseleccionar el elemento editado
+            this.selectedItems = this.selectedItems.filter(id => id !== this.currentPersonaId);
+            this.updateSelectionState();
             this.loadPersonas();
             this.cerrarModalCrearCliente();
           },
@@ -894,6 +1320,9 @@ export class PersonasComponent implements OnInit {
       if (this.isEditMode && this.currentPersonaId) {
         this.personaJuridicaService.update(this.currentPersonaId, request).subscribe({
           next: () => {
+            // Deseleccionar el elemento editado
+            this.selectedItems = this.selectedItems.filter(id => id !== this.currentPersonaId);
+            this.updateSelectionState();
             this.loadPersonas();
             this.cerrarModalCrearCliente();
           },
@@ -987,5 +1416,24 @@ export class PersonasComponent implements OnInit {
         this.markFormGroupTouched(control);
       }
     });
+  }
+
+  // Métodos del Sidebar
+  onSidebarItemClick(item: SidebarMenuItem): void {
+    console.log('Sidebar item clicked:', item);
+    // Aquí puedes manejar la navegación o acciones específicas
+  }
+
+  onToggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
+  // Métodos para cambiar entre vistas
+  changeView(view: 'table' | 'cards' | 'list'): void {
+    this.currentView = view;
+  }
+
+  isActiveView(view: 'table' | 'cards' | 'list'): boolean {
+    return this.currentView === view;
   }
 }
