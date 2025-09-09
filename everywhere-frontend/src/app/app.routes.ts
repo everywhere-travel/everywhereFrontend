@@ -4,6 +4,7 @@ import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { PersonasComponent } from './pages/personas/personas.component';
 import { Viajero } from './pages/viajero/viajero';
+import { ViajeroFrecuente } from './pages/viajero-frecuente/viajero-frecuente';
 import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.component';
 import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
 import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.component';
@@ -30,6 +31,11 @@ export const routes: Routes = [
   {
     path: 'viajero',
     component: Viajero,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'viajero-frecuente',
+    component: ViajeroFrecuente,
     canActivate: [authGuard]
   },
   {
