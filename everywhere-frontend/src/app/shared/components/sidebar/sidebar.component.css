@@ -1,19 +1,11 @@
-/* Scroll personalizado para la navegación */
+/* Ocultar scrollbars completamente */
+nav {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
 nav::-webkit-scrollbar {
-  width: 4px;
-}
-
-nav::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-nav::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
-  border-radius: 2px;
-}
-
-nav::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db;
+  display: none; /* Chrome, Safari, Opera */
 }
 
 /* Animación suave para el collapse */

@@ -1,19 +1,40 @@
-<div class="user-profile">
-  <div [class]="'user-avatar ' + getSizeClass()">
-    <img 
-      *ngIf="user.avatar" 
-      [src]="user.avatar" 
-      [alt]="user.name"
-      class="avatar-image">
-    <div 
-      *ngIf="!user.avatar" 
-      class="avatar-initials">
-      {{ getUserInitials() }}
+<div class="user-profile relative">
+  <button (click)="toggleUserMenu()" class="user-profile-button">
+    <div [class]="'user-avatar ' + getSizeClass()">
+      @if (user.avatar) {
+        <img 
+          [src]="user.avatar" 
+          [alt]="user.name"
+          class="avatar-image">
+      } @else {
+        <div class="avatar-initials">
+          {{ getUserInitials() }}
+        </div>
+      }
     </div>
-  </div>
-  
-  <div class="user-info" *ngIf="showInfo">
-    <span class="user-name">{{ user.name || 'Usuario' }}</span>
-    <span class="user-role">{{ user.role || 'Sin rol' }}</span>
-  </div>
+    
+    @if (showInfo) {
+      <div class="user-info">
+        <span class="user-role">{{ userRole || 'Sin rol' }}</span>
+        <span class="user-name">{{ currentUser?.email || currentUser?.name || 'Usuario' }}</span>
+      </div>
+      
+      <i class="fas fa-chevron-down ml-2 text-gray-400"></i>
+    }
+  </button>
+
+  <!-- Dropdown Menu -->
+  @if (showUserMenu) {
+    <div class="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl min-w-48 z-50">
+      <div class="px-4 py-3 border-b border-gray-100">
+        <p class="text-sm font-medium text-gray-800">{{ userRole || 'Sin rol' }}</p>
+        <p class="text-xs text-gray-500">{{ currentUser?.email || currentUser?.name || 'Usuario' }}</p>
+      </div>
+      <button (click)="onLogout()"
+        class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  }
 </div>
