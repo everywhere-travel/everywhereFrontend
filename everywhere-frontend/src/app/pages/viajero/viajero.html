@@ -1163,4 +1163,78 @@
     </div>
   </div>
 
+  <!-- Modal de Confirmación de Eliminación Múltiple -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+    *ngIf="mostrarModalEliminarMultiple" (click)="cerrarModalEliminarMultiple()">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100"
+      (click)="$event.stopPropagation()">
+      
+      <!-- Header del Modal -->
+      <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-6 rounded-t-3xl">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+            <i class="fas fa-exclamation-triangle text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold">Confirmar Eliminación Múltiple</h2>
+            <p class="text-red-100 text-sm">Esta acción no se puede deshacer</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenido del Modal -->
+      <div class="p-8">
+        <!-- Información de los viajeros a eliminar -->
+        <div class="bg-gray-50 rounded-2xl p-6 mb-6">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+              <i class="fas fa-users text-2xl"></i>
+            </div>
+            <div class="flex-1">
+              <div class="font-bold text-gray-900 text-lg mb-1">
+                {{ selectedItems.length }} viajero{{ selectedItems.length > 1 ? 's' : '' }} seleccionado{{ selectedItems.length > 1 ? 's' : '' }}
+              </div>
+              <div class="text-gray-600 text-sm">
+                Se eliminarán permanentemente
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje de advertencia -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-triangle text-amber-500 text-lg mt-1"></i>
+            <div>
+              <h4 class="font-bold text-amber-800 mb-2">¿Estás seguro de que quieres eliminar estos viajeros?</h4>
+              <p class="text-amber-700 text-sm">
+                Esta acción eliminará permanentemente todos los datos de los viajeros seleccionados, incluyendo:
+              </p>
+              <ul class="list-disc list-inside text-amber-700 text-sm mt-2 space-y-1">
+                <li>Información personal y documentos</li>
+                <li>Historial de viajes</li>
+                <li>Información de contacto</li>
+                <li>Registros asociados</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="flex gap-4">
+          <button (click)="cerrarModalEliminarMultiple()"
+            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3">
+            <i class="fas fa-times"></i>
+            <span>Cancelar</span>
+          </button>
+          <button (click)="confirmarEliminacionMultiple()"
+            class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 transform hover:scale-105">
+            <i class="fas fa-trash"></i>
+            <span>Sí, Eliminar {{ selectedItems.length }} viajero{{ selectedItems.length > 1 ? 's' : '' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>

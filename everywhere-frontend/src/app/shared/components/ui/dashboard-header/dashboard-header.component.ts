@@ -23,8 +23,13 @@ export interface DashboardHeaderData {
 export class DashboardHeaderComponent {
   @Input() data!: DashboardHeaderData;
   @Output() refreshClicked = new EventEmitter<void>();
+  @Output() logoutClicked = new EventEmitter<void>();
 
   onRefreshClick(): void {
     this.refreshClicked.emit();
+  }
+
+  onLogout(): void {
+    this.logoutClicked.emit();
   }
 }

@@ -55,7 +55,7 @@ export class PersonasComponent implements OnInit {
       children: [
         {
           id: 'personas',
-          title: 'Personas',
+          title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas'
         },
@@ -348,9 +348,7 @@ export class PersonasComponent implements OnInit {
   }
 
   // Métodos para mejorar UX/UI
-  exportarDatos(): void {
-    // Implementar exportación de datos
-    console.log('Exportar datos');
+  exportarDatos(): void { 
   }
 
   sortBy(column: string): void {
@@ -375,8 +373,7 @@ export class PersonasComponent implements OnInit {
     }
   }
 
-  confirmarEliminar(persona: PersonaTabla): void {
-    console.log('🔥🔥🔥 confirmarEliminar called for persona:', persona);
+  confirmarEliminar(persona: PersonaTabla): void { 
     this.closeAllMenus(); // Cerrar todos los menús
     // Mostrar modal de confirmación en lugar de alert feo
     this.personaAEliminar = persona;
@@ -385,8 +382,7 @@ export class PersonasComponent implements OnInit {
 
   // Nuevo método para confirmar eliminación desde el modal
   confirmarEliminacionModal(): void {
-    if (this.personaAEliminar) {
-      console.log('🔥🔥🔥 Confirmando eliminación de:', this.personaAEliminar);
+    if (this.personaAEliminar) { 
       this.eliminarPersona(this.personaAEliminar.id);
       this.cerrarModalEliminar();
     }
@@ -481,9 +477,7 @@ export class PersonasComponent implements OnInit {
       // Para múltiples elementos, abrir el primer elemento
       const persona = this.personas.find(p => p.id === this.selectedItems[0]);
       if (persona) {
-        this.editarPersona(persona);
-        // Mostrar mensaje informativo
-        console.log(`Editando el primer elemento de ${this.selectedItems.length} seleccionados`);
+        this.editarPersona(persona); 
       }
     }
   }
@@ -547,79 +541,55 @@ export class PersonasComponent implements OnInit {
   }
 
   // Métodos para el menú de acciones - separados por vista
-  toggleActionMenu(id: number): void {
-    console.log('🔥🔥🔥 TABLE - BOTÓN CLICKEADO - ID:', id);
-    console.log('🔥🔥🔥 TABLE - ESTADO ACTUAL showActionMenu:', this.showActionMenu);
-    
+  toggleActionMenu(id: number): void { 
     // Cerrar otros menús
     this.showQuickActions = null;
     this.showActionMenuCards = null;
     this.showActionMenuList = null;
     
     // Alternar el menú de tabla
-    if (this.showActionMenu === id) {
-      console.log('🔥🔥🔥 TABLE - CERRANDO MENÚ');
+    if (this.showActionMenu === id) { 
       this.showActionMenu = null;
-    } else {
-      console.log('🔥🔥🔥 TABLE - ABRIENDO MENÚ PARA ID:', id);
+    } else { 
       this.showActionMenu = id;
-    }
-    
-    console.log('🔥🔥🔥 TABLE - NUEVO ESTADO showActionMenu:', this.showActionMenu);
+    } 
   }
 
-  toggleActionMenuCards(id: number): void {
-    console.log('🔥🔥🔥 CARDS - BOTÓN CLICKEADO - ID:', id);
-    console.log('🔥🔥🔥 CARDS - ESTADO ACTUAL showActionMenuCards:', this.showActionMenuCards);
-    
+  toggleActionMenuCards(id: number): void { 
     // Cerrar otros menús
     this.showQuickActions = null;
     this.showActionMenu = null;
     this.showActionMenuList = null;
     
     // Alternar el menú de cards
-    if (this.showActionMenuCards === id) {
-      console.log('🔥🔥🔥 CARDS - CERRANDO MENÚ');
+    if (this.showActionMenuCards === id) { 
       this.showActionMenuCards = null;
-    } else {
-      console.log('🔥🔥🔥 CARDS - ABRIENDO MENÚ PARA ID:', id);
+    } else { 
       this.showActionMenuCards = id;
-    }
-    
-    console.log('🔥🔥🔥 CARDS - NUEVO ESTADO showActionMenuCards:', this.showActionMenuCards);
+    } 
   }
 
-  toggleActionMenuList(id: number): void {
-    console.log('🔥🔥🔥 LIST - BOTÓN CLICKEADO - ID:', id);
-    console.log('🔥🔥🔥 LIST - ESTADO ACTUAL showActionMenuList:', this.showActionMenuList);
-    
+  toggleActionMenuList(id: number): void { 
     // Cerrar otros menús
     this.showQuickActions = null;
     this.showActionMenu = null;
     this.showActionMenuCards = null;
     
     // Alternar el menú de list
-    if (this.showActionMenuList === id) {
-      console.log('🔥🔥🔥 LIST - CERRANDO MENÚ');
+    if (this.showActionMenuList === id) { 
       this.showActionMenuList = null;
-    } else {
-      console.log('🔥🔥🔥 LIST - ABRIENDO MENÚ PARA ID:', id);
+    } else { 
       this.showActionMenuList = id;
     }
-    
-    console.log('🔥🔥🔥 LIST - NUEVO ESTADO showActionMenuList:', this.showActionMenuList);
   }
 
-  toggleQuickActions(id: number): void {
-    console.log('🔥🔥🔥 QUICK - BOTÓN CLICKEADO - ID:', id);
-    
+  toggleQuickActions(id: number): void {  
     // Cerrar otros menús
     this.showActionMenu = null;
     this.showActionMenuCards = null;
     this.showActionMenuList = null;
     
-    this.showQuickActions = this.showQuickActions === id ? null : id;
-    console.log('🔥🔥🔥 QUICK - NUEVO ESTADO showQuickActions:', this.showQuickActions);
+    this.showQuickActions = this.showQuickActions === id ? null : id; 
   }
 
   // Método auxiliar para cerrar todos los menús
@@ -772,8 +742,7 @@ export class PersonasComponent implements OnInit {
   }
 
   // Métodos de acciones de tabla
-  editarPersona(persona: PersonaTabla): void {
-    console.log('🔥🔥🔥 EDITAR PERSONA LLAMADO:', persona.id);
+  editarPersona(persona: PersonaTabla): void { 
     this.closeAllMenus(); // Cerrar todos los menús
     this.editandoPersona = true;
     if (persona.tipo === 'natural') {
@@ -787,8 +756,7 @@ export class PersonasComponent implements OnInit {
     }
   }
 
-  verPersona(persona: PersonaTabla): void {
-    console.log('🔥🔥🔥 VER PERSONA LLAMADO:', persona.id);
+  verPersona(persona: PersonaTabla): void { 
     this.closeAllMenus(); // Cerrar todos los menús
     this.personaDetalles = persona;
     this.mostrarModalDetalles = true;

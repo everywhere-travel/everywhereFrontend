@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
-import { 
-  DashboardHeaderComponent, 
-  WelcomeBannerComponent, 
+import {
+  DashboardHeaderComponent,
+  WelcomeBannerComponent,
   ModuleCardComponent,
   ModuleCardData,
   WelcomeBannerData,
@@ -17,10 +17,10 @@ import {
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
   imports: [
-    RouterModule, 
-    CommonModule, 
-    DashboardHeaderComponent, 
-    WelcomeBannerComponent, 
+    RouterModule,
+    CommonModule,
+    DashboardHeaderComponent,
+    WelcomeBannerComponent,
     ModuleCardComponent
   ]
 })
@@ -97,7 +97,10 @@ export class DashboardComponent implements OnInit {
     }
   ];
 
-  constructor(private authService: AuthServiceService) {}
+  constructor(
+    private authService: AuthServiceService,
+    private router: Router
+  ) { }
 
   ngOnInit(): void {
     this.initializeData();
@@ -105,13 +108,13 @@ export class DashboardComponent implements OnInit {
 
   private initializeData(): void {
     const user = this.getCurrentUser();
-    
+
     // Actualizar datos del header
     this.headerData.userData = {
       name: user.name,
       role: user.role
     };
-    
+
     // Actualizar datos del welcome banner
     this.welcomeData.title = `¡Bienvenido, ${user.name}!`;
     this.welcomeData.subtitle = `Hoy es ${this.getCurrentTime()} - Gestiona tu negocio desde aquí`;
@@ -158,7 +161,7 @@ export class DashboardComponent implements OnInit {
   refreshData(): void {
     this.headerData.isLoading = true;
     this.isLoading = true;
-    
+
     setTimeout(() => {
       this.initializeData();
       this.headerData.isLoading = false;
@@ -169,5 +172,11 @@ export class DashboardComponent implements OnInit {
   // Manejar evento de refresh desde el header
   onHeaderRefresh(): void {
     this.refreshData();
+  }
+
+  // Cerrar sesión
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 }

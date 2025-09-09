@@ -841,20 +841,80 @@
         <div *ngIf="!editandoViajeroFrecuente" class="bg-gray-50 rounded-xl p-6">
           <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
             <i class="fas fa-user text-red-600"></i>
-            Seleccionar Viajero
+            Buscar Viajero
           </h3>
-          <div class="space-y-2">
-            <label for="viajeroId" class="text-sm font-semibold text-gray-700">Viajero *</label>
-            <select id="viajeroId" formControlName="viajeroId"
-              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
-              <option value="">Seleccione un viajero</option>
-              <option *ngFor="let viajero of viajeros" [value]="viajero.id">
-                {{ viajero.nombres }} {{ viajero.apellidoPaterno }} {{ viajero.apellidoMaterno }} ({{ viajero.numeroDocumento }})
-              </option>
-            </select>
+          <div class="space-y-2 relative">
+            <label for="viajeroSearch" class="text-sm font-semibold text-gray-700">Viajero *</label>
+            <div class="relative">
+              <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input 
+                type="text" 
+                id="viajeroSearch"
+                [(ngModel)]="viajeroSearchQuery"
+                [ngModelOptions]="{standalone: true}"
+                (input)="onViajeroSearchChange()"
+                (keyup)="onViajeroSearchChange()"
+                (focus)="onViajeroInputFocus()"
+                (blur)="onViajeroInputBlur()"
+                placeholder="Buscar por nombre o documento..."
+                class="w-full pl-11 pr-12 py-3 border-2 rounded-xl text-lg transition-all"
+                [class.border-gray-200]="!selectedViajero"
+                [class.border-green-500]="selectedViajero"
+                [class.focus:border-red-500]="!selectedViajero"
+                [class.focus:border-green-500]="selectedViajero"
+                [class.focus:ring-4]="true"
+                [class.focus:ring-red-100]="!selectedViajero"
+                [class.focus:ring-green-100]="selectedViajero">
+              <button 
+                *ngIf="viajeroSearchQuery" 
+                (click)="clearViajeroSearch()"
+                type="button"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-gray-300 hover:bg-gray-400 rounded-full flex items-center justify-center transition-colors">
+                <i class="fas fa-times text-xs text-white"></i>
+              </button>
+            </div>
+
+            <!-- Dropdown de resultados -->
+            <div *ngIf="showViajeroDropdown" 
+                 class="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto mt-1">
+              <div *ngIf="viajerosFiltrados.length === 0 && viajeroSearchQuery.length > 0" class="p-4 text-center text-gray-500">
+                <i class="fas fa-search text-2xl text-gray-300 mb-2"></i>
+                <div>No se encontraron viajeros para "<strong>{{ viajeroSearchQuery }}</strong>"</div>
+                <div class="text-xs text-gray-400 mt-1">Intenta con otro término de búsqueda</div>
+              </div>
+              <div *ngFor="let viajero of viajerosFiltrados; trackBy: trackByViajero" 
+                   (click)="selectViajero(viajero)"
+                   class="p-3 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                   [class.bg-blue-50]="selectedViajero?.id === viajero.id"
+                   [class.border-l-4]="selectedViajero?.id === viajero.id"
+                   [class.border-l-blue-500]="selectedViajero?.id === viajero.id">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-semibold text-gray-900">
+                      {{ viajero.nombres }} {{ viajero.apellidoPaterno }} {{ viajero.apellidoMaterno }}
+                    </div>
+                    <div class="text-sm text-gray-600">
+                      {{ viajero.tipoDocumento }}: {{ viajero.numeroDocumento }}
+                    </div>
+                  </div>
+                  <div *ngIf="selectedViajero?.id === viajero.id" class="text-blue-500">
+                    <i class="fas fa-check-circle"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div *ngIf="viajeroFrecuenteForm.get('viajeroId')?.invalid && viajeroFrecuenteForm.get('viajeroId')?.touched" 
                  class="text-red-500 text-sm mt-1">
               Debe seleccionar un viajero
+            </div>
+            <div *ngIf="selectedViajero" 
+                 class="text-green-600 text-sm mt-1 flex items-center gap-1">
+              <i class="fas fa-check-circle"></i>
+              Viajero seleccionado: {{ selectedViajero.nombres }} {{ selectedViajero.apellidoPaterno }}
             </div>
           </div>
         </div>
@@ -938,6 +998,47 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmación para Eliminar Múltiples -->
+<div *ngIf="mostrarModalEliminarMultiple" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-4 rounded-t-2xl">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+          <i class="fas fa-exclamation-triangle text-xl"></i>
+        </div>
+        <h2 class="text-xl font-bold">Confirmar Eliminación Múltiple</h2>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <p class="text-gray-700 mb-4">
+        ¿Está seguro que desea eliminar {{ selectedItems.length }} registro{{ selectedItems.length === 1 ? '' : 's' }} de viajero{{ selectedItems.length === 1 ? '' : 's' }} frecuente{{ selectedItems.length === 1 ? '' : 's' }}?
+      </p>
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+        <div class="flex items-center space-x-2 text-red-700">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span class="font-semibold">{{ selectedItems.length }} elemento{{ selectedItems.length === 1 ? '' : 's' }} seleccionado{{ selectedItems.length === 1 ? '' : 's' }}</span>
+        </div>
+      </div>
+      <p class="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end space-x-3">
+      <button (click)="cerrarModalEliminarMultiple()" 
+              class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+        Cancelar
+      </button>
+      <button (click)="confirmarEliminacionMultiple()" 
+              class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+        Eliminar {{ selectedItems.length }} registro{{ selectedItems.length === 1 ? '' : 's' }}
+      </button>
     </div>
   </div>
 </div>

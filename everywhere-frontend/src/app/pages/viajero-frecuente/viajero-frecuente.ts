@@ -6,7 +6,16 @@ import { ViajeroFrecuenteService } from '../../core/service/viajero/viajero-frec
 import { ViajeroService } from '../../core/service/viajero/viajero.service';
 import { ViajeroFrecuenteRequest, ViajeroFrecuenteResponse } from '../../shared/models/Viajero/viajeroFrecuente.model';
 import { ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
-import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
+
+interface SidebarMenuItem {
+  id: string;
+  title: string;
+  icon: string;
+  route?: string;
+  active?: boolean;
+  children?: SidebarMenuItem[];
+}
 
 @Component({
   selector: 'app-viajero-frecuente',
@@ -138,6 +147,7 @@ export class ViajeroFrecuente implements OnInit {
   // Modal states
   mostrarModalEliminar = false;
   viajeroFrecuenteAEliminar: ViajeroFrecuenteResponse | null = null;
+  mostrarModalEliminarMultiple = false;
   mostrarModalDetalles = false;
   viajeroFrecuenteDetalles: ViajeroFrecuenteResponse | null = null;
   mostrarModalCrearViajeroFrecuente = false;
@@ -146,6 +156,12 @@ export class ViajeroFrecuente implements OnInit {
 
   // Form
   viajeroFrecuenteForm: FormGroup;
+
+  // Viajero search
+  viajeroSearchQuery = '';
+  viajerosFiltrados: ViajeroResponse[] = [];
+  selectedViajero: ViajeroResponse | null = null;
+  showViajeroDropdown = false;
 
   constructor(
     private viajeroFrecuenteService: ViajeroFrecuenteService,
@@ -230,14 +246,12 @@ export class ViajeroFrecuente implements OnInit {
   }
 
   loadViajeros(): void {
-    console.log('VIAJEROS FRECUENTES: Cargando lista de viajeros para selector...');
     this.viajeroService.findAll().subscribe({
       next: (viajeros) => {
         this.viajeros = viajeros;
-        console.log('VIAJEROS FRECUENTES: Viajeros para selector cargados:', viajeros.length);
       },
       error: (error) => {
-        console.error('VIAJEROS FRECUENTES: Error al cargar viajeros para selector:', error);
+        console.error('Error al cargar viajeros:', error);
       }
     });
   }
@@ -395,10 +409,19 @@ export class ViajeroFrecuente implements OnInit {
     this.viajeroFrecuenteAEliminar = null;
   }
 
+  cerrarModalEliminarMultiple(): void {
+    this.mostrarModalEliminarMultiple = false;
+  }
+
+  clearSelection(): void {
+    this.selectedItems = [];
+  }
+
   abrirModalCrearViajeroFrecuente(): void {
     console.log('VIAJEROS FRECUENTES ACTION: Abrir modal crear viajero frecuente');
     this.editandoViajeroFrecuente = null;
     this.viajeroFrecuenteForm.reset();
+    this.clearViajeroSearch();
     this.mostrarModalCrearViajeroFrecuente = true;
   }
 
@@ -473,15 +496,57 @@ export class ViajeroFrecuente implements OnInit {
 
   // Bulk operations
   editarSeleccionados(): void {
-    console.log('VIAJEROS FRECUENTES BULK: Editar seleccionados:', this.selectedItems);
-    // Implementar edición en lote
+    if (this.selectedItems.length === 0) return;
+    
+    if (this.selectedItems.length === 1) {
+      // Si solo hay uno seleccionado, abrir editor individual
+      const viajeroFrecuente = this.viajerosFrecuentes.find(vf => vf.id === this.selectedItems[0]);
+      if (viajeroFrecuente) {
+        this.editarViajeroFrecuente(viajeroFrecuente);
+      }
+    } else {
+      // Para múltiples elementos, mostrar mensaje que solo se puede editar uno a la vez
+      alert('Solo se puede editar un viajero frecuente a la vez. Por favor, selecciona solo uno para editar.');
+    }
   }
 
   eliminarSeleccionados(): void {
-    console.log('VIAJEROS FRECUENTES BULK: Eliminar seleccionados:', this.selectedItems);
-    if (confirm(`¿Está seguro que desea eliminar ${this.selectedItems.length} viajeros frecuentes seleccionados?`)) {
-      // Implementar eliminación en lote
-    }
+    if (this.selectedItems.length === 0) return;
+    
+    // Mostrar modal de confirmación múltiple
+    this.mostrarModalEliminarMultiple = true;
+  }
+
+  // Método para eliminar múltiples viajeros frecuentes desde el modal
+  confirmarEliminacionMultiple(): void {
+    if (this.selectedItems.length === 0) return;
+    
+    this.isLoading = true;
+    let eliminados = 0;
+    const total = this.selectedItems.length;
+    
+    this.selectedItems.forEach(id => {
+      this.viajeroFrecuenteService.eliminar(id).subscribe({
+        next: () => {
+          eliminados++;
+          if (eliminados === total) {
+            this.loadViajerosFrecuentes();
+            this.clearSelection();
+            this.isLoading = false;
+            this.cerrarModalEliminarMultiple();
+          }
+        },
+        error: (error) => {
+          eliminados++;
+          if (eliminados === total) {
+            this.loadViajerosFrecuentes();
+            this.clearSelection();
+            this.isLoading = false;
+            this.cerrarModalEliminarMultiple();
+          }
+        }
+      });
+    });
   }
 
   exportarSeleccionados(): void {
@@ -498,14 +563,21 @@ export class ViajeroFrecuente implements OnInit {
   // Método para poblar el formulario con datos del viajero frecuente
   populateFormWithViajeroFrecuente(viajeroFrecuente: ViajeroFrecuenteResponse): void {
     console.log('VIAJEROS FRECUENTES: Poblando formulario con datos del viajero frecuente:', viajeroFrecuente);
+    console.log('VIAJEROS FRECUENTES: Aerolínea recibida:', viajeroFrecuente.areolinea);
     
+    // Poblar con los valores del viajero frecuente
     this.viajeroFrecuenteForm.patchValue({
       viajeroId: viajeroFrecuente.viajero.id,
-      areolinea: viajeroFrecuente.areolinea || '',
-      codigo: viajeroFrecuente.codigo || ''
+      areolinea: viajeroFrecuente.areolinea,
+      codigo: viajeroFrecuente.codigo
     });
+
+    // Para el modo edición, configurar el viajero seleccionado en el campo de búsqueda
+    this.selectedViajero = viajeroFrecuente.viajero;
+    this.viajeroSearchQuery = `${viajeroFrecuente.viajero.nombres} ${viajeroFrecuente.viajero.apellidoPaterno} ${viajeroFrecuente.viajero.apellidoMaterno} (${viajeroFrecuente.viajero.numeroDocumento})`;
     
     console.log('VIAJEROS FRECUENTES: Formulario poblado, valores actuales:', this.viajeroFrecuenteForm.value);
+    console.log('VIAJEROS FRECUENTES: Control aerolínea específico:', this.viajeroFrecuenteForm.get('areolinea')?.value);
   }
 
   // Método para cerrar modal de detalles
@@ -520,7 +592,10 @@ export class ViajeroFrecuente implements OnInit {
     console.log('VIAJEROS FRECUENTES: Cerrando modal de crear/editar viajero frecuente');
     this.mostrarModalCrearViajeroFrecuente = false;
     this.editandoViajeroFrecuente = null;
+    this.isSubmitting = false;
+    // Solo resetear el formulario cuando se cierre el modal
     this.viajeroFrecuenteForm.reset();
+    this.clearViajeroSearch();
   }
 
   // Método para manejar el envío del formulario
@@ -594,8 +669,89 @@ export class ViajeroFrecuente implements OnInit {
     return this.viajerosFrecuentes.filter(vf => vf.areolinea === aerolinea).length;
   }
 
+  // Viajero search methods
+  onViajeroSearchChange(): void {
+    if (!this.viajeros || this.viajeros.length === 0) {
+      this.viajerosFiltrados = [];
+      this.showViajeroDropdown = false;
+      return;
+    }
+
+    const query = this.viajeroSearchQuery?.toLowerCase().trim() || '';
+    
+    if (query === '') {
+      // Sin búsqueda: mostrar los primeros 10
+      this.viajerosFiltrados = this.viajeros.slice(0, 10);
+    } else {
+      // Con búsqueda: filtrar los que coincidan
+      this.viajerosFiltrados = this.viajeros.filter((viajero: ViajeroResponse) => {
+        const nombreCompleto = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`.toLowerCase();
+        const documento = viajero.numeroDocumento.toLowerCase();
+        
+        return nombreCompleto.includes(query) || documento.includes(query);
+      }).slice(0, 10);
+    }
+
+    this.showViajeroDropdown = true;
+  }
+
+  // TEST METHOD - Asignar datos falsos para probar
+  testSearchMethod(): void {
+    console.log('🧪 TEST METHOD EJECUTADO');
+    this.viajerosFiltrados = [
+      { id: 1, nombres: 'TEST', apellidoPaterno: 'USER', apellidoMaterno: 'FAKE', numeroDocumento: '12345678' } as any
+    ];
+    this.showViajeroDropdown = true;
+    console.log('🧪 Datos de prueba asignados');
+  }
+
+  selectViajero(viajero: ViajeroResponse): void {
+    console.log('Viajero seleccionado:', viajero);
+    this.selectedViajero = viajero;
+    this.viajeroSearchQuery = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno} (${viajero.numeroDocumento})`;
+    this.viajeroFrecuenteForm.patchValue({ viajeroId: viajero.id });
+    this.showViajeroDropdown = false;
+    console.log('Formulario actualizado con viajeroId:', viajero.id);
+  }
+
+  clearViajeroSearch(): void {
+    this.viajeroSearchQuery = '';
+    this.selectedViajero = null;
+    this.viajeroFrecuenteForm.patchValue({ viajeroId: '' });
+    this.onViajeroSearchChange(); // Esto manejará mostrar las opciones iniciales
+  }
+
+  closeViajeroDropdown(): void {
+    this.showViajeroDropdown = false;
+  }
+
+  onViajeroInputFocus(): void {
+    console.log('FOCUS en input de viajero');
+    // Simplemente ejecutar la búsqueda (que maneja tanto caso vacío como con texto)
+    this.onViajeroSearchChange();
+  }
+
+  onViajeroInputBlur(): void {
+    // Delay para permitir clicks en el dropdown
+    setTimeout(() => {
+      this.showViajeroDropdown = false;
+    }, 200);
+  }
+
   // TrackBy function para mejorar performance
   trackByFn(index: number, item: ViajeroFrecuenteResponse): number {
     return item.id;
+  }
+
+  trackByViajero(index: number, item: ViajeroResponse): number {
+    return item.id;
+  }
+
+  // Método para resaltar texto que coincide con la búsqueda
+  highlightSearchText(text: string, searchQuery: string): string {
+    if (!searchQuery.trim()) return text;
+    
+    const regex = new RegExp(`(${searchQuery.trim()})`, 'gi');
+    return text.replace(regex, '<strong class="bg-yellow-200 text-yellow-800">$1</strong>');
   }
 }

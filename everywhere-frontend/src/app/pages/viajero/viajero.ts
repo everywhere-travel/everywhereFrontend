@@ -125,6 +125,7 @@ export class Viajero implements OnInit {
   // Modal states
   mostrarModalEliminar = false;
   viajeroAEliminar: ViajeroResponse | null = null;
+  mostrarModalEliminarMultiple = false;
   mostrarModalDetalles = false;
   viajeroDetalles: ViajeroResponse | null = null;
   mostrarModalCrearViajero = false;
@@ -144,30 +145,19 @@ export class Viajero implements OnInit {
 
   ngOnInit(): void {
     this.loadViajeros();
-  }
-
-  // 🔥🔥🔥 DEBUG: Método de depuración para cargar viajeros
-  private debugLoadViajeros(context: string): void {
-    console.log(`🔥🔥🔥 VIAJEROS DEBUG [${context}]: Iniciando carga de viajeros`);
-    console.log(`🔥🔥🔥 VIAJEROS DEBUG [${context}]: isLoading = ${this.isLoading}`);
-  }
-
+  } 
   // Load data
-  loadViajeros(): void {
-    this.debugLoadViajeros('LOAD_VIAJEROS');
+  loadViajeros(): void { 
     this.isLoading = true;
     
     this.viajeroService.findAll().subscribe({
-      next: (data) => {
-        console.log('🔥🔥🔥 VIAJEROS DEBUG: Datos recibidos:', data);
+      next: (data) => { 
         this.viajeros = data;
         this.aplicarFiltros();
         this.calcularEstadisticas();
-        this.isLoading = false;
-        console.log(`🔥🔥🔥 VIAJEROS DEBUG: Carga completada. Total viajeros: ${this.viajeros.length}`);
+        this.isLoading = false; 
       },
-      error: (error) => {
-        console.error('🔥🔥🔥 VIAJEROS ERROR: Error al cargar viajeros:', error);
+      error: (error) => { 
         this.isLoading = false;
       }
     });
@@ -190,13 +180,11 @@ export class Viajero implements OnInit {
   }
 
   // Search and filter methods
-  onSearchChange(): void {
-    console.log('🔥🔥🔥 VIAJEROS SEARCH: Búsqueda actualizada:', this.searchQuery);
+  onSearchChange(): void { 
     this.aplicarFiltros();
   }
 
-  aplicarFiltroTipo(tipo: string): void {
-    console.log('🔥🔥🔥 VIAJEROS FILTER: Aplicando filtro tipo:', tipo);
+  aplicarFiltroTipo(tipo: string): void { 
     this.filtroTipo = tipo;
     this.aplicarFiltros();
   }
@@ -229,8 +217,7 @@ export class Viajero implements OnInit {
       });
     }
 
-    this.viajerosFiltrados = filtrados;
-    console.log(`🔥🔥🔥 VIAJEROS FILTER: Filtrados: ${this.viajerosFiltrados.length} de ${this.viajeros.length}`);
+    this.viajerosFiltrados = filtrados; 
   }
 
   clearSearch(): void {
@@ -254,8 +241,7 @@ export class Viajero implements OnInit {
   }
 
   // View management
-  changeView(view: 'table' | 'cards' | 'list'): void {
-    console.log('🔥🔥🔥 VIAJEROS VIEW: Cambiando vista a:', view);
+  changeView(view: 'table' | 'cards' | 'list'): void { 
     this.currentView = view;
     this.closeAllMenus();
   }
@@ -271,8 +257,7 @@ export class Viajero implements OnInit {
       this.selectedItems.splice(index, 1);
     } else {
       this.selectedItems.push(viajeroId);
-    }
-    console.log('🔥🔥🔥 VIAJEROS SELECTION: Items seleccionados:', this.selectedItems);
+    } 
   }
 
   toggleAllSelection(): void {
@@ -280,8 +265,7 @@ export class Viajero implements OnInit {
       this.selectedItems = [];
     } else {
       this.selectedItems = this.viajerosFiltrados.map(v => v.id);
-    }
-    console.log('🔥🔥🔥 VIAJEROS SELECTION: Selección masiva, total:', this.selectedItems.length);
+    } 
   }
 
   isSelected(viajeroId: number): boolean {
@@ -301,92 +285,70 @@ export class Viajero implements OnInit {
   }
 
   // Action menu management
-  toggleActionMenu(viajeroId: number): void {
-    console.log('🔥🔥🔥 VIAJEROS TABLE ACTION: Toggle menú para viajero:', viajeroId);
-    console.log('🔥🔥🔥 VIAJEROS TABLE ACTION: Estado anterior showActionMenu:', this.showActionMenu);
+  toggleActionMenu(viajeroId: number): void { 
     this.showActionMenuCards = null;
     this.showActionMenuList = null;
-    this.showActionMenu = this.showActionMenu === viajeroId ? null : viajeroId;
-    console.log('🔥🔥🔥 VIAJEROS TABLE ACTION: Estado nuevo showActionMenu:', this.showActionMenu);
+    this.showActionMenu = this.showActionMenu === viajeroId ? null : viajeroId; 
   }
 
-  toggleActionMenuCards(viajeroId: number): void {
-    console.log('🔥🔥🔥 VIAJEROS CARDS ACTION: Toggle menú para viajero:', viajeroId);
-    console.log('🔥🔥🔥 VIAJEROS CARDS ACTION: Estado anterior showActionMenuCards:', this.showActionMenuCards);
+  toggleActionMenuCards(viajeroId: number): void { 
     this.showActionMenu = null;
     this.showActionMenuList = null;
-    this.showActionMenuCards = this.showActionMenuCards === viajeroId ? null : viajeroId;
-    console.log('🔥🔥🔥 VIAJEROS CARDS ACTION: Estado nuevo showActionMenuCards:', this.showActionMenuCards);
+    this.showActionMenuCards = this.showActionMenuCards === viajeroId ? null : viajeroId; 
   }
 
   toggleActionMenuList(viajeroId: number): void {
-    console.log('🔥🔥🔥 VIAJEROS LIST ACTION: Toggle menú para viajero:', viajeroId);
-    console.log('🔥🔥🔥 VIAJEROS LIST ACTION: Estado anterior showActionMenuList:', this.showActionMenuList);
     this.showActionMenu = null;
     this.showActionMenuCards = null;
     this.showActionMenuList = this.showActionMenuList === viajeroId ? null : viajeroId;
-    console.log('🔥🔥🔥 VIAJEROS LIST ACTION: Estado nuevo showActionMenuList:', this.showActionMenuList);
-  }
-
-  closeAllMenus(): void {
-    console.log('🔥🔥🔥 VIAJEROS CLOSE: Cerrando todos los menús');
-    console.log('🔥🔥🔥 VIAJEROS CLOSE: Estados antes - Table:', this.showActionMenu, 'Cards:', this.showActionMenuCards, 'List:', this.showActionMenuList);
     this.showActionMenu = null;
     this.showActionMenuCards = null;
-    this.showActionMenuList = null;
-    console.log('🔥🔥🔥 VIAJEROS CLOSE: Todos los menús cerrados');
+    this.showActionMenuList = this.showActionMenuList === viajeroId ? null : viajeroId; 
+  }
+
+  closeAllMenus(): void { 
+    this.showActionMenu = null;
+    this.showActionMenuCards = null;
+    this.showActionMenuList = null; 
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event): void {
-    const target = event.target as HTMLElement;
-    console.log('🔥🔥🔥 VIAJEROS CLICK: Document click detectado');
-    console.log('🔥🔥🔥 VIAJEROS CLICK: Target element:', target);
-    console.log('🔥🔥🔥 VIAJEROS CLICK: Closest action-menu-container:', target.closest('.action-menu-container'));
-    console.log('🔥🔥🔥 VIAJEROS CLICK: Closest data-action-menu:', target.closest('[data-action-menu]'));
+    const target = event.target as HTMLElement; 
     
-    if (!target.closest('.action-menu-container') && !target.closest('[data-action-menu]')) {
-      console.log('🔥🔥🔥 VIAJEROS CLICK: Click fuera de menús, cerrando todos');
-      this.closeAllMenus();
-    } else {
-      console.log('🔥🔥🔥 VIAJEROS CLICK: Click dentro de menú, manteniendo abierto');
+    if (!target.closest('.action-menu-container') && !target.closest('[data-action-menu]')) { 
+      this.closeAllMenus(); 
     }
   }
 
   // CRUD operations
-  verViajero(viajero: ViajeroResponse): void {
-    console.log('🔥🔥🔥 VIAJEROS ACTION: Ver detalles del viajero:', viajero.id);
+  verViajero(viajero: ViajeroResponse): void { 
     this.viajeroDetalles = viajero;
     this.mostrarModalDetalles = true;
     this.closeAllMenus();
   }
 
-  editarViajero(viajero: ViajeroResponse): void {
-    console.log('🔥🔥🔥 VIAJEROS ACTION: Editar viajero:', viajero.id);
+  editarViajero(viajero: ViajeroResponse): void { 
     this.editandoViajero = viajero;
     this.populateFormWithViajero(viajero);
     this.mostrarModalCrearViajero = true;
     this.closeAllMenus();
   }
 
-  confirmarEliminar(viajero: ViajeroResponse): void {
-    console.log('🔥🔥🔥 VIAJEROS ACTION: Confirmar eliminación del viajero:', viajero.id);
+  confirmarEliminar(viajero: ViajeroResponse): void { 
     this.viajeroAEliminar = viajero;
     this.mostrarModalEliminar = true;
     this.closeAllMenus();
   }
 
   confirmarEliminacionModal(): void {
-    if (this.viajeroAEliminar) {
-      console.log('🔥🔥🔥 VIAJEROS DELETE: Eliminando viajero:', this.viajeroAEliminar.id);
+    if (this.viajeroAEliminar) { 
       this.viajeroService.deleteById(this.viajeroAEliminar.id).subscribe({
-        next: () => {
-          console.log('🔥🔥🔥 VIAJEROS DELETE: Viajero eliminado exitosamente');
+        next: () => { 
           this.cerrarModalEliminar();
           this.loadViajeros();
         },
-        error: (error) => {
-          console.error('🔥🔥🔥 VIAJEROS DELETE ERROR:', error);
+        error: (error) => { 
           this.cerrarModalEliminar();
         }
       });
@@ -398,22 +360,69 @@ export class Viajero implements OnInit {
     this.viajeroAEliminar = null;
   }
 
-  abrirModalCrearViajero(): void {
-    console.log('🔥🔥🔥 VIAJEROS ACTION: Abrir modal crear viajero');
+  cerrarModalEliminarMultiple(): void {
+    this.mostrarModalEliminarMultiple = false;
+  }
+
+  abrirModalCrearViajero(): void { 
     this.editandoViajero = null;
     this.viajeroForm.reset();
     this.mostrarModalCrearViajero = true;
   }
 
   // Bulk operations
-  editarSeleccionados(): void {
-    console.log('🔥🔥🔥 VIAJEROS BULK: Editar seleccionados:', this.selectedItems);
-    // TODO: Implementar edición masiva
+  editarSeleccionados(): void { 
+    if (this.selectedItems.length === 0) return;
+    
+    if (this.selectedItems.length === 1) {
+      // Si solo hay uno seleccionado, abrir editor individual
+      const viajero = this.viajeros.find(v => v.id === this.selectedItems[0]);
+      if (viajero) {
+        this.editarViajero(viajero);
+      }
+    } else {
+      // Para múltiples elementos, mostrar mensaje que solo se puede editar uno a la vez
+      alert('Solo se puede editar un viajero a la vez. Por favor, selecciona solo un viajero para editar.');
+    }
   }
 
-  eliminarSeleccionados(): void {
-    console.log('🔥🔥🔥 VIAJEROS BULK: Eliminar seleccionados:', this.selectedItems);
-    // TODO: Implementar eliminación masiva
+  eliminarSeleccionados(): void { 
+    if (this.selectedItems.length === 0) return;
+    
+    // Mostrar modal de confirmación múltiple
+    this.mostrarModalEliminarMultiple = true;
+  }
+
+  // Método para eliminar múltiples viajeros desde el modal
+  confirmarEliminacionMultiple(): void {
+    if (this.selectedItems.length === 0) return;
+    
+    this.isLoading = true;
+    let eliminados = 0;
+    const total = this.selectedItems.length;
+    
+    this.selectedItems.forEach(id => {
+      this.viajeroService.deleteById(id).subscribe({
+        next: () => {
+          eliminados++;
+          if (eliminados === total) {
+            this.loadViajeros();
+            this.clearSelection();
+            this.isLoading = false;
+            this.cerrarModalEliminarMultiple();
+          }
+        },
+        error: (error) => {
+          eliminados++;
+          if (eliminados === total) {
+            this.loadViajeros();
+            this.clearSelection();
+            this.isLoading = false;
+            this.cerrarModalEliminarMultiple();
+          }
+        }
+      });
+    });
   }
 
   // Utility methods
@@ -526,8 +535,7 @@ export class Viajero implements OnInit {
         return 0;
       }
     });
-
-    console.log(`🔥🔥🔥 VIAJEROS SORT: Ordenado por ${column} ${this.sortDirection}`);
+ 
   }
 
   // Track by functions
@@ -536,33 +544,31 @@ export class Viajero implements OnInit {
   }
 
   // Sidebar methods
-  onSidebarItemClick(item: SidebarMenuItem): void {
-    console.log('🔥🔥🔥 SIDEBAR: Item clicked:', item);
+  onSidebarItemClick(item: SidebarMenuItem): void { 
     if (item.route) {
       this.router.navigate([item.route]);
     }
   }
 
   onToggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
-    console.log('🔥🔥🔥 SIDEBAR: Collapsed:', this.sidebarCollapsed);
+    this.sidebarCollapsed = !this.sidebarCollapsed; 
   }
 
   // Form methods
   private createViajeroForm(): FormGroup {
     return this.formBuilder.group({
-      nombres: ['', [Validators.required, Validators.minLength(2)]],
-      apellidoPaterno: ['', [Validators.required, Validators.minLength(2)]],
-      apellidoMaterno: ['', [Validators.required, Validators.minLength(2)]],
-      fechaNacimiento: ['', Validators.required],
-      nacionalidad: ['', Validators.required],
-      residencia: ['', Validators.required],
-      tipoDocumento: ['', Validators.required],
-      numeroDocumento: ['', [Validators.required, Validators.minLength(5)]],
-      fechaEmisionDocumento: ['', Validators.required],
-      fechaVencimientoDocumento: ['', Validators.required],
+      nombres: [''],
+      apellidoPaterno: [''],
+      apellidoMaterno: [''],
+      fechaNacimiento: [''],
+      nacionalidad: [''],
+      residencia: [''],
+      tipoDocumento: [''],
+      numeroDocumento: [''],
+      fechaEmisionDocumento: [''],
+      fechaVencimientoDocumento: [''],
       persona: this.formBuilder.group({
-        email: ['', [Validators.email]],
+        email: [''],
         telefono: [''],
         direccion: ['']
       })
@@ -570,14 +576,80 @@ export class Viajero implements OnInit {
   }
 
   // Refresh data
-  refreshData(): void {
-    console.log('🔥🔥🔥 VIAJEROS: Refrescando datos');
+  refreshData(): void { 
     this.loadViajeros();
   }
 
+  // Export data
+  exportarDatos(): void {
+    // Implementar exportación de datos
+    const csvData = this.convertToCSV(this.viajerosFiltrados);
+    this.downloadCSV(csvData, 'viajeros.csv');
+  }
+
+  private convertToCSV(data: ViajeroResponse[]): string {
+    const headers = ['Nombres', 'Apellido Paterno', 'Apellido Materno', 'Documento', 'Nacionalidad', 'Residencia', 'Email', 'Teléfono'];
+    const csvContent = [headers.join(',')];
+    
+    data.forEach(viajero => {
+      const row = [
+        viajero.nombres || '',
+        viajero.apellidoPaterno || '',
+        viajero.apellidoMaterno || '',
+        viajero.numeroDocumento || '',
+        viajero.nacionalidad || '',
+        viajero.residencia || '',
+        viajero.persona?.email || '',
+        viajero.persona?.telefono || ''
+      ];
+      csvContent.push(row.join(','));
+    });
+    
+    return csvContent.join('\n');
+  }
+
+  private downloadCSV(csvContent: string, filename: string): void {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
+
+  // Utility methods for UI
+  hasActiveFilters(): boolean {
+    return !!(this.searchQuery || this.filtroTipo !== 'todos');
+  }
+
+  getEmptyStateTitle(): string {
+    if (this.searchQuery) {
+      return 'No se encontraron resultados';
+    }
+    if (this.filtroTipo !== 'todos') {
+      return `No hay viajeros con ${this.getFiltroLabel(this.filtroTipo).toLowerCase()}`;
+    }
+    return 'No hay viajeros registrados';
+  }
+
+  getEmptyStateMessage(): string {
+    if (this.searchQuery) {
+      return `No hay resultados para "${this.searchQuery}". Intenta con otros términos de búsqueda.`;
+    }
+    if (this.filtroTipo !== 'todos') {
+      return `No hay viajeros que cumplan con el filtro ${this.getFiltroLabel(this.filtroTipo).toLowerCase()}.`;
+    }
+    return 'Comienza creando tu primer viajero. Haz clic en "Nuevo Viajero" para empezar.';
+  }
+
   // Método para poblar el formulario con datos del viajero
-  populateFormWithViajero(viajero: ViajeroResponse): void {
-    console.log('🔥🔥🔥 VIAJEROS: Poblando formulario con datos del viajero:', viajero);
+  populateFormWithViajero(viajero: ViajeroResponse): void { 
     
     this.viajeroForm.patchValue({
       nombres: viajero.nombres || '',
@@ -595,21 +667,17 @@ export class Viajero implements OnInit {
         telefono: viajero.persona?.telefono || '',
         direccion: viajero.persona?.direccion || ''
       }
-    });
-    
-    console.log('🔥🔥🔥 VIAJEROS: Formulario poblado, valores actuales:', this.viajeroForm.value);
+    }); 
   }
 
   // Método para cerrar modal de detalles
-  cerrarModalDetalles(): void {
-    console.log('🔥🔥🔥 VIAJEROS: Cerrando modal de detalles');
+  cerrarModalDetalles(): void { 
     this.mostrarModalDetalles = false;
     this.viajeroDetalles = null;
   }
 
   // Método para cerrar modal de crear/editar
-  cerrarModalCrearViajero(): void {
-    console.log('🔥🔥🔥 VIAJEROS: Cerrando modal de crear/editar viajero');
+  cerrarModalCrearViajero(): void { 
     this.mostrarModalCrearViajero = false;
     this.editandoViajero = null;
     this.viajeroForm.reset();
@@ -622,11 +690,8 @@ export class Viajero implements OnInit {
   }
 
   // Método para manejar el envío del formulario
-  onSubmitViajero(): void {
-    console.log('🔥🔥🔥 VIAJEROS: Enviando formulario...');
-    
-    if (this.viajeroForm.invalid) {
-      console.log('🔥🔥🔥 VIAJEROS: Formulario inválido, marcando campos como touched');
+  onSubmitViajero(): void { 
+    if (this.viajeroForm.invalid) { 
       Object.keys(this.viajeroForm.controls).forEach(key => {
         this.viajeroForm.get(key)?.markAsTouched();
       });
@@ -634,8 +699,7 @@ export class Viajero implements OnInit {
     }
 
     this.isSubmitting = true;
-    const formData = this.viajeroForm.value;
-    console.log('🔥🔥🔥 VIAJEROS: Datos del formulario:', formData);
+    const formData = this.viajeroForm.value; 
 
     const viajeroRequest: ViajeroRequest = {
       nombres: formData.nombres,
@@ -656,37 +720,31 @@ export class Viajero implements OnInit {
     };
 
     if (this.editandoViajero) {
-      // Actualizar viajero existente
-      console.log('🔥🔥🔥 VIAJEROS: Actualizando viajero con ID:', this.editandoViajero.id);
+      // Actualizar viajero existente 
       
       this.viajeroService.update(this.editandoViajero.id, viajeroRequest).subscribe({
-        next: (response) => {
-          console.log('🔥🔥🔥 VIAJEROS: Viajero actualizado exitosamente:', response);
+        next: (response) => { 
           this.isSubmitting = false;
           this.cerrarModalCrearViajero();
           this.loadViajeros();
           // Aquí podrías agregar una notificación de éxito
         },
-        error: (error) => {
-          console.error('🔥🔥🔥 VIAJEROS: Error al actualizar viajero:', error);
+        error: (error) => { 
           this.isSubmitting = false;
           // Aquí podrías agregar una notificación de error
         }
       });
     } else {
-      // Crear nuevo viajero
-      console.log('🔥🔥🔥 VIAJEROS: Creando nuevo viajero');
+      // Crear nuevo viajero 
       
       this.viajeroService.save(viajeroRequest).subscribe({
-        next: (response) => {
-          console.log('🔥🔥🔥 VIAJEROS: Viajero creado exitosamente:', response);
+        next: (response) => { 
           this.isSubmitting = false;
           this.cerrarModalCrearViajero();
           this.loadViajeros();
           // Aquí podrías agregar una notificación de éxito
         },
-        error: (error) => {
-          console.error('🔥🔥🔥 VIAJEROS: Error al crear viajero:', error);
+        error: (error) => { 
           this.isSubmitting = false;
           // Aquí podrías agregar una notificación de error
         }
