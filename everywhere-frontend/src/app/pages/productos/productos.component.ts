@@ -1,10 +1,12 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductoService } from '../../core/service/Producto/producto.service';
 import { ProductoRequest, ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
+import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 
 // Interface para la tabla de productos
 export interface ProductoTabla {
@@ -25,7 +27,8 @@ export interface ProductoTabla {
     CommonModule,
     FormsModule, 
     ReactiveFormsModule,
-    SidebarComponent
+    SidebarComponent,
+    ErrorModalComponent
   ]
 })
 export class ProductosComponent implements OnInit {
@@ -116,11 +119,22 @@ export class ProductosComponent implements OnInit {
   loading = false;
   mostrarModalCrear = false;
   mostrarModalEliminar = false;
+  mostrarModalError = false;
   editandoProducto = false;
   productoSeleccionado: ProductoResponse | null = null;
   productoAEliminar: ProductoResponse | null = null;
+  
+  // Error modal data
+  errorModalData: ErrorModalData | null = null;
+  backendErrorData: BackendErrorResponse | null = null;
+  
   searchTerm = '';
+  selectedType = 'todos';
   currentView: 'table' | 'cards' | 'list' = 'table';
+  
+  // Sorting variables
+  sortColumn: string = 'creado';
+  sortDirection: 'asc' | 'desc' = 'desc';
   
   // Pagination
   currentPage = 1;
@@ -137,24 +151,15 @@ export class ProductosComponent implements OnInit {
   // Math object for template use
   Math = Math;
   
-  // Tipos de producto disponibles
-  tiposProducto = [
-    { value: 'TRANSPORTE', label: 'Transporte' },
-    { value: 'HOSPEDAJE', label: 'Hospedaje' },
-    { value: 'TOUR', label: 'Tour' },
-    { value: 'ALIMENTACION', label: 'Alimentación' },
-    { value: 'SEGURO', label: 'Seguro' },
-    { value: 'ENTRETENIMIENTO', label: 'Entretenimiento' },
-    { value: 'ACTIVIDAD', label: 'Actividad' },
-    { value: 'SERVICIO', label: 'Servicio' },
-    { value: 'PRODUCTO', label: 'Producto' },
-    { value: 'OTRO', label: 'Otro' }
-  ];
+  // Tipos únicos extraídos de los datos
+  tiposUnicos: string[] = [];
 
   constructor(
     private fb: FormBuilder,
     private productoService: ProductoService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef,
+    private errorHandler: ErrorHandlerService
   ) {
     this.initializeForms();
   }
@@ -180,6 +185,7 @@ export class ProductosComponent implements OnInit {
         this.convertirATabla();
         this.applyFilters();
         this.loading = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error('Error al cargar productos:', error);
@@ -215,8 +221,7 @@ export class ProductosComponent implements OnInit {
       const productoRequest: ProductoRequest = this.productoForm.value;
       
       this.productoService.createProducto(productoRequest).subscribe({
-        next: (response) => {
-          console.log('Producto creado exitosamente:', response);
+        next: (response) => { 
           this.loadProductos();
           this.cerrarModal();
           this.loading = false;
@@ -235,8 +240,7 @@ export class ProductosComponent implements OnInit {
       const productoRequest: ProductoRequest = this.productoForm.value;
       
       this.productoService.updateProducto(this.productoSeleccionado.id, productoRequest).subscribe({
-        next: (response) => {
-          console.log('Producto actualizado exitosamente:', response);
+        next: (response) => { 
           this.loadProductos();
           this.cerrarModal();
           this.loading = false;
@@ -250,7 +254,6 @@ export class ProductosComponent implements OnInit {
   }
 
   eliminarProducto(id: number): void {
-    // Buscar el producto a eliminar
     const producto = this.productos.find(p => p.id === id);
     if (producto) {
       this.productoAEliminar = producto;
@@ -269,22 +272,39 @@ export class ProductosComponent implements OnInit {
     this.productoAEliminar = null;
   }
 
+  cerrarModalError(): void {
+    this.mostrarModalError = false;
+    this.errorModalData = null;
+    this.backendErrorData = null;
+  }
+
   confirmarEliminacionModal(): void {
-    if (this.productoAEliminar?.id) {
-      this.loading = true;
-      this.productoService.deleteByIdProducto(this.productoAEliminar.id).subscribe({
-        next: () => {
-          console.log('Producto eliminado exitosamente');
-          this.loadProductos();
-          this.cerrarModalEliminar();
-          this.loading = false;
-        },
-        error: (error) => {
-          console.error('Error al eliminar producto:', error);
-          this.loading = false;
-        }
-      });
+    if (this.productoAEliminar) { 
+      this.eliminarProductoDefinitivo(this.productoAEliminar.id);
     }
+  }
+
+  eliminarProductoDefinitivo(id: number): void {
+    this.loading = true;
+    this.productoService.deleteByIdProducto(id).subscribe({
+      next: () => {
+        this.cerrarModalEliminar();
+        this.loadProductos();
+      },
+      error: (error) => {
+        this.loading = false;
+        this.cerrarModalEliminar();
+        
+        // Usar el servicio de manejo de errores
+        const { modalData, backendError } = this.errorHandler.handleHttpError(error, 'eliminar producto');
+        
+        this.errorModalData = modalData;
+        this.backendErrorData = backendError || null;
+        this.mostrarModalError = true;
+        
+        console.error('Error al eliminar producto:', error);
+      }
+    });
   }
 
   // Modal management
@@ -296,44 +316,18 @@ export class ProductosComponent implements OnInit {
   }
 
   editarProducto(productoTabla: ProductoTabla): void {
-    console.log('Editando producto:', productoTabla);
-    
     // Buscar el producto completo en la lista original
     const productoCompleto = this.productos.find(p => p.id === productoTabla.id);
     
     if (productoCompleto) {
-      console.log('Producto completo encontrado:', productoCompleto);
-      console.log('Tipo del producto:', productoCompleto.tipo);
-      console.log('Tipos disponibles:', this.tiposProducto);
-      
       this.editandoProducto = true;
       this.productoSeleccionado = productoCompleto;
-      
-      // Limpiar y normalizar el tipo
-      const tipoNormalizado = productoCompleto.tipo?.trim().toUpperCase() || '';
-      console.log('Tipo normalizado:', tipoNormalizado);
-      
-      // Verificar si el tipo existe en nuestras opciones
-      const tipoExiste = this.tiposProducto.some(t => t.value === tipoNormalizado);
-      console.log('¿Tipo existe en opciones?:', tipoExiste);
-      
-      // Si el tipo no existe, agregarlo temporalmente
-      if (!tipoExiste && tipoNormalizado) {
-        console.log('Agregando tipo temporal:', tipoNormalizado);
-        this.tiposProducto.push({ 
-          value: tipoNormalizado, 
-          label: tipoNormalizado.charAt(0) + tipoNormalizado.slice(1).toLowerCase() 
-        });
-      }
       
       // Cargar los datos del producto en el formulario
       this.productoForm.patchValue({
         descripcion: productoCompleto.descripcion || '',
-        tipo: tipoNormalizado
+        tipo: productoCompleto.tipo || ''
       });
-      
-      console.log('Formulario después de patchValue:', this.productoForm.value);
-      console.log('Control tipo después de patchValue:', this.productoForm.get('tipo')?.value);
       
       this.mostrarModalCrear = true;
     } else {
@@ -352,22 +346,92 @@ export class ProductosComponent implements OnInit {
   applyFilters(): void {
     let filtered = [...this.productosTabla];
 
+    // Filtro por tipo
+    if (this.selectedType !== 'todos') {
+      filtered = filtered.filter(producto => producto.tipo === this.selectedType);
+    }
+
+    // Filtro por búsqueda
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(producto =>
-        producto.descripcion.toLowerCase().includes(term) ||
-        producto.codigo.toLowerCase().includes(term) ||
-        producto.tipo.toLowerCase().includes(term)
-      );
+      filtered = filtered.filter(producto => {
+        const searchableText = `${producto.descripcion} ${producto.tipo}`.toLowerCase();
+        return searchableText.includes(term);
+      });
     }
 
     this.filteredProductos = filtered;
     this.totalItems = filtered.length;
+    
+    // Aplicar ordenamiento
+    this.applySorting();
+    
+    // Extraer tipos únicos para el filtro
+    this.extraerTiposUnicos();
+  }
+
+  // Extraer tipos únicos de los datos
+  private extraerTiposUnicos(): void {
+    const tipos = this.productosTabla.map(p => p.tipo).filter(tipo => tipo && tipo.trim() !== '');
+    this.tiposUnicos = [...new Set(tipos)].sort();
   }
 
   onSearchChange(): void {
     this.currentPage = 1;
     this.applyFilters();
+  }
+
+  onTypeChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  sortBy(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  private applySorting(): void {
+    if (!this.filteredProductos.length) return;
+    
+    this.filteredProductos.sort((a, b) => {
+      let valueA: any;
+      let valueB: any;
+
+      switch (this.sortColumn) {
+        case 'tipo':
+          valueA = a.tipo?.toLowerCase() || '';
+          valueB = b.tipo?.toLowerCase() || '';
+          break;
+        case 'descripcion':
+          valueA = a.descripcion?.toLowerCase() || '';
+          valueB = b.descripcion?.toLowerCase() || '';
+          break;
+        case 'creado':
+          valueA = new Date(a.creado || 0);
+          valueB = new Date(b.creado || 0);
+          break;
+        case 'actualizado':
+          valueA = new Date(a.actualizado || 0);
+          valueB = new Date(b.actualizado || 0);
+          break;
+        default:
+          return 0;
+      }
+
+      if (valueA < valueB) {
+        return this.sortDirection === 'asc' ? -1 : 1;
+      }
+      if (valueA > valueB) {
+        return this.sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
   }
 
   clearSearch(): void {
@@ -412,8 +476,7 @@ export class ProductosComponent implements OnInit {
 
   // Utilities
   getTipoLabel(tipo: string): string {
-    const tipoObj = this.tiposProducto.find(t => t.value === tipo);
-    return tipoObj ? tipoObj.label : tipo;
+    return tipo || 'Sin tipo';
   }
 
   formatDate(dateString: string): string {
@@ -431,8 +494,7 @@ export class ProductosComponent implements OnInit {
   }
 
   // Sidebar methods
-  onSidebarItemClick(item: SidebarMenuItem): void {
-    console.log('Sidebar item clicked:', item);
+  onSidebarItemClick(item: SidebarMenuItem): void { 
     if (item.route) {
       this.router.navigate([item.route]);
     }
@@ -476,11 +538,12 @@ export class ProductosComponent implements OnInit {
 
   // Métodos para filtros
   hasActiveFilters(): boolean {
-    return false; // Por ahora no hay filtros adicionales implementados
+    return this.selectedType !== 'todos';
   }
 
   clearAllFilters(): void {
     this.searchTerm = '';
+    this.selectedType = 'todos';
     this.onSearchChange();
   }
 
