@@ -4,13 +4,12 @@ import { ProveedorResponse } from '../Proveedor/proveedor.model';
 
 
 export interface DetalleCotizacionRequest {
-  cantidad?: number
-  unidad?: number
-  descripcion?: string
-  categoriaId?: number
-  comision?: number
-  precioHistorico?: number
-
+  cantidad?: number;          // ✅ Opcional para flexibilidad
+  unidad?: number;           // ✅ Opcional
+  descripcion?: string;      // ✅ Opcional
+  categoria?: number;        // ✅ Cambio: categoriaId → categoria
+  comision?: number;         // ✅ Opcional
+  precioHistorico?: number;  // ✅ Opcional
 }
 
 export interface DetalleCotizacionResponse {
@@ -23,7 +22,7 @@ export interface DetalleCotizacionResponse {
   cotizacion?: CotizacionResponse
   producto?: ProductoResponse
   proveedor?: ProveedorResponse
-  categoriaId?: number
+  categoria?: number        // ✅ Cambio: categoriaId → categoria
   comision?: number
   precioHistorico?: number
 }

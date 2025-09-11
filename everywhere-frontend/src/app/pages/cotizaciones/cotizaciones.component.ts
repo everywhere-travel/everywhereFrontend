@@ -1,7 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 // Services
 import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
@@ -59,7 +60,7 @@ interface GrupoHotelTemp {
   styleUrls: ['./cotizaciones.component.css'],
   imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent]
 })
-export class CotizacionesComponent implements OnInit {
+export class CotizacionesComponent implements OnInit, OnDestroy {
   
   // Services injection
   private fb = inject(FormBuilder);
@@ -133,10 +134,6 @@ export class CotizacionesComponent implements OnInit {
   gruposHoteles: GrupoHotelTemp[] = [];
   deletedDetalleIds: number[] = [];
 
-  // Modal states
-  mostrarModalEliminar = false;
-  cotizacionEliminarId: number | null = null;
-
   // Search and pagination
   searchTerm = '';
   filteredCotizaciones: CotizacionResponse[] = [];
@@ -196,7 +193,7 @@ export class CotizacionesComponent implements OnInit {
 
     // Grupo hotel form
     this.grupoHotelForm = this.fb.group({
-      categoriaId: ['', [Validators.required]]
+      categoria: ['', [Validators.required]]
     });
 
     // Subscribe to search changes
@@ -226,10 +223,13 @@ export class CotizacionesComponent implements OnInit {
 
   private async loadCotizaciones(): Promise<void> {
     try {
+      console.log('📋 Cargando cotizaciones...');
       this.cotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
+      console.log('📋 Cotizaciones cargadas:', this.cotizaciones.length, this.cotizaciones);
       this.filterCotizaciones();
+      console.log('📋 Cotizaciones filtradas:', this.filteredCotizaciones.length, this.filteredCotizaciones);
     } catch (error) {
-      console.error('Error loading cotizaciones:', error);
+      console.error('❌ Error loading cotizaciones:', error);
       this.cotizaciones = [];
     }
   }
@@ -291,9 +291,38 @@ export class CotizacionesComponent implements OnInit {
 
   private async loadCategorias(): Promise<void> {
     try {
-      this.categorias = await this.categoriaService.findAll().toPromise() || [];
+      console.log('🔍 Iniciando carga de categorías...');
+      console.log('🌐 Base URL:', environment.baseURL);
+      console.log('📡 Llamando al servicio de categorías...');
+      
+      // 🔄 Limpiar array antes de cargar nuevos datos
+      this.categorias = [];
+      
+      const response = await this.categoriaService.findAll().toPromise();
+      console.log('📥 Respuesta del servicio:', response);
+      
+      this.categorias = response || [];
+      console.log('✅ Categorías cargadas:', this.categorias.length, this.categorias);
+      
+      // 🔍 Verificar que tenemos categorías válidas
+      if (this.categorias.length === 0) {
+        console.warn('⚠️ ADVERTENCIA: No se cargaron categorías. Verificar conexión con backend.');
+      } else {
+        console.log('🎉 Categorías disponibles:');
+        this.categorias.forEach(cat => console.log(`   - ID: ${cat.id}, Nombre: ${cat.nombre}`));
+      }
+      
     } catch (error) {
-      console.error('Error loading categorías:', error);
+      console.error('❌ Error loading categorías:', error);
+      console.error('❌ Detalles del error:', JSON.stringify(error, null, 2));
+      
+      // 🔍 Información adicional de debugging
+      if (error && typeof error === 'object') {
+        console.error('❌ Error status:', (error as any).status);
+        console.error('❌ Error message:', (error as any).message);
+        console.error('❌ Error URL:', (error as any).url);
+      }
+      
       this.categorias = [];
     }
   }
@@ -324,17 +353,26 @@ export class CotizacionesComponent implements OnInit {
   }
 
   // Form methods
-  mostrarFormularioCrear(): void {
+  async mostrarFormularioCrear(): Promise<void> {
     this.resetForm();
     this.mostrarFormulario = true;
     this.editandoCotizacion = false;
     this.setupDatesForNew();
+    
+    // 🔄 Cargar categorías cada vez que se abre el formulario de creación
+    console.log('🔄 Cargando categorías para nuevo formulario...');
+    await this.loadCategorias();
   }
 
-  mostrarFormularioEditar(cotizacion: CotizacionResponse): void {
+  async mostrarFormularioEditar(cotizacion: CotizacionResponse): Promise<void> {
     this.editandoCotizacion = true;
     this.cotizacionEditandoId = cotizacion.id;
     this.mostrarFormulario = true;
+    
+    // 🔄 Cargar categorías cada vez que se abre el formulario de edición
+    console.log('🔄 Cargando categorías para edición...');
+    await this.loadCategorias();
+    
     this.loadCotizacionForEdit(cotizacion);
   }
 
@@ -477,7 +515,7 @@ export class CotizacionesComponent implements OnInit {
 
     // Separate detalles by category
     detalles.forEach(detalle => {
-      if (detalle.categoriaId === 1) {
+      if (detalle.categoria === 1) {
         // Productos fijos
         this.detallesFijos.push(this.convertDetalleToTemp(detalle));
       } else {
@@ -503,14 +541,14 @@ export class CotizacionesComponent implements OnInit {
   }
 
   private addDetalleToGrupoHotel(detalle: DetalleCotizacionResponse): void {
-    const categoriaId = detalle.categoriaId;
-    let grupo = this.gruposHoteles.find(g => g.categoria.id === categoriaId);
+    const categoria = detalle.categoria;
+    let grupo = this.gruposHoteles.find(g => g.categoria.id === categoria);
     
     if (!grupo) {
-      const categoria = this.categorias.find(c => c.id === categoriaId);
-      if (categoria) {
+      const categoriaObj = this.categorias.find(c => c.id === categoria);
+      if (categoriaObj) {
         grupo = {
-          categoria,
+          categoria: categoriaObj,
           detalles: [],
           total: 0,
           isTemporary: false
@@ -533,11 +571,16 @@ export class CotizacionesComponent implements OnInit {
     }
 
     const formValue = this.detalleForm.value;
+    console.log('🔍 DEBUG Form Value:', formValue);
+    
     let proveedor = null;
 
     // Handle proveedor
     if (formValue.proveedorId) {
-      proveedor = this.proveedores.find(p => p.id === formValue.proveedorId) || null;
+      const proveedorId = Number(formValue.proveedorId);
+      proveedor = this.proveedores.find(p => p.id === proveedorId) || null;
+      console.log('🔍 DEBUG Proveedor encontrado por ID:', proveedor);
+      console.log('🔍 DEBUG proveedorId convertido:', proveedorId, 'original:', formValue.proveedorId);
     } else if (formValue.nuevoProveedor?.trim()) {
       // This would create a new proveedor, for now we'll simulate it
       proveedor = {
@@ -546,9 +589,14 @@ export class CotizacionesComponent implements OnInit {
         creado: new Date().toISOString(),
         actualizado: new Date().toISOString()
       } as ProveedorResponse;
+      console.log('🔍 DEBUG Nuevo proveedor creado:', proveedor);
     }
 
-    const producto = this.productos.find(p => p.id === formValue.productoId);
+    const producto = this.productos.find(p => p.id === Number(formValue.productoId));
+    console.log('🔍 DEBUG productoId del form:', formValue.productoId, 'convertido:', Number(formValue.productoId));
+    console.log('🔍 DEBUG producto encontrado:', producto);
+    console.log('🔍 DEBUG todos los productos disponibles:', this.productos.map(p => ({id: p.id, producto: p})));
+    
     const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
     const precioHistorico = formValue.precioHistorico || 0;
     const comision = formValue.comision || 0;
@@ -592,18 +640,24 @@ export class CotizacionesComponent implements OnInit {
   }
 
   // Grupo hoteles methods
-  crearGrupoHotel(): void {
+  async crearGrupoHotel(): Promise<void> {
     if (this.grupoHotelForm.invalid) {
       this.markFormGroupTouched(this.grupoHotelForm);
       return;
     }
 
-    const categoriaId = this.grupoHotelForm.value.categoriaId;
-    const categoria = this.categorias.find(c => c.id === categoriaId);
+    // 🔄 Asegurar que las categorías estén cargadas
+    if (this.categorias.length === 0) {
+      console.log('🔄 Categorías vacías, recargando...');
+      await this.loadCategorias();
+    }
+
+    const categoria = this.grupoHotelForm.value.categoria;
+    const categoriaObj = this.categorias.find(c => c.id === categoria);
     
-    if (categoria && !this.gruposHoteles.find(g => g.categoria.id === categoriaId)) {
+    if (categoriaObj && !this.gruposHoteles.find(g => g.categoria.id === categoria)) {
       const nuevoGrupo: GrupoHotelTemp = {
-        categoria,
+        categoria: categoriaObj,
         detalles: [],
         total: 0,
         isTemporary: true
@@ -611,6 +665,10 @@ export class CotizacionesComponent implements OnInit {
       
       this.gruposHoteles.push(nuevoGrupo);
       this.grupoHotelForm.reset();
+      console.log('✅ Grupo de hotel creado para categoría:', categoriaObj.nombre);
+    } else if (!categoriaObj) {
+      console.error('❌ Categoría no encontrada:', categoria);
+      console.error('❌ Categorías disponibles:', this.categorias);
     }
   }
 
@@ -635,10 +693,14 @@ export class CotizacionesComponent implements OnInit {
 
     const grupo = this.gruposHoteles[grupoIndex];
     const formValue = this.detalleForm.value;
+    console.log('🔍 DEBUG Form Value (Grupo):', formValue);
     
     let proveedor: ProveedorResponse | null = null;
     if (formValue.proveedorId) {
-      proveedor = this.proveedores.find(p => p.id === formValue.proveedorId) || null;
+      const proveedorId = Number(formValue.proveedorId);
+      proveedor = this.proveedores.find(p => p.id === proveedorId) || null;
+      console.log('🔍 DEBUG Proveedor encontrado por ID (Grupo):', proveedor);
+      console.log('🔍 DEBUG proveedorId convertido (Grupo):', proveedorId, 'original:', formValue.proveedorId);
     } else if (formValue.nuevoProveedor?.trim()) {
       proveedor = {
         id: 0,
@@ -646,9 +708,13 @@ export class CotizacionesComponent implements OnInit {
         creado: new Date().toISOString(),
         actualizado: new Date().toISOString()
       } as ProveedorResponse;
+      console.log('🔍 DEBUG Nuevo proveedor creado (Grupo):', proveedor);
     }
 
-    const producto = this.productos.find(p => p.id === formValue.productoId);
+    const producto = this.productos.find(p => p.id === Number(formValue.productoId));
+    console.log('🔍 DEBUG productoId del form (Grupo):', formValue.productoId, 'convertido:', Number(formValue.productoId));
+    console.log('🔍 DEBUG producto encontrado (Grupo):', producto);
+    
     const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
     const precioHistorico = formValue.precioHistorico || 0;
     const comision = formValue.comision || 0;
@@ -718,6 +784,7 @@ export class CotizacionesComponent implements OnInit {
     }
 
     this.isLoading = true;
+    console.log('🚀 Iniciando flujo de cotización secuencial...');
 
     try {
       const formValue = this.cotizacionForm.value;
@@ -737,58 +804,75 @@ export class CotizacionesComponent implements OnInit {
       let cotizacionResponse: CotizacionResponse;
 
       if (this.editandoCotizacion && this.cotizacionEditandoId) {
+        console.log('📝 Actualizando cotización existente...');
         // Update existing cotización
         const updateResult = await this.cotizacionService.updateCotizacion(this.cotizacionEditandoId, cotizacionRequest).toPromise();
         if (!updateResult) throw new Error('Failed to update cotización');
         cotizacionResponse = updateResult;
+        console.log('✅ Cotización actualizada:', cotizacionResponse.id);
         
         // Set relationships
+        console.log('🔗 Asignando relaciones secuencialmente...');
         await this.setRelacionesCotizacion(cotizacionResponse.id, formValue);
         
         // Handle deleted detalles
         await this.eliminarDetallesEliminados();
         
       } else {
+        console.log('🆕 Creando nueva cotización...');
         // Create new cotización
         const createResult = await this.cotizacionService.createCotizacion(cotizacionRequest).toPromise();
         if (!createResult) throw new Error('Failed to create cotización');
         cotizacionResponse = createResult;
+        console.log('✅ Cotización creada con ID:', cotizacionResponse.id);
         
         // Set relationships
+        console.log('🔗 Asignando relaciones secuencialmente...');
         await this.setRelacionesCotizacion(cotizacionResponse.id, formValue);
       }
 
       // Create/update detalles
+      console.log('📋 Procesando detalles de cotización...');
       await this.procesarDetalles(cotizacionResponse.id);
+      console.log('✅ Detalles procesados correctamente');
 
       // Reload data and close form
+      console.log('🔄 Recargando lista de cotizaciones...');
       await this.loadCotizaciones();
       this.cerrarFormulario();
+      console.log('🎉 Flujo completado exitosamente');
       
     } catch (error) {
-      console.error('Error saving cotización:', error);
+      console.error('❌ Error en flujo de cotización:', error);
     } finally {
       this.isLoading = false;
     }
   }
 
   private async setRelacionesCotizacion(cotizacionId: number, formValue: any): Promise<void> {
-    const promises = [];
-
+    // 🔹 Ejecutar secuencialmente para evitar conflictos con IDs
+    
     if (formValue.personaId) {
-      promises.push(this.cotizacionService.setPersona(cotizacionId, formValue.personaId).toPromise());
+      await this.cotizacionService.setPersona(cotizacionId, formValue.personaId).toPromise();
+      console.log('✅ Persona asignada a cotización:', cotizacionId);
     }
+    
     if (formValue.formaPagoId) {
-      promises.push(this.cotizacionService.setFormaPago(cotizacionId, formValue.formaPagoId).toPromise());
+      await this.cotizacionService.setFormaPago(cotizacionId, formValue.formaPagoId).toPromise();
+      console.log('✅ Forma de pago asignada a cotización:', cotizacionId);
     }
+    
     if (formValue.estadoCotizacionId) {
-      promises.push(this.cotizacionService.setEstadoCotizacion(cotizacionId, formValue.estadoCotizacionId).toPromise());
+      await this.cotizacionService.setEstadoCotizacion(cotizacionId, formValue.estadoCotizacionId).toPromise();
+      console.log('✅ Estado asignado a cotización:', cotizacionId);
     }
+    
     if (formValue.sucursalId) {
-      promises.push(this.cotizacionService.setSucursal(cotizacionId, formValue.sucursalId).toPromise());
+      await this.cotizacionService.setSucursal(cotizacionId, formValue.sucursalId).toPromise();
+      console.log('✅ Sucursal asignada a cotización:', cotizacionId);
     }
-
-    await Promise.all(promises);
+    
+    console.log('🎉 Todas las relaciones asignadas secuencialmente para cotización:', cotizacionId);
   }
 
   private async eliminarDetallesEliminados(): Promise<void> {
@@ -814,9 +898,9 @@ export class CotizacionesComponent implements OnInit {
     for (const grupo of this.gruposHoteles) {
       for (const detalle of grupo.detalles) {
         if (detalle.isTemporary) {
-          const categoriaId = grupo.categoria.id;
-          if (categoriaId) {
-            await this.crearDetalle(cotizacionId, detalle, categoriaId);
+          const categoria = grupo.categoria.id;
+          if (categoria) {
+            await this.crearDetalle(cotizacionId, detalle, categoria);
           }
         } else if (detalle.id) {
           await this.actualizarDetalle(detalle);
@@ -825,74 +909,202 @@ export class CotizacionesComponent implements OnInit {
     }
   }
 
-  private async crearDetalle(cotizacionId: number, detalle: DetalleCotizacionTemp, categoriaId: number): Promise<void> {
+  private async crearDetalle(cotizacionId: number, detalle: DetalleCotizacionTemp, categoria: number): Promise<void> {
+    console.log('🔍 DEBUGGING - Creando detalle:');
+    console.log('  cotizacionId:', cotizacionId);
+    console.log('  categoria RECIBIDA:', categoria);
+    console.log('  detalle completo:', detalle);
+    
+    // 🔍 Verificar que la categoría existe en el array local
+    const categoriaExiste = this.categorias.find(c => c.id === categoria);
+    console.log('🔍 Categoría encontrada en array local:', categoriaExiste);
+    console.log('🔍 Todas las categorías disponibles:', this.categorias.map(c => ({id: c.id, nombre: c.nombre})));
+    
+    if (!categoriaExiste) {
+      console.error('❌ FATAL: La categoría con ID', categoria, 'no existe en el frontend');
+      console.error('❌ Categorías disponibles:', this.categorias);
+      throw new Error(`Categoría con ID ${categoria} no encontrada en el frontend`);
+    }
+    
+    // 🔍 Verificar que el producto existe (advertencia, no error fatal)
+    if (!detalle.producto) {
+      console.warn('⚠️ ADVERTENCIA: No se ha seleccionado un producto para este detalle');
+      console.warn('⚠️ Detalle sin producto:', detalle);
+    }
+    
+    // Validar datos críticos
+    if (!cotizacionId) {
+      console.error('❌ ERROR: cotizacionId es null/undefined');
+      throw new Error('cotizacionId no puede ser null');
+    }
+    if (!categoria) {
+      console.error('❌ ERROR: categoria es null/undefined');
+      throw new Error('categoria no puede ser null');
+    }
+    
     // Create proveedor if needed
     let proveedorId = detalle.proveedor?.id;
     if (detalle.proveedor && detalle.proveedor.id === 0) {
+      console.log('📝 Creando nuevo proveedor:', detalle.proveedor.nombre);
       const nuevoProveedor = await this.proveedorService.createProveedor({ 
         nombre: detalle.proveedor.nombre 
       }).toPromise();
       proveedorId = nuevoProveedor?.id;
+      console.log('✅ Proveedor creado con ID:', proveedorId);
     }
 
     const request: DetalleCotizacionRequest = {
-      cantidad: detalle.cantidad,
-      unidad: detalle.unidad,
-      descripcion: detalle.descripcion,
-      categoriaId: categoriaId,
-      comision: detalle.comision,
-      precioHistorico: detalle.precioHistorico
+      cantidad: detalle.cantidad || 1,                    // ✅ Default 1
+      unidad: detalle.unidad || 1,                       // ✅ Default 1  
+      descripcion: detalle.descripcion || '',            // ✅ Default empty
+      categoria: categoria,                              // ✅ Cambio: categoriaId → categoria
+      comision: detalle.comision || 0,                   // ✅ Default 0
+      precioHistorico: detalle.precioHistorico || 0      // ✅ Default 0
     };
+    
+    // ✅ Validación final antes de enviar
+    if (!request.categoria) {
+      console.error('❌ FATAL: categoria sigue siendo null después de validación');
+      throw new Error('categoria es requerido para crear detalle');
+    }
+    
+    console.log('📤 Request que se enviará al backend:', request);
 
     const detalleCreado = await this.detalleCotizacionService.createDetalleCotizacion(cotizacionId, request).toPromise();
+    console.log('✅ Detalle creado exitosamente:', detalleCreado);
     
     if (detalleCreado && detalle.producto) {
+      console.log('🔗 Asignando producto al detalle:', detalle.producto.id);
       await this.detalleCotizacionService.setProducto(detalleCreado.id, detalle.producto.id).toPromise();
+      console.log('✅ Producto asignado al detalle');
+    } else if (detalleCreado && !detalle.producto) {
+      console.warn('⚠️ Detalle creado sin producto asociado. ID:', detalleCreado.id);
     }
     
     if (detalleCreado && proveedorId) {
+      console.log('🔗 Asignando proveedor al detalle:', proveedorId);
       await this.detalleCotizacionService.setProveedor(detalleCreado.id, proveedorId).toPromise();
+      console.log('✅ Proveedor asignado al detalle');
     }
   }
 
   private async actualizarDetalle(detalle: DetalleCotizacionTemp): Promise<void> {
     if (!detalle.id) return;
 
+    console.log('📝 Actualizando detalle existente:', detalle.id);
+
     const request: DetalleCotizacionRequest = {
-      cantidad: detalle.cantidad,
-      unidad: detalle.unidad,
-      descripcion: detalle.descripcion,
-      comision: detalle.comision,
-      precioHistorico: detalle.precioHistorico
+      cantidad: detalle.cantidad || 1,
+      unidad: detalle.unidad || 1,
+      descripcion: detalle.descripcion || '',
+      comision: detalle.comision || 0,
+      precioHistorico: detalle.precioHistorico || 0
+      // ✅ No incluimos categoriaId en updates, solo en creación
     };
 
+    console.log('📤 Request para actualizar detalle:', request);
     await this.detalleCotizacionService.updateDetalleCotizacion(detalle.id, request).toPromise();
+    console.log('✅ Detalle actualizado exitosamente');
   }
 
-  // Delete cotización
-  confirmarEliminarCotizacion(cotizacion: CotizacionResponse): void {
-    this.cotizacionEliminarId = cotizacion.id;
-    this.mostrarModalEliminar = true;
+  // Variables para el sistema de presionar y mantener
+  cotizacionAEliminar: CotizacionResponse | null = null;
+  presionandoEliminar = false;
+  tiempoPresionado = 0;
+  intervaloPulsacion: any = null;
+
+  // Iniciar proceso de eliminación por presión mantenida
+  iniciarEliminacion(cotizacion: CotizacionResponse): void {
+    console.log('🗑️ Iniciando eliminación por presión:', cotizacion.codigoCotizacion);
+    
+    this.cotizacionAEliminar = cotizacion;
+    this.presionandoEliminar = true;
+    this.tiempoPresionado = 0;
+    
+    // Intervalo que cuenta cada 100ms
+    this.intervaloPulsacion = setInterval(() => {
+      this.tiempoPresionado += 100;
+      
+      // Mostrar progreso en consola cada segundo
+      if (this.tiempoPresionado % 1000 === 0) {
+        console.log(`⏱️ Presionando: ${this.tiempoPresionado / 1000}s / 3s`);
+      }
+      
+      // Después de 3 segundos (3000ms), proceder con eliminación
+      if (this.tiempoPresionado >= 3000) {
+        this.completarEliminacion();
+      }
+    }, 100);
   }
 
-  cerrarModalEliminar(): void {
-    this.mostrarModalEliminar = false;
-    this.cotizacionEliminarId = null;
+  // Cancelar proceso de eliminación
+  cancelarEliminacion(): void {
+    console.log('❌ Eliminación cancelada - se soltó el botón');
+    
+    this.presionandoEliminar = false;
+    this.tiempoPresionado = 0;
+    this.cotizacionAEliminar = null;
+    
+    if (this.intervaloPulsacion) {
+      clearInterval(this.intervaloPulsacion);
+      this.intervaloPulsacion = null;
+    }
   }
 
-  async eliminarCotizacion(): Promise<void> {
-    if (!this.cotizacionEliminarId) return;
+  // Completar eliminación después de 3 segundos
+  completarEliminacion(): void {
+    console.log('✅ Eliminación completada - 3 segundos mantenidos');
+    
+    if (this.cotizacionAEliminar) {
+      const cotizacion = this.cotizacionAEliminar;
+      this.cancelarEliminacion(); // Limpiar estado
+      this.eliminarCotizacionDirectamente(cotizacion.id);
+    }
+  }
 
+  // Obtener porcentaje de progreso para mostrar visualmente
+  getPorcentajeProgreso(): number {
+    return Math.min((this.tiempoPresionado / 3000) * 100, 100);
+  }
+
+  // Función para acceder a Math en el template
+  getMath() {
+    return Math;
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar intervalo si existe
+    if (this.intervaloPulsacion) {
+      clearInterval(this.intervaloPulsacion);
+      this.intervaloPulsacion = null;
+    }
+  }
+  
+  private async eliminarCotizacionDirectamente(id: number): Promise<void> {
+    console.log('🗑️ Ejecutando eliminación directa de cotización ID:', id);
+    
     this.isLoading = true;
 
     try {
-      await this.cotizacionService.deleteByIdCotizacion(this.cotizacionEliminarId).toPromise();
+      console.log('📡 Llamando al servicio de eliminación...');
+      await this.cotizacionService.deleteByIdCotizacion(id).toPromise();
+      console.log('✅ Cotización eliminada exitosamente');
+      
+      console.log('� Recargando lista de cotizaciones...');
       await this.loadCotizaciones();
-      this.cerrarModalEliminar();
+      console.log('✅ Lista recargada');
+      
+      console.log('🎉 Proceso de eliminación completado');
+      alert('Cotización eliminada exitosamente.');
+      
     } catch (error) {
-      console.error('Error deleting cotización:', error);
+      console.error('❌ Error eliminando cotización:', error);
+      console.error('❌ Detalles del error:', JSON.stringify(error, null, 2));
+      
+      alert('Error al eliminar la cotización. Por favor, inténtelo de nuevo.');
     } finally {
       this.isLoading = false;
+      console.log('🏁 Proceso finalizado. isLoading:', this.isLoading);
     }
   }
 
@@ -939,7 +1151,12 @@ export class CotizacionesComponent implements OnInit {
     return `Persona #${personaId}`;
   }
 
-  getEstadoBadgeClass(estado: EstadoCotizacionResponse): string {
+  getEstadoBadgeClass(estado: EstadoCotizacionResponse | null | undefined): string {
+    // 🔹 Validar si estado existe
+    if (!estado) {
+      return 'bg-gray-100 text-gray-800'; // estilo por defecto para estados null/undefined
+    }
+    
     const descripcion = estado.descripcion?.toLowerCase();
     switch (descripcion) {
       case 'aprobada':
@@ -964,8 +1181,15 @@ export class CotizacionesComponent implements OnInit {
   }
 
   getCategoriasDisponibles(): CategoriaResponse[] {
+    // 🔍 Verificar si hay categorías cargadas
+    if (this.categorias.length === 0) {
+      return [];
+    }
+    
     const categoriasUsadas = this.gruposHoteles.map(g => g.categoria.id);
-    return this.categorias.filter(c => c.id !== 1 && !categoriasUsadas.includes(c.id));
+    const disponibles = this.categorias.filter(c => c.id !== 1 && !categoriasUsadas.includes(c.id));
+    
+    return disponibles;
   }
 
   trackByCotizacion(index: number, cotizacion: CotizacionResponse): number {
