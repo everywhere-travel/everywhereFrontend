@@ -35,7 +35,7 @@
           },
           "configurations": {
             "production": {
-              "outputPath": "dist/everyWhere",
+              "outputPath": "dist/everywhere-frontend",
               "outputHashing": "all",
               "budgets": [
                 {
