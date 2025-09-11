@@ -89,7 +89,7 @@ export class PersonasComponent implements OnInit {
       route: '/liquidaciones'
     },
     {
-      id: 'productos',
+      id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box', 
       children: [
@@ -104,6 +104,12 @@ export class PersonasComponent implements OnInit {
           title: 'Proveedores',
           icon: 'fas fa-truck',
           route: '/proveedores'
+        },
+        {
+          id: 'operadores',
+          title: 'Operadores',
+          icon: 'fas fa-headset',
+          route: '/operadores'
         }
       ]
     },

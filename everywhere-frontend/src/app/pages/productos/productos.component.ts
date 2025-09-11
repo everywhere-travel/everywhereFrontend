@@ -80,7 +80,7 @@ export class ProductosComponent implements OnInit {
       route: '/liquidaciones'
     },
     {
-      id: 'productos',
+      id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
       active: true,
@@ -96,20 +96,52 @@ export class ProductosComponent implements OnInit {
           title: 'Proveedores',
           icon: 'fas fa-truck',
           route: '/proveedores'
+        },
+        {
+          id: 'operadores',
+          title: 'Operadores',
+          icon: 'fas fa-headset',
+          route: '/operadores'
         }
       ]
     },
     {
       id: 'reportes',
-      title: 'Reportes',
+      title: 'Reportes y Analytics',
       icon: 'fas fa-chart-bar',
-      route: '/reportes'
+      children: [
+        {
+          id: 'estadisticas',
+          title: 'Estadísticas',
+          icon: 'fas fa-chart-line',
+          route: '/estadistica'
+        },
+        {
+          id: 'reportes-general',
+          title: 'Reportes Generales',
+          icon: 'fas fa-file-pdf',
+          route: '/reportes'
+        }
+      ]
     },
     {
-      id: 'estadisticas',
-      title: 'Estadísticas',
-      icon: 'fas fa-chart-line',
-      route: '/estadistica'
+      id: 'configuracion',
+      title: 'Configuración',
+      icon: 'fas fa-cog',
+      children: [
+        {
+          id: 'usuarios',
+          title: 'Usuarios',
+          icon: 'fas fa-user-shield',
+          route: '/usuarios'
+        },
+        {
+          id: 'sistema',
+          title: 'Sistema',
+          icon: 'fas fa-server',
+          route: '/configuracion'
+        }
+      ]
     }
   ];
 
