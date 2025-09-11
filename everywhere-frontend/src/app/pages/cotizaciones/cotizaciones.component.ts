@@ -1,12 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 // Services
 import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
 import { DetalleCotizacionService } from '../../core/service/DetalleCotizacion/detalle-cotizacion.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
+import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
+import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
 import { FormaPagoService } from '../../core/service/FormaPago/forma-pago.service';
 import { EstadoCotizacionService } from '../../core/service/EstadoCotizacion/estado-cotizacion.service';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
@@ -55,7 +57,7 @@ interface GrupoHotelTemp {
   standalone: true,
   templateUrl: './cotizaciones.component.html',
   styleUrls: ['./cotizaciones.component.css'],
-  imports: [CommonModule, ReactiveFormsModule, SidebarComponent]
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent]
 })
 export class CotizacionesComponent implements OnInit {
   
@@ -65,6 +67,8 @@ export class CotizacionesComponent implements OnInit {
   private cotizacionService = inject(CotizacionService);
   private detalleCotizacionService = inject(DetalleCotizacionService);
   private personaService = inject(PersonaService);
+  private personaNaturalService = inject(PersonaNaturalService);
+  private personaJuridicaService = inject(PersonaJuridicaService);
   private formaPagoService = inject(FormaPagoService);
   private estadoCotizacionService = inject(EstadoCotizacionService);
   private sucursalService = inject(SucursalService);
@@ -137,6 +141,11 @@ export class CotizacionesComponent implements OnInit {
   searchTerm = '';
   filteredCotizaciones: CotizacionResponse[] = [];
 
+  // Client selection variables (only the ones not in FormGroup)
+  personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
+  buscandoClientes = false;
+  clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | null = null;
+
   constructor() {}
 
   ngOnInit(): void {
@@ -165,7 +174,12 @@ export class CotizacionesComponent implements OnInit {
       cantAdultos: [1, [Validators.required, Validators.min(1)]],
       cantNinos: [0, [Validators.min(0)]],
       moneda: ['USD', [Validators.required]],
-      observacion: ['']
+      observacion: [''],
+      // Client selection fields
+      tipoClienteSeleccionado: [''],
+      criterioBusquedaNatural: ['nombres'],
+      criterioBusquedaJuridica: ['ruc'],
+      terminoBusquedaCliente: ['']
     });
 
     // Detalle form para productos fijos
@@ -335,11 +349,20 @@ export class CotizacionesComponent implements OnInit {
     this.cotizacionForm.reset({
       cantAdultos: 1,
       cantNinos: 0,
-      moneda: 'USD'
+      moneda: 'USD',
+      tipoClienteSeleccionado: '',
+      criterioBusquedaNatural: 'nombres',
+      criterioBusquedaJuridica: 'ruc',
+      terminoBusquedaCliente: ''
     });
     this.detallesFijos = [];
     this.gruposHoteles = [];
     this.deletedDetalleIds = [];
+    
+    // Reset client selection variables
+    this.personasEncontradas = [];
+    this.clienteSeleccionado = null;
+    this.buscandoClientes = false;
   }
 
   private setupDatesForNew(): void {
@@ -392,6 +415,11 @@ export class CotizacionesComponent implements OnInit {
       observacion: cotizacion.observacion || ''
     });
 
+    // Load client information for the new selector
+    if (cotizacion.persona?.id) {
+      await this.loadClienteForEdit(cotizacion.persona.id);
+    }
+
     // Load detalles
     try {
       const detalles = await this.detalleCotizacionService.getByCotizacionId(cotizacion.id).toPromise() || [];
@@ -399,6 +427,40 @@ export class CotizacionesComponent implements OnInit {
     } catch (error) {
       console.error('Error loading detalles:', error);
     }
+  }
+
+  private async loadClienteForEdit(personaId: number): Promise<void> {
+    // First try to find in personas naturales
+    try {
+      const personasNaturales = await this.personaNaturalService.findAll().toPromise() || [];
+      const personaNatural = personasNaturales.find(p => p.id === personaId);
+      
+      if (personaNatural) {
+        this.cotizacionForm.patchValue({ tipoClienteSeleccionado: 'natural' });
+        this.clienteSeleccionado = personaNatural;
+        return;
+      }
+    } catch (error) {
+      console.error('Error loading persona natural:', error);
+    }
+
+    // If not found, try personas juridicas
+    try {
+      const personasJuridicas = await this.personaJuridicaService.findAll().toPromise() || [];
+      const personaJuridica = personasJuridicas.find(p => p.id === personaId);
+      
+      if (personaJuridica) {
+        this.cotizacionForm.patchValue({ tipoClienteSeleccionado: 'juridica' });
+        this.clienteSeleccionado = personaJuridica;
+        return;
+      }
+    } catch (error) {
+      console.error('Error loading persona juridica:', error);
+    }
+
+    // If not found in either, reset
+    this.cotizacionForm.patchValue({ tipoClienteSeleccionado: '' });
+    this.clienteSeleccionado = null;
   }
 
   private formatDateForInput(date: Date): string {
@@ -908,5 +970,169 @@ export class CotizacionesComponent implements OnInit {
 
   trackByCotizacion(index: number, cotizacion: CotizacionResponse): number {
     return cotizacion.id;
+  }
+
+  // Client selection methods
+  onSelectChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    const value = target.value as 'natural' | 'juridica' | '';
+    this.onTipoClienteChange(value);
+  }
+
+  onTipoClienteChange(tipo: 'natural' | 'juridica' | ''): void {
+    this.cotizacionForm.patchValue({ 
+      tipoClienteSeleccionado: tipo,
+      terminoBusquedaCliente: '',
+      personaId: ''
+    });
+    this.personasEncontradas = [];
+    this.clienteSeleccionado = null;
+  }
+
+  resetClienteSeleccionado(): void {
+    const currentTipo = this.cotizacionForm.get('tipoClienteSeleccionado')?.value;
+    this.onTipoClienteChange(currentTipo);
+  }
+
+  onCriterioBusquedaChange(criterio: string): void {
+    const tipoCliente = this.cotizacionForm.get('tipoClienteSeleccionado')?.value;
+    if (tipoCliente === 'natural') {
+      this.cotizacionForm.patchValue({ criterioBusquedaNatural: criterio });
+    } else if (tipoCliente === 'juridica') {
+      this.cotizacionForm.patchValue({ criterioBusquedaJuridica: criterio });
+    }
+    this.cotizacionForm.patchValue({ terminoBusquedaCliente: '' });
+    this.personasEncontradas = [];
+  }
+
+  async buscarClientes(): Promise<void> {
+    const terminoBusqueda = this.cotizacionForm.get('terminoBusquedaCliente')?.value?.trim();
+    const tipoCliente = this.cotizacionForm.get('tipoClienteSeleccionado')?.value;
+    
+    if (!terminoBusqueda || !tipoCliente) {
+      return;
+    }
+
+    this.buscandoClientes = true;
+    this.personasEncontradas = [];
+
+    try {
+      if (tipoCliente === 'natural') {
+        await this.buscarPersonasNaturales();
+      } else if (tipoCliente === 'juridica') {
+        await this.buscarPersonasJuridicas();
+      }
+    } catch (error) {
+      console.error('Error searching clients:', error);
+      this.personasEncontradas = [];
+    } finally {
+      this.buscandoClientes = false;
+    }
+  }
+
+  private async buscarPersonasNaturales(): Promise<void> {
+    const termino = this.cotizacionForm.get('terminoBusquedaCliente')?.value?.trim().toLowerCase();
+    const criterio = this.cotizacionForm.get('criterioBusquedaNatural')?.value;
+    
+    try {
+      const todasLasPersonas = await this.personaNaturalService.findAll().toPromise() || [];
+      let resultado: PersonaNaturalResponse[] = [];
+
+      switch (criterio) {
+        case 'nombres':
+          resultado = todasLasPersonas.filter(p => 
+            p.nombres?.toLowerCase().includes(termino)
+          );
+          break;
+        case 'apellidos':
+          resultado = todasLasPersonas.filter(p => 
+            p.apellidos?.toLowerCase().includes(termino)
+          );
+          break;
+        case 'documento':
+          resultado = todasLasPersonas.filter(p => 
+            p.documento === termino.toUpperCase()
+          );
+          break;
+      }
+
+      this.personasEncontradas = resultado.slice(0, 10); // Limitar a 10 resultados
+    } catch (error) {
+      console.error('Error loading personas naturales:', error);
+      this.personasEncontradas = [];
+    }
+  }
+
+  private async buscarPersonasJuridicas(): Promise<void> {
+    const termino = this.cotizacionForm.get('terminoBusquedaCliente')?.value?.trim().toLowerCase();
+    const criterio = this.cotizacionForm.get('criterioBusquedaJuridica')?.value;
+    
+    try {
+      const todasLasPersonas = await this.personaJuridicaService.findAll().toPromise() || [];
+      let resultado: PersonaJuridicaResponse[] = [];
+
+      switch (criterio) {
+        case 'ruc':
+          resultado = todasLasPersonas.filter(p => 
+            p.ruc === termino.toUpperCase()
+          );
+          break;
+        case 'razonSocial':
+          resultado = todasLasPersonas.filter(p => 
+            p.razonSocial?.toLowerCase().includes(termino)
+          );
+          break;
+      }
+
+      this.personasEncontradas = resultado.slice(0, 10); // Limitar a 10 resultados
+    } catch (error) {
+      console.error('Error loading personas juridicas:', error);
+      this.personasEncontradas = [];
+    }
+  }
+
+  seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse): void {
+    this.clienteSeleccionado = persona;
+    this.cotizacionForm.patchValue({ 
+      personaId: persona.id,
+      terminoBusquedaCliente: ''
+    });
+    this.personasEncontradas = [];
+  }
+
+  getClienteDisplayName(persona: PersonaNaturalResponse | PersonaJuridicaResponse): string {
+    if ('nombres' in persona && 'apellidos' in persona) {
+      const doc = persona.documento ? ` - ${persona.documento}` : '';
+      return `${persona.nombres || ''} ${persona.apellidos || ''}${doc}`.trim();
+    }
+    
+    if ('razonSocial' in persona) {
+      const ruc = persona.ruc ? ` - RUC: ${persona.ruc}` : '';
+      return `${persona.razonSocial || 'Empresa'}${ruc}`.trim();
+    }
+    
+    return 'Cliente';
+  }
+
+  getSelectedClienteName(): string {
+    if (!this.clienteSeleccionado) return '';
+    return this.getClienteDisplayName(this.clienteSeleccionado);
+  }
+
+  // Getters for template access
+  get tipoClienteSeleccionado(): string {
+    return this.cotizacionForm.get('tipoClienteSeleccionado')?.value || '';
+  }
+
+  get criterioBusquedaNatural(): string {
+    return this.cotizacionForm.get('criterioBusquedaNatural')?.value || 'nombres';
+  }
+
+  get criterioBusquedaJuridica(): string {
+    return this.cotizacionForm.get('criterioBusquedaJuridica')?.value || 'ruc';
+  }
+
+  get terminoBusquedaCliente(): string {
+    return this.cotizacionForm.get('terminoBusquedaCliente')?.value || '';
   }
 }
