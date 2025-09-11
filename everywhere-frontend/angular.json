@@ -35,6 +35,8 @@
           },
           "configurations": {
             "production": {
+              "outputPath": "dist/everyWhere",
+              "outputHashing": "all",
               "budgets": [
                 {
                   "type": "initial",
@@ -46,8 +48,7 @@
                   "maximumWarning": "20kB",
                   "maximumError": "40kB"
                 }
-              ],
-              "outputHashing": "all"
+              ]
             },
             "development": {
               "optimization": false,
