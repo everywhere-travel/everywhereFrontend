@@ -50,7 +50,7 @@ export interface BackendErrorResponse {
           <div *ngIf="backendError?.error?.details" class="bg-gray-50 rounded-lg p-4 mb-6 text-left">
             <p class="text-sm text-gray-700">
               <strong>Detalles técnicos:</strong><br>
-              {{ backendError.error.details }}
+              {{ backendError?.error?.details }}
             </p>
           </div>
           
@@ -58,7 +58,7 @@ export interface BackendErrorResponse {
           <div *ngIf="backendError?.error?.relatedEntities?.length" class="bg-blue-50 rounded-lg p-4 mb-6 text-left">
             <p class="text-sm text-blue-800">
               <strong>Relacionado con:</strong>
-              <span class="block mt-1">{{ backendError.error.relatedEntities.join(', ') }}</span>
+              <span class="block mt-1">{{ backendError?.error?.relatedEntities?.join(', ') }}</span>
             </p>
           </div>
           
