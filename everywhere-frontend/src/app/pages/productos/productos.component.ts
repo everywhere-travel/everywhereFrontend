@@ -1,134 +1,526 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
-import { NavbarComponent } from "../../shared/components/navbar/navbar.component";
+import { Router } from '@angular/router';
+import { ProductoService } from '../../core/service/Producto/producto.service';
+import { ProductoRequest, ProductoResponse } from '../../shared/models/Producto/producto.model';
+import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+
+// Interface para la tabla de productos
+export interface ProductoTabla {
+  id: number;
+  codigo: string;
+  descripcion: string;
+  tipo: string;
+  creado: string;
+  actualizado: string;
+}
 
 @Component({
   selector: 'app-productos',
   standalone: true,
   templateUrl: './productos.component.html',
   styleUrls: ['./productos.component.css'],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, NavbarComponent]
+  imports: [
+    CommonModule,
+    FormsModule, 
+    ReactiveFormsModule,
+    SidebarComponent
+  ]
 })
 export class ProductosComponent implements OnInit {
 
-    currentData: any[] = [];
+  // Sidebar Configuration
+  sidebarCollapsed = false;
+  sidebarMenuItems: SidebarMenuItem[] = [
+    {
+      id: 'dashboard',
+      title: 'Dashboard',
+      icon: 'fas fa-chart-pie',
+      route: '/dashboard'
+    },
+    {
+      id: 'clientes',
+      title: 'Gestión de Clientes',
+      icon: 'fas fa-users',
+      children: [
+        {
+          id: 'personas',
+          title: 'Personas',
+          icon: 'fas fa-address-card',
+          route: '/personas'
+        },
+        {
+          id: 'viajeros',
+          title: 'Viajeros',
+          icon: 'fas fa-passport',
+          route: '/viajero'
+        },
+        {
+          id: 'viajero-frecuente',
+          title: 'Viajero Frecuente',
+          icon: 'fas fa-star',
+          route: '/viajero-frecuente'
+        }
+      ]
+    },
+    {
+      id: 'productos',
+      title: 'Productos y Servicios',
+      icon: 'fas fa-box',
+      active: true,
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos'
+        }
+      ]
+    },
+    {
+      id: 'cotizaciones',
+      title: 'Cotizaciones',
+      icon: 'fas fa-file-invoice-dollar',
+      route: '/cotizaciones'
+    },
+    {
+      id: 'liquidaciones',
+      title: 'Liquidaciones',
+      icon: 'fas fa-calculator',
+      route: '/liquidaciones'
+    },
+    {
+      id: 'reportes',
+      title: 'Reportes',
+      icon: 'fas fa-chart-bar',
+      route: '/reportes'
+    },
+    {
+      id: 'estadisticas',
+      title: 'Estadísticas',
+      icon: 'fas fa-chart-line',
+      route: '/estadistica'
+    }
+  ];
 
-  // Control
-  searchQuery: string = '';
-  activeTab: string = 'productos';
-  showForm: boolean = false;
-  editingId: number | null = null;
-  loading: boolean = false;
-
-  // Formularios
+  // Data
+  productos: ProductoResponse[] = [];
+  productosTabla: ProductoTabla[] = [];
+  filteredProductos: ProductoTabla[] = [];
+  
+  // Forms
   productoForm!: FormGroup;
-  proveedorForm!: FormGroup;
-  operadorForm!: FormGroup;
-  hotelForm!: FormGroup;
-
-  // Datos
-  productos: any[] = [];
-  proveedores: any[] = [];
-  operadores: any[] = [];
-  hoteles: any[] = [];
-
-  categorias = [
-    { value: 'transporte', label: 'Transporte' },
-    { value: 'tour', label: 'Tour' },
-    { value: 'hotel', label: 'Hotel' }
+  
+  // Control variables
+  loading = false;
+  mostrarModalCrear = false;
+  mostrarModalEliminar = false;
+  editandoProducto = false;
+  productoSeleccionado: ProductoResponse | null = null;
+  productoAEliminar: ProductoResponse | null = null;
+  searchTerm = '';
+  currentView: 'table' | 'cards' | 'list' = 'table';
+  
+  // Pagination
+  currentPage = 1;
+  itemsPerPage = 10;
+  totalItems = 0;
+  
+  // Dropdowns and menus
+  showActionMenu: number | null = null;
+  showQuickActions: number | null = null;
+  
+  // Estadísticas
+  totalProductos = 0;
+  
+  // Math object for template use
+  Math = Math;
+  
+  // Tipos de producto disponibles
+  tiposProducto = [
+    { value: 'TRANSPORTE', label: 'Transporte' },
+    { value: 'HOSPEDAJE', label: 'Hospedaje' },
+    { value: 'TOUR', label: 'Tour' },
+    { value: 'ALIMENTACION', label: 'Alimentación' },
+    { value: 'SEGURO', label: 'Seguro' },
+    { value: 'ENTRETENIMIENTO', label: 'Entretenimiento' },
+    { value: 'ACTIVIDAD', label: 'Actividad' },
+    { value: 'SERVICIO', label: 'Servicio' },
+    { value: 'PRODUCTO', label: 'Producto' },
+    { value: 'OTRO', label: 'Otro' }
   ];
 
-  monedas = [
-    { value: 'PEN', label: 'Soles (PEN)' },
-    { value: 'USD', label: 'Dólares (USD)' },
-    { value: 'EUR', label: 'Euros (EUR)' }
-  ];
-
-  constructor(private fb: FormBuilder) {}
+  constructor(
+    private fb: FormBuilder,
+    private productoService: ProductoService,
+    private router: Router
+  ) {
+    this.initializeForms();
+  }
 
   ngOnInit(): void {
-    console.log('ProductosComponent inicializado');
+    this.loadProductos();
+    this.calcularEstadisticas();
+  }
 
-    // Formularios
+  private initializeForms(): void {
     this.productoForm = this.fb.group({
-      codigo: [''],
-      nombre: [''],
       descripcion: [''],
-      categoria: [''],
-      activo: [true],
-      precio: [0],
-      moneda: ['PEN'],
-      proveedorId: [''],
-      operadorId: ['']
-    });
-
-    this.proveedorForm = this.fb.group({
-      nombre: [''],
-      contacto: [''],
-      telefono: [''],
-      email: [''],
-      direccion: ['']
-    });
-
-    this.operadorForm = this.fb.group({
-      nombre: [''],
-      codigo: [''],
-      contacto: [''],
-      telefono: [''],
-      email: ['']
-    });
-
-    this.hotelForm = this.fb.group({
-      nombre: [''],
-      categoria: [''],
-      ubicacion: [''],
-      precioNoche: [0],
-      descripcion: [''],
-      servicios: [''],
-      activo: [true]
+      tipo: ['']
     });
   }
 
-  // Métodos de acción
-  searchItems(): void {
-    console.log('Buscando ítems con query:', this.searchQuery);
+  // CRUD Operations
+  loadProductos(): void {
+    this.loading = true;
+    this.productoService.getAllProductos().subscribe({
+      next: (productos) => {
+        this.productos = productos;
+        this.convertirATabla();
+        this.applyFilters();
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar productos:', error);
+        this.loading = false;
+      }
+    });
   }
 
-  toggleForm(): void {
-    this.showForm = !this.showForm;
-    console.log('Mostrar/Ocultar formulario:', this.showForm);
+  private convertirATabla(): void {
+    this.productosTabla = this.productos.map(producto => ({
+      id: producto.id,
+      codigo: producto.codigo,
+      descripcion: producto.descripcion,
+      tipo: producto.tipo,
+      creado: producto.creado,
+      actualizado: producto.actualizado
+    }));
+    this.totalProductos = this.productosTabla.length;
   }
 
-  setActiveTab(tab: string): void {
-    this.activeTab = tab;
-    console.log('Pestaña activa:', this.activeTab);
+  // Método principal para guardar (crea o actualiza según el estado)
+  guardarProducto(): void {
+    if (this.editandoProducto) {
+      this.actualizarProducto();
+    } else {
+      this.crearProducto();
+    }
   }
 
-  onSubmit(): void {
-    console.log('Formulario enviado en pestaña:', this.activeTab);
+  crearProducto(): void {
+    if (this.productoForm.valid) {
+      this.loading = true;
+      const productoRequest: ProductoRequest = this.productoForm.value;
+      
+      this.productoService.createProducto(productoRequest).subscribe({
+        next: (response) => {
+          console.log('Producto creado exitosamente:', response);
+          this.loadProductos();
+          this.cerrarModal();
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error al crear producto:', error);
+          this.loading = false;
+        }
+      });
+    }
   }
 
-  editItem(item: any): void {
-    console.log('Editar item:', item);
+  actualizarProducto(): void {
+    if (this.productoForm.valid && this.productoSeleccionado) {
+      this.loading = true;
+      const productoRequest: ProductoRequest = this.productoForm.value;
+      
+      this.productoService.updateProducto(this.productoSeleccionado.id, productoRequest).subscribe({
+        next: (response) => {
+          console.log('Producto actualizado exitosamente:', response);
+          this.loadProductos();
+          this.cerrarModal();
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error al actualizar producto:', error);
+          this.loading = false;
+        }
+      });
+    }
   }
 
-  deleteItem(id: number): void {
-    console.log('Eliminar item con ID:', id);
+  eliminarProducto(id: number): void {
+    // Buscar el producto a eliminar
+    const producto = this.productos.find(p => p.id === id);
+    if (producto) {
+      this.productoAEliminar = producto;
+      this.mostrarModalEliminar = true;
+    }
   }
 
-  // Helpers
-  getCategoriaLabel(value: string): string {
-    const cat = this.categorias.find(c => c.value === value);
-    return cat ? cat.label : 'Desconocido';
+  // Modal de confirmación de eliminación
+  confirmarEliminar(producto: ProductoResponse): void {
+    this.productoAEliminar = producto;
+    this.mostrarModalEliminar = true;
   }
 
-  getProveedorName(id: number): string {
-    const prov = this.proveedores.find(p => p.id === id);
-    return prov ? prov.nombre : '-';
+  cerrarModalEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.productoAEliminar = null;
   }
 
-  getStarRating(categoria: number): string {
-    return '★'.repeat(categoria) + '☆'.repeat(5 - categoria);
+  confirmarEliminacionModal(): void {
+    if (this.productoAEliminar?.id) {
+      this.loading = true;
+      this.productoService.deleteByIdProducto(this.productoAEliminar.id).subscribe({
+        next: () => {
+          console.log('Producto eliminado exitosamente');
+          this.loadProductos();
+          this.cerrarModalEliminar();
+          this.loading = false;
+        },
+        error: (error) => {
+          console.error('Error al eliminar producto:', error);
+          this.loading = false;
+        }
+      });
+    }
+  }
+
+  // Modal management
+  abrirModalCrear(): void {
+    this.editandoProducto = false;
+    this.productoSeleccionado = null;
+    this.productoForm.reset();
+    this.mostrarModalCrear = true;
+  }
+
+  editarProducto(productoTabla: ProductoTabla): void {
+    console.log('Editando producto:', productoTabla);
+    
+    // Buscar el producto completo en la lista original
+    const productoCompleto = this.productos.find(p => p.id === productoTabla.id);
+    
+    if (productoCompleto) {
+      console.log('Producto completo encontrado:', productoCompleto);
+      console.log('Tipo del producto:', productoCompleto.tipo);
+      console.log('Tipos disponibles:', this.tiposProducto);
+      
+      this.editandoProducto = true;
+      this.productoSeleccionado = productoCompleto;
+      
+      // Limpiar y normalizar el tipo
+      const tipoNormalizado = productoCompleto.tipo?.trim().toUpperCase() || '';
+      console.log('Tipo normalizado:', tipoNormalizado);
+      
+      // Verificar si el tipo existe en nuestras opciones
+      const tipoExiste = this.tiposProducto.some(t => t.value === tipoNormalizado);
+      console.log('¿Tipo existe en opciones?:', tipoExiste);
+      
+      // Si el tipo no existe, agregarlo temporalmente
+      if (!tipoExiste && tipoNormalizado) {
+        console.log('Agregando tipo temporal:', tipoNormalizado);
+        this.tiposProducto.push({ 
+          value: tipoNormalizado, 
+          label: tipoNormalizado.charAt(0) + tipoNormalizado.slice(1).toLowerCase() 
+        });
+      }
+      
+      // Cargar los datos del producto en el formulario
+      this.productoForm.patchValue({
+        descripcion: productoCompleto.descripcion || '',
+        tipo: tipoNormalizado
+      });
+      
+      console.log('Formulario después de patchValue:', this.productoForm.value);
+      console.log('Control tipo después de patchValue:', this.productoForm.get('tipo')?.value);
+      
+      this.mostrarModalCrear = true;
+    } else {
+      console.error('No se encontró el producto completo para editar');
+    }
+  }
+
+  cerrarModal(): void {
+    this.mostrarModalCrear = false;
+    this.editandoProducto = false;
+    this.productoSeleccionado = null;
+    this.productoForm.reset();
+  }
+
+  // Search and filter
+  applyFilters(): void {
+    let filtered = [...this.productosTabla];
+
+    if (this.searchTerm.trim()) {
+      const term = this.searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(producto =>
+        producto.descripcion.toLowerCase().includes(term) ||
+        producto.codigo.toLowerCase().includes(term) ||
+        producto.tipo.toLowerCase().includes(term)
+      );
+    }
+
+    this.filteredProductos = filtered;
+    this.totalItems = filtered.length;
+  }
+
+  onSearchChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.applyFilters();
+  }
+
+  // Pagination
+  get paginatedProductos(): ProductoTabla[] {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return this.filteredProductos.slice(startIndex, endIndex);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalItems / this.itemsPerPage);
+  }
+
+  changePage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  // Estadísticas
+  calcularEstadisticas(): void {
+    this.totalProductos = this.productos.length;
+  }
+
+  // Action menus
+  toggleActionMenu(productoId: number, event: Event): void {
+    event.stopPropagation();
+    this.showActionMenu = this.showActionMenu === productoId ? null : productoId;
+    this.showQuickActions = null;
+  }
+
+  toggleQuickActions(productoId: number, event: Event): void {
+    event.stopPropagation();
+    this.showQuickActions = this.showQuickActions === productoId ? null : productoId;
+    this.showActionMenu = null;
+  }
+
+  // Utilities
+  getTipoLabel(tipo: string): string {
+    const tipoObj = this.tiposProducto.find(t => t.value === tipo);
+    return tipoObj ? tipoObj.label : tipo;
+  }
+
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('es-ES');
+  }
+
+  // Listener para cerrar menus al hacer click fuera
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.action-menu-container')) {
+      this.showActionMenu = null;
+      this.showQuickActions = null;
+    }
+  }
+
+  // Sidebar methods
+  onSidebarItemClick(item: SidebarMenuItem): void {
+    console.log('Sidebar item clicked:', item);
+    if (item.route) {
+      this.router.navigate([item.route]);
+    }
+  }
+
+  onToggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
+  // Métodos para cambiar entre vistas
+  changeView(view: 'table' | 'cards' | 'list'): void {
+    this.currentView = view;
+  }
+
+  isActiveView(view: 'table' | 'cards' | 'list'): boolean {
+    return this.currentView === view;
+  }
+
+  // Métodos para estadísticas del header
+  getActiveProductsCount(): number {
+    return this.productos.filter(p => p.id).length; // Asumiendo que productos activos son los que tienen ID
+  }
+
+  getUniqueTypesCount(): number {
+    const tipos = new Set(this.productos.map(p => p.tipo));
+    return tipos.size;
+  }
+
+  // Método para obtener clases de color por tipo
+  getTipoColorClass(tipo: string): string {
+    const colorMap: { [key: string]: string } = {
+      'TRANSPORTE': 'bg-blue-100 text-blue-800',
+      'HOSPEDAJE': 'bg-green-100 text-green-800',
+      'TOUR': 'bg-purple-100 text-purple-800',
+      'ALIMENTACION': 'bg-orange-100 text-orange-800',
+      'SEGURO': 'bg-red-100 text-red-800',
+      'OTRO': 'bg-gray-100 text-gray-800'
+    };
+    return colorMap[tipo] || 'bg-gray-100 text-gray-800';
+  }
+
+  // Métodos para filtros
+  hasActiveFilters(): boolean {
+    return false; // Por ahora no hay filtros adicionales implementados
+  }
+
+  clearAllFilters(): void {
+    this.searchTerm = '';
+    this.onSearchChange();
+  }
+
+  onItemsPerPageChange(): void {
+    this.currentPage = 1;
+    this.calcularEstadisticas();
+  }
+
+  // Método para actualizar datos paginados
+  updatePaginatedData(): void {
+    this.calcularEstadisticas();
+  }
+
+  // Métodos para paginación (remover el getter duplicado)
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+
+    if (end - start < 2 * delta) {
+      if (start === 1) {
+        end = Math.min(total, start + 2 * delta);
+      } else if (end === total) {
+        start = Math.max(1, end - 2 * delta);
+      }
+    }
+
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 }
