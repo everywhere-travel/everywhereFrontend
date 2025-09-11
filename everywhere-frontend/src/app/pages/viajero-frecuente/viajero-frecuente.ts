@@ -75,26 +75,33 @@ export class ViajeroFrecuente implements OnInit {
     {
       id: 'liquidaciones',
       title: 'Liquidaciones',
-      icon: 'fas fa-calculator',
+      icon: 'fas fa-credit-card',
       route: '/liquidaciones'
     },
     {
-      id: 'productos',
-      title: 'Gestión de Productos',
-      icon: 'fas fa-box-open',
-      route: '/productos'
-    },
-    {
-      id: 'juridica',
-      title: 'Persona Jurídica',
-      icon: 'fas fa-building',
-      route: '/juridica'
-    },
-    {
-      id: 'natural',
-      title: 'Persona Natural',
-      icon: 'fas fa-user-tie',
-      route: '/natural'
+      id: 'recursos',
+      title: 'Recursos',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos'
+        },
+        {
+          id: 'proveedores',
+          title: 'Proveedores',
+          icon: 'fas fa-truck',
+          route: '/proveedores'
+        },
+        {
+          id: 'operadores',
+          title: 'Operadores',
+          icon: 'fas fa-headset',
+          route: '/operadores'
+        }
+      ]
     },
     {
       id: 'reportes',
@@ -106,6 +113,31 @@ export class ViajeroFrecuente implements OnInit {
           title: 'Estadísticas',
           icon: 'fas fa-chart-line',
           route: '/estadistica'
+        },
+        {
+          id: 'reportes-general',
+          title: 'Reportes Generales',
+          icon: 'fas fa-file-pdf',
+          route: '/reportes'
+        }
+      ]
+    },
+    {
+      id: 'configuracion',
+      title: 'Configuración',
+      icon: 'fas fa-cog',
+      children: [
+        {
+          id: 'usuarios',
+          title: 'Usuarios',
+          icon: 'fas fa-user-shield',
+          route: '/usuarios'
+        },
+        {
+          id: 'sistema',
+          title: 'Sistema',
+          icon: 'fas fa-server',
+          route: '/configuracion'
         }
       ]
     }

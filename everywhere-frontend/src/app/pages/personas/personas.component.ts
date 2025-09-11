@@ -89,10 +89,29 @@ export class PersonasComponent implements OnInit {
       route: '/liquidaciones'
     },
     {
-      id: 'productos',
-      title: 'Productos y Servicios',
-      icon: 'fas fa-suitcase-rolling',
-      route: '/productos'
+      id: 'recursos',
+      title: 'Recursos',
+      icon: 'fas fa-box', 
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos'
+        },
+        {
+          id: 'proveedores',
+          title: 'Proveedores',
+          icon: 'fas fa-truck',
+          route: '/proveedores'
+        },
+        {
+          id: 'operadores',
+          title: 'Operadores',
+          icon: 'fas fa-headset',
+          route: '/operadores'
+        }
+      ]
     },
     {
       id: 'reportes',
