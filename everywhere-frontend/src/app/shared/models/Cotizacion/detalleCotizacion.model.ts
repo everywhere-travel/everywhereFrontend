@@ -7,6 +7,10 @@ export interface DetalleCotizacionRequest {
   cantidad?: number
   unidad?: number
   descripcion?: string
+  categoriaId?: number
+  comision?: number
+  precioHistorico?: number
+
 }
 
 export interface DetalleCotizacionResponse {
@@ -14,10 +18,12 @@ export interface DetalleCotizacionResponse {
   cantidad?: number
   unidad?: number
   descripcion?: string
-  precioHistorico?: number
   creado?: string
   actualizado?: string
   cotizacion?: CotizacionResponse
   producto?: ProductoResponse
   proveedor?: ProveedorResponse
+  categoriaId?: number
+  comision?: number
+  precioHistorico?: number
 }

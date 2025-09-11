@@ -1,5 +1,5 @@
 import { CounterResponse } from '../Counter/counter.model'
-import { FormaPagoResponse} from '../FormaPago/formaPago'
+import { FormaPagoResponse} from '../FormaPago/formaPago.model'
 import { EstadoCotizacionResponse } from './estadoCotizacion.model'
 import { SucursalResponse } from '../Sucursal/sucursal.model'
 import { CarpetaResponse } from '../Carpeta/carpeta.model'

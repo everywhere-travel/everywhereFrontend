@@ -52,5 +52,8 @@ export class CotizacionService {
     return this.http.put<CotizacionResponse>(`${this.apiUrl}/${id}/sucursal/${sucursalId}`, {});
   }
 
+  setPersona(id: number, personaId: number): Observable<CotizacionResponse> {
+    return this.http.put<CotizacionResponse>(`${this.apiUrl}/${id}/persona/${personaId}`, {});
+  }
 
 }
