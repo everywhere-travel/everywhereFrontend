@@ -68,20 +68,6 @@ export class ProductosComponent implements OnInit {
       ]
     },
     {
-      id: 'productos',
-      title: 'Productos y Servicios',
-      icon: 'fas fa-box',
-      active: true,
-      children: [
-        {
-          id: 'productos',
-          title: 'Productos',
-          icon: 'fas fa-cube',
-          route: '/productos'
-        }
-      ]
-    },
-    {
       id: 'cotizaciones',
       title: 'Cotizaciones',
       icon: 'fas fa-file-invoice-dollar',
@@ -92,6 +78,26 @@ export class ProductosComponent implements OnInit {
       title: 'Liquidaciones',
       icon: 'fas fa-calculator',
       route: '/liquidaciones'
+    },
+    {
+      id: 'productos',
+      title: 'Recursos',
+      icon: 'fas fa-box',
+      active: true,
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos'
+        },
+        {
+          id: 'proveedores',
+          title: 'Proveedores',
+          icon: 'fas fa-truck',
+          route: '/proveedores'
+        }
+      ]
     },
     {
       id: 'reportes',

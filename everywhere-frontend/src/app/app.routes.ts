@@ -9,6 +9,7 @@ import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.compone
 import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
 import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.component';
 import { ProductosComponent } from './pages/productos/productos.component';
+import { ProveedorComponent } from './pages/proveedor/proveedor.component';
 import { ReportesComponent } from './pages/reportes/reportes.component';
 import { EstadisticaComponent } from './pages/estadistica/estadistica.component';
 
@@ -61,6 +62,11 @@ export const routes: Routes = [
   {
     path: 'productos',
     component: ProductosComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'proveedores',
+    component: ProveedorComponent,
     canActivate: [authGuard]
   },
   {
