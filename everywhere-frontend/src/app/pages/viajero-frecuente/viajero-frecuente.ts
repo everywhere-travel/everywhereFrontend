@@ -80,9 +80,16 @@ export class ViajeroFrecuente implements OnInit {
     },
     {
       id: 'productos',
-      title: 'Gestión de Productos',
-      icon: 'fas fa-box-open',
-      route: '/productos'
+      title: 'Productos y Servicios',
+      icon: 'fas fa-box', 
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos'
+        }
+      ]
     },
     {
       id: 'juridica',

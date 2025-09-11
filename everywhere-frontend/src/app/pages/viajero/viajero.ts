@@ -72,8 +72,15 @@ export class Viajero implements OnInit {
     {
       id: 'productos',
       title: 'Productos y Servicios',
-      icon: 'fas fa-suitcase-rolling',
-      route: '/productos'
+      icon: 'fas fa-box', 
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos'
+        }
+      ]
     },
     {
       id: 'reportes',
