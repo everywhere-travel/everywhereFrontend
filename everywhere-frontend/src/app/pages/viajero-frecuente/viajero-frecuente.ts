@@ -48,7 +48,7 @@ export class ViajeroFrecuente implements OnInit {
       children: [
         {
           id: 'personas',
-          title: 'Personas',
+          title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas'
         },

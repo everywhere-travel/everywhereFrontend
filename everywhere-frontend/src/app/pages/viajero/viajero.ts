@@ -37,7 +37,7 @@ export class Viajero implements OnInit {
       children: [
         {
           id: 'personas',
-          title: 'Personas',
+          title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas'
         },
@@ -139,7 +139,8 @@ export class Viajero implements OnInit {
   viajerosFiltrados: ViajeroResponse[] = [];
 
   // Loading state
-  isLoading = true;
+  loading: boolean = false;
+  isLoading = false;
 
   // Search and filters
   searchQuery = '';
@@ -179,6 +180,14 @@ export class Viajero implements OnInit {
   // Form
   viajeroForm: FormGroup;
 
+  // Pagination
+  currentPage = 1;
+  itemsPerPage = 10;
+  totalItems = 0;
+
+  // Math object for template use
+  Math = Math;
+
   constructor(
     private viajeroService: ViajeroService,
     private router: Router,
@@ -189,19 +198,22 @@ export class Viajero implements OnInit {
 
   ngOnInit(): void {
     this.loadViajeros();
-  } 
+  }
   // Load data
-  loadViajeros(): void { 
+  loadViajeros(): void {
+    this.loading = true;
     this.isLoading = true;
-    
+
     this.viajeroService.findAll().subscribe({
-      next: (data) => { 
+      next: (data) => {
         this.viajeros = data;
         this.aplicarFiltros();
         this.calcularEstadisticas();
-        this.isLoading = false; 
+        this.loading = false;
+        this.isLoading = false;
       },
-      error: (error) => { 
+      error: (error) => {
+        this.loading = false;
         this.isLoading = false;
       }
     });
@@ -211,12 +223,12 @@ export class Viajero implements OnInit {
   calcularEstadisticas(): void {
     const nacionalidades = new Set(this.viajeros.map(v => v.nacionalidad));
     this.estadisticas.totalNacionalidades = nacionalidades.size;
-    
+
     // Calcular documentos próximos a vencer (próximos 30 días)
     const hoy = new Date();
     const treintaDias = new Date();
     treintaDias.setDate(hoy.getDate() + 30);
-    
+
     this.estadisticas.documentosVenciendo = this.viajeros.filter(viajero => {
       const fechaVencimiento = new Date(viajero.fechaVencimientoDocumento);
       return fechaVencimiento >= hoy && fechaVencimiento <= treintaDias;
@@ -224,11 +236,11 @@ export class Viajero implements OnInit {
   }
 
   // Search and filter methods
-  onSearchChange(): void { 
+  onSearchChange(): void {
     this.aplicarFiltros();
   }
 
-  aplicarFiltroTipo(tipo: string): void { 
+  aplicarFiltroTipo(tipo: string): void {
     this.filtroTipo = tipo;
     this.aplicarFiltros();
   }
@@ -254,14 +266,14 @@ export class Viajero implements OnInit {
       const hoy = new Date();
       const treintaDias = new Date();
       treintaDias.setDate(hoy.getDate() + 30);
-      
+
       filtrados = filtrados.filter(viajero => {
         const fechaVencimiento = new Date(viajero.fechaVencimientoDocumento);
         return fechaVencimiento >= hoy && fechaVencimiento <= treintaDias;
       });
     }
 
-    this.viajerosFiltrados = filtrados; 
+    this.viajerosFiltrados = filtrados;
   }
 
   clearSearch(): void {
@@ -285,7 +297,7 @@ export class Viajero implements OnInit {
   }
 
   // View management
-  changeView(view: 'table' | 'cards' | 'list'): void { 
+  changeView(view: 'table' | 'cards' | 'list'): void {
     this.currentView = view;
     this.closeAllMenus();
   }
@@ -301,7 +313,7 @@ export class Viajero implements OnInit {
       this.selectedItems.splice(index, 1);
     } else {
       this.selectedItems.push(viajeroId);
-    } 
+    }
   }
 
   toggleAllSelection(): void {
@@ -309,7 +321,7 @@ export class Viajero implements OnInit {
       this.selectedItems = [];
     } else {
       this.selectedItems = this.viajerosFiltrados.map(v => v.id);
-    } 
+    }
   }
 
   isSelected(viajeroId: number): boolean {
@@ -329,16 +341,16 @@ export class Viajero implements OnInit {
   }
 
   // Action menu management
-  toggleActionMenu(viajeroId: number): void { 
+  toggleActionMenu(viajeroId: number): void {
     this.showActionMenuCards = null;
     this.showActionMenuList = null;
-    this.showActionMenu = this.showActionMenu === viajeroId ? null : viajeroId; 
+    this.showActionMenu = this.showActionMenu === viajeroId ? null : viajeroId;
   }
 
-  toggleActionMenuCards(viajeroId: number): void { 
+  toggleActionMenuCards(viajeroId: number): void {
     this.showActionMenu = null;
     this.showActionMenuList = null;
-    this.showActionMenuCards = this.showActionMenuCards === viajeroId ? null : viajeroId; 
+    this.showActionMenuCards = this.showActionMenuCards === viajeroId ? null : viajeroId;
   }
 
   toggleActionMenuList(viajeroId: number): void {
@@ -347,52 +359,52 @@ export class Viajero implements OnInit {
     this.showActionMenuList = this.showActionMenuList === viajeroId ? null : viajeroId;
     this.showActionMenu = null;
     this.showActionMenuCards = null;
-    this.showActionMenuList = this.showActionMenuList === viajeroId ? null : viajeroId; 
+    this.showActionMenuList = this.showActionMenuList === viajeroId ? null : viajeroId;
   }
 
-  closeAllMenus(): void { 
+  closeAllMenus(): void {
     this.showActionMenu = null;
     this.showActionMenuCards = null;
-    this.showActionMenuList = null; 
+    this.showActionMenuList = null;
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event): void {
-    const target = event.target as HTMLElement; 
-    
-    if (!target.closest('.action-menu-container') && !target.closest('[data-action-menu]')) { 
-      this.closeAllMenus(); 
+    const target = event.target as HTMLElement;
+
+    if (!target.closest('.action-menu-container') && !target.closest('[data-action-menu]')) {
+      this.closeAllMenus();
     }
   }
 
   // CRUD operations
-  verViajero(viajero: ViajeroResponse): void { 
+  verViajero(viajero: ViajeroResponse): void {
     this.viajeroDetalles = viajero;
     this.mostrarModalDetalles = true;
     this.closeAllMenus();
   }
 
-  editarViajero(viajero: ViajeroResponse): void { 
+  editarViajero(viajero: ViajeroResponse): void {
     this.editandoViajero = viajero;
     this.populateFormWithViajero(viajero);
     this.mostrarModalCrearViajero = true;
     this.closeAllMenus();
   }
 
-  confirmarEliminar(viajero: ViajeroResponse): void { 
+  confirmarEliminar(viajero: ViajeroResponse): void {
     this.viajeroAEliminar = viajero;
     this.mostrarModalEliminar = true;
     this.closeAllMenus();
   }
 
   confirmarEliminacionModal(): void {
-    if (this.viajeroAEliminar) { 
+    if (this.viajeroAEliminar) {
       this.viajeroService.deleteById(this.viajeroAEliminar.id).subscribe({
-        next: () => { 
+        next: () => {
           this.cerrarModalEliminar();
           this.loadViajeros();
         },
-        error: (error) => { 
+        error: (error) => {
           this.cerrarModalEliminar();
         }
       });
@@ -408,16 +420,16 @@ export class Viajero implements OnInit {
     this.mostrarModalEliminarMultiple = false;
   }
 
-  abrirModalCrearViajero(): void { 
+  abrirModalCrearViajero(): void {
     this.editandoViajero = null;
     this.viajeroForm.reset();
     this.mostrarModalCrearViajero = true;
   }
 
   // Bulk operations
-  editarSeleccionados(): void { 
+  editarSeleccionados(): void {
     if (this.selectedItems.length === 0) return;
-    
+
     if (this.selectedItems.length === 1) {
       // Si solo hay uno seleccionado, abrir editor individual
       const viajero = this.viajeros.find(v => v.id === this.selectedItems[0]);
@@ -430,9 +442,9 @@ export class Viajero implements OnInit {
     }
   }
 
-  eliminarSeleccionados(): void { 
+  eliminarSeleccionados(): void {
     if (this.selectedItems.length === 0) return;
-    
+
     // Mostrar modal de confirmación múltiple
     this.mostrarModalEliminarMultiple = true;
   }
@@ -440,11 +452,11 @@ export class Viajero implements OnInit {
   // Método para eliminar múltiples viajeros desde el modal
   confirmarEliminacionMultiple(): void {
     if (this.selectedItems.length === 0) return;
-    
+
     this.isLoading = true;
     let eliminados = 0;
     const total = this.selectedItems.length;
-    
+
     this.selectedItems.forEach(id => {
       this.viajeroService.deleteById(id).subscribe({
         next: () => {
@@ -515,12 +527,12 @@ export class Viajero implements OnInit {
 
   getDiasHastaVencimiento(fechaVencimiento: string): string {
     if (!fechaVencimiento) return '';
-    
+
     const hoy = new Date();
     const vencimiento = new Date(fechaVencimiento);
     const diferencia = vencimiento.getTime() - hoy.getTime();
     const dias = Math.ceil(diferencia / (1000 * 3600 * 24));
-    
+
     if (dias < 0) {
       return `Vencido hace ${Math.abs(dias)} días`;
     } else if (dias === 0) {
@@ -536,12 +548,12 @@ export class Viajero implements OnInit {
 
   isDocumentoProximoVencer(viajero: ViajeroResponse): boolean {
     if (!viajero.fechaVencimientoDocumento) return false;
-    
+
     const hoy = new Date();
     const vencimiento = new Date(viajero.fechaVencimientoDocumento);
     const diferencia = vencimiento.getTime() - hoy.getTime();
     const dias = Math.ceil(diferencia / (1000 * 3600 * 24));
-    
+
     return dias >= 0 && dias <= 30;
   }
 
@@ -579,7 +591,7 @@ export class Viajero implements OnInit {
         return 0;
       }
     });
- 
+
   }
 
   // Track by functions
@@ -588,14 +600,14 @@ export class Viajero implements OnInit {
   }
 
   // Sidebar methods
-  onSidebarItemClick(item: SidebarMenuItem): void { 
+  onSidebarItemClick(item: SidebarMenuItem): void {
     if (item.route) {
       this.router.navigate([item.route]);
     }
   }
 
   onToggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed; 
+    this.sidebarCollapsed = !this.sidebarCollapsed;
   }
 
   // Form methods
@@ -620,7 +632,7 @@ export class Viajero implements OnInit {
   }
 
   // Refresh data
-  refreshData(): void { 
+  refreshData(): void {
     this.loadViajeros();
   }
 
@@ -634,7 +646,7 @@ export class Viajero implements OnInit {
   private convertToCSV(data: ViajeroResponse[]): string {
     const headers = ['Nombres', 'Apellido Paterno', 'Apellido Materno', 'Documento', 'Nacionalidad', 'Residencia', 'Email', 'Teléfono'];
     const csvContent = [headers.join(',')];
-    
+
     data.forEach(viajero => {
       const row = [
         viajero.nombres || '',
@@ -648,14 +660,14 @@ export class Viajero implements OnInit {
       ];
       csvContent.push(row.join(','));
     });
-    
+
     return csvContent.join('\n');
   }
 
   private downloadCSV(csvContent: string, filename: string): void {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
-    
+
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -670,6 +682,12 @@ export class Viajero implements OnInit {
   // Utility methods for UI
   hasActiveFilters(): boolean {
     return !!(this.searchQuery || this.filtroTipo !== 'todos');
+  }
+
+  onItemsPerPageChange(): void {
+    this.itemsPerPage = Number(this.itemsPerPage);
+    this.currentPage = 1;
+    this.calcularEstadisticas();
   }
 
   getEmptyStateTitle(): string {
@@ -693,8 +711,8 @@ export class Viajero implements OnInit {
   }
 
   // Método para poblar el formulario con datos del viajero
-  populateFormWithViajero(viajero: ViajeroResponse): void { 
-    
+  populateFormWithViajero(viajero: ViajeroResponse): void {
+
     this.viajeroForm.patchValue({
       nombres: viajero.nombres || '',
       apellidoPaterno: viajero.apellidoPaterno || '',
@@ -711,21 +729,21 @@ export class Viajero implements OnInit {
         telefono: viajero.persona?.telefono || '',
         direccion: viajero.persona?.direccion || ''
       }
-    }); 
+    });
   }
 
   // Método para cerrar modal de detalles
-  cerrarModalDetalles(): void { 
+  cerrarModalDetalles(): void {
     this.mostrarModalDetalles = false;
     this.viajeroDetalles = null;
   }
 
   // Método para cerrar modal de crear/editar
-  cerrarModalCrearViajero(): void { 
+  cerrarModalCrearViajero(): void {
     this.mostrarModalCrearViajero = false;
     this.editandoViajero = null;
     this.viajeroForm.reset();
-    
+
     // Resetear el formulario a valores por defecto
     this.viajeroForm.patchValue({
       tipoDocumento: 'DNI',
@@ -734,8 +752,8 @@ export class Viajero implements OnInit {
   }
 
   // Método para manejar el envío del formulario
-  onSubmitViajero(): void { 
-    if (this.viajeroForm.invalid) { 
+  onSubmitViajero(): void {
+    if (this.viajeroForm.invalid) {
       Object.keys(this.viajeroForm.controls).forEach(key => {
         this.viajeroForm.get(key)?.markAsTouched();
       });
@@ -743,7 +761,7 @@ export class Viajero implements OnInit {
     }
 
     this.isSubmitting = true;
-    const formData = this.viajeroForm.value; 
+    const formData = this.viajeroForm.value;
 
     const viajeroRequest: ViajeroRequest = {
       nombres: formData.nombres,
@@ -765,34 +783,78 @@ export class Viajero implements OnInit {
 
     if (this.editandoViajero) {
       // Actualizar viajero existente 
-      
+
       this.viajeroService.update(this.editandoViajero.id, viajeroRequest).subscribe({
-        next: (response) => { 
+        next: (response) => {
           this.isSubmitting = false;
           this.cerrarModalCrearViajero();
           this.loadViajeros();
           // Aquí podrías agregar una notificación de éxito
         },
-        error: (error) => { 
+        error: (error) => {
           this.isSubmitting = false;
           // Aquí podrías agregar una notificación de error
         }
       });
     } else {
       // Crear nuevo viajero 
-      
+
       this.viajeroService.save(viajeroRequest).subscribe({
-        next: (response) => { 
+        next: (response) => {
           this.isSubmitting = false;
           this.cerrarModalCrearViajero();
           this.loadViajeros();
           // Aquí podrías agregar una notificación de éxito
         },
-        error: (error) => { 
+        error: (error) => {
           this.isSubmitting = false;
           // Aquí podrías agregar una notificación de error
         }
       });
     }
   }
+
+  // Pagination
+  get paginatedViajeros(): ViajeroResponse[] {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * itemsPerPageNum;
+    const endIndex = startIndex + itemsPerPageNum;
+    return this.viajerosFiltrados.slice(startIndex, endIndex);
+  }
+
+  get totalPages(): number {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    return Math.ceil(this.totalItems / itemsPerPageNum);
+  }
+
+  // Métodos para paginación (remover el getter duplicado)
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+
+    if (end - start < 2 * delta) {
+      if (start === 1) {
+        end = Math.min(total, start + 2 * delta);
+      } else if (end === total) {
+        start = Math.max(1, end - 2 * delta);
+      }
+    }
+
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+  
 }

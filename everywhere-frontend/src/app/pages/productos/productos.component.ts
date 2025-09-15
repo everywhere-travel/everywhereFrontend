@@ -25,7 +25,7 @@ export interface ProductoTabla {
   styleUrls: ['./productos.component.css'],
   imports: [
     CommonModule,
-    FormsModule, 
+    FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
     ErrorModalComponent
@@ -49,7 +49,7 @@ export class ProductosComponent implements OnInit {
       children: [
         {
           id: 'personas',
-          title: 'Personas',
+          title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas'
         },
@@ -149,10 +149,10 @@ export class ProductosComponent implements OnInit {
   productos: ProductoResponse[] = [];
   productosTabla: ProductoTabla[] = [];
   filteredProductos: ProductoTabla[] = [];
-  
+
   // Forms
   productoForm!: FormGroup;
-  
+
   // Control variables
   loading = false;
   mostrarModalCrear = false;
@@ -161,34 +161,39 @@ export class ProductosComponent implements OnInit {
   editandoProducto = false;
   productoSeleccionado: ProductoResponse | null = null;
   productoAEliminar: ProductoResponse | null = null;
-  
+
   // Error modal data
   errorModalData: ErrorModalData | null = null;
   backendErrorData: BackendErrorResponse | null = null;
-  
+
   searchTerm = '';
   selectedType = 'todos';
   currentView: 'table' | 'cards' | 'list' = 'table';
-  
+
   // Sorting variables
   sortColumn: string = 'creado';
   sortDirection: 'asc' | 'desc' = 'desc';
-  
+
+  // Variables para selección múltiple
+  selectedItems: number[] = [];
+  allSelected: boolean = false;
+  someSelected: boolean = false;
+
   // Pagination
   currentPage = 1;
   itemsPerPage = 10;
   totalItems = 0;
-  
+
   // Dropdowns and menus
   showActionMenu: number | null = null;
   showQuickActions: number | null = null;
-  
+
   // Estadísticas
   totalProductos = 0;
-  
+
   // Math object for template use
   Math = Math;
-  
+
   // Tipos únicos extraídos de los datos
   tiposUnicos: string[] = [];
 
@@ -257,9 +262,9 @@ export class ProductosComponent implements OnInit {
     if (this.productoForm.valid) {
       this.loading = true;
       const productoRequest: ProductoRequest = this.productoForm.value;
-      
+
       this.productoService.createProducto(productoRequest).subscribe({
-        next: (response) => { 
+        next: (response) => {
           this.loadProductos();
           this.cerrarModal();
           this.loading = false;
@@ -276,9 +281,9 @@ export class ProductosComponent implements OnInit {
     if (this.productoForm.valid && this.productoSeleccionado) {
       this.loading = true;
       const productoRequest: ProductoRequest = this.productoForm.value;
-      
+
       this.productoService.updateProducto(this.productoSeleccionado.id, productoRequest).subscribe({
-        next: (response) => { 
+        next: (response) => {
           this.loadProductos();
           this.cerrarModal();
           this.loading = false;
@@ -317,7 +322,7 @@ export class ProductosComponent implements OnInit {
   }
 
   confirmarEliminacionModal(): void {
-    if (this.productoAEliminar) { 
+    if (this.productoAEliminar) {
       this.eliminarProductoDefinitivo(this.productoAEliminar.id);
     }
   }
@@ -332,14 +337,14 @@ export class ProductosComponent implements OnInit {
       error: (error) => {
         this.loading = false;
         this.cerrarModalEliminar();
-        
+
         // Usar el servicio de manejo de errores
         const { modalData, backendError } = this.errorHandler.handleHttpError(error, 'eliminar producto');
-        
+
         this.errorModalData = modalData;
         this.backendErrorData = backendError || null;
         this.mostrarModalError = true;
-        
+
         console.error('Error al eliminar producto:', error);
       }
     });
@@ -356,20 +361,88 @@ export class ProductosComponent implements OnInit {
   editarProducto(productoTabla: ProductoTabla): void {
     // Buscar el producto completo en la lista original
     const productoCompleto = this.productos.find(p => p.id === productoTabla.id);
-    
+
     if (productoCompleto) {
       this.editandoProducto = true;
       this.productoSeleccionado = productoCompleto;
-      
+
       // Cargar los datos del producto en el formulario
       this.productoForm.patchValue({
         descripcion: productoCompleto.descripcion || '',
         tipo: productoCompleto.tipo || ''
       });
-      
+
       this.mostrarModalCrear = true;
     } else {
       console.error('No se encontró el producto completo para editar');
+    }
+  }
+
+  updateSelectionState(): void {
+    const totalItems = this.filteredProductos.length;
+    const selectedCount = this.selectedItems.length;
+
+    this.allSelected = selectedCount === totalItems && totalItems > 0;
+    this.someSelected = selectedCount > 0 && selectedCount < totalItems;
+  }
+
+  // Métodos para acciones masivas
+  clearSelection(): void {
+    this.selectedItems = [];
+    this.updateSelectionState();
+  }
+
+
+  editarSeleccionados(): void {
+    if (this.selectedItems.length === 0) return;
+
+    if (this.selectedItems.length === 1) {
+      const producto = this.productos.find(p => p.id === this.selectedItems[0]);
+      if (producto) {
+        this.editarProducto(producto);
+      }
+    } else {
+      const producto = this.productos.find(p => p.id === this.selectedItems[0]);
+      if (producto) {
+        this.editarProducto(producto);
+      }
+    }
+  }
+
+  eliminarSeleccionados(): void {
+    if (this.selectedItems.length === 0) return;
+
+    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cliente${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
+    if (confirm(confirmMessage)) {
+      this.loading = true;
+      let eliminados = 0;
+      const total = this.selectedItems.length;
+
+      this.selectedItems.forEach(id => {
+        const producto = this.productos.find(p => p.id === id);
+        if (producto) {
+          this.productoService.deleteByIdProducto(id).subscribe({
+            next: () => {
+              eliminados++;
+              if (eliminados === total) {
+                this.loadProductos();
+                this.clearSelection();
+                this.loading = false;
+              }
+            },
+            error: (error) => {
+              console.error('Error al eliminar persona natural:', error);
+              eliminados++;
+              if (eliminados === total) {
+                this.loadProductos();
+                this.clearSelection();
+                this.loading = false;
+              }
+            }
+          });
+
+        }
+      });
     }
   }
 
@@ -378,6 +451,10 @@ export class ProductosComponent implements OnInit {
     this.editandoProducto = false;
     this.productoSeleccionado = null;
     this.productoForm.reset();
+  }
+
+  refreshData(): void {
+    this.loadProductos();
   }
 
   // Search and filter
@@ -400,10 +477,10 @@ export class ProductosComponent implements OnInit {
 
     this.filteredProductos = filtered;
     this.totalItems = filtered.length;
-    
+
     // Aplicar ordenamiento
     this.applySorting();
-    
+
     // Extraer tipos únicos para el filtro
     this.extraerTiposUnicos();
   }
@@ -436,7 +513,7 @@ export class ProductosComponent implements OnInit {
 
   private applySorting(): void {
     if (!this.filteredProductos.length) return;
-    
+
     this.filteredProductos.sort((a, b) => {
       let valueA: any;
       let valueB: any;
@@ -472,6 +549,30 @@ export class ProductosComponent implements OnInit {
     });
   }
 
+  // Métodos para selección múltiple
+  toggleAllSelection(): void {
+    if (this.allSelected) {
+      this.selectedItems = [];
+    } else {
+      this.selectedItems = this.filteredProductos.map(p => p.id!);
+    }
+    this.updateSelectionState();
+  }
+
+  toggleSelection(id: number): void {
+    const index = this.selectedItems.indexOf(id);
+    if (index > -1) {
+      this.selectedItems.splice(index, 1);
+    } else {
+      this.selectedItems.push(id);
+    }
+    this.updateSelectionState();
+  }
+
+  isSelected(id: number): boolean {
+    return this.selectedItems.includes(id);
+  }
+
   clearSearch(): void {
     this.searchTerm = '';
     this.applyFilters();
@@ -479,13 +580,15 @@ export class ProductosComponent implements OnInit {
 
   // Pagination
   get paginatedProductos(): ProductoTabla[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * itemsPerPageNum;
+    const endIndex = startIndex + itemsPerPageNum;
     return this.filteredProductos.slice(startIndex, endIndex);
   }
 
   get totalPages(): number {
-    return Math.ceil(this.totalItems / this.itemsPerPage);
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    return Math.ceil(this.totalItems / itemsPerPageNum);
   }
 
   changePage(page: number): void {
@@ -532,7 +635,7 @@ export class ProductosComponent implements OnInit {
   }
 
   // Sidebar methods
-  onSidebarItemClick(item: SidebarMenuItem): void { 
+  onSidebarItemClick(item: SidebarMenuItem): void {
     if (item.route) {
       this.router.navigate([item.route]);
     }
@@ -586,6 +689,7 @@ export class ProductosComponent implements OnInit {
   }
 
   onItemsPerPageChange(): void {
+    this.itemsPerPage = Number(this.itemsPerPage);
     this.currentPage = 1;
     this.calcularEstadisticas();
   }
