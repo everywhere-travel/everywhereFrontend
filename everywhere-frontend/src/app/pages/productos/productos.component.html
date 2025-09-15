@@ -116,20 +116,15 @@
           </div>
         </div>
 
-        <!-- Search and Filters Content -->
-        <div class="p-6">
-          <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <!-- Search Input -->
+        <!-- Search Controls -->
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Search Input -->
             <div class="lg:col-span-2">
               <div class="relative">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 <input type="text" placeholder="Buscar por código, descripción o tipo..."
                   [(ngModel)]="searchTerm" (input)="onSearchChange()" 
-                  class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
-                   
-                  >
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i class="fas fa-search text-gray-400"></i>
-                </div>
+                  class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"> 
                 <button *ngIf="searchTerm"
                   class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                   (click)="clearSearch()">
@@ -158,10 +153,10 @@
                   <i class="fas fa-times"></i>Limpiar filtros
                 </button>
               </div>
-            </div>
-          </div>
+            </div> 
         </div>
       </div>
+
       <!-- Loading State -->
       <div *ngIf="loading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
         <div class="flex flex-col items-center justify-center py-16 px-6">
