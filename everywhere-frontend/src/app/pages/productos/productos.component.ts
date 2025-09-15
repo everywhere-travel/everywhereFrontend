@@ -49,7 +49,7 @@ export class ProductosComponent implements OnInit {
       children: [
         {
           id: 'personas',
-          title: 'Personas',
+          title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas'
         },
@@ -580,13 +580,15 @@ export class ProductosComponent implements OnInit {
 
   // Pagination
   get paginatedProductos(): ProductoTabla[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * itemsPerPageNum;
+    const endIndex = startIndex + itemsPerPageNum;
     return this.filteredProductos.slice(startIndex, endIndex);
   }
 
   get totalPages(): number {
-    return Math.ceil(this.totalItems / this.itemsPerPage);
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    return Math.ceil(this.totalItems / itemsPerPageNum);
   }
 
   changePage(page: number): void {
@@ -687,6 +689,7 @@ export class ProductosComponent implements OnInit {
   }
 
   onItemsPerPageChange(): void {
+    this.itemsPerPage = Number(this.itemsPerPage);
     this.currentPage = 1;
     this.calcularEstadisticas();
   }
