@@ -510,35 +510,19 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private async loadClienteForEdit(personaId: number): Promise<void> {
-    // First try to find in personas naturales
     try {
-      const personasNaturales = await this.personaNaturalService.findAll().toPromise() || [];
-      const personaNatural = personasNaturales.find(p => p.id === personaId);
-      
-      if (personaNatural) {
-        this.cotizacionForm.patchValue({ tipoClienteSeleccionado: 'natural' });
-        this.clienteSeleccionado = personaNatural;
+      const persona = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
+      if (persona) {
+        this.clienteSeleccionado = persona;
+        this.cotizacionForm.patchValue({
+          tipoClienteSeleccionado: persona.tipo === 'JURIDICA' ? 'juridica' : 'natural'
+        });
         return;
       }
     } catch (error) {
-      console.error('Error loading persona natural:', error);
+      console.error('Error loading persona (unificada):', error);
     }
-
-    // If not found, try personas juridicas
-    try {
-      const personasJuridicas = await this.personaJuridicaService.findAll().toPromise() || [];
-      const personaJuridica = personasJuridicas.find(p => p.id === personaId);
-      
-      if (personaJuridica) {
-        this.cotizacionForm.patchValue({ tipoClienteSeleccionado: 'juridica' });
-        this.clienteSeleccionado = personaJuridica;
-        return;
-      }
-    } catch (error) {
-      console.error('Error loading persona juridica:', error);
-    }
-
-    // If not found in either, reset
+    // Si no se encuentra, resetea
     this.cotizacionForm.patchValue({ tipoClienteSeleccionado: '' });
     this.clienteSeleccionado = null;
   }
@@ -1416,17 +1400,26 @@ seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse): v
   this.personasEncontradas = [];
 }
 
-  getClienteDisplayName(persona: PersonaNaturalResponse | PersonaJuridicaResponse): string {
+  getClienteDisplayName(persona: any): string {
+    // Soporta personaDisplay, PersonaNaturalResponse y PersonaJuridicaResponse
+    if (!persona) return 'Cliente';
+    // Si es personaDisplay (nuevo modelo unificado)
+    if ('tipo' in persona && 'identificador' in persona && 'nombre' in persona) {
+      if (persona.tipo === 'JURIDICA') {
+        return `RUC: ${persona.identificador} - ${persona.nombre}`;
+      } else {
+        return `DNI: ${persona.identificador} - ${persona.nombre}`;
+      }
+    }
+    // Compatibilidad con modelos antiguos
     if ('nombres' in persona && 'apellidos' in persona) {
       const doc = persona.documento ? ` - ${persona.documento}` : '';
       return `${persona.nombres || ''} ${persona.apellidos || ''}${doc}`.trim();
     }
-    
     if ('razonSocial' in persona) {
       const ruc = persona.ruc ? ` - RUC: ${persona.ruc}` : '';
       return `${persona.razonSocial || 'Empresa'}${ruc}`.trim();
     }
-    
     return 'Cliente';
   }
 
