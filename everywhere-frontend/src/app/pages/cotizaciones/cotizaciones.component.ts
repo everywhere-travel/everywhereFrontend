@@ -545,7 +545,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     detalles.forEach(detalle => {
       console.log('🔍 Procesando detalle ID:', detalle.id, 'Categoría:', detalle.categoria);
       
-      if (detalle.categoria === 1) {
+      if (detalle.categoria?.id === 1) {
         // Productos fijos
         const detalleTemp = this.convertDetalleToTemp(detalle);
         console.log('📌 Agregando a detalles fijos:', detalleTemp);

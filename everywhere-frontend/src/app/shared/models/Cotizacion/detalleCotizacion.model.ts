@@ -1,6 +1,7 @@
 import { CotizacionResponse } from './cotizacion.model'
 import { ProductoResponse } from '../Producto/producto.model';
 import { ProveedorResponse } from '../Proveedor/proveedor.model';
+import { CategoriaResponse } from '../Categoria/categoria.model';
 
 
 export interface DetalleCotizacionRequest {
@@ -22,7 +23,7 @@ export interface DetalleCotizacionResponse {
   cotizacion?: CotizacionResponse
   producto?: ProductoResponse
   proveedor?: ProveedorResponse
-  categoria?: number        // ✅ Cambio: categoriaId → categoria
+  categoria?: CategoriaResponse        // ✅ Cambio: categoriaId → categoria
   comision?: number
   precioHistorico?: number
 }
