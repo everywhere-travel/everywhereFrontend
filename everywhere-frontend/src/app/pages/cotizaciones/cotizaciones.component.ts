@@ -17,6 +17,7 @@ import { ProductoService } from '../../core/service/Producto/producto.service';
 import { ProveedorService } from '../../core/service/Proveedor/proveedor.service';
 import { CategoriaService } from '../../core/service/Categoria/categoria.service';
 
+import { personaDisplay } from '../../shared/models/Persona/persona.model';
 // Models
 import { CotizacionRequest, CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
 import { DetalleCotizacionRequest, DetalleCotizacionResponse } from '../../shared/models/Cotizacion/detalleCotizacion.model';
@@ -848,6 +849,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Validar personaId: debe existir y ser el ID real retornado por el backend
+    let formValue = this.cotizacionForm.getRawValue();
+    if (!formValue.personaId || formValue.personaId === 0) {
+      alert('Debes seleccionar o registrar un cliente antes de guardar la cotización.');
+      return;
+    }
+
     this.isLoading = true;
     console.log('🚀 Iniciando flujo de cotización secuencial...');
 
@@ -856,7 +864,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       console.log('📝 DEBUG onSubmitCotizacion - Form Value completo:', formValue);
       console.log('📝 DEBUG personaId del form:', formValue.personaId);
       console.log('📝 DEBUG clienteSeleccionado:', this.clienteSeleccionado);
-      
       // Prepare cotización request
       const cotizacionRequest: CotizacionRequest = {
         cantAdultos: formValue.cantAdultos,
@@ -878,14 +885,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         if (!updateResult) throw new Error('Failed to update cotización');
         cotizacionResponse = updateResult;
         console.log('✅ Cotización actualizada:', cotizacionResponse.id);
-        
         // Set relationships
         console.log('🔗 Asignando relaciones secuencialmente...');
         await this.setRelacionesCotizacion(cotizacionResponse.id, formValue);
-        
         // Handle deleted detalles
         await this.eliminarDetallesEliminados();
-        
       } else {
         console.log('🆕 Creando nueva cotización...');
         // Create new cotización
@@ -893,23 +897,19 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         if (!createResult) throw new Error('Failed to create cotización');
         cotizacionResponse = createResult;
         console.log('✅ Cotización creada con ID:', cotizacionResponse.id);
-        
         // Set relationships
         console.log('🔗 Asignando relaciones secuencialmente...');
         await this.setRelacionesCotizacion(cotizacionResponse.id, formValue);
       }
-
       // Create/update detalles
       console.log('📋 Procesando detalles de cotización...');
       await this.procesarDetalles(cotizacionResponse.id);
       console.log('✅ Detalles procesados correctamente');
-
       // Reload data and close form
       console.log('🔄 Recargando lista de cotizaciones...');
       await this.loadCotizaciones();
       this.cerrarFormulario();
       console.log('🎉 Flujo completado exitosamente');
-      
     } catch (error) {
       console.error('❌ Error en flujo de cotización:', error);
     } finally {
@@ -1215,38 +1215,25 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   getPersonaDisplayName(personaId: number): string {
-    // Cache para personas consultadas por ID
+    // Usar cache para evitar llamadas repetidas
     if (!this['personasCache']) {
       this['personasCache'] = {};
     }
-    // Buscar en array local
-    let persona = this.personas.find(p => p.id === personaId);
-    // Si no está, buscar en cache
-    if (!persona && this['personasCache'][personaId]) {
-      persona = this['personasCache'][personaId];
+    const cache = this['personasCache'];
+    if (personaId in cache) {
+      const persona: personaDisplay = cache[personaId];
+      return `${persona.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${persona.identificador} - ${persona.nombre}`;
     }
-    // Si no está, consultar backend y guardar en cache
-    if (!persona && personaId) {
-      this.personaService.findPersonaNaturalOrJuridicaById(personaId).subscribe({
-        next: (data) => {
-          this['personasCache'][personaId] = data;
-        }
-      });
-      return 'Buscando...';
-    }
-    if (!persona) return 'Sin asignar';
-
-    // Persona Natural
-    if ('nombres' in persona && 'apellidos' in persona && 'documento' in persona) {
-      return `${persona.nombres} ${persona.apellidos} (DNI: ${persona.documento})`;
-    }
-
-    // Persona Jurídica
-    if ('razonSocial' in persona && 'ruc' in persona) {
-      return `${persona.razonSocial} (RUC: ${persona.ruc})`;
-    }
-
-    return `Persona #${personaId}`;
+    // Si no está en cache, consultar backend y guardar
+    this.personaService.findPersonaNaturalOrJuridicaById(personaId).subscribe({
+      next: (data) => {
+        cache[personaId] = data;
+      },
+      error: (err) => {
+        console.error('[getPersonaDisplayName] Error consultando backend para id', personaId, ':', err);
+      }
+    });
+    return 'Buscando...';
   }
 
   getEstadoBadgeClass(estado: EstadoCotizacionResponse | null | undefined): string {
@@ -1413,21 +1400,21 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
   }
 
-  seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse): void {
-    console.log('👤 DEBUG seleccionarCliente - Persona seleccionada:', persona);
-    console.log('👤 DEBUG ID de la persona:', persona.id);
-    
-    this.clienteSeleccionado = persona;
-    this.cotizacionForm.patchValue({ 
-      personaId: persona.id,
-      terminoBusquedaCliente: ''
-    });
-    
-    console.log('👤 DEBUG Form actualizado con personaId:', persona.id);
-    console.log('👤 DEBUG Valor actual del form personaId:', this.cotizacionForm.get('personaId')?.value);
-    
-    this.personasEncontradas = [];
-  }
+seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse): void {
+  console.log('👤 DEBUG seleccionarCliente - Persona seleccionada:', persona);
+  // Usar el FK de la tabla persona base si existe, si no el id propio
+  const personaId = typeof (persona as any).persona === 'object'
+    ? (persona as any).persona.id
+    : (persona as any).persona || persona.id;
+  this.clienteSeleccionado = persona;
+  this.cotizacionForm.patchValue({ 
+    personaId: personaId,
+    terminoBusquedaCliente: ''
+  });
+  console.log('👤 DEBUG Form actualizado con personaId:', personaId);
+  console.log('👤 DEBUG Valor actual del form personaId:', this.cotizacionForm.get('personaId')?.value);
+  this.personasEncontradas = [];
+}
 
   getClienteDisplayName(persona: PersonaNaturalResponse | PersonaJuridicaResponse): string {
     if ('nombres' in persona && 'apellidos' in persona) {

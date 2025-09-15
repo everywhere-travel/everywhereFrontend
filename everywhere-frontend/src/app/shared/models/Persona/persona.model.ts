@@ -15,3 +15,9 @@ export interface PersonaResponse {
   actualizado: string
 }
 
+export interface personaDisplay {
+  id: number;
+  tipo: string; // 'JURIDICA' | 'NATURAL' | etc.
+  identificador: string; // RUC, DNI, etc.
+  nombre: string;
+}
