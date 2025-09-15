@@ -38,6 +38,7 @@ interface DetalleCotizacionTemp {
   id?: number;
   proveedor?: ProveedorResponse | null;
   producto?: ProductoResponse;
+  categoria: CategoriaResponse | number; // Puede ser objeto o id
   descripcion: string;
   precioHistorico: number;
   comision: number;
@@ -569,6 +570,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       id: detalle.id,
       proveedor: detalle.proveedor,
       producto: detalle.producto,
+      categoria: (detalle.categoria?.id ?? detalle.categoria ?? 1), // Nunca undefined
       descripcion: detalle.descripcion || 'Sin descripción',
       precioHistorico: detalle.precioHistorico || 0,
       comision: detalle.comision || 0,
@@ -656,6 +658,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const nuevoDetalle: DetalleCotizacionTemp = {
       proveedor,
       producto,
+      categoria: 1, // Productos fijos siempre categoria 1
       descripcion,
       precioHistorico,
       comision,
@@ -774,6 +777,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const nuevoDetalle: DetalleCotizacionTemp = {
       proveedor,
       producto,
+      categoria: grupo.categoria.id ?? 1,
       descripcion,
       precioHistorico,
       comision,
@@ -1057,16 +1061,23 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     console.log('📝 Actualizando detalle existente:', detalle.id);
 
+    // Enviamos también la categoría
+    let categoriaId: number;
+    if (typeof detalle.categoria === 'object' && detalle.categoria !== null && 'id' in detalle.categoria) {
+      categoriaId = (detalle.categoria as any).id;
+    } else {
+      categoriaId = detalle.categoria as number;
+    }
     const request: DetalleCotizacionRequest = {
       cantidad: detalle.cantidad || 1,
-      unidad: detalle.unidad || 1,
+      unidad: (detalle.unidad !== undefined && detalle.unidad !== null) ? detalle.unidad : 0,
       descripcion: detalle.descripcion || '',
+      categoria: categoriaId,
       comision: detalle.comision || 0,
       precioHistorico: detalle.precioHistorico || 0
-      // ✅ No incluimos categoriaId en updates, solo en creación
     };
 
-    console.log('📤 Request para actualizar detalle:', request);
+    console.log('📤 Request para actualizar detalle (sin id en body):', request);
     await this.detalleCotizacionService.updateDetalleCotizacion(detalle.id, request).toPromise();
     console.log('✅ Detalle actualizado exitosamente');
   }
