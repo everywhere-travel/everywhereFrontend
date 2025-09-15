@@ -33,7 +33,7 @@ export interface CotizacionResponse {
   estadoCotizacion?: EstadoCotizacionResponse
   sucursal?: SucursalResponse
   carpeta?: CarpetaResponse
-  persona?: PersonaResponse
+  personas?: PersonaResponse
   formaPago?: FormaPagoResponse
 
 }

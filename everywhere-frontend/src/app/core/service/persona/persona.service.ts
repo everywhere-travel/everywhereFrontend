@@ -63,4 +63,8 @@ export class PersonaService {
   deleteById(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseURL}/${id}`);
   }
+
+  findPersonaNaturalOrJuridicaById(id: number): Observable<PersonaResponse> {
+    return this.http.get<PersonaResponse>(`${this.baseURL}/with-details/${id}`);
+  }
 }

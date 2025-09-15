@@ -61,6 +61,7 @@ interface GrupoHotelTemp {
   imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent]
 })
 export class CotizacionesComponent implements OnInit, OnDestroy {
+  personasCache: { [id: number]: any } = {};
   
   // Services injection
   private fb = inject(FormBuilder);
@@ -206,9 +207,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private loadInitialData(): void {
     this.isLoading = true;
     
-    // Load all required data in parallel
+    // 🔄 Cargar personas PRIMERO antes que las cotizaciones
     Promise.all([
-      this.loadCotizaciones(),
       this.loadPersonas(),
       this.loadFormasPago(),
       this.loadEstadosCotizacion(),
@@ -216,7 +216,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.loadProductos(),
       this.loadProveedores(),
       this.loadCategorias()
-    ]).finally(() => {
+    ]).then(() => {
+      // 🔄 Después de cargar todo lo demás, cargar cotizaciones
+      console.log('📋 Datos iniciales cargados, ahora cargando cotizaciones...');
+      return this.loadCotizaciones();
+    }).finally(() => {
       this.isLoading = false;
     });
   }
@@ -224,8 +228,21 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private async loadCotizaciones(): Promise<void> {
     try {
       console.log('📋 Cargando cotizaciones...');
+      console.log('👥 Personas disponibles al cargar cotizaciones:', this.personas.length);
       this.cotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
       console.log('📋 Cotizaciones cargadas:', this.cotizaciones.length, this.cotizaciones);
+      
+      // Debug específico de personas en cotizaciones
+      this.cotizaciones.forEach((cot, index) => {
+        const personaDisplay = this.getPersonaDisplayName(cot.personas?.id || 0);
+        console.log(`📋 Cotización ${index + 1}:`, {
+          codigo: cot.codigoCotizacion,
+          personaId: cot.personas?.id,
+          personaCompleta: cot.personas,
+          personaDisplay: personaDisplay
+        });
+      });
+      
       this.filterCotizaciones();
       console.log('📋 Cotizaciones filtradas:', this.filteredCotizaciones.length, this.filteredCotizaciones);
     } catch (error) {
@@ -236,10 +253,22 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadPersonas(): Promise<void> {
     try {
-      const personasResult = await this.personaService.findAll().toPromise();
-      this.personas = personasResult || [];
+      console.log('👥 Cargando personas naturales y jurídicas...');
+      
+      // Cargar personas naturales
+      const personasNaturales = await this.personaNaturalService.findAll().toPromise() || [];
+      console.log('👤 Personas naturales cargadas:', personasNaturales.length);
+      
+      // Cargar personas jurídicas
+      const personasJuridicas = await this.personaJuridicaService.findAll().toPromise() || [];
+      console.log('🏢 Personas jurídicas cargadas:', personasJuridicas.length);
+      
+      // Combinar ambas listas
+      this.personas = [...personasNaturales, ...personasJuridicas];
+      console.log('👥 Total personas cargadas:', this.personas.length, this.personas);
+      
     } catch (error) {
-      console.error('Error loading personas:', error);
+      console.error('❌ Error loading personas:', error);
       this.personas = [];
     }
   }
@@ -344,11 +373,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.filteredCotizaciones = [...this.cotizaciones];
     } else {
       const term = this.searchTerm.toLowerCase();
-      this.filteredCotizaciones = this.cotizaciones.filter(cotizacion =>
-        cotizacion.codigoCotizacion?.toLowerCase().includes(term) ||
-        this.getPersonaDisplayName(cotizacion.persona?.id || 0).toLowerCase().includes(term) ||
-        cotizacion.origenDestino?.toLowerCase().includes(term)
-      );
+      this.filteredCotizaciones = this.cotizaciones.filter(cotizacion => {
+        console.log('🔍 DEBUG Filtrando cotización:', cotizacion.codigoCotizacion, 'personaId:', cotizacion.personas?.id);
+        return cotizacion.codigoCotizacion?.toLowerCase().includes(term) ||
+               this.getPersonaDisplayName(cotizacion.personas?.id || 0).toLowerCase().includes(term) ||
+               cotizacion.origenDestino?.toLowerCase().includes(term);
+      });
     }
   }
 
@@ -435,10 +465,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private async loadCotizacionForEdit(cotizacion: CotizacionResponse): Promise<void> {
+    console.log('📝 Cargando cotización para editar:', cotizacion.id);
+    
     // Set form values
     this.cotizacionForm.patchValue({
       codigoCotizacion: cotizacion.codigoCotizacion,
-      personaId: cotizacion.persona?.id,
+      personaId: cotizacion.personas?.id,
       fechaEmision: cotizacion.fechaEmision ? this.formatDateTimeLocal(new Date(cotizacion.fechaEmision)) : '',
       fechaVencimiento: cotizacion.fechaVencimiento ? this.formatDateTimeLocal(new Date(cotizacion.fechaVencimiento)) : '',
       estadoCotizacionId: cotizacion.estadoCotizacion?.id,
@@ -454,16 +486,25 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     });
 
     // Load client information for the new selector
-    if (cotizacion.persona?.id) {
-      await this.loadClienteForEdit(cotizacion.persona.id);
+    if (cotizacion.personas?.id) {
+      await this.loadClienteForEdit(cotizacion.personas.id);
+    }
+
+    // 🔄 Asegurar que las categorías estén cargadas antes de cargar detalles
+    console.log('🔄 Verificando categorías antes de cargar detalles...');
+    if (this.categorias.length === 0) {
+      console.log('🔄 Cargando categorías antes de procesar detalles...');
+      await this.loadCategorias();
     }
 
     // Load detalles
     try {
+      console.log('📋 Cargando detalles de cotización...');
       const detalles = await this.detalleCotizacionService.getByCotizacionId(cotizacion.id).toPromise() || [];
+      console.log('📋 Detalles obtenidos:', detalles);
       this.loadDetallesIntoForm(detalles);
     } catch (error) {
-      console.error('Error loading detalles:', error);
+      console.error('❌ Error loading detalles:', error);
     }
   }
 
@@ -509,23 +550,36 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private loadDetallesIntoForm(detalles: DetalleCotizacionResponse[]): void {
+    console.log('📋 Cargando detalles en formulario:', detalles);
+    
     // Reset arrays
     this.detallesFijos = [];
     this.gruposHoteles = [];
 
     // Separate detalles by category
     detalles.forEach(detalle => {
+      console.log('🔍 Procesando detalle ID:', detalle.id, 'Categoría:', detalle.categoria);
+      
       if (detalle.categoria === 1) {
         // Productos fijos
-        this.detallesFijos.push(this.convertDetalleToTemp(detalle));
+        const detalleTemp = this.convertDetalleToTemp(detalle);
+        console.log('📌 Agregando a detalles fijos:', detalleTemp);
+        this.detallesFijos.push(detalleTemp);
       } else {
         // Grupos de hoteles
+        console.log('🏨 Agregando a grupo de hotel categoría:', detalle.categoria);
         this.addDetalleToGrupoHotel(detalle);
       }
     });
+    
+    console.log('✅ Detalles cargados - Fijos:', this.detallesFijos.length, 'Grupos:', this.gruposHoteles.length);
   }
 
   private convertDetalleToTemp(detalle: DetalleCotizacionResponse): DetalleCotizacionTemp {
+    console.log('🔄 Convirtiendo detalle a temp:', detalle);
+    console.log('🔄 Proveedor del detalle:', detalle.proveedor);
+    console.log('🔄 Producto del detalle:', detalle.producto);
+    
     return {
       id: detalle.id,
       proveedor: detalle.proveedor,
@@ -542,10 +596,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private addDetalleToGrupoHotel(detalle: DetalleCotizacionResponse): void {
     const categoria = detalle.categoria;
+    console.log('🏨 Buscando grupo para categoría:', categoria);
+    console.log('🏨 Categorías disponibles:', this.categorias.map(c => ({id: c.id, nombre: c.nombre})));
+    
     let grupo = this.gruposHoteles.find(g => g.categoria.id === categoria);
     
     if (!grupo) {
       const categoriaObj = this.categorias.find(c => c.id === categoria);
+      console.log('🏨 Categoría encontrada:', categoriaObj);
+      
       if (categoriaObj) {
         grupo = {
           categoria: categoriaObj,
@@ -554,12 +613,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           isTemporary: false
         };
         this.gruposHoteles.push(grupo);
+        console.log('🏨 Nuevo grupo creado para categoría:', categoriaObj.nombre);
+      } else {
+        console.error('❌ Categoría no encontrada para ID:', categoria);
+        return;
       }
     }
 
     if (grupo) {
-      grupo.detalles.push(this.convertDetalleToTemp(detalle));
+      const detalleTemp = this.convertDetalleToTemp(detalle);
+      grupo.detalles.push(detalleTemp);
       grupo.total = grupo.detalles.reduce((sum, d) => sum + d.total, 0);
+      console.log('✅ Detalle agregado al grupo:', grupo.categoria.nombre, 'Total detalles:', grupo.detalles.length);
     }
   }
 
@@ -788,6 +853,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     try {
       const formValue = this.cotizacionForm.value;
+      console.log('📝 DEBUG onSubmitCotizacion - Form Value completo:', formValue);
+      console.log('📝 DEBUG personaId del form:', formValue.personaId);
+      console.log('📝 DEBUG clienteSeleccionado:', this.clienteSeleccionado);
       
       // Prepare cotización request
       const cotizacionRequest: CotizacionRequest = {
@@ -850,24 +918,36 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private async setRelacionesCotizacion(cotizacionId: number, formValue: any): Promise<void> {
+    console.log('🔗 DEBUG setRelacionesCotizacion - Datos recibidos:');
+    console.log('   cotizacionId:', cotizacionId);
+    console.log('   formValue completo:', formValue);
+    console.log('   personaId del form:', formValue.personaId);
+    console.log('   clienteSeleccionado:', this.clienteSeleccionado);
+    
     // 🔹 Ejecutar secuencialmente para evitar conflictos con IDs
     
     if (formValue.personaId) {
+      console.log('✅ Asignando persona ID:', formValue.personaId, 'a cotización:', cotizacionId);
       await this.cotizacionService.setPersona(cotizacionId, formValue.personaId).toPromise();
       console.log('✅ Persona asignada a cotización:', cotizacionId);
+    } else {
+      console.warn('⚠️ No hay personaId en formValue para asignar');
     }
     
     if (formValue.formaPagoId) {
+      console.log('✅ Asignando forma de pago ID:', formValue.formaPagoId);
       await this.cotizacionService.setFormaPago(cotizacionId, formValue.formaPagoId).toPromise();
       console.log('✅ Forma de pago asignada a cotización:', cotizacionId);
     }
     
     if (formValue.estadoCotizacionId) {
+      console.log('✅ Asignando estado ID:', formValue.estadoCotizacionId);
       await this.cotizacionService.setEstadoCotizacion(cotizacionId, formValue.estadoCotizacionId).toPromise();
       console.log('✅ Estado asignado a cotización:', cotizacionId);
     }
     
     if (formValue.sucursalId) {
+      console.log('✅ Asignando sucursal ID:', formValue.sucursalId);
       await this.cotizacionService.setSucursal(cotizacionId, formValue.sucursalId).toPromise();
       console.log('✅ Sucursal asignada a cotización:', cotizacionId);
     }
@@ -1135,19 +1215,37 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   getPersonaDisplayName(personaId: number): string {
-    const persona = this.personas.find(p => p.id === personaId);
+    // Cache para personas consultadas por ID
+    if (!this['personasCache']) {
+      this['personasCache'] = {};
+    }
+    // Buscar en array local
+    let persona = this.personas.find(p => p.id === personaId);
+    // Si no está, buscar en cache
+    if (!persona && this['personasCache'][personaId]) {
+      persona = this['personasCache'][personaId];
+    }
+    // Si no está, consultar backend y guardar en cache
+    if (!persona && personaId) {
+      this.personaService.findPersonaNaturalOrJuridicaById(personaId).subscribe({
+        next: (data) => {
+          this['personasCache'][personaId] = data;
+        }
+      });
+      return 'Buscando...';
+    }
     if (!persona) return 'Sin asignar';
-    
-    // Check if it's PersonaNaturalResponse
-    if ('nombres' in persona && 'apellidos' in persona) {
-      return `${persona.nombres || ''} ${persona.apellidos || ''}`.trim();
+
+    // Persona Natural
+    if ('nombres' in persona && 'apellidos' in persona && 'documento' in persona) {
+      return `${persona.nombres} ${persona.apellidos} (DNI: ${persona.documento})`;
     }
-    
-    // Check if it's PersonaJuridicaResponse  
-    if ('razonSocial' in persona) {
-      return persona.razonSocial || 'Empresa';
+
+    // Persona Jurídica
+    if ('razonSocial' in persona && 'ruc' in persona) {
+      return `${persona.razonSocial} (RUC: ${persona.ruc})`;
     }
-    
+
     return `Persona #${personaId}`;
   }
 
@@ -1316,11 +1414,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse): void {
+    console.log('👤 DEBUG seleccionarCliente - Persona seleccionada:', persona);
+    console.log('👤 DEBUG ID de la persona:', persona.id);
+    
     this.clienteSeleccionado = persona;
     this.cotizacionForm.patchValue({ 
       personaId: persona.id,
       terminoBusquedaCliente: ''
     });
+    
+    console.log('👤 DEBUG Form actualizado con personaId:', persona.id);
+    console.log('👤 DEBUG Valor actual del form personaId:', this.cotizacionForm.get('personaId')?.value);
+    
     this.personasEncontradas = [];
   }
 
