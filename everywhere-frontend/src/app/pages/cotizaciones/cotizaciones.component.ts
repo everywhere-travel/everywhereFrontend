@@ -219,7 +219,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.loadCategorias()
     ]).then(() => {
       // 🔄 Después de cargar todo lo demás, cargar cotizaciones
-      console.log('📋 Datos iniciales cargados, ahora cargando cotizaciones...');
+      
       return this.loadCotizaciones();
     }).finally(() => {
       this.isLoading = false;
@@ -228,48 +228,43 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadCotizaciones(): Promise<void> {
     try {
-      console.log('📋 Cargando cotizaciones...');
-      console.log('👥 Personas disponibles al cargar cotizaciones:', this.personas.length);
+      
+      
       this.cotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
-      console.log('📋 Cotizaciones cargadas:', this.cotizaciones.length, this.cotizaciones);
+      
       
       // Debug específico de personas en cotizaciones
       this.cotizaciones.forEach((cot, index) => {
         const personaDisplay = this.getPersonaDisplayName(cot.personas?.id || 0);
-        console.log(`📋 Cotización ${index + 1}:`, {
-          codigo: cot.codigoCotizacion,
-          personaId: cot.personas?.id,
-          personaCompleta: cot.personas,
-          personaDisplay: personaDisplay
-        });
+        
       });
       
       this.filterCotizaciones();
-      console.log('📋 Cotizaciones filtradas:', this.filteredCotizaciones.length, this.filteredCotizaciones);
+      
     } catch (error) {
-      console.error('❌ Error loading cotizaciones:', error);
+      
       this.cotizaciones = [];
     }
   }
 
   private async loadPersonas(): Promise<void> {
     try {
-      console.log('👥 Cargando personas naturales y jurídicas...');
+      
       
       // Cargar personas naturales
       const personasNaturales = await this.personaNaturalService.findAll().toPromise() || [];
-      console.log('👤 Personas naturales cargadas:', personasNaturales.length);
+      
       
       // Cargar personas jurídicas
       const personasJuridicas = await this.personaJuridicaService.findAll().toPromise() || [];
-      console.log('🏢 Personas jurídicas cargadas:', personasJuridicas.length);
+      
       
       // Combinar ambas listas
       this.personas = [...personasNaturales, ...personasJuridicas];
-      console.log('👥 Total personas cargadas:', this.personas.length, this.personas);
+      
       
     } catch (error) {
-      console.error('❌ Error loading personas:', error);
+      
       this.personas = [];
     }
   }
@@ -278,7 +273,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       this.formasPago = await this.formaPagoService.getAllFormasPago().toPromise() || [];
     } catch (error) {
-      console.error('Error loading formas pago:', error);
+      
       this.formasPago = [];
     }
   }
@@ -287,7 +282,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       this.estadosCotizacion = await this.estadoCotizacionService.getAllEstadosCotizacion().toPromise() || [];
     } catch (error) {
-      console.error('Error loading estados cotización:', error);
+      
       this.estadosCotizacion = [];
     }
   }
@@ -296,7 +291,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
     } catch (error) {
-      console.error('Error loading sucursales:', error);
+      
       this.sucursales = [];
     }
   }
@@ -305,7 +300,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       this.productos = await this.productoService.getAllProductos().toPromise() || [];
     } catch (error) {
-      console.error('Error loading productos:', error);
+      
       this.productos = [];
     }
   }
@@ -314,43 +309,43 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       this.proveedores = await this.proveedorService.findAllProveedor().toPromise() || [];
     } catch (error) {
-      console.error('Error loading proveedores:', error);
+      
       this.proveedores = [];
     }
   }
 
   private async loadCategorias(): Promise<void> {
     try {
-      console.log('🔍 Iniciando carga de categorías...');
-      console.log('🌐 Base URL:', environment.baseURL);
-      console.log('📡 Llamando al servicio de categorías...');
+      
+      
+      
       
       // 🔄 Limpiar array antes de cargar nuevos datos
       this.categorias = [];
       
       const response = await this.categoriaService.findAll().toPromise();
-      console.log('📥 Respuesta del servicio:', response);
+      
       
       this.categorias = response || [];
-      console.log('✅ Categorías cargadas:', this.categorias.length, this.categorias);
+      
       
       // 🔍 Verificar que tenemos categorías válidas
       if (this.categorias.length === 0) {
-        console.warn('⚠️ ADVERTENCIA: No se cargaron categorías. Verificar conexión con backend.');
+        
       } else {
-        console.log('🎉 Categorías disponibles:');
-        this.categorias.forEach(cat => console.log(`   - ID: ${cat.id}, Nombre: ${cat.nombre}`));
+        
+        
       }
       
     } catch (error) {
-      console.error('❌ Error loading categorías:', error);
-      console.error('❌ Detalles del error:', JSON.stringify(error, null, 2));
+      
+      
       
       // 🔍 Información adicional de debugging
       if (error && typeof error === 'object') {
-        console.error('❌ Error status:', (error as any).status);
-        console.error('❌ Error message:', (error as any).message);
-        console.error('❌ Error URL:', (error as any).url);
+        
+        
+        
       }
       
       this.categorias = [];
@@ -375,7 +370,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     } else {
       const term = this.searchTerm.toLowerCase();
       this.filteredCotizaciones = this.cotizaciones.filter(cotizacion => {
-        console.log('🔍 DEBUG Filtrando cotización:', cotizacion.codigoCotizacion, 'personaId:', cotizacion.personas?.id);
+        
         return cotizacion.codigoCotizacion?.toLowerCase().includes(term) ||
                this.getPersonaDisplayName(cotizacion.personas?.id || 0).toLowerCase().includes(term) ||
                cotizacion.origenDestino?.toLowerCase().includes(term);
@@ -391,7 +386,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.setupDatesForNew();
     
     // 🔄 Cargar categorías cada vez que se abre el formulario de creación
-    console.log('🔄 Cargando categorías para nuevo formulario...');
+    
     await this.loadCategorias();
   }
 
@@ -401,7 +396,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.mostrarFormulario = true;
     
     // 🔄 Cargar categorías cada vez que se abre el formulario de edición
-    console.log('🔄 Cargando categorías para edición...');
+    
     await this.loadCategorias();
     
     this.loadCotizacionForEdit(cotizacion);
@@ -466,7 +461,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private async loadCotizacionForEdit(cotizacion: CotizacionResponse): Promise<void> {
-    console.log('📝 Cargando cotización para editar:', cotizacion.id);
+    
     
     // Set form values
     this.cotizacionForm.patchValue({
@@ -492,20 +487,20 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     // 🔄 Asegurar que las categorías estén cargadas antes de cargar detalles
-    console.log('🔄 Verificando categorías antes de cargar detalles...');
+    
     if (this.categorias.length === 0) {
-      console.log('🔄 Cargando categorías antes de procesar detalles...');
+      
       await this.loadCategorias();
     }
 
     // Load detalles
     try {
-      console.log('📋 Cargando detalles de cotización...');
+      
       const detalles = await this.detalleCotizacionService.getByCotizacionId(cotizacion.id).toPromise() || [];
-      console.log('📋 Detalles obtenidos:', detalles);
+      
       this.loadDetallesIntoForm(detalles);
     } catch (error) {
-      console.error('❌ Error loading detalles:', error);
+      
     }
   }
 
@@ -520,7 +515,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         return;
       }
     } catch (error) {
-      console.error('Error loading persona (unificada):', error);
+      
     }
     // Si no se encuentra, resetea
     this.cotizacionForm.patchValue({ tipoClienteSeleccionado: '' });
@@ -535,7 +530,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private loadDetallesIntoForm(detalles: DetalleCotizacionResponse[]): void {
-    console.log('📋 Cargando detalles en formulario:', detalles);
+    
     
     // Reset arrays
     this.detallesFijos = [];
@@ -543,27 +538,27 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Separate detalles by category
     detalles.forEach(detalle => {
-      console.log('🔍 Procesando detalle ID:', detalle.id, 'Categoría:', detalle.categoria);
+      
       
       if (detalle.categoria?.id === 1) {
         // Productos fijos
         const detalleTemp = this.convertDetalleToTemp(detalle);
-        console.log('📌 Agregando a detalles fijos:', detalleTemp);
+        
         this.detallesFijos.push(detalleTemp);
       } else {
         // Grupos de hoteles
-        console.log('🏨 Agregando a grupo de hotel categoría:', detalle.categoria);
+        
         this.addDetalleToGrupoHotel(detalle);
       }
     });
     
-    console.log('✅ Detalles cargados - Fijos:', this.detallesFijos.length, 'Grupos:', this.gruposHoteles.length);
+    
   }
 
   private convertDetalleToTemp(detalle: DetalleCotizacionResponse): DetalleCotizacionTemp {
-    console.log('🔄 Convirtiendo detalle a temp:', detalle);
-    console.log('🔄 Proveedor del detalle:', detalle.proveedor);
-    console.log('🔄 Producto del detalle:', detalle.producto);
+    
+    
+    
     
     return {
       id: detalle.id,
@@ -582,14 +577,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private addDetalleToGrupoHotel(detalle: DetalleCotizacionResponse): void {
     const categoriaId = detalle.categoria?.id;
-    console.log('🏨 Buscando grupo para categoría:', categoriaId);
-    console.log('🏨 Categorías disponibles:', this.categorias.map(c => ({id: c.id, nombre: c.nombre})));
+    
+    
 
     let grupo = this.gruposHoteles.find(g => g.categoria.id === categoriaId);
 
     if (!grupo) {
       const categoriaObj = this.categorias.find(c => c.id === categoriaId);
-      console.log('🏨 Categoría encontrada:', categoriaObj);
+      
 
       if (categoriaObj) {
         grupo = {
@@ -599,9 +594,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           isTemporary: false
         };
         this.gruposHoteles.push(grupo);
-        console.log('🏨 Nuevo grupo creado para categoría:', categoriaObj.nombre);
+      
       } else {
-        console.error('❌ Categoría no encontrada para ID:', categoriaId);
+      
         return;
       }
     }
@@ -610,7 +605,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const detalleTemp = this.convertDetalleToTemp(detalle);
       grupo.detalles.push(detalleTemp);
       grupo.total = grupo.detalles.reduce((sum, d) => sum + d.total, 0);
-      console.log('✅ Detalle agregado al grupo:', grupo.categoria.nombre, 'Total detalles:', grupo.detalles.length);
+      
     }
   }
 
@@ -622,7 +617,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     const formValue = this.detalleForm.value;
-    console.log('🔍 DEBUG Form Value:', formValue);
+    
     
     let proveedor = null;
 
@@ -630,8 +625,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     if (formValue.proveedorId) {
       const proveedorId = Number(formValue.proveedorId);
       proveedor = this.proveedores.find(p => p.id === proveedorId) || null;
-      console.log('🔍 DEBUG Proveedor encontrado por ID:', proveedor);
-      console.log('🔍 DEBUG proveedorId convertido:', proveedorId, 'original:', formValue.proveedorId);
+      
+      
     } else if (formValue.nuevoProveedor?.trim()) {
       // This would create a new proveedor, for now we'll simulate it
       proveedor = {
@@ -640,13 +635,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         creado: new Date().toISOString(),
         actualizado: new Date().toISOString()
       } as ProveedorResponse;
-      console.log('🔍 DEBUG Nuevo proveedor creado:', proveedor);
+      
     }
 
     const producto = this.productos.find(p => p.id === Number(formValue.productoId));
-    console.log('🔍 DEBUG productoId del form:', formValue.productoId, 'convertido:', Number(formValue.productoId));
-    console.log('🔍 DEBUG producto encontrado:', producto);
-    console.log('🔍 DEBUG todos los productos disponibles:', this.productos.map(p => ({id: p.id, producto: p})));
+    
+    
+    
     
     const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
     const precioHistorico = formValue.precioHistorico || 0;
@@ -700,7 +695,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // 🔄 Asegurar que las categorías estén cargadas
     if (this.categorias.length === 0) {
-      console.log('🔄 Categorías vacías, recargando...');
       await this.loadCategorias();
     }
 
@@ -710,7 +704,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       : Number(categoriaValue);
 
     if (!categoriaId || isNaN(categoriaId)) {
-      console.error('❌ Categoría seleccionada no es válida:', categoriaValue);
       return;
     }
 
@@ -725,10 +718,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       };
       this.gruposHoteles.push(nuevoGrupo);
       this.grupoHotelForm.reset();
-      console.log('✅ Grupo de hotel creado para categoría:', categoriaObj.nombre);
     } else if (!categoriaObj) {
-      console.error('❌ Categoría no encontrada:', categoriaId);
-      console.error('❌ Categorías disponibles:', this.categorias);
     }
   }
 
@@ -753,14 +743,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     const grupo = this.gruposHoteles[grupoIndex];
     const formValue = this.detalleForm.value;
-    console.log('🔍 DEBUG Form Value (Grupo):', formValue);
+    
     
     let proveedor: ProveedorResponse | null = null;
     if (formValue.proveedorId) {
       const proveedorId = Number(formValue.proveedorId);
       proveedor = this.proveedores.find(p => p.id === proveedorId) || null;
-      console.log('🔍 DEBUG Proveedor encontrado por ID (Grupo):', proveedor);
-      console.log('🔍 DEBUG proveedorId convertido (Grupo):', proveedorId, 'original:', formValue.proveedorId);
+      
+      
     } else if (formValue.nuevoProveedor?.trim()) {
       proveedor = {
         id: 0,
@@ -768,12 +758,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         creado: new Date().toISOString(),
         actualizado: new Date().toISOString()
       } as ProveedorResponse;
-      console.log('🔍 DEBUG Nuevo proveedor creado (Grupo):', proveedor);
+      
     }
 
     const producto = this.productos.find(p => p.id === Number(formValue.productoId));
-    console.log('🔍 DEBUG productoId del form (Grupo):', formValue.productoId, 'convertido:', Number(formValue.productoId));
-    console.log('🔍 DEBUG producto encontrado (Grupo):', producto);
+    
+    
     
     const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
     const precioHistorico = formValue.precioHistorico || 0;
@@ -850,13 +840,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     this.isLoading = true;
-    console.log('🚀 Iniciando flujo de cotización secuencial...');
+    
 
     try {
       const formValue = this.cotizacionForm.value;
-      console.log('📝 DEBUG onSubmitCotizacion - Form Value completo:', formValue);
-      console.log('📝 DEBUG personaId del form:', formValue.personaId);
-      console.log('📝 DEBUG clienteSeleccionado:', this.clienteSeleccionado);
+      
+      
+      
       // Prepare cotización request
       const cotizacionRequest: CotizacionRequest = {
         cantAdultos: formValue.cantAdultos,
@@ -872,80 +862,79 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       let cotizacionResponse: CotizacionResponse;
 
       if (this.editandoCotizacion && this.cotizacionEditandoId) {
-        console.log('📝 Actualizando cotización existente...');
+        
         // Update existing cotización
         const updateResult = await this.cotizacionService.updateCotizacion(this.cotizacionEditandoId, cotizacionRequest).toPromise();
         if (!updateResult) throw new Error('Failed to update cotización');
         cotizacionResponse = updateResult;
-        console.log('✅ Cotización actualizada:', cotizacionResponse.id);
+        
         // Set relationships
-        console.log('🔗 Asignando relaciones secuencialmente...');
+        
         await this.setRelacionesCotizacion(cotizacionResponse.id, formValue);
         // Handle deleted detalles
         await this.eliminarDetallesEliminados();
       } else {
-        console.log('🆕 Creando nueva cotización...');
+        
         // Create new cotización
         const createResult = await this.cotizacionService.createCotizacion(cotizacionRequest).toPromise();
         if (!createResult) throw new Error('Failed to create cotización');
         cotizacionResponse = createResult;
-        console.log('✅ Cotización creada con ID:', cotizacionResponse.id);
+        
         // Set relationships
-        console.log('🔗 Asignando relaciones secuencialmente...');
+        
         await this.setRelacionesCotizacion(cotizacionResponse.id, formValue);
       }
       // Create/update detalles
-      console.log('📋 Procesando detalles de cotización...');
+      
       await this.procesarDetalles(cotizacionResponse.id);
-      console.log('✅ Detalles procesados correctamente');
+      
       // Reload data and close form
-      console.log('🔄 Recargando lista de cotizaciones...');
+      
       await this.loadCotizaciones();
       this.cerrarFormulario();
-      console.log('🎉 Flujo completado exitosamente');
+      
     } catch (error) {
-      console.error('❌ Error en flujo de cotización:', error);
+      
     } finally {
       this.isLoading = false;
     }
   }
 
   private async setRelacionesCotizacion(cotizacionId: number, formValue: any): Promise<void> {
-    console.log('🔗 DEBUG setRelacionesCotizacion - Datos recibidos:');
-    console.log('   cotizacionId:', cotizacionId);
-    console.log('   formValue completo:', formValue);
-    console.log('   personaId del form:', formValue.personaId);
-    console.log('   clienteSeleccionado:', this.clienteSeleccionado);
+    
+    
+    
+    
+    
     
     // 🔹 Ejecutar secuencialmente para evitar conflictos con IDs
     
     if (formValue.personaId) {
-      console.log('✅ Asignando persona ID:', formValue.personaId, 'a cotización:', cotizacionId);
+      
       await this.cotizacionService.setPersona(cotizacionId, formValue.personaId).toPromise();
-      console.log('✅ Persona asignada a cotización:', cotizacionId);
+      
     } else {
-      console.warn('⚠️ No hay personaId en formValue para asignar');
+      
     }
     
     if (formValue.formaPagoId) {
-      console.log('✅ Asignando forma de pago ID:', formValue.formaPagoId);
+      
       await this.cotizacionService.setFormaPago(cotizacionId, formValue.formaPagoId).toPromise();
-      console.log('✅ Forma de pago asignada a cotización:', cotizacionId);
+      
     }
     
     if (formValue.estadoCotizacionId) {
-      console.log('✅ Asignando estado ID:', formValue.estadoCotizacionId);
+      
       await this.cotizacionService.setEstadoCotizacion(cotizacionId, formValue.estadoCotizacionId).toPromise();
-      console.log('✅ Estado asignado a cotización:', cotizacionId);
+      
     }
     
     if (formValue.sucursalId) {
-      console.log('✅ Asignando sucursal ID:', formValue.sucursalId);
+      
       await this.cotizacionService.setSucursal(cotizacionId, formValue.sucursalId).toPromise();
-      console.log('✅ Sucursal asignada a cotización:', cotizacionId);
+      
     }
     
-    console.log('🎉 Todas las relaciones asignadas secuencialmente para cotización:', cotizacionId);
   }
 
   private async eliminarDetallesEliminados(): Promise<void> {
@@ -983,47 +972,33 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private async crearDetalle(cotizacionId: number, detalle: DetalleCotizacionTemp, categoria: number): Promise<void> {
-    console.log('🔍 DEBUGGING - Creando detalle:');
-    console.log('  cotizacionId:', cotizacionId);
-    console.log('  categoria RECIBIDA:', categoria);
-    console.log('  detalle completo:', detalle);
     
     // 🔍 Verificar que la categoría existe en el array local
     const categoriaExiste = this.categorias.find(c => c.id === categoria);
-    console.log('🔍 Categoría encontrada en array local:', categoriaExiste);
-    console.log('🔍 Todas las categorías disponibles:', this.categorias.map(c => ({id: c.id, nombre: c.nombre})));
     
     if (!categoriaExiste) {
-      console.error('❌ FATAL: La categoría con ID', categoria, 'no existe en el frontend');
-      console.error('❌ Categorías disponibles:', this.categorias);
       throw new Error(`Categoría con ID ${categoria} no encontrada en el frontend`);
     }
     
     // 🔍 Verificar que el producto existe (advertencia, no error fatal)
     if (!detalle.producto) {
-      console.warn('⚠️ ADVERTENCIA: No se ha seleccionado un producto para este detalle');
-      console.warn('⚠️ Detalle sin producto:', detalle);
     }
     
     // Validar datos críticos
     if (!cotizacionId) {
-      console.error('❌ ERROR: cotizacionId es null/undefined');
       throw new Error('cotizacionId no puede ser null');
     }
     if (!categoria) {
-      console.error('❌ ERROR: categoria es null/undefined');
       throw new Error('categoria no puede ser null');
     }
     
     // Create proveedor if needed
     let proveedorId = detalle.proveedor?.id;
     if (detalle.proveedor && detalle.proveedor.id === 0) {
-      console.log('📝 Creando nuevo proveedor:', detalle.proveedor.nombre);
       const nuevoProveedor = await this.proveedorService.createProveedor({ 
         nombre: detalle.proveedor.nombre 
       }).toPromise();
       proveedorId = nuevoProveedor?.id;
-      console.log('✅ Proveedor creado con ID:', proveedorId);
     }
 
     const request: DetalleCotizacionRequest = {
@@ -1037,34 +1012,22 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     
     // ✅ Validación final antes de enviar
     if (!request.categoria) {
-      console.error('❌ FATAL: categoria sigue siendo null después de validación');
       throw new Error('categoria es requerido para crear detalle');
     }
     
-    console.log('📤 Request que se enviará al backend:', request);
-
     const detalleCreado = await this.detalleCotizacionService.createDetalleCotizacion(cotizacionId, request).toPromise();
-    console.log('✅ Detalle creado exitosamente:', detalleCreado);
     
     if (detalleCreado && detalle.producto) {
-      console.log('🔗 Asignando producto al detalle:', detalle.producto.id);
       await this.detalleCotizacionService.setProducto(detalleCreado.id, detalle.producto.id).toPromise();
-      console.log('✅ Producto asignado al detalle');
-    } else if (detalleCreado && !detalle.producto) {
-      console.warn('⚠️ Detalle creado sin producto asociado. ID:', detalleCreado.id);
     }
     
     if (detalleCreado && proveedorId) {
-      console.log('🔗 Asignando proveedor al detalle:', proveedorId);
       await this.detalleCotizacionService.setProveedor(detalleCreado.id, proveedorId).toPromise();
-      console.log('✅ Proveedor asignado al detalle');
     }
   }
 
   private async actualizarDetalle(detalle: DetalleCotizacionTemp): Promise<void> {
     if (!detalle.id) return;
-
-    console.log('📝 Actualizando detalle existente:', detalle.id);
 
     // Enviamos también la categoría
     let categoriaId: number;
@@ -1082,9 +1045,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       precioHistorico: detalle.precioHistorico || 0
     };
 
-    console.log('📤 Request para actualizar detalle (sin id en body):', request);
     await this.detalleCotizacionService.updateDetalleCotizacion(detalle.id, request).toPromise();
-    console.log('✅ Detalle actualizado exitosamente');
   }
 
   // Variables para el sistema de presionar y mantener
@@ -1095,7 +1056,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Iniciar proceso de eliminación por presión mantenida
   iniciarEliminacion(cotizacion: CotizacionResponse): void {
-    console.log('🗑️ Iniciando eliminación por presión:', cotizacion.codigoCotizacion);
     
     this.cotizacionAEliminar = cotizacion;
     this.presionandoEliminar = true;
@@ -1107,7 +1067,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       
       // Mostrar progreso en consola cada segundo
       if (this.tiempoPresionado % 1000 === 0) {
-        console.log(`⏱️ Presionando: ${this.tiempoPresionado / 1000}s / 3s`);
       }
       
       // Después de 3 segundos (3000ms), proceder con eliminación
@@ -1119,7 +1078,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Cancelar proceso de eliminación
   cancelarEliminacion(): void {
-    console.log('❌ Eliminación cancelada - se soltó el botón');
     
     this.presionandoEliminar = false;
     this.tiempoPresionado = 0;
@@ -1133,7 +1091,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Completar eliminación después de 3 segundos
   completarEliminacion(): void {
-    console.log('✅ Eliminación completada - 3 segundos mantenidos');
     
     if (this.cotizacionAEliminar) {
       const cotizacion = this.cotizacionAEliminar;
@@ -1161,30 +1118,21 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
   
   private async eliminarCotizacionDirectamente(id: number): Promise<void> {
-    console.log('🗑️ Ejecutando eliminación directa de cotización ID:', id);
     
     this.isLoading = true;
 
     try {
-      console.log('📡 Llamando al servicio de eliminación...');
       await this.cotizacionService.deleteByIdCotizacion(id).toPromise();
-      console.log('✅ Cotización eliminada exitosamente');
       
-      console.log('� Recargando lista de cotizaciones...');
       await this.loadCotizaciones();
-      console.log('✅ Lista recargada');
       
-      console.log('🎉 Proceso de eliminación completado');
       alert('Cotización eliminada exitosamente.');
       
     } catch (error) {
-      console.error('❌ Error eliminando cotización:', error);
-      console.error('❌ Detalles del error:', JSON.stringify(error, null, 2));
       
       alert('Error al eliminar la cotización. Por favor, inténtelo de nuevo.');
     } finally {
       this.isLoading = false;
-      console.log('🏁 Proceso finalizado. isLoading:', this.isLoading);
     }
   }
 
@@ -1230,7 +1178,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         cache[personaId] = data;
       },
       error: (err) => {
-        console.error('[getPersonaDisplayName] Error consultando backend para id', personaId, ':', err);
       }
     });
     return 'Buscando...';
@@ -1332,7 +1279,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         await this.buscarPersonasJuridicas();
       }
     } catch (error) {
-      console.error('Error searching clients:', error);
       this.personasEncontradas = [];
     } finally {
       this.buscandoClientes = false;
@@ -1367,7 +1313,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       this.personasEncontradas = resultado.slice(0, 10); // Limitar a 10 resultados
     } catch (error) {
-      console.error('Error loading personas naturales:', error);
       this.personasEncontradas = [];
     }
   }
@@ -1395,13 +1340,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       this.personasEncontradas = resultado.slice(0, 10); // Limitar a 10 resultados
     } catch (error) {
-      console.error('Error loading personas juridicas:', error);
       this.personasEncontradas = [];
     }
   }
 
 seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse): void {
-  console.log('👤 DEBUG seleccionarCliente - Persona seleccionada:', persona);
   // Usar el FK de la tabla persona base si existe, si no el id propio
   const personaId = typeof (persona as any).persona === 'object'
     ? (persona as any).persona.id
@@ -1411,8 +1354,6 @@ seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse): v
     personaId: personaId,
     terminoBusquedaCliente: ''
   });
-  console.log('👤 DEBUG Form actualizado con personaId:', personaId);
-  console.log('👤 DEBUG Valor actual del form personaId:', this.cotizacionForm.get('personaId')?.value);
   this.personasEncontradas = [];
 }
 
