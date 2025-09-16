@@ -177,6 +177,11 @@ export class ProveedorComponent implements OnInit {
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
+  // Variables para selección múltiple
+  selectedItems: number[] = [];
+  allSelected: boolean = false;
+  someSelected: boolean = false;
+
   // Menu states
   showActionMenu: number | null = null;
   showQuickActions: number | null = null;
@@ -366,6 +371,77 @@ export class ProveedorComponent implements OnInit {
     this.proveedorForm.reset();
   }
 
+  updateSelectionState(): void {
+    const totalItems = this.filteredProveedores.length;
+    const selectedCount = this.selectedItems.length;
+
+    this.allSelected = selectedCount === totalItems && totalItems > 0;
+    this.someSelected = selectedCount > 0 && selectedCount < totalItems;
+  }
+
+  refreshData(): void {
+    this.loadProveedores();
+  }
+
+  // Métodos para acciones masivas
+  clearSelection(): void {
+    this.selectedItems = [];
+    this.updateSelectionState();
+  }
+
+  editarSeleccionados(): void {
+    if (this.selectedItems.length === 0) return;
+
+    if (this.selectedItems.length === 1) {
+      const proveedor = this.proveedores.find(p => p.id === this.selectedItems[0]);
+      if (proveedor) {
+        this.editarProveedor(proveedor);
+      }
+    } else {
+      const proveedor = this.proveedores.find(p => p.id === this.selectedItems[0]);
+      if (proveedor) {
+        this.editarProveedor(proveedor);
+      }
+    }
+  }
+
+  eliminarSeleccionados(): void {
+    if (this.selectedItems.length === 0) return;
+
+    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cliente${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
+    if (confirm(confirmMessage)) {
+      this.loading = true;
+      let eliminados = 0;
+      const total = this.selectedItems.length;
+
+      this.selectedItems.forEach(id => {
+        const proveedor = this.proveedores.find(p => p.id === id);
+        if (proveedor) {
+          this.proveedorService.deleteByIdProveedor(id).subscribe({
+            next: () => {
+              eliminados++;
+              if (eliminados === total) {
+                this.loadProveedores();
+                this.clearSelection();
+                this.loading = false;
+              }
+            },
+            error: (error) => {
+              console.error('Error al eliminar persona natural:', error);
+              eliminados++;
+              if (eliminados === total) {
+                this.loadProveedores();
+                this.clearSelection();
+                this.loading = false;
+              }
+            }
+          });
+
+        }
+      });
+    }
+  }
+
   // Search and filter
   applyFilters(): void {
     let filtered = [...this.proveedoresTabla];
@@ -474,6 +550,30 @@ export class ProveedorComponent implements OnInit {
   // View management
   setView(view: 'table' | 'cards' | 'list'): void {
     this.currentView = view;
+  }
+
+  // Métodos para selección múltiple
+  toggleAllSelection(): void {
+    if (this.allSelected) {
+      this.selectedItems = [];
+    } else {
+      this.selectedItems = this.filteredProveedores.map(p => p.id!);
+    }
+    this.updateSelectionState();
+  }
+
+  toggleSelection(id: number): void {
+    const index = this.selectedItems.indexOf(id);
+    if (index > -1) {
+      this.selectedItems.splice(index, 1);
+    } else {
+      this.selectedItems.push(id);
+    }
+    this.updateSelectionState();
+  }
+
+  isSelected(id: number): boolean {
+    return this.selectedItems.includes(id);
   }
 
   clearSearch(): void {

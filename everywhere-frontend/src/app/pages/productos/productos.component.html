@@ -131,29 +131,7 @@
                 <i class="fas fa-times"></i>
               </button>
             </div>
-          </div>
-
-          <!-- Type Filter -->
-          <div>
-            <div class="relative">
-              <select
-                class="w-full py-3 px-4 pr-10 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white appearance-none"
-                [(ngModel)]="selectedType" (change)="onTypeChange()">
-                <option value="todos">Todos los tipos de productos</option>
-                <option *ngFor="let tipo of tiposUnicos" [value]="tipo">{{ tipo }}</option>
-              </select>
-              <div class="absolute inset-y-0 right-0 flex items-center justify-center px-3 pointer-events-none">
-                <i class="fas fa-chevron-down text-gray-400"></i>
-              </div>
-            </div>
-            <div class="flex items-center gap-4 p-1">
-              <button *ngIf="searchTerm || hasActiveFilters()"
-                class="text-sm text-everywhere-primary hover:text-everywhere-secondary font-medium flex items-center gap-2"
-                (click)="clearAllFilters()">
-                <i class="fas fa-times"></i>Limpiar filtros
-              </button>
-            </div>
-          </div>
+          </div> 
         </div>
       </div>
 
@@ -338,7 +316,7 @@
                       </div>
                     </div>
                   </th>
-                  <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
+                  <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
                     <div class="flex items-center justify-center gap-2">
                       <i class="fas fa-cogs text-gray-500"></i>
                       <span>Acciones</span>

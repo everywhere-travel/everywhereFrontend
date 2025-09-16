@@ -1,10 +1,7 @@
 <!-- Layout con Sidebar -->
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
   <!-- Sidebar Component -->
-  <app-sidebar 
-    [isCollapsed]="sidebarCollapsed"
-    [menuItems]="sidebarMenuItems"
-    (itemClick)="onSidebarItemClick($event)"
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
     (toggleSidebar)="onToggleSidebar()">
   </app-sidebar>
 
@@ -12,8 +9,10 @@
   <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
 
     <!-- Header Section -->
-    <header class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12"></div>
+    <header
+      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
+      </div>
 
       <div class="max-w-full mx-auto px-6 py-6 relative z-10">
         <!-- Mobile Menu Button -->
@@ -31,39 +30,47 @@
               </div>
               <div>
                 <h1 class="text-4xl font-bold">Gestión de Operadores</h1>
-                <p class="text-xl opacity-90 mt-2">Administra y organiza todos tus operadores turísticos de manera eficiente</p>
+                <p class="text-xl opacity-90 mt-2">Administra y organiza todos tus operadores turísticos de manera
+                  eficiente</p>
               </div>
             </div>
 
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!loading">
-              <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
                 <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
                   <i class="fas fa-headset text-white text-xl"></i>
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ operadoresFiltrados.length }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Operador{{ operadoresFiltrados.length === 1 ? '' : 'es' }} Total{{ operadoresFiltrados.length === 1 ? '' : 'es' }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Operador{{
+                    operadoresFiltrados.length === 1 ? '' : 'es' }} Total{{ operadoresFiltrados.length === 1 ? '' : 'es'
+                    }}</div>
                 </div>
               </div>
 
-              <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
                 <div class="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
                   <i class="fas fa-check-circle text-white text-xl"></i>
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ operadores.length }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Registrado{{ operadores.length === 1 ? '' : 's' }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Registrado{{ operadores.length ===
+                    1 ? '' : 's' }}</div>
                 </div>
               </div>
 
-              <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
                 <div class="w-14 h-14 bg-everywhere-secondary rounded-xl flex items-center justify-center">
                   <i class="fas fa-filter text-white text-xl"></i>
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ hasActiveFilters() ? '1' : '0' }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Filtro{{ hasActiveFilters() ? '' : 's' }} Activo{{ hasActiveFilters() ? '' : 's' }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Filtro{{ hasActiveFilters() ? '' :
+                    's' }} Activo{{ hasActiveFilters() ? '' : 's' }}</div>
                 </div>
               </div>
             </div>
@@ -73,7 +80,9 @@
           <div class="z-10">
             <button (click)="openCreateModal()" [disabled]="loading"
               class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
-              <div class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+              </div>
               <i class="fas fa-plus text-lg"></i>
               <span>Nuevo Operador</span>
             </button>
@@ -83,7 +92,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-full mx-auto px-6 py-8 space-y-8">
+    <main class="max-w-full mx-auto px-6 py-6 space-y-6">
       <!-- Search & Filters Panel -->
       <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
         <!-- Panel Header -->
@@ -99,224 +108,213 @@
               </div>
             </div>
 
-            <!-- Clear Filters Button -->
-            <button *ngIf="hasActiveFilters()" (click)="clearAllFilters()"
-              class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl flex items-center gap-2 transition-all">
-              <i class="fas fa-times"></i>
-              <span>Limpiar Filtros</span>
-            </button>
+            <!-- View Controls -->
+            <div class="flex items-center gap-4">
+              <!-- View Type Selector -->
+              <div class="flex bg-gray-100 rounded-xl p-1">
+                <button (click)="changeView('table')"
+                  [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('table') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
+                  <i class="fas fa-table mr-2"></i>Tabla
+                </button>
+                <button (click)="changeView('cards')"
+                  [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('cards') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
+                  <i class="fas fa-th-large mr-2"></i>Tarjetas
+                </button>
+                <button (click)="changeView('list')"
+                  [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('list') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
+                  <i class="fas fa-list mr-2"></i>Lista
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Search Controls -->
-        <div class="p-6">
-          <div class="flex flex-col lg:flex-row gap-4">
-            <!-- Search Input -->
-            <div class="flex-1">
-              <div class="relative">
-                <input type="text" 
-                  [(ngModel)]="searchQuery" 
-                  (input)="onSearchChange()"
-                  placeholder="Buscar operadores por nombre..."
-                  class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-everywhere-primary focus:ring-4 focus:ring-everywhere-primary/20 transition-all bg-gray-50 focus:bg-white">
-                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <button *ngIf="searchQuery" (click)="clearSearch()"
-                  class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">
-                  <i class="fas fa-times"></i>
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Search Input -->
+          <div class="lg:col-span-2">
+            <div class="relative">
+              <input type="text" [(ngModel)]="searchQuery" (input)="onSearchChange()"
+                placeholder="Buscar operadores por nombre..."
+                class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-everywhere-primary focus:ring-4 focus:ring-everywhere-primary/20 transition-all bg-gray-50 focus:bg-white">
+              <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <button *ngIf="searchQuery" (click)="clearSearch()"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="flex flex-col items-center justify-center py-16 px-6">
+          <div
+            class="w-16 h-16 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary rounded-2xl flex items-center justify-center mb-4">
+            <i class="fas fa-spinner fa-spin text-white text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Cargando Operadores</h3>
+          <p class="text-gray-600">Por favor espera mientras obtenemos los datos...</p>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && operadoresFiltrados.length === 0" class="text-center py-32">
+        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i class="fas fa-headset text-3xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-3">{{ getEmptyStateTitle() }}</h3>
+        <p class="text-gray-600 mb-8 max-w-md mx-auto">{{ getEmptyStateMessage() }}</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <button (click)="openCreateModal()"
+            class="bg-everywhere-primary hover:bg-everywhere-secondary text-white px-6 py-3 rounded-xl font-semibold transition-all">
+            <i class="fas fa-plus mr-2"></i>Crear Primer Operador
+          </button>
+          <button *ngIf="hasActiveFilters()" (click)="clearAllFilters()"
+            class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-semibold transition-all">
+            <i class="fas fa-filter mr-2"></i>Ver Todos
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Content -->
+      <div *ngIf="!loading && operadoresFiltrados.length > 0" class="space-y-2">
+
+        <!-- Data Header -->
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-4">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-database text-red-600"></i>
+                  <h2 class="text-xl font-bold text-gray-900">Lista de Operadores</h2>
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <button (click)="refreshData()"
+                  class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5">
+                  <i class="fas fa-sync-alt"></i>
+                  <span>Actualizar</span>
+                </button>
+                <button (click)="openCreateModal()"
+                  class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 shadow-lg">
+                  <i class="fas fa-plus"></i>
+                  <span>Nuevo Operador</span>
                 </button>
               </div>
             </div>
-
-            <!-- Search Button -->
-            <button (click)="searchOperadores()" [disabled]="loading"
-              class="bg-everywhere-primary hover:bg-everywhere-secondary text-white px-8 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all hover:shadow-lg disabled:opacity-50">
-              <i class="fas fa-search"></i>
-              <span>Buscar</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Content Controls -->
-      <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white rounded-2xl p-6 shadow-lg border border-gray-200">
-        <!-- View Controls -->
-        <div class="flex items-center gap-4">
-          <!-- View Type Selector -->
-          <div class="flex bg-gray-100 rounded-xl p-1">
-            <button (click)="changeView('table')" 
-              [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('table') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
-              <i class="fas fa-table mr-2"></i>Tabla
-            </button>
-            <button (click)="changeView('cards')" 
-              [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('cards') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
-              <i class="fas fa-th-large mr-2"></i>Tarjetas
-            </button>
-            <button (click)="changeView('list')" 
-              [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('list') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
-              <i class="fas fa-list mr-2"></i>Lista
-            </button>
-          </div>
-
-          <!-- Results Info -->
-          <div class="text-sm text-gray-600 hidden sm:block">
-            Mostrando {{ paginatedOperadores.length }} de {{ operadoresFiltrados.length }} operadores
           </div>
         </div>
 
-        <!-- Selection Controls -->
-        <div class="flex items-center gap-3">
-          <!-- Selection Info -->
-          <div *ngIf="selectedItems.length > 0" class="text-sm text-gray-600">
-            {{ selectedItems.length }} seleccionado{{ selectedItems.length > 1 ? 's' : '' }}
-          </div>
-
-          <!-- Bulk Actions -->
-          <div *ngIf="selectedItems.length > 0" class="flex gap-2">
-            <button (click)="clearSelection()"
-              class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-all">
-              Deseleccionar
-            </button>
-            <button (click)="deleteSelected()" [disabled]="loading"
-              class="text-sm bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg transition-all disabled:opacity-50">
-              <i class="fas fa-trash mr-1"></i>Eliminar
-            </button>
-          </div>
-
-          <!-- Refresh Button -->
-          <button (click)="refreshData()" [disabled]="loading"
-            class="bg-gray-100 hover:bg-gray-200 text-gray-700 p-3 rounded-xl transition-all disabled:opacity-50">
-            <i class="fas fa-sync-alt" [class.animate-spin]="loading"></i>
+        <!-- Bulk Actions -->
+        <div *ngIf="selectedItems.length > 0" class="flex gap-2">
+          <button (click)="clearSelection()"
+            class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg transition-all">
+            Deseleccionar
           </button>
-
-          <!-- Export Button -->
-          <button (click)="exportData()" [disabled]="loading"
-            class="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-3 rounded-xl transition-all disabled:opacity-50">
-            <i class="fas fa-download mr-2"></i>Exportar
+          <button (click)="deleteSelected()" [disabled]="loading"
+            class="text-sm bg-red-100 hover:bg-red-200 text-red-700 px-3 py-2 rounded-lg transition-all disabled:opacity-50">
+            <i class="fas fa-trash mr-1"></i>Eliminar
           </button>
-        </div>
-      </div>
-
-      <!-- Data Display -->
-      <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-        <!-- Loading State -->
-        <div *ngIf="isLoading" class="flex items-center justify-center py-32">
-          <div class="text-center">
-            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-everywhere-primary mx-auto"></div>
-            <p class="mt-4 text-gray-600">Cargando operadores...</p>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div *ngIf="!isLoading && operadoresFiltrados.length === 0" class="text-center py-32">
-          <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <i class="fas fa-headset text-3xl text-gray-400"></i>
-          </div>
-          <h3 class="text-xl font-semibold text-gray-900 mb-3">{{ getEmptyStateTitle() }}</h3>
-          <p class="text-gray-600 mb-8 max-w-md mx-auto">{{ getEmptyStateMessage() }}</p>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <button (click)="openCreateModal()"
-              class="bg-everywhere-primary hover:bg-everywhere-secondary text-white px-6 py-3 rounded-xl font-semibold transition-all">
-              <i class="fas fa-plus mr-2"></i>Crear Primer Operador
-            </button>
-            <button *ngIf="hasActiveFilters()" (click)="clearAllFilters()"
-              class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-semibold transition-all">
-              <i class="fas fa-filter mr-2"></i>Ver Todos
-            </button>
-          </div>
         </div>
 
         <!-- Table View -->
-        <div *ngIf="!isLoading && operadoresFiltrados.length > 0 && currentView === 'table'" class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th class="text-left py-4 px-6">
-                  <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" 
-                      [checked]="allSelected"
-                      [indeterminate]="someSelected"
-                      (change)="toggleAllSelection()"
-                      class="w-4 h-4 text-everywhere-primary border-gray-300 rounded focus:ring-everywhere-primary">
-                  </label>
-                </th>
-                <th class="text-left py-4 px-6 font-semibold text-gray-900 cursor-pointer hover:text-everywhere-primary transition-colors"
-                  (click)="sortBy('nombre')">
-                  <div class="flex items-center gap-2">
-                    <span>Nombre</span>
-                    <i class="fas fa-sort text-xs opacity-50"></i>
-                  </div>
-                </th>
-                <th class="text-left py-4 px-6 font-semibold text-gray-900 cursor-pointer hover:text-everywhere-primary transition-colors"
-                  (click)="sortBy('creado')">
-                  <div class="flex items-center gap-2">
-                    <span>Fecha Creación</span>
-                    <i class="fas fa-sort text-xs opacity-50"></i>
-                  </div>
-                </th>
-                <th class="text-center py-4 px-6 font-semibold text-gray-900">Acciones</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              <tr *ngFor="let operador of paginatedOperadores; trackBy: trackByOperadorId" 
-                [class]="'hover:bg-gray-50 transition-colors ' + (isSelected(operador.id) ? 'bg-blue-50' : '')">
-                
-                <!-- Checkbox -->
-                <td class="py-4 px-6">
-                  <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" 
-                      [checked]="isSelected(operador.id)"
-                      (change)="toggleSelection(operador.id)"
-                      class="w-4 h-4 text-everywhere-primary border-gray-300 rounded focus:ring-everywhere-primary">
-                  </label>
-                </td>
-
-                <!-- Nombre -->
-                <td class="py-4 px-6">
-                  <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-everywhere-primary to-everywhere-secondary rounded-xl flex items-center justify-center text-white font-semibold text-sm">
-                      {{ getOperadorInitials(operador) }}
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
+          *ngIf="currentView === 'table'">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+                <tr>
+                  <th class="text-left py-4 px-6">
+                    <label class="flex items-center cursor-pointer">
+                      <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
+                        (change)="toggleAllSelection()"
+                        class="w-4 h-4 text-everywhere-primary border-gray-300 rounded focus:ring-everywhere-primary">
+                    </label>
+                  </th>
+                  <th
+                    class="text-left py-4 px-6 font-semibold text-gray-900 cursor-pointer hover:text-everywhere-primary transition-colors"
+                    (click)="sortBy('nombre')">
+                    <div class="flex items-center gap-2">
+                      <span>Nombre</span>
+                      <i class="fas fa-sort text-xs opacity-50"></i>
                     </div>
-                    <div>
-                      <div class="font-semibold text-gray-900">{{ operador.nombre || 'Sin nombre' }}</div>
-                      <div class="text-sm text-gray-500">ID: {{ operador.id }}</div>
+                  </th>
+                  <th
+                    class="text-left py-4 px-6 font-semibold text-gray-900 cursor-pointer hover:text-everywhere-primary transition-colors"
+                    (click)="sortBy('creado')">
+                    <div class="flex items-center gap-2">
+                      <span>Fecha Creación</span>
+                      <i class="fas fa-sort text-xs opacity-50"></i>
                     </div>
-                  </div>
-                </td>
+                  </th>
+                  <th class="text-center py-4 px-6 font-semibold text-gray-900">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr *ngFor="let operador of paginatedOperadores; trackBy: trackByOperadorId"
+                  [class]="'hover:bg-gray-50 transition-colors ' + (isSelected(operador.id) ? 'bg-blue-50' : '')">
 
-                <!-- Fecha Creación -->
-                <td class="py-4 px-6">
-                  <div class="text-sm text-gray-900">{{ formatDate(operador.creado) }}</div>
-                  <div class="text-xs text-gray-500">{{ formatDate(operador.actualizado) }}</div>
-                </td>
+                  <!-- Checkbox -->
+                  <td class="py-4 px-6">
+                    <label class="flex items-center cursor-pointer">
+                      <input type="checkbox" [checked]="isSelected(operador.id)" (change)="toggleSelection(operador.id)"
+                        class="w-4 h-4 text-everywhere-primary border-gray-300 rounded focus:ring-everywhere-primary">
+                    </label>
+                  </td>
 
-                <!-- Actions -->
-                <td class="py-4 px-6 text-center">
-                  <div class="relative inline-block action-menu-container">
-                    <button (click)="toggleActionMenu(operador.id)" 
-                      class="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                      <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    
-                    <!-- Action Menu -->
-                    <div *ngIf="showActionMenu === operador.id" 
-                      class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-in slide-in-from-top-2">
-                      <button (click)="openEditModal(operador)"
-                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                        <i class="fas fa-edit text-blue-500 w-4"></i>
-                        <span>Editar Operador</span>
+                  <!-- Nombre -->
+                  <td class="py-4 px-6">
+                    <div class="flex items-center gap-3">
+                      <div
+                        class="w-10 h-10 bg-gradient-to-br from-everywhere-primary to-everywhere-secondary rounded-xl flex items-center justify-center text-white font-semibold text-sm">
+                        {{ getOperadorInitials(operador) }}
+                      </div>
+                      <div>
+                        <div class="font-semibold text-gray-900">{{ operador.nombre || 'Sin nombre' }}</div>
+                        <div class="text-sm text-gray-500">ID: {{ operador.id }}</div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Fecha Creación -->
+                  <td class="py-4 px-6">
+                    <div class="text-sm text-gray-900">{{ formatDate(operador.creado) }}</div>
+                    <div class="text-xs text-gray-500">{{ formatDate(operador.actualizado) }}</div>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="py-4 px-6 text-center">
+                    <div class="relative inline-block action-menu-container">
+                      <button (click)="toggleActionMenu(operador.id)"
+                        class="inline-flex items-center justify-center w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                        <i class="fas fa-ellipsis-v"></i>
                       </button>
-                      <hr class="my-1 border-gray-100">
-                      <button (click)="confirmDelete(operador)"
-                        class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3">
-                        <i class="fas fa-trash text-red-500 w-4"></i>
-                        <span>Eliminar Operador</span>
-                      </button>
+
+                      <!-- Action Menu -->
+                      <div *ngIf="showActionMenu === operador.id"
+                        class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 animate-in slide-in-from-top-2">
+                        <button (click)="openEditModal(operador)"
+                          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
+                          <i class="fas fa-edit text-blue-500 w-4"></i>
+                          <span>Editar Operador</span>
+                        </button>
+                        <hr class="my-1 border-gray-100">
+                        <button (click)="confirmDelete(operador)"
+                          class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3">
+                          <i class="fas fa-trash text-red-500 w-4"></i>
+                          <span>Eliminar Operador</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Cards View -->
@@ -324,27 +322,26 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <div *ngFor="let operador of paginatedOperadores; trackBy: trackByOperadorId"
               [class]="'bg-white border-2 rounded-2xl p-6 hover:border-everywhere-primary transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer ' + (isSelected(operador.id) ? 'border-everywhere-primary bg-blue-50' : 'border-gray-200')">
-              
+
               <!-- Card Header -->
               <div class="flex items-start justify-between mb-4">
-                <div class="w-12 h-12 bg-gradient-to-br from-everywhere-primary to-everywhere-secondary rounded-2xl flex items-center justify-center text-white font-bold text-lg">
+                <div
+                  class="w-12 h-12 bg-gradient-to-br from-everywhere-primary to-everywhere-secondary rounded-2xl flex items-center justify-center text-white font-bold text-lg">
                   {{ getOperadorInitials(operador) }}
                 </div>
                 <div class="flex items-center gap-2">
                   <label class="cursor-pointer">
-                    <input type="checkbox" 
-                      [checked]="isSelected(operador.id)"
-                      (change)="toggleSelection(operador.id)"
+                    <input type="checkbox" [checked]="isSelected(operador.id)" (change)="toggleSelection(operador.id)"
                       class="w-4 h-4 text-everywhere-primary border-gray-300 rounded focus:ring-everywhere-primary">
                   </label>
                   <div class="relative action-menu-container">
-                    <button (click)="toggleActionMenuCards(operador.id)" 
+                    <button (click)="toggleActionMenuCards(operador.id)"
                       class="w-8 h-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
                       <i class="fas fa-ellipsis-v"></i>
                     </button>
-                    
+
                     <!-- Action Menu -->
-                    <div *ngIf="showActionMenuCards === operador.id" 
+                    <div *ngIf="showActionMenuCards === operador.id"
                       class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
                       <button (click)="openEditModal(operador)"
                         class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
@@ -400,18 +397,17 @@
         <div *ngIf="!isLoading && operadoresFiltrados.length > 0 && currentView === 'list'" class="p-6 space-y-3">
           <div *ngFor="let operador of paginatedOperadores; trackBy: trackByOperadorId"
             [class]="'bg-white border-2 rounded-xl p-4 hover:border-everywhere-primary transition-all duration-300 hover:shadow-md ' + (isSelected(operador.id) ? 'border-everywhere-primary bg-blue-50' : 'border-gray-200')">
-            
+
             <div class="flex items-center justify-between">
               <!-- Left Content -->
               <div class="flex items-center gap-4 flex-1">
                 <label class="cursor-pointer">
-                  <input type="checkbox" 
-                    [checked]="isSelected(operador.id)"
-                    (change)="toggleSelection(operador.id)"
+                  <input type="checkbox" [checked]="isSelected(operador.id)" (change)="toggleSelection(operador.id)"
                     class="w-4 h-4 text-everywhere-primary border-gray-300 rounded focus:ring-everywhere-primary">
                 </label>
 
-                <div class="w-12 h-12 bg-gradient-to-br from-everywhere-primary to-everywhere-secondary rounded-xl flex items-center justify-center text-white font-bold">
+                <div
+                  class="w-12 h-12 bg-gradient-to-br from-everywhere-primary to-everywhere-secondary rounded-xl flex items-center justify-center text-white font-bold">
                   {{ getOperadorInitials(operador) }}
                 </div>
 
@@ -430,85 +426,64 @@
               <!-- Right Actions -->
               <div class="flex items-center gap-2">
                 <button (click)="openEditModal(operador)"
-                  class="bg-blue-50 hover:bg-blue-100 text-blue-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors">
-                  <i class="fas fa-edit mr-1"></i>Editar
+                  class="w-10 h-10 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105"
+                  title="Editar proveedor">
+                  <i class="fas fa-edit"></i>
                 </button>
-                
-                <div class="relative action-menu-container">
-                  <button (click)="toggleActionMenuList(operador.id)" 
-                    class="w-10 h-10 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg flex items-center justify-center transition-colors">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </button>
-                  
-                  <!-- Action Menu -->
-                  <div *ngIf="showActionMenuList === operador.id" 
-                    class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50">
-                    <button (click)="openEditModal(operador)"
-                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3">
-                      <i class="fas fa-edit text-blue-500 w-4"></i>
-                      <span>Editar Operador</span>
-                    </button>
-                    <hr class="my-1 border-gray-100">
-                    <button (click)="confirmDelete(operador)"
-                      class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-3">
-                      <i class="fas fa-trash text-red-500 w-4"></i>
-                      <span>Eliminar Operador</span>
-                    </button>
-                  </div>
-                </div>
+                <hr class="my-1 border-gray-100">
+                <button (click)="confirmDelete(operador)"
+                  class="w-10 h-10 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105"
+                  title="Eliminar proveedor">
+                  <i class="fas fa-trash"></i>
+                </button>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Pagination -->
-        <div *ngIf="!isLoading && operadoresFiltrados.length > 0" class="border-t border-gray-200 px-6 py-4">
-          <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <!-- Page Size Selector -->
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-gray-600">Mostrar:</span>
-              <select [(ngModel)]="pageSize" (change)="onPageSizeChange()"
-                class="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-everywhere-primary focus:border-everywhere-primary">
-                <option value="10">10</option>
-                <option value="25">25</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+          <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <!-- Items per page selector -->
+            <div class="flex items-center gap-2 text-sm text-gray-700 font-medium">
+              <span>Mostrar:</span>
+              <select [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()"
+                class="border border-gray-300 rounded-lg px-3 py-2 bg-white font-medium">
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
               </select>
-              <span class="text-sm text-gray-600">por página</span>
+              <span>por página</span>
             </div>
 
-            <!-- Page Info -->
-            <div class="text-sm text-gray-600">
-              {{ getPageInfo() }}
+            <!-- Results info -->
+            <div class="text-sm font-semibold text-gray-700">
+              Mostrando {{ Math.min((currentPage - 1) * itemsPerPage + 1, totalItems) }} -
+              {{ Math.min(currentPage * itemsPerPage, totalItems) }} de {{ totalItems }} producto{{ totalItems === 1 ?
+              '' : 's' }}
             </div>
 
-            <!-- Pagination Controls -->
-            <div class="flex items-center gap-1">
-              <button (click)="goToPage(1)" [disabled]="currentPage === 1"
-                class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                <i class="fas fa-angle-double-left"></i>
+            <!-- Navigation buttons -->
+            <nav class="flex items-center gap-2" *ngIf="totalPages > 1">
+              <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-left"></i>
               </button>
-              <button (click)="previousPage()" [disabled]="currentPage === 1"
-                class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                <i class="fas fa-angle-left"></i>
-              </button>
-              
-              <span *ngFor="let page of getVisiblePages()" class="mx-1">
-                <button (click)="goToPage(page)" 
-                  [class]="'px-3 py-2 text-sm border rounded-lg ' + (currentPage === page ? 'bg-everywhere-primary text-white border-everywhere-primary' : 'border-gray-300 hover:bg-gray-50')">
+
+              <div class="flex items-center gap-1">
+                <button *ngFor="let page of getVisiblePages()" (click)="goToPage(page)"
+                  class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-200"
+                  [class]="page === currentPage ? 'bg-everywhere-primary text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'">
                   {{ page }}
                 </button>
-              </span>
-              
-              <button (click)="nextPage()" [disabled]="currentPage === totalPages"
-                class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                <i class="fas fa-angle-right"></i>
+              </div>
+
+              <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-right"></i>
               </button>
-              <button (click)="goToPage(totalPages)" [disabled]="currentPage === totalPages"
-                class="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                <i class="fas fa-angle-double-right"></i>
-              </button>
-            </div>
+            </nav>
           </div>
         </div>
       </div>
@@ -536,9 +511,7 @@
         <label class="block text-sm font-semibold text-gray-700 mb-2">
           Nombre del Operador *
         </label>
-        <input type="text" 
-          formControlName="nombre"
-          placeholder="Ej: SkyTours, AeroPerú, HotelPlaza..."
+        <input type="text" formControlName="nombre" placeholder="Ej: SkyTours, AeroPerú, HotelPlaza..."
           [class]="'w-full px-4 py-3 border-2 rounded-xl focus:ring-4 focus:ring-everywhere-primary/20 transition-all ' + (isFieldInvalid('nombre') ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-everywhere-primary')">
         <div *ngIf="isFieldInvalid('nombre')" class="mt-2 text-sm text-red-600 flex items-center gap-2">
           <i class="fas fa-exclamation-circle"></i>
@@ -582,7 +555,7 @@
     <!-- Modal Body -->
     <div class="p-6">
       <p class="text-gray-700">
-        ¿Está seguro de que desea eliminar el operador 
+        ¿Está seguro de que desea eliminar el operador
         <strong class="text-gray-900">{{ operadorToDelete?.nombre }}</strong>?
       </p>
       <p class="text-sm text-gray-500 mt-2">
@@ -607,17 +580,6 @@
 </div>
 
 <!-- Error Modal Component -->
-<app-error-modal 
-  *ngIf="showErrorModal"
-  [show]="showErrorModal"
-  [data]="{ title: 'Error', message: errorMessage, type: 'error' }"
-  (close)="closeErrorModal()">
+<app-error-modal *ngIf="showErrorModal" [show]="showErrorModal"
+  [data]="{ title: 'Error', message: errorMessage, type: 'error' }" (close)="closeErrorModal()">
 </app-error-modal>
-
-<!-- Loading Overlay -->
-<div *ngIf="loading" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-  <div class="bg-white rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl">
-    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-everywhere-primary"></div>
-    <p class="text-gray-700 font-medium">Procesando...</p>
-  </div>
-</div>

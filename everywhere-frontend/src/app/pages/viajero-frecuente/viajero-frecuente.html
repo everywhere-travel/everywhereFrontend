@@ -421,59 +421,28 @@
         <div *ngIf="currentView === 'cards'"
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <div *ngFor="let viajeroFrecuente of viajerosFrecuentesFiltrados; trackBy: trackByFn"
-            class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 overflow-hidden">
-
-            <!-- Card Header -->
-            <div class="bg-gradient-to-r from-blue-500 to-purple-500 p-4 text-white">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                  <input type="checkbox" [checked]="selectedItems.includes(viajeroFrecuente.id)"
-                    (change)="toggleSelection(viajeroFrecuente.id)"
-                    class="rounded border-white text-blue-600 focus:ring-blue-500">
-                  <i class="fas fa-id-card text-xl"></i>
-                </div>
-                <div class="relative" data-action-menu>
-                  <button (click)="toggleActionMenu($event, viajeroFrecuente.id, 'cards')"
-                    class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </button>
-
-                  <div *ngIf="showActionMenuCards === viajeroFrecuente.id"
-                    class="absolute right-0 top-10 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-2">
-                    <button (click)="verViajeroFrecuente(viajeroFrecuente)"
-                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                      <i class="fas fa-eye text-blue-500 w-4"></i>
-                      <span>Ver detalles</span>
-                    </button>
-                    <button (click)="editarViajeroFrecuente(viajeroFrecuente)"
-                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                      <i class="fas fa-edit text-green-500 w-4"></i>
-                      <span>Editar</span>
-                    </button>
-                    <button (click)="confirmarEliminar(viajeroFrecuente)"
-                      class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2">
-                      <i class="fas fa-trash text-red-500 w-4"></i>
-                      <span>Eliminar</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="mt-2">
-                <div class="font-bold text-gray-900 font-mono text-lg">{{ viajeroFrecuente.codigo }}</div>
-              </div>
-            </div>
+            class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col h-full">
 
             <!-- Card Body -->
-            <div class="p-4">
+            <div class="p-4 flex-1">
               <div class="space-y-3">
-                <div class="flex items-center space-x-2">
-                  <div
-                    class="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white text-sm">
-                    <i class="fas fa-plane"></i>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <input type="checkbox" [checked]="selectedItems.includes(viajeroFrecuente.id)"
+                      (change)="toggleSelection(viajeroFrecuente.id)"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <div
+                      class="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white text-sm">
+                      <i class="fas fa-plane"></i>
+                    </div>
+                    <div>
+                      <div class="font-semibold text-gray-900">{{ viajeroFrecuente.areolinea }}</div>
+                      <div class="text-xs text-gray-500">Aerolínea</div>
+                    </div>
                   </div>
-                  <div>
-                    <div class="font-semibold text-gray-900">{{ viajeroFrecuente.areolinea }}</div>
-                    <div class="text-xs text-gray-500">Aerolínea</div>
+                  <div class="text-right">
+                    <div class="font-bold text-blue-600 font-mono text-lg">{{ viajeroFrecuente.codigo }}</div>
+                    <div class="text-xs text-gray-500">Código</div>
                   </div>
                 </div>
 
@@ -491,6 +460,30 @@
                     <span>Registrado:</span>
                     <span>{{ viajeroFrecuente.creado | date:'dd/MM/yyyy' }}</span>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Footer -->
+            <div class="bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-200 px-4 py-3 rounded-b-xl">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-gray-500 font-medium">ID: {{ viajeroFrecuente.id }}</span>
+                <div class="flex items-center space-x-1">
+                  <button (click)="verViajeroFrecuente(viajeroFrecuente)"
+                    class="w-8 h-8 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105 group"
+                    title="Ver detalles">
+                    <i class="fas fa-eye text-sm group-hover:scale-110 transition-transform"></i>
+                  </button>
+                  <button (click)="editarViajeroFrecuente(viajeroFrecuente)"
+                    class="w-8 h-8 bg-green-500/10 hover:bg-green-500/20 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105 group"
+                    title="Editar">
+                    <i class="fas fa-edit text-sm group-hover:scale-110 transition-transform"></i>
+                  </button>
+                  <button (click)="confirmarEliminar(viajeroFrecuente)"
+                    class="w-8 h-8 bg-red-500/10 hover:bg-red-500/20 text-red-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105 group"
+                    title="Eliminar">
+                    <i class="fas fa-trash text-sm group-hover:scale-110 transition-transform"></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -527,54 +520,52 @@
                   </div>
 
                   <div class="flex-1">
-                    <div class="flex items-center space-x-4">
-                      <div>
-                        <div class="font-bold text-gray-900 font-mono">{{ viajeroFrecuente.codigo }}</div>
-                        <div class="text-sm text-gray-600 flex items-center space-x-2">
-                          <i class="fas fa-plane text-xs"></i>
-                          <span>{{ viajeroFrecuente.areolinea }}</span>
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center space-x-6">
+                        <div class="min-w-0 flex-shrink-0" style="width: 200px;">
+                          <div class="font-bold text-gray-900 font-mono">{{ viajeroFrecuente.codigo }}</div>
+                          <div class="text-sm text-gray-600 flex items-center space-x-2">
+                            <i class="fas fa-plane text-xs"></i>
+                            <span>{{ viajeroFrecuente.areolinea }}</span>
+                          </div>
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                          <div class="font-semibold text-gray-900">{{ viajeroFrecuente.viajero.nombres }} {{
+                            viajeroFrecuente.viajero.apellidoPaterno }} {{ viajeroFrecuente.viajero.apellidoMaterno }}
+                          </div>
+                          <span class="font-mono font-medium text-gray-600 text-sm">{{
+                            viajeroFrecuente.viajero.tipoDocumento }}: {{
+                            viajeroFrecuente.viajero.numeroDocumento }}</span>
                         </div>
                       </div>
 
-                      <div class="text-sm">
-                        <div class="font-semibold text-gray-900">{{ viajeroFrecuente.viajero.nombres }} {{
-                          viajeroFrecuente.viajero.apellidoPaterno }} {{ viajeroFrecuente.viajero.apellidoMaterno }}
+                      <div class="text-right flex-shrink-0" style="width: 180px; margin-left: 2rem;">
+                        <div class="text-xs text-gray-400 font-medium mb-1">Registrado</div>
+                        <div class="font-mono text-sm text-gray-900">{{ viajeroFrecuente.creado | date:'dd/MM/yyyy' }}
                         </div>
-                        <span class="font-mono font-medium">{{ viajeroFrecuente.viajero.tipoDocumento }}: {{
-                          viajeroFrecuente.viajero.numeroDocumento }}</span>
-                      </div>
-
-                      <div class="text-sm text-gray-500">
-                        {{ viajeroFrecuente.creado | date:'dd/MM/yyyy' }}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div class="relative" data-action-menu>
-                  <button (click)="toggleActionMenu($event, viajeroFrecuente.id, 'list')"
-                    class="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors">
-                    <i class="fas fa-ellipsis-v text-gray-600"></i>
+                <!-- Actions -->
+                <div class="flex justify-center items-center gap-2">
+                  <button (click)="verViajeroFrecuente(viajeroFrecuente)"
+                    class="w-9 h-9 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    title="Ver viajero">
+                    <i class="fas fa-eye text-blue-500 w-4"></i> 
                   </button>
-
-                  <div *ngIf="showActionMenuList === viajeroFrecuente.id"
-                    class="absolute right-0 top-10 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-2">
-                    <button (click)="verViajeroFrecuente(viajeroFrecuente)"
-                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                      <i class="fas fa-eye text-blue-500 w-4"></i>
-                      <span>Ver detalles</span>
-                    </button>
-                    <button (click)="editarViajeroFrecuente(viajeroFrecuente)"
-                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2">
-                      <i class="fas fa-edit text-green-500 w-4"></i>
-                      <span>Editar</span>
-                    </button>
-                    <button (click)="confirmarEliminar(viajeroFrecuente)"
-                      class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2">
-                      <i class="fas fa-trash text-red-500 w-4"></i>
-                      <span>Eliminar</span>
-                    </button>
-                  </div>
+                  <button (click)="editarViajeroFrecuente(viajeroFrecuente)"
+                    class="w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    title="Editar viajero">
+                    <i class="fas fa-edit text-green-500 w-4"></i>
+                  </button>
+                  <button (click)="confirmarEliminar(viajeroFrecuente)"
+                    class="w-9 h-9 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    title="Eliminar viajero">
+                    <i class="fas fa-trash text-red-500 w-4"></i>
+                  </button>
                 </div>
               </div>
             </div>

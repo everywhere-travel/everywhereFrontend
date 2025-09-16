@@ -444,7 +444,7 @@
         <!-- Cards View -->
         <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" *ngIf="currentView === 'cards'">
           <div *ngFor="let viajero of paginatedViajeros; trackBy: trackByViajeroId; let i = index"
-            class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+            class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full"
             [class.ring-2]="isSelected(viajero.id)" [class.ring-red-500]="isSelected(viajero.id)"
             [class.shadow-red-100]="isSelected(viajero.id)">
 
@@ -487,7 +487,7 @@
             </div>
 
             <!-- Card Body -->
-            <div class="p-6 space-y-4">
+            <div class="p-6 space-y-4 flex-1">
               <!-- Document Info -->
               <div class="space-y-1">
                 <div class="text-xs text-gray-500 uppercase font-semibold tracking-wide">{{ viajero.tipoDocumento }}
@@ -514,45 +514,27 @@
             </div>
 
             <!-- Card Footer -->
-            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-              <div class="flex items-center justify-between">
-                <div class="relative inline-block action-menu-container">
-                  <button (click)="verViajero(viajero)"
-                    class="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center gap-2 transition-colors bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg">
-                    <i class="fas fa-eye"></i>
-                    Ver detalles
-                  </button>
+            <div class="px-6 py-4 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white rounded-b-xl">
+              <div class="flex justify-between items-center">
+                <div class="text-xs text-gray-400 font-medium">
+                  ID: #{{ viajero.id }}
                 </div>
-
-                <div class="relative" data-action-menu>
-                  <button (click)="toggleActionMenuCards(viajero.id); $event.stopPropagation()"
-                    class="w-8 h-8 border border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg flex items-center justify-center text-gray-600 transition-all duration-200"
-                    type="button">
-                    <i class="fas fa-ellipsis-v"></i>
+                <div class="flex items-center gap-1">
+                  <button (click)="verViajero(viajero)"
+                    class="group relative p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-all duration-200"
+                    title="Ver detalles">
+                    <i class="fas fa-eye text-sm"></i>
                   </button>
-                  <div *ngIf="showActionMenuCards === viajero.id"
-                    class="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-xl shadow-xl min-w-48 z-50"
-                    style="z-index: 9999;" (click)="$event.stopPropagation()">
-                    <button (click)="verViajero(viajero)"
-                      class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
-                      type="button">
-                      <i class="fas fa-eye text-blue-500"></i>
-                      <span>Ver detalles</span>
-                    </button>
-                    <button (click)="editarViajero(viajero)"
-                      class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
-                      type="button">
-                      <i class="fas fa-edit text-green-500"></i>
-                      <span>Editar</span>
-                    </button>
-                    <div class="h-px bg-gray-200 my-1"></div>
-                    <button (click)="confirmarEliminar(viajero)"
-                      class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
-                      type="button">
-                      <i class="fas fa-trash text-red-500"></i>
-                      <span>Eliminar</span>
-                    </button>
-                  </div>
+                  <button (click)="editarViajero(viajero)"
+                    class="group relative p-2 text-gray-400 hover:text-green-600 rounded-lg hover:bg-green-50 transition-all duration-200"
+                    title="Editar viajero">
+                    <i class="fas fa-edit text-sm"></i>
+                  </button>
+                  <button (click)="confirmarEliminar(viajero)"
+                    class="group relative p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200"
+                    title="Eliminar viajero">
+                    <i class="fas fa-trash text-sm"></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -634,37 +616,23 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="flex items-center gap-2">
-                  <div class="relative" data-action-menu>
-                    <button (click)="toggleActionMenuList(viajero.id); $event.stopPropagation()"
-                      class="w-8 h-8 border border-gray-300 hover:border-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg flex items-center justify-center text-gray-600 transition-all duration-200"
-                      type="button">
-                      <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    <div *ngIf="showActionMenuList === viajero.id"
-                      class="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl min-w-48 z-50"
-                      style="z-index: 9999;" (click)="$event.stopPropagation()">
-                      <button (click)="verViajero(viajero)"
-                        class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
-                        type="button">
-                        <i class="fas fa-eye text-blue-500"></i>
-                        <span>Ver detalles</span>
-                      </button>
-                      <button (click)="editarViajero(viajero)"
-                        class="w-full flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
-                        type="button">
-                        <i class="fas fa-edit text-green-500"></i>
-                        <span>Editar</span>
-                      </button>
-                      <div class="h-px bg-gray-200 my-1"></div>
-                      <button (click)="confirmarEliminar(viajero)"
-                        class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
-                        type="button">
-                        <i class="fas fa-trash text-red-500"></i>
-                        <span>Eliminar</span>
-                      </button>
-                    </div>
-                  </div>
+                <div class="flex justify-center items-center gap-2">
+                  <button (click)="verViajero(viajero)"
+                    class="w-9 h-9 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    title="Ver viajero">
+                    <i class="fas fa-eye text-blue-500"></i> 
+                  </button>
+                  <button (click)="editarViajero(viajero)"
+                    class="w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    title="Editar viajero">
+                    <i class="fas fa-edit text-green-500"></i> 
+                  </button>
+                  <div class="h-px bg-gray-200 my-1"></div>
+                  <button (click)="confirmarEliminar(viajero)"
+                    class="w-9 h-9 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    title="Eliminar viajero">
+                    <i class="fas fa-trash text-red-500"></i> 
+                  </button>
                 </div>
               </div>
             </div>
