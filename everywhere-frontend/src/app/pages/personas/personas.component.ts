@@ -212,9 +212,12 @@ export class PersonasComponent implements OnInit {
   someSelected: boolean = false;
 
   // Variables para paginación
-  pageSize: number = 10;
-  currentPage: number = 1;
-  totalPages: number = 1;
+  currentPage = 1;
+  itemsPerPage = 10;
+  totalItems = 0;
+
+  // Math object for template use
+  Math = Math;
 
   // Variables adicionales para otras funcionalidades
   selectedViajeroId: number | null = null;
@@ -447,6 +450,12 @@ export class PersonasComponent implements OnInit {
     this.applyFilters();
   }
 
+  onItemsPerPageChange(): void {
+    this.itemsPerPage = Number(this.itemsPerPage);
+    this.currentPage = 1;
+    this.calcularEstadisticas();
+  }
+
   // Métodos para selección múltiple
   toggleAllSelection(): void {
     if (this.allSelected) {
@@ -621,60 +630,6 @@ export class PersonasComponent implements OnInit {
     this.showQuickActions = null;
   }
 
-  // Métodos para paginación
-  onPageSizeChange(): void {
-    this.currentPage = 1;
-    this.calculatePagination();
-  }
-
-  goToPage(page: number): void {
-    this.currentPage = page;
-    this.calculatePagination();
-  }
-
-  previousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.calculatePagination();
-    }
-  }
-
-  nextPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.calculatePagination();
-    }
-  }
-
-  getPageInfo(): string {
-    const start = (this.currentPage - 1) * this.pageSize + 1;
-    const end = Math.min(this.currentPage * this.pageSize, this.personasFiltradas.length);
-    return `${start}-${end} de ${this.personasFiltradas.length}`;
-  }
-
-  getVisiblePages(): number[] {
-    const pages: number[] = [];
-    const maxVisible = 5;
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(this.totalPages, startPage + maxVisible - 1);
-
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    return pages;
-  }
-
-  calculatePagination(): void {
-    this.totalPages = Math.ceil(this.personasFiltradas.length / this.pageSize);
-    if (this.currentPage > this.totalPages) {
-      this.currentPage = 1;
-    }
-  }
-
   // Métodos de utilidad
   getClientInitials(persona: PersonaTabla): string {
     if (persona.tipo === 'natural') {
@@ -739,6 +694,7 @@ export class PersonasComponent implements OnInit {
   aplicarFiltro(tipo: 'todos' | 'natural' | 'juridica'): void {
     this.filtroTipo = tipo;
     this.selectedType = tipo;
+    this.currentPage = 1;
     this.applyFilters();
   }
 
@@ -760,6 +716,19 @@ export class PersonasComponent implements OnInit {
     this.searchQuery = '';
     this.searchTerm = '';
     this.applyFilters();
+  }
+
+  //Pagination
+  get paginatedPersonas(): PersonaTabla[] {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * itemsPerPageNum;
+    const endIndex = startIndex + itemsPerPageNum;
+    return this.personasFiltradas.slice(startIndex, endIndex);
+  }
+
+  get totalPages(): number {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    return Math.ceil(this.totalItems / itemsPerPageNum);
   }
 
   // Métodos de acciones de tabla
@@ -1093,6 +1062,7 @@ export class PersonasComponent implements OnInit {
 
     this.filteredPersonas = filtered;
     this.personasFiltradas = filtered;
+    this.totalItems = filtered.length;
     
     // Aplicar ordenamiento
     this.applySorting();
@@ -1136,10 +1106,12 @@ export class PersonasComponent implements OnInit {
 
   onSearchChange(): void {
     this.searchTerm = this.searchQuery; // Sincronizar las variables
+    this.currentPage = 1;
     this.applyFilters();
   }
 
   onTypeFilterChange(): void {
+    this.currentPage = 1;
     this.applyFilters();
   }
 
@@ -1425,5 +1397,35 @@ export class PersonasComponent implements OnInit {
 
   isActiveView(view: 'table' | 'cards' | 'list'): boolean {
     return this.currentView === view;
+  }
+
+  // Métodos para paginación (remover el getter duplicado)
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+
+    if (end - start < 2 * delta) {
+      if (start === 1) {
+        end = Math.min(total, start + 2 * delta);
+      } else if (end === total) {
+        start = Math.max(1, end - 2 * delta);
+      }
+    }
+
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 }

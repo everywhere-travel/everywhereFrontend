@@ -48,7 +48,7 @@ export class ViajeroFrecuente implements OnInit {
       children: [
         {
           id: 'personas',
-          title: 'Personas',
+          title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas'
         },
@@ -158,8 +158,21 @@ export class ViajeroFrecuente implements OnInit {
   // View management
   currentView: 'table' | 'cards' | 'list' = 'table';
 
-  // Selection management
+  // Estadísticas
+  totalViajeroFrecuente = 0;
+
+  // Math object for template use
+  Math = Math;
+
+  // Variables para selección múltiple
   selectedItems: number[] = [];
+  allSelected: boolean = false;
+  someSelected: boolean = false;
+
+  // Pagination
+  currentPage = 1;
+  itemsPerPage = 10;
+  totalItems = 0;
 
   // Action menus
   showActionMenu: number | null = null;
@@ -207,6 +220,7 @@ export class ViajeroFrecuente implements OnInit {
   ngOnInit(): void { 
     this.loadViajerosFrecuentes();
     this.loadViajeros();
+    this.calcularEstadisticas();
   }
 
   // Form methods
@@ -341,12 +355,16 @@ export class ViajeroFrecuente implements OnInit {
     }
   }
 
-  toggleSelectAll(): void {
+  toggleAllSelection(): void {
     if (this.selectedItems.length === this.viajerosFrecuentesFiltrados.length) {
       this.selectedItems = [];
     } else {
       this.selectedItems = this.viajerosFrecuentesFiltrados.map(vf => vf.id);
     }
+  }
+
+  isSelected(id: number): boolean {
+    return this.selectedItems.includes(id);
   }
 
   // Action menu management
@@ -735,5 +753,56 @@ export class ViajeroFrecuente implements OnInit {
     
     const regex = new RegExp(`(${searchQuery.trim()})`, 'gi');
     return text.replace(regex, '<strong class="bg-yellow-200 text-yellow-800">$1</strong>');
+  }
+
+  get totalPages(): number {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    return Math.ceil(this.totalItems / itemsPerPageNum);
+  }
+
+  // Estadísticas
+  calcularEstadisticas(): void {
+    this.totalViajeroFrecuente = this.viajerosFrecuentes.length;
+  }
+
+  onItemsPerPageChange(): void {
+    this.itemsPerPage = Number(this.itemsPerPage);
+    this.currentPage = 1;
+    this.calcularEstadisticas();
+  }
+
+  // Método para actualizar datos paginados
+  updatePaginatedData(): void {
+    this.calcularEstadisticas();
+  }
+
+  // Métodos para paginación (remover el getter duplicado)
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+
+    if (end - start < 2 * delta) {
+      if (start === 1) {
+        end = Math.min(total, start + 2 * delta);
+      } else if (end === total) {
+        start = Math.max(1, end - 2 * delta);
+      }
+    }
+
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 }

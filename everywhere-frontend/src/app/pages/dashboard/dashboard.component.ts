@@ -78,7 +78,7 @@ export class DashboardComponent implements OnInit {
       action: { text: 'Administrar' }
     },
     {
-      title: 'Personas',
+      title: 'Clientes',
       description: 'Gestión de clientes y proveedores',
       icon: 'fas fa-users',
       route: '/personas',
