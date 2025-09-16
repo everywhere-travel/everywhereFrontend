@@ -21,7 +21,6 @@ import { personaDisplay } from '../../shared/models/Persona/persona.model';
 // Models
 import { CotizacionRequest, CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
 import { DetalleCotizacionRequest, DetalleCotizacionResponse } from '../../shared/models/Cotizacion/detalleCotizacion.model';
-import { PersonaResponse } from '../../shared/models/Persona/persona.model';
 import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model';
