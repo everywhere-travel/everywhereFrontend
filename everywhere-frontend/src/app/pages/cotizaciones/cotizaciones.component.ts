@@ -29,6 +29,7 @@ import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { CategoriaResponse } from '../../shared/models/Categoria/categoria.model';
+import { CategoriaRequest } from '../../shared/models/Categoria/categoria.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -84,6 +85,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   mostrarFormulario = false;
   editandoCotizacion = false;
   cotizacionEditandoId: number | null = null;
+  mostrarGestionGrupos = false; // Nueva variable para la vista de gestión
 
   // Sidebar
   sidebarCollapsed = false;
@@ -145,6 +147,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   buscandoClientes = false;
   clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | null = null;
 
+  // Variables para gestión de categorías
+  nuevaCategoriaForm!: FormGroup;
+  creandoCategoria = false;
+  categoriaEditandose: number | null = null;
+  categoriaDatosOriginales: any = null;
+
   constructor() {}
 
   ngOnInit(): void {
@@ -156,6 +164,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Search form
     this.searchForm = this.fb.group({
       searchTerm: ['']
+    });
+
+    // Nueva categoría form
+    this.nuevaCategoriaForm = this.fb.group({
+      nombre: ['', [Validators.required, Validators.minLength(3)]],
+      descripcion: ['']
     });
 
     // Cotización form
@@ -733,6 +747,249 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     });
 
     this.gruposHoteles.splice(index, 1);
+  }
+
+  // Gestión de grupos de hoteles
+  mostrarVistaGestionGrupos(): void {
+    this.mostrarGestionGrupos = true;
+  }
+
+  cerrarVistaGestionGrupos(): void {
+    this.mostrarGestionGrupos = false;
+  }
+
+  // Obtener total de opciones en todos los grupos
+  getTotalOpcionesGrupos(): number {
+    return this.gruposHoteles.reduce((total, grupo) => total + grupo.detalles.length, 0);
+  }
+
+  // Duplicar un grupo completo
+  duplicarGrupoHotel(index: number): void {
+    if (index >= 0 && index < this.gruposHoteles.length) {
+      const grupoOriginal = this.gruposHoteles[index];
+      const grupoDuplicado: GrupoHotelTemp = {
+        categoria: { ...grupoOriginal.categoria },
+        detalles: grupoOriginal.detalles.map(detalle => ({
+          ...detalle,
+          proveedor: detalle.proveedor ? { ...detalle.proveedor } : undefined,
+          producto: detalle.producto ? { ...detalle.producto } : undefined,
+          isTemporary: true
+        })),
+        isTemporary: true,
+        total: grupoOriginal.total
+      };
+      
+      // Agregar "(Copia)" al nombre de la categoría
+      if (grupoDuplicado.categoria.nombre) {
+        grupoDuplicado.categoria.nombre = `${grupoOriginal.categoria.nombre} (Copia)`;
+      }
+      
+      this.gruposHoteles.push(grupoDuplicado);
+    }
+  }
+
+  // Duplicar una opción específica dentro de un grupo
+  duplicarDetalleGrupo(grupoIndex: number, detalleIndex: number): void {
+    if (grupoIndex >= 0 && grupoIndex < this.gruposHoteles.length) {
+      const grupo = this.gruposHoteles[grupoIndex];
+      if (detalleIndex >= 0 && detalleIndex < grupo.detalles.length) {
+        const detalleOriginal = grupo.detalles[detalleIndex];
+        const detalleDuplicado: DetalleCotizacionTemp = {
+          ...detalleOriginal,
+          proveedor: detalleOriginal.proveedor ? { ...detalleOriginal.proveedor } : undefined,
+          producto: detalleOriginal.producto ? { ...detalleOriginal.producto } : undefined,
+          isTemporary: true
+        };
+        
+        grupo.detalles.push(detalleDuplicado);
+        
+        // Recalcular el total del grupo
+        grupo.total = grupo.detalles.reduce((sum, det) => sum + det.total, 0);
+      }
+    }
+  }
+
+  // Limpiar todos los grupos
+  limpiarTodosLosGrupos(): void {
+    if (confirm('¿Estás seguro de que quieres eliminar todos los grupos? Esta acción no se puede deshacer.')) {
+      this.gruposHoteles = [];
+    }
+  }
+
+  // Exportar grupos a JSON
+  exportarGrupos(): void {
+    const datosExport = {
+      fecha: new Date().toISOString(),
+      totalGrupos: this.gruposHoteles.length,
+      totalOpciones: this.getTotalOpcionesGrupos(),
+      valorTotal: this.calcularTotalGrupos(),
+      grupos: this.gruposHoteles
+    };
+
+    const dataStr = JSON.stringify(datosExport, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = `grupos-hoteles-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  }
+
+  // Crear nuevo grupo desde formulario
+  crearNuevaCategoria(): void {
+    if (this.nuevaCategoriaForm.invalid) {
+      this.markFormGroupTouched(this.nuevaCategoriaForm);
+      return;
+    }
+
+    this.creandoCategoria = true;
+    const formValue = this.nuevaCategoriaForm.value;
+    
+    // Crear nueva categoría
+    const nuevaCategoria: CategoriaRequest = {
+      nombre: formValue.nombre
+    };
+
+    // Llamar al servicio para crear la categoría
+    this.categoriaService.create(nuevaCategoria).subscribe({
+      next: (response) => {
+        // Agregar a la lista local
+        this.categorias.push(response);
+        this.limpiarFormularioNuevaCategoria();
+        this.creandoCategoria = false;
+        alert(`Categoría "${formValue.nombre}" creada exitosamente!`);
+      },
+      error: (error) => {
+        console.error('Error al crear categoría:', error);
+        this.creandoCategoria = false;
+        alert('Error al crear la categoría. Inténtalo de nuevo.');
+      }
+    });
+  }
+
+  // Limpiar formulario de nueva categoría
+  limpiarFormularioNuevaCategoria(): void {
+    this.nuevaCategoriaForm.reset();
+    this.markFormGroupUntouched(this.nuevaCategoriaForm);
+  }
+
+  // Editar categoría existente
+  editarCategoria(index: number): void {
+    if (index >= 0 && index < this.categorias.length) {
+      this.categoriaEditandose = index;
+      // Guardar datos originales para poder cancelar
+      this.categoriaDatosOriginales = {
+        nombre: this.categorias[index].nombre
+      };
+    }
+  }
+
+  // Guardar edición de categoría
+  guardarEdicionCategoria(index: number): void {
+    if (index >= 0 && index < this.categorias.length) {
+      const categoria = this.categorias[index];
+      
+      // Validar que el nombre no esté vacío
+      if (!categoria.nombre || categoria.nombre.trim().length < 3) {
+        alert('El nombre de la categoría debe tener al menos 3 caracteres');
+        return;
+      }
+
+      // Crear objeto para actualizar
+      const categoriaActualizada: CategoriaRequest = {
+        nombre: categoria.nombre
+      };
+      
+      // Llamar al servicio para actualizar
+      this.categoriaService.update(categoria.id!, categoriaActualizada).subscribe({
+        next: (response) => {
+          this.categorias[index] = response;
+          this.categoriaEditandose = null;
+          this.categoriaDatosOriginales = null;
+          alert('Categoría actualizada exitosamente!');
+        },
+        error: (error) => {
+          console.error('Error al actualizar categoría:', error);
+          alert('Error al actualizar la categoría. Inténtalo de nuevo.');
+          // Restaurar datos originales en caso de error
+          this.cancelarEdicionCategoria(index);
+        }
+      });
+    }
+  }
+
+  // Cancelar edición de categoría
+  cancelarEdicionCategoria(index: number): void {
+    if (index >= 0 && index < this.categorias.length && this.categoriaDatosOriginales) {
+      // Restaurar datos originales
+      this.categorias[index].nombre = this.categoriaDatosOriginales.nombre;
+      
+      this.categoriaEditandose = null;
+      this.categoriaDatosOriginales = null;
+    }
+  }
+
+  // Confirmar eliminación de categoría con diálogo
+  confirmarEliminarCategoria(index: number): void {
+    if (index >= 0 && index < this.categorias.length) {
+      const categoria = this.categorias[index];
+      const mensaje = `¿Estás seguro de que quieres eliminar la categoría "${categoria.nombre}"?\n\n` +
+                     `Esta acción no se puede deshacer y podría afectar grupos existentes.`;
+      
+      if (confirm(mensaje)) {
+        this.eliminarCategoria(index);
+      }
+    }
+  }
+
+  // Eliminar categoría
+  eliminarCategoria(index: number): void {
+    if (index >= 0 && index < this.categorias.length) {
+      const categoria = this.categorias[index];
+      
+      this.categoriaService.delete(categoria.id!).subscribe({
+        next: () => {
+          this.categorias.splice(index, 1);
+          alert('Categoría eliminada exitosamente');
+        },
+        error: (error) => {
+          console.error('Error al eliminar categoría:', error);
+          alert('Error al eliminar la categoría. Puede estar en uso por grupos existentes.');
+        }
+      });
+    }
+  }
+
+  // Contar categorías (todas están activas ya que no hay campo activo/inactivo)
+  contarCategoriasActivas(): number {
+    return this.categorias.length;
+  }
+
+  // Verificar si una categoría está activa (todas lo están)
+  esCategoriaActiva(categoria: any): boolean {
+    return true; // Todas las categorías están activas
+  }
+
+  // Formatear fecha para mostrar
+  formatearFecha(fecha: any): string {
+    if (!fecha) return 'N/A';
+    const date = new Date(fecha);
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  // Marcar todos los controles como untouched
+  private markFormGroupUntouched(formGroup: FormGroup): void {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      control?.markAsUntouched();
+      control?.markAsPristine();
+    });
   }
 
   agregarDetalleAGrupo(grupoIndex: number): void {

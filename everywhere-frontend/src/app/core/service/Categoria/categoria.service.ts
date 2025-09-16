@@ -14,7 +14,6 @@ export class CategoriaService {
   }
 
   findAll(): Observable<CategoriaResponse[]> {
-    console.log('🚀 CategoriaService.findAll() - URL:', this.apiUrl);
     return this.http.get<CategoriaResponse[]>(this.apiUrl);
   }
 
