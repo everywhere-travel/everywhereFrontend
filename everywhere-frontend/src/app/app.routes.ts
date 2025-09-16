@@ -1,6 +1,19 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth/auth.guard';
 import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { PersonasComponent } from './pages/personas/personas.component';
+import { Viajero } from './pages/viajero/viajero';
+import { ViajeroFrecuente } from './pages/viajero-frecuente/viajero-frecuente';
+import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.component';
+import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
+import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.component';
+import { ProductosComponent } from './pages/productos/productos.component';
+import { ProveedorComponent } from './pages/proveedor/proveedor.component';
+import { OperadoresComponent } from './pages/operadores/operadores.component';
+import { ReportesComponent } from './pages/reportes/reportes.component';
+import { EstadisticaComponent } from './pages/estadistica/estadistica.component';
+
 
 export const routes: Routes = [
   {
@@ -61,6 +74,16 @@ export const routes: Routes = [
     path: 'productos',
     loadComponent: () =>
       import('./pages/productos/productos.component').then(m => m.ProductosComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'proveedores',
+    component: ProveedorComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'operadores',
+    component: OperadoresComponent,
     canActivate: [authGuard]
   },
   {

@@ -70,10 +70,29 @@ export class Viajero implements OnInit {
       route: '/liquidaciones'
     },
     {
-      id: 'productos',
-      title: 'Productos y Servicios',
-      icon: 'fas fa-suitcase-rolling',
-      route: '/productos'
+      id: 'recursos',
+      title: 'Recursos',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos'
+        },
+        {
+          id: 'proveedores',
+          title: 'Proveedores',
+          icon: 'fas fa-truck',
+          route: '/proveedores'
+        },
+        {
+          id: 'operadores',
+          title: 'Operadores',
+          icon: 'fas fa-headset',
+          route: '/operadores'
+        }
+      ]
     },
     {
       id: 'reportes',
@@ -85,6 +104,31 @@ export class Viajero implements OnInit {
           title: 'Estadísticas',
           icon: 'fas fa-chart-line',
           route: '/estadistica'
+        },
+        {
+          id: 'reportes-general',
+          title: 'Reportes Generales',
+          icon: 'fas fa-file-pdf',
+          route: '/reportes'
+        }
+      ]
+    },
+    {
+      id: 'configuracion',
+      title: 'Configuración',
+      icon: 'fas fa-cog',
+      children: [
+        {
+          id: 'usuarios',
+          title: 'Usuarios',
+          icon: 'fas fa-user-shield',
+          route: '/usuarios'
+        },
+        {
+          id: 'sistema',
+          title: 'Sistema',
+          icon: 'fas fa-server',
+          route: '/configuracion'
         }
       ]
     }

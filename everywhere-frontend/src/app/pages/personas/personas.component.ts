@@ -1,6 +1,7 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
 import { ViajeroService } from '../../core/service/viajero/viajero.service';
@@ -88,10 +89,29 @@ export class PersonasComponent implements OnInit {
       route: '/liquidaciones'
     },
     {
-      id: 'productos',
-      title: 'Productos y Servicios',
-      icon: 'fas fa-suitcase-rolling',
-      route: '/productos'
+      id: 'recursos',
+      title: 'Recursos',
+      icon: 'fas fa-box', 
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos'
+        },
+        {
+          id: 'proveedores',
+          title: 'Proveedores',
+          icon: 'fas fa-truck',
+          route: '/proveedores'
+        },
+        {
+          id: 'operadores',
+          title: 'Operadores',
+          icon: 'fas fa-headset',
+          route: '/operadores'
+        }
+      ]
     },
     {
       id: 'reportes',
@@ -226,7 +246,8 @@ export class PersonasComponent implements OnInit {
     private fb: FormBuilder,
     private personaNaturalService: PersonaNaturalService,
     private personaJuridicaService: PersonaJuridicaService,
-    private viajeroService: ViajeroService
+    private viajeroService: ViajeroService,
+    private router: Router
   ) {
     this.initializeForms();
   }
@@ -1387,9 +1408,10 @@ export class PersonasComponent implements OnInit {
   }
 
   // Métodos del Sidebar
-  onSidebarItemClick(item: SidebarMenuItem): void {
-    console.log('Sidebar item clicked:', item);
-    // Aquí puedes manejar la navegación o acciones específicas
+  onSidebarItemClick(item: SidebarMenuItem): void { 
+    if (item.route) {
+      this.router.navigate([item.route]);
+    }
   }
 
   onToggleSidebar(): void {

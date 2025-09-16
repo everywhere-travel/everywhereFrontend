@@ -75,26 +75,33 @@ export class ViajeroFrecuente implements OnInit {
     {
       id: 'liquidaciones',
       title: 'Liquidaciones',
-      icon: 'fas fa-calculator',
+      icon: 'fas fa-credit-card',
       route: '/liquidaciones'
     },
     {
-      id: 'productos',
-      title: 'Gestión de Productos',
-      icon: 'fas fa-box-open',
-      route: '/productos'
-    },
-    {
-      id: 'juridica',
-      title: 'Persona Jurídica',
-      icon: 'fas fa-building',
-      route: '/juridica'
-    },
-    {
-      id: 'natural',
-      title: 'Persona Natural',
-      icon: 'fas fa-user-tie',
-      route: '/natural'
+      id: 'recursos',
+      title: 'Recursos',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos'
+        },
+        {
+          id: 'proveedores',
+          title: 'Proveedores',
+          icon: 'fas fa-truck',
+          route: '/proveedores'
+        },
+        {
+          id: 'operadores',
+          title: 'Operadores',
+          icon: 'fas fa-headset',
+          route: '/operadores'
+        }
+      ]
     },
     {
       id: 'reportes',
@@ -106,6 +113,31 @@ export class ViajeroFrecuente implements OnInit {
           title: 'Estadísticas',
           icon: 'fas fa-chart-line',
           route: '/estadistica'
+        },
+        {
+          id: 'reportes-general',
+          title: 'Reportes Generales',
+          icon: 'fas fa-file-pdf',
+          route: '/reportes'
+        }
+      ]
+    },
+    {
+      id: 'configuracion',
+      title: 'Configuración',
+      icon: 'fas fa-cog',
+      children: [
+        {
+          id: 'usuarios',
+          title: 'Usuarios',
+          icon: 'fas fa-user-shield',
+          route: '/usuarios'
+        },
+        {
+          id: 'sistema',
+          title: 'Sistema',
+          icon: 'fas fa-server',
+          route: '/configuracion'
         }
       ]
     }
@@ -172,8 +204,7 @@ export class ViajeroFrecuente implements OnInit {
     this.viajeroFrecuenteForm = this.createViajeroFrecuenteForm();
   }
 
-  ngOnInit(): void {
-    console.log('VIAJEROS FRECUENTES: Componente inicializado');
+  ngOnInit(): void { 
     this.loadViajerosFrecuentes();
     this.loadViajeros();
   }
@@ -188,14 +219,12 @@ export class ViajeroFrecuente implements OnInit {
   }
 
   // Load data methods
-  loadViajerosFrecuentes(): void {
-    console.log('VIAJEROS FRECUENTES: Cargando viajeros frecuentes...');
+  loadViajerosFrecuentes(): void { 
     this.isLoading = true;
     
     // Para obtener todos los viajeros frecuentes, necesitamos iterar por cada viajero
     this.viajeroService.findAll().subscribe({
-      next: (viajeros) => {
-        console.log('VIAJEROS FRECUENTES: Viajeros obtenidos:', viajeros);
+      next: (viajeros) => { 
         this.viajeros = viajeros;
         
         // Obtener viajeros frecuentes para cada viajero
@@ -221,11 +250,9 @@ export class ViajeroFrecuente implements OnInit {
                 this.viajerosFrecuentesFiltrados = [...this.viajerosFrecuentes];
                 this.isLoading = false;
                 this.calculateStatistics();
-                console.log('VIAJEROS FRECUENTES: Datos cargados exitosamente:', this.viajerosFrecuentes);
               }
             },
-            error: (error) => {
-              console.error('VIAJEROS FRECUENTES: Error al cargar viajeros frecuentes del viajero', viajero.id, ':', error);
+            error: (error) => { 
               completedRequests++;
               
               if (completedRequests === viajeros.length) {
@@ -258,25 +285,19 @@ export class ViajeroFrecuente implements OnInit {
 
   // Statistics
   calculateStatistics(): void {
-    console.log('VIAJEROS FRECUENTES: Calculando estadísticas...');
-    
     this.estadisticas.totalViajerosActivos = this.viajerosFrecuentes.length;
     
     // Contar aerolíneas únicas
     const aerolineasUnicas = new Set(this.viajerosFrecuentes.map(vf => vf.areolinea));
     this.estadisticas.aerolineasPopulares = aerolineasUnicas.size;
-    
-    console.log('VIAJEROS FRECUENTES: Estadísticas calculadas:', this.estadisticas);
   }
 
   // Search and filter methods
   onSearch(): void {
-    console.log('VIAJEROS FRECUENTES: Buscando con query:', this.searchQuery);
     this.applyFilters();
   }
 
   onFilterChange(): void {
-    console.log('VIAJEROS FRECUENTES: Filtro de aerolínea cambiado a:', this.filtroAerolinea);
     this.applyFilters();
   }
 
@@ -302,12 +323,10 @@ export class ViajeroFrecuente implements OnInit {
     }
 
     this.viajerosFrecuentesFiltrados = filtered;
-    console.log('VIAJEROS FRECUENTES: Filtros aplicados, resultados:', this.viajerosFrecuentesFiltrados.length);
   }
 
   // View management
   setView(view: 'table' | 'cards' | 'list'): void {
-    console.log('VIAJEROS FRECUENTES: Cambiando vista a:', view);
     this.currentView = view;
     this.closeAllMenus();
   }
@@ -320,7 +339,6 @@ export class ViajeroFrecuente implements OnInit {
     } else {
       this.selectedItems.push(id);
     }
-    console.log('VIAJEROS FRECUENTES: Items seleccionados:', this.selectedItems);
   }
 
   toggleSelectAll(): void {
@@ -329,7 +347,6 @@ export class ViajeroFrecuente implements OnInit {
     } else {
       this.selectedItems = this.viajerosFrecuentesFiltrados.map(vf => vf.id);
     }
-    console.log('VIAJEROS FRECUENTES: Selección total cambiada:', this.selectedItems);
   }
 
   // Action menu management
@@ -343,7 +360,6 @@ export class ViajeroFrecuente implements OnInit {
 
   toggleActionMenu(event: Event, id: number, menuType: 'table' | 'cards' | 'list'): void {
     event.stopPropagation();
-    console.log(`VIAJEROS FRECUENTES: Toggle action menu ${menuType} para ID:`, id);
     
     this.closeAllMenus();
     
@@ -366,14 +382,12 @@ export class ViajeroFrecuente implements OnInit {
 
   // CRUD Actions
   verViajeroFrecuente(viajeroFrecuente: ViajeroFrecuenteResponse): void {
-    console.log('VIAJEROS FRECUENTES ACTION: Ver detalles del viajero frecuente:', viajeroFrecuente.id);
     this.viajeroFrecuenteDetalles = viajeroFrecuente;
     this.mostrarModalDetalles = true;
     this.closeAllMenus();
   }
 
   editarViajeroFrecuente(viajeroFrecuente: ViajeroFrecuenteResponse): void {
-    console.log('VIAJEROS FRECUENTES ACTION: Editar viajero frecuente:', viajeroFrecuente.id);
     this.editandoViajeroFrecuente = viajeroFrecuente;
     this.populateFormWithViajeroFrecuente(viajeroFrecuente);
     this.mostrarModalCrearViajeroFrecuente = true;
@@ -381,7 +395,6 @@ export class ViajeroFrecuente implements OnInit {
   }
 
   confirmarEliminar(viajeroFrecuente: ViajeroFrecuenteResponse): void {
-    console.log('VIAJEROS FRECUENTES ACTION: Confirmar eliminación del viajero frecuente:', viajeroFrecuente.id);
     this.viajeroFrecuenteAEliminar = viajeroFrecuente;
     this.mostrarModalEliminar = true;
     this.closeAllMenus();
@@ -389,11 +402,8 @@ export class ViajeroFrecuente implements OnInit {
 
   confirmarEliminacionModal(): void {
     if (this.viajeroFrecuenteAEliminar) {
-      console.log('VIAJEROS FRECUENTES: Eliminando viajero frecuente:', this.viajeroFrecuenteAEliminar.id);
-      
       this.viajeroFrecuenteService.eliminar(this.viajeroFrecuenteAEliminar.id).subscribe({
         next: () => {
-          console.log('VIAJEROS FRECUENTES: Viajero frecuente eliminado exitosamente');
           this.loadViajerosFrecuentes();
           this.cerrarModalEliminar();
         },
@@ -418,7 +428,6 @@ export class ViajeroFrecuente implements OnInit {
   }
 
   abrirModalCrearViajeroFrecuente(): void {
-    console.log('VIAJEROS FRECUENTES ACTION: Abrir modal crear viajero frecuente');
     this.editandoViajeroFrecuente = null;
     this.viajeroFrecuenteForm.reset();
     this.clearViajeroSearch();
@@ -433,8 +442,6 @@ export class ViajeroFrecuente implements OnInit {
       this.sortColumn = column;
       this.sortDirection = 'asc';
     }
-
-    console.log('VIAJEROS FRECUENTES: Ordenando por:', column, this.sortDirection);
 
     this.viajerosFrecuentesFiltrados.sort((a, b) => {
       let valueA: any;
@@ -481,14 +488,12 @@ export class ViajeroFrecuente implements OnInit {
   }
 
   onSidebarItemClick(item: SidebarMenuItem): void {
-    console.log('VIAJEROS FRECUENTES: Sidebar item clicked:', item);
     if (item.route) {
       this.router.navigate([item.route]);
     }
   }
 
   onMenuItemClick(item: SidebarMenuItem): void {
-    console.log('VIAJEROS FRECUENTES: Menu item clicked:', item);
     if (item.route) {
       this.router.navigate([item.route]);
     }
@@ -550,21 +555,16 @@ export class ViajeroFrecuente implements OnInit {
   }
 
   exportarSeleccionados(): void {
-    console.log('VIAJEROS FRECUENTES BULK: Exportar seleccionados:', this.selectedItems);
     // Implementar exportación
   }
 
   // Refresh data
   refreshData(): void {
-    console.log('VIAJEROS FRECUENTES: Refrescando datos');
     this.loadViajerosFrecuentes();
   }
 
   // Método para poblar el formulario con datos del viajero frecuente
   populateFormWithViajeroFrecuente(viajeroFrecuente: ViajeroFrecuenteResponse): void {
-    console.log('VIAJEROS FRECUENTES: Poblando formulario con datos del viajero frecuente:', viajeroFrecuente);
-    console.log('VIAJEROS FRECUENTES: Aerolínea recibida:', viajeroFrecuente.areolinea);
-    
     // Poblar con los valores del viajero frecuente
     this.viajeroFrecuenteForm.patchValue({
       viajeroId: viajeroFrecuente.viajero.id,
@@ -575,21 +575,16 @@ export class ViajeroFrecuente implements OnInit {
     // Para el modo edición, configurar el viajero seleccionado en el campo de búsqueda
     this.selectedViajero = viajeroFrecuente.viajero;
     this.viajeroSearchQuery = `${viajeroFrecuente.viajero.nombres} ${viajeroFrecuente.viajero.apellidoPaterno} ${viajeroFrecuente.viajero.apellidoMaterno} (${viajeroFrecuente.viajero.numeroDocumento})`;
-    
-    console.log('VIAJEROS FRECUENTES: Formulario poblado, valores actuales:', this.viajeroFrecuenteForm.value);
-    console.log('VIAJEROS FRECUENTES: Control aerolínea específico:', this.viajeroFrecuenteForm.get('areolinea')?.value);
   }
 
   // Método para cerrar modal de detalles
   cerrarModalDetalles(): void {
-    console.log('VIAJEROS FRECUENTES: Cerrando modal de detalles');
     this.mostrarModalDetalles = false;
     this.viajeroFrecuenteDetalles = null;
   }
 
   // Método para cerrar modal de crear/editar
   cerrarModalCrearViajeroFrecuente(): void {
-    console.log('VIAJEROS FRECUENTES: Cerrando modal de crear/editar viajero frecuente');
     this.mostrarModalCrearViajeroFrecuente = false;
     this.editandoViajeroFrecuente = null;
     this.isSubmitting = false;
@@ -600,10 +595,8 @@ export class ViajeroFrecuente implements OnInit {
 
   // Método para manejar el envío del formulario
   onSubmitViajeroFrecuente(): void {
-    console.log('VIAJEROS FRECUENTES: Enviando formulario...');
     
     if (this.viajeroFrecuenteForm.invalid) {
-      console.log('VIAJEROS FRECUENTES: Formulario inválido, marcando campos como touched');
       Object.keys(this.viajeroFrecuenteForm.controls).forEach(key => {
         this.viajeroFrecuenteForm.get(key)?.markAsTouched();
       });
@@ -612,7 +605,6 @@ export class ViajeroFrecuente implements OnInit {
 
     this.isSubmitting = true;
     const formData = this.viajeroFrecuenteForm.value;
-    console.log('VIAJEROS FRECUENTES: Datos del formulario:', formData);
 
     const viajeroFrecuenteRequest: ViajeroFrecuenteRequest = {
       areolinea: formData.areolinea,
@@ -621,11 +613,9 @@ export class ViajeroFrecuente implements OnInit {
 
     if (this.editandoViajeroFrecuente) {
       // Actualizar viajero frecuente existente
-      console.log('VIAJEROS FRECUENTES: Actualizando viajero frecuente con ID:', this.editandoViajeroFrecuente.id);
       
       this.viajeroFrecuenteService.actualizar(this.editandoViajeroFrecuente.id, viajeroFrecuenteRequest).subscribe({
         next: (response) => {
-          console.log('VIAJEROS FRECUENTES: Viajero frecuente actualizado exitosamente:', response);
           this.isSubmitting = false;
           this.cerrarModalCrearViajeroFrecuente();
           this.loadViajerosFrecuentes();
@@ -639,18 +629,15 @@ export class ViajeroFrecuente implements OnInit {
       });
     } else {
       // Crear nuevo viajero frecuente
-      console.log('VIAJEROS FRECUENTES: Creando nuevo viajero frecuente para viajero ID:', formData.viajeroId);
       
       this.viajeroFrecuenteService.crear(formData.viajeroId, viajeroFrecuenteRequest).subscribe({
         next: (response) => {
-          console.log('VIAJEROS FRECUENTES: Viajero frecuente creado exitosamente:', response);
           this.isSubmitting = false;
           this.cerrarModalCrearViajeroFrecuente();
           this.loadViajerosFrecuentes();
           // Aquí podrías agregar una notificación de éxito
         },
         error: (error) => {
-          console.error('VIAJEROS FRECUENTES: Error al crear viajero frecuente:', error);
           this.isSubmitting = false;
           // Aquí podrías agregar una notificación de error
         }
@@ -697,21 +684,17 @@ export class ViajeroFrecuente implements OnInit {
 
   // TEST METHOD - Asignar datos falsos para probar
   testSearchMethod(): void {
-    console.log('🧪 TEST METHOD EJECUTADO');
     this.viajerosFiltrados = [
       { id: 1, nombres: 'TEST', apellidoPaterno: 'USER', apellidoMaterno: 'FAKE', numeroDocumento: '12345678' } as any
     ];
     this.showViajeroDropdown = true;
-    console.log('🧪 Datos de prueba asignados');
   }
 
   selectViajero(viajero: ViajeroResponse): void {
-    console.log('Viajero seleccionado:', viajero);
     this.selectedViajero = viajero;
     this.viajeroSearchQuery = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno} (${viajero.numeroDocumento})`;
     this.viajeroFrecuenteForm.patchValue({ viajeroId: viajero.id });
     this.showViajeroDropdown = false;
-    console.log('Formulario actualizado con viajeroId:', viajero.id);
   }
 
   clearViajeroSearch(): void {
@@ -726,7 +709,6 @@ export class ViajeroFrecuente implements OnInit {
   }
 
   onViajeroInputFocus(): void {
-    console.log('FOCUS en input de viajero');
     // Simplemente ejecutar la búsqueda (que maneja tanto caso vacío como con texto)
     this.onViajeroSearchChange();
   }
