@@ -1,6 +1,6 @@
 import { CarpetaResponse } from '../Carpeta/carpeta.model'
 import { CotizacionResponse } from '../Cotizacion/cotizacion.model'
-import { FormaPagoResponse } from '../FormaPago/formaPago'
+import { FormaPagoResponse } from '../FormaPago/formaPago.model'
 import { ProductoResponse } from '../Producto/producto.model'
 
 export interface LiquidacionRequest {

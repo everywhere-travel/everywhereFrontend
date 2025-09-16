@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { PersonaRequest, PersonaResponse } from '../../../shared/models/Persona/persona.model';
+import { personaDisplay, PersonaRequest, PersonaResponse } from '../../../shared/models/Persona/persona.model';
 
 @Injectable({
   providedIn: 'root'
@@ -62,5 +62,9 @@ export class PersonaService {
    */
   deleteById(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseURL}/${id}`);
+  }
+
+  findPersonaNaturalOrJuridicaById(id: number): Observable<personaDisplay> {
+    return this.http.get<personaDisplay>(`${this.baseURL}/${id}/NaturalOrJuridica`);
   }
 }

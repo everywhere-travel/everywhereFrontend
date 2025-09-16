@@ -14,55 +14,66 @@ import { OperadoresComponent } from './pages/operadores/operadores.component';
 import { ReportesComponent } from './pages/reportes/reportes.component';
 import { EstadisticaComponent } from './pages/estadistica/estadistica.component';
 
+
 export const routes: Routes = [
   {
     path: 'auth',
-    loadChildren: () => import("./pages/auth/auth.routes").then(a => a.authRoutes),
+    loadChildren: () =>
+      import('./pages/auth/auth.routes').then(a => a.authRoutes),
     canActivate: [authInverseGuard]
   },
   {
     path: 'dashboard',
-    component: DashboardComponent,
+    loadComponent: () =>
+      import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
     canActivate: [authGuard]
   },
   {
     path: 'personas',
-    component: PersonasComponent,
+    loadComponent: () =>
+      import('./pages/personas/personas.component').then(m => m.PersonasComponent),
     canActivate: [authGuard]
   },
   {
     path: 'viajero',
-    component: Viajero,
+    loadComponent: () =>
+      import('./pages/viajero/viajero').then(m => m.Viajero),
     canActivate: [authGuard]
   },
   {
     path: 'viajero-frecuente',
-    component: ViajeroFrecuente,
+    loadComponent: () =>
+      import('./pages/viajero-frecuente/viajero-frecuente').then(m => m.ViajeroFrecuente),
     canActivate: [authGuard]
   },
   {
     path: 'cotizaciones',
-    component: CotizacionesComponent,
+    loadComponent: () =>
+      import('./pages/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent),
     canActivate: [authGuard]
   },
   {
     path: 'cotizaciones/detail',
-    component: CotizacionDetailComponent,
+    loadComponent: () =>
+      import('./pages/cotizaciones/cotizacion-detail/cotizacion-detail.component').then(m => m.CotizacionDetailComponent),
     canActivate: [authGuard]
   },
   {
     path: 'cotizaciones/detail/:id',
-    component: CotizacionDetailComponent,
+    loadComponent: () =>
+      import('./pages/cotizaciones/cotizacion-detail/cotizacion-detail.component').then(m => m.CotizacionDetailComponent),
     canActivate: [authGuard]
   },
   {
     path: 'liquidaciones',
-    component: LiquidacionesComponent,
+    loadComponent: () =>
+      import('./pages/liquidaciones/liquidaciones.component').then(m => m.LiquidacionesComponent),
     canActivate: [authGuard]
   },
   {
     path: 'productos',
-    component: ProductosComponent,
+    loadComponent: () =>
+      import('./pages/productos/productos.component').then(m => m.ProductosComponent),
     canActivate: [authGuard]
   },
   {
@@ -77,12 +88,14 @@ export const routes: Routes = [
   },
   {
     path: 'reportes',
-    component: ReportesComponent,
+    loadComponent: () =>
+      import('./pages/reportes/reportes.component').then(m => m.ReportesComponent),
     canActivate: [authGuard]
   },
   {
     path: 'estadisticas',
-    component: EstadisticaComponent,
+    loadComponent: () =>
+      import('./pages/estadistica/estadistica.component').then(m => m.EstadisticaComponent),
     canActivate: [authGuard]
   },
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
