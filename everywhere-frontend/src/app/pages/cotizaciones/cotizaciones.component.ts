@@ -582,16 +582,16 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private addDetalleToGrupoHotel(detalle: DetalleCotizacionResponse): void {
-    const categoria = detalle.categoria;
-    console.log('🏨 Buscando grupo para categoría:', categoria);
+    const categoriaId = detalle.categoria?.id;
+    console.log('🏨 Buscando grupo para categoría:', categoriaId);
     console.log('🏨 Categorías disponibles:', this.categorias.map(c => ({id: c.id, nombre: c.nombre})));
-    
-    let grupo = this.gruposHoteles.find(g => g.categoria.id === categoria);
-    
+
+    let grupo = this.gruposHoteles.find(g => g.categoria.id === categoriaId);
+
     if (!grupo) {
-      const categoriaObj = this.categorias.find(c => c.id === categoria);
+      const categoriaObj = this.categorias.find(c => c.id === categoriaId);
       console.log('🏨 Categoría encontrada:', categoriaObj);
-      
+
       if (categoriaObj) {
         grupo = {
           categoria: categoriaObj,
@@ -602,7 +602,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         this.gruposHoteles.push(grupo);
         console.log('🏨 Nuevo grupo creado para categoría:', categoriaObj.nombre);
       } else {
-        console.error('❌ Categoría no encontrada para ID:', categoria);
+        console.error('❌ Categoría no encontrada para ID:', categoriaId);
         return;
       }
     }
@@ -705,22 +705,30 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       await this.loadCategorias();
     }
 
-    const categoria = this.grupoHotelForm.value.categoria;
-    const categoriaObj = this.categorias.find(c => c.id === categoria);
-    
-    if (categoriaObj && !this.gruposHoteles.find(g => g.categoria.id === categoria)) {
+    const categoriaValue = this.grupoHotelForm.value.categoria;
+    const categoriaId = typeof categoriaValue === 'object' && categoriaValue !== null
+      ? categoriaValue.id
+      : Number(categoriaValue);
+
+    if (!categoriaId || isNaN(categoriaId)) {
+      console.error('❌ Categoría seleccionada no es válida:', categoriaValue);
+      return;
+    }
+
+    const categoriaObj = this.categorias.find(c => c.id === categoriaId);
+
+    if (categoriaObj && !this.gruposHoteles.find(g => g.categoria.id === categoriaId)) {
       const nuevoGrupo: GrupoHotelTemp = {
         categoria: categoriaObj,
         detalles: [],
         total: 0,
         isTemporary: true
       };
-      
       this.gruposHoteles.push(nuevoGrupo);
       this.grupoHotelForm.reset();
       console.log('✅ Grupo de hotel creado para categoría:', categoriaObj.nombre);
     } else if (!categoriaObj) {
-      console.error('❌ Categoría no encontrada:', categoria);
+      console.error('❌ Categoría no encontrada:', categoriaId);
       console.error('❌ Categorías disponibles:', this.categorias);
     }
   }
@@ -770,7 +778,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     
     const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
     const precioHistorico = formValue.precioHistorico || 0;
-    const comision = formValue.comision || 0;
+    const comision = 0; // Siempre 0 para grupo hotel
     const cantidad = formValue.cantidad || 1;
     const unidad = formValue.unidad || 1;
 
@@ -789,11 +797,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     grupo.detalles.push(nuevoDetalle);
     grupo.total = grupo.detalles.reduce((sum, d) => sum + d.total, 0);
-    
     this.detalleForm.reset({
       cantidad: 1,
       unidad: 1,
-      comision: 0,
       precioHistorico: 0
     });
   }
