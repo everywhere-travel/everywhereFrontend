@@ -365,7 +365,7 @@
                         [class]="counter.estado ? 'bg-red-100 hover:bg-red-200 text-red-600' : 'bg-green-100 hover:bg-green-200 text-green-600'"
                         class="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
                         [title]="counter.estado ? 'Desactivar counter' : 'Activar counter'">
-                        <i class="fas fa-trash text-sm"></i>
+                        <i [class]="counter.estado ? 'fas fa-ban' : 'fas fa-check'" class="text-sm"></i>
                       </button>
                     </div>
                   </td>
@@ -380,7 +380,7 @@
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <div *ngFor="let counter of paginatedCounters; trackBy: trackByCounterId"
             class="relative group">
-            
+
             <!-- Checkbox overlay -->
             <div class="absolute top-4 right-4 z-10">
               <label class="relative inline-block cursor-pointer">
@@ -396,7 +396,7 @@
 
             <!-- Module Card -->
             <app-module-card [data]="adaptCounterToModuleCard(counter)"></app-module-card>
-            
+
             <!-- Action buttons overlay -->
             <div class="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button (click)="editarCounter(counter)"
@@ -404,8 +404,14 @@
                 <i class="fas fa-edit"></i>Editar
               </button>
               <button (click)="confirmarEliminar(counter)"
-                class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg backdrop-blur-sm">
-                <i class="fas fa-trash"></i>Eliminar
+                class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg backdrop-blur-sm"
+                *ngIf="counter.estado">
+                <i class="fas fa-ban"></i>Desactivar
+              </button>
+              <button (click)="confirmarEliminar(counter)"
+                class="flex-1 bg-green-50 hover:bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg backdrop-blur-sm"
+                *ngIf="!counter.estado">
+                <i class="fas fa-check"></i>Activar
               </button>
             </div>
           </div>
@@ -447,7 +453,7 @@
                   [class]="counter.estado ? 'bg-red-100 hover:bg-red-200 text-red-600' : 'bg-green-100 hover:bg-green-200 text-green-600'"
                   class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105"
                   [title]="counter.estado ? 'Desactivar counter' : 'Activar counter'">
-                  <i class="fas fa-trash"></i>
+                  <i [class]="counter.estado ? 'fas fa-ban' : 'fas fa-check'"></i>
                 </button>
               </div>
             </div>
@@ -599,7 +605,7 @@
     <div class="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-6 rounded-t-3xl">
       <div class="flex items-center justify-between">
         <h2 class="text-xl font-bold">
-          <i class="fas fa-exclamation-triangle mr-3"></i>Eliminar Counter
+          <i class="fas fa-exclamation-triangle mr-3"></i>{{ counterAEliminar?.estado ? 'Desactivar' : 'Activar' }} Counter
         </h2>
         <button (click)="cerrarModalEliminar()"
           class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
@@ -611,16 +617,16 @@
     <!-- Modal Content -->
     <div class="p-8">
       <div class="text-center mb-8">
-        <div class="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-          <i class="fas fa-trash text-red-600 text-3xl"></i>
+        <div [class]="counterAEliminar?.estado ? 'bg-red-100' : 'bg-green-100'" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i [class]="counterAEliminar?.estado ? 'fas fa-ban text-red-600 text-3xl' : 'fas fa-check text-green-600 text-3xl'"></i>
         </div>
 
         <h3 class="text-xl font-bold text-gray-900 mb-4">
-          ¿Eliminar este counter?
+          ¿{{ counterAEliminar?.estado ? 'Desactivar' : 'Activar' }} este counter?
         </h3>
 
         <div *ngIf="counterAEliminar" class="bg-gray-50 rounded-xl p-4 mb-6">
-          <p class="text-gray-600 text-sm mb-2">Counter a eliminar:</p>
+          <p class="text-gray-600 text-sm mb-2">Counter {{ counterAEliminar?.estado ? 'a desactivar' : 'a activar' }}:</p>
           <p class="font-semibold text-gray-900">{{ counterAEliminar.nombre }}</p>
           <p class="text-gray-500 text-sm mt-1">
             Código: {{ counterAEliminar.codigo }}
@@ -628,7 +634,7 @@
         </div>
 
         <p class="text-gray-600">
-          Al eliminar el counter, no estará disponible en el sistema.
+          {{ counterAEliminar?.estado ? 'Al desactivar el counter, no estará disponible en el sistema.' : 'Al activar el counter, estará disponible nuevamente en el sistema.' }}
         </p>
       </div>
 
@@ -639,10 +645,11 @@
           <i class="fas fa-times mr-2"></i>Cancelar
         </button>
         <button type="button" (click)="confirmarEliminacionModal()" [disabled]="loading"
-          class="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all duration-200 font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+          [class]="counterAEliminar?.estado ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800' : 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800'"
+          class="flex-1 px-6 py-3 text-white rounded-xl transition-all duration-200 font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
           <i class="fas fa-spinner fa-spin mr-2" *ngIf="loading"></i>
-          <i class="fas fa-trash mr-2" *ngIf="!loading"></i>
-          {{ loading ? 'Eliminando...' : 'Sí, Eliminar' }}
+          <i [class]="counterAEliminar?.estado ? 'fas fa-ban mr-2' : 'fas fa-check mr-2'" *ngIf="!loading"></i>
+          {{ loading ? (counterAEliminar?.estado ? 'Desactivando...' : 'Activando...') : (counterAEliminar?.estado ? 'Sí, Desactivar' : 'Sí, Activar') }}
         </button>
       </div>
     </div>
