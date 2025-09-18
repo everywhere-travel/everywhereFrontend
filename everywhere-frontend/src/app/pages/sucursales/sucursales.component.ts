@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { SucursalRequest, SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
-import { ModuleCardComponent, ModuleCardData } from '../../shared/components/ui/module-card/module-card.component';
 
 // Interface para la tabla de sucursales
 export interface SucursalTabla {
@@ -16,6 +15,8 @@ export interface SucursalTabla {
   email: string;
   estado: boolean;
   estadoText: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
 }
 
 @Component({
@@ -25,8 +26,7 @@ export interface SucursalTabla {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    SidebarComponent,
-    ModuleCardComponent
+    SidebarComponent
   ],
   templateUrl: './sucursales.component.html',
   styleUrls: ['./sucursales.component.css']
@@ -107,24 +107,6 @@ export class SucursalesComponent implements OnInit {
   sortDirection: 'asc' | 'desc' = 'asc';
 
   // Función para adaptar sucursal a formato module-card
-  adaptSucursalToModuleCard(sucursal: SucursalTabla): ModuleCardData {
-    return {
-      title: sucursal.descripcion,
-      description: `${sucursal.direccion} | Tel: ${sucursal.telefono}`,
-      route: '',
-      icon: '',
-      iconType: 'sucursales',
-      status: {
-        text: sucursal.estadoText,
-        type: sucursal.estado ? 'active' : 'neutral'
-      },
-      action: {
-        text: 'Gestionar'
-      },
-      featured: false
-    };
-  }
-
   // Variables para selección múltiple
   selectedItems: number[] = [];
   allSelected: boolean = false;
@@ -372,7 +354,11 @@ export class SucursalesComponent implements OnInit {
       let valueA: any = a[column as keyof SucursalTabla];
       let valueB: any = b[column as keyof SucursalTabla];
 
-      if (typeof valueA === 'string') {
+      // Manejo especial para fechas
+      if (column === 'fechaCreacion' || column === 'fechaActualizacion') {
+        valueA = new Date(valueA);
+        valueB = new Date(valueB);
+      } else if (typeof valueA === 'string') {
         valueA = valueA.toLowerCase();
         valueB = valueB.toLowerCase();
       }
@@ -483,6 +469,20 @@ export class SucursalesComponent implements OnInit {
 
   getTotalSucursalesCount(): number {
     return this.totalSucursales;
+  }
+
+  // Métodos para formatear fechas
+  formatDate(dateString: string): string {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('es-ES');
+  }
+
+  formatTime(dateString: string): string {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleTimeString('es-ES', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   }
 
   // TrackBy function for performance
