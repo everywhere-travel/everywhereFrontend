@@ -70,13 +70,13 @@ export class ProductosComponent implements OnInit {
     {
       id: 'cotizaciones',
       title: 'Cotizaciones',
-      icon: 'fas fa-file-invoice-dollar',
+      icon: 'fas fa-file-invoice',
       route: '/cotizaciones'
     },
     {
       id: 'liquidaciones',
       title: 'Liquidaciones',
-      icon: 'fas fa-calculator',
+      icon: 'fas fa-credit-card',
       route: '/liquidaciones'
     },
     {
