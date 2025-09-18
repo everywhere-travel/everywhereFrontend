@@ -1,562 +1,650 @@
 <!-- Layout con Sidebar -->
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
   <!-- Sidebar Component -->
-  <app-sidebar 
-    [isCollapsed]="sidebarCollapsed" 
-    [menuItems]="sidebarMenuItems" 
+  <app-sidebar
+    [isCollapsed]="sidebarCollapsed"
+    [menuItems]="sidebarMenuItems"
     (itemClick)="onSidebarItemClick($event)"
     (toggleSidebar)="onToggleSidebar()">
   </app-sidebar>
 
   <!-- Main Content Area -->
   <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-          <h1 class="text-2xl font-bold text-gray-900">Counters</h1>
-          <div class="flex items-center space-x-4 text-sm text-gray-600">
-            <span class="flex items-center">
-              <i class="fas fa-circle text-green-500 mr-2"></i>
-              {{ getActiveCountersCount() }} Activos
-            </span>
-            <span class="flex items-center">
-              <i class="fas fa-circle text-red-500 mr-2"></i>
-              {{ getInactiveCountersCount() }} Inactivos
-            </span>
-            <span class="flex items-center">
-              <i class="fas fa-circle text-blue-500 mr-2"></i>
-              {{ getTotalCountersCount() }} Total
-            </span>
+    <!-- Header Section -->
+    <header
+      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
+      </div>
+
+      <div class="max-w-full mx-auto px-6 py-6 relative z-10">
+        <!-- Mobile Menu Button -->
+        <button (click)="onToggleSidebar()"
+          class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
+
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+          <!-- Header Info -->
+          <div class="flex-1">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-tachometer-alt text-2xl"></i>
+              </div>
+              <div>
+                <h1 class="text-4xl font-bold">Gestión de Counters</h1>
+                <p class="text-xl opacity-90 mt-2">Administra y organiza todos tus counters de manera
+                  eficiente</p>
+              </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!loading">
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
+                  <i class="fas fa-tachometer-alt text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ getTotalCountersCount() }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Counter{{ getTotalCountersCount() === 1 ?
+                    '' : 's' }} Total{{ getTotalCountersCount() === 1 ? '' : 'es' }}</div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-check-circle text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ getActiveCountersCount() }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Counter{{ getActiveCountersCount() === 1 ?
+                    '' : 's' }} Activo{{ getActiveCountersCount() === 1 ? '' : 's' }}</div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-times-circle text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ getInactiveCountersCount() }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Counter{{ getInactiveCountersCount() === 1 ?
+                    '' : 's' }} Inactivo{{ getInactiveCountersCount() === 1 ? '' : 's' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header Action -->
+          <div class="z-10">
+            <button (click)="abrirModalCrear()" [disabled]="loading"
+              class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+              </div>
+              <i class="fas fa-plus text-lg"></i>
+              <span>Nuevo Counter</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>    <!-- Main Content -->
+    <main class="max-w-full mx-auto px-6 py-6 space-y-6">
+      <!-- Search & Filters Panel -->
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <!-- Panel Header -->
+        <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-everywhere-primary rounded-xl flex items-center justify-center">
+                <i class="fas fa-search text-white"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-900">Buscar y Filtrar</h2>
+                <p class="text-sm text-gray-600">Encuentra counters específicos</p>
+              </div>
+            </div>
+
+            <!-- View Controls -->
+            <div class="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                [class]="currentView === 'table' ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                (click)="changeView('table')" title="Vista de Tabla">
+                <i class="fas fa-table mr-2"></i>Tabla
+              </button>
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                [class]="currentView === 'cards' ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                (click)="changeView('cards')" title="Vista de Tarjetas">
+                <i class="fas fa-th mr-2"></i>Tarjetas
+              </button>
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                [class]="currentView === 'list' ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                (click)="changeView('list')" title="Vista de Lista">
+                <i class="fas fa-list mr-2"></i>Lista
+              </button>
+            </div>
           </div>
         </div>
 
-        <button
-          (click)="abrirModalCrear()"
-          class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary hover:from-everywhere-secondary hover:to-everywhere-primary text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center space-x-2">
-          <i class="fas fa-plus"></i>
-          <span>Nuevo Counter</span>
-        </button>
-      </div>
-    </header>    <!-- Controls Section -->
-    <div class="bg-white border-b border-gray-200 px-6 py-4">
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-        <!-- Search and Filters -->
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-          <!-- Search -->
-          <div class="relative flex-1 max-w-md">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <i class="fas fa-search text-gray-400"></i>
+        <!-- Search Controls -->
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Search Input -->
+          <div class="lg:col-span-2">
+            <div class="relative">
+              <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input type="text" placeholder="Buscar por nombre, código o estado..." [(ngModel)]="searchTerm"
+                (input)="onSearchChange()"
+                class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+              <button *ngIf="searchTerm"
+                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                (click)="clearSearch()">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
-            <input
-              type="text"
-              [(ngModel)]="searchTerm"
-              (input)="onSearchChange()"
-              placeholder="Buscar counters..."
-              class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-everywhere-primary transition-colors">
-            <button
-              *ngIf="searchTerm"
-              (click)="clearSearch()"
-              class="absolute inset-y-0 right-0 pr-3 flex items-center">
-              <i class="fas fa-times text-gray-400 hover:text-gray-600"></i>
-            </button>
           </div>
 
           <!-- Status Filter -->
-          <select
-            [(ngModel)]="selectedStatus"
-            (change)="onStatusChange()"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-everywhere-primary">
-            <option value="todos">Todos los estados</option>
-            <option value="activos">Solo activos</option>
-            <option value="inactivos">Solo inactivos</option>
-          </select>
-        </div>
-
-        <!-- View Controls -->
-        <div class="flex items-center space-x-2">
-          <!-- View Selector -->
-          <div class="flex rounded-lg border border-gray-300 bg-white">
-            <button
-              (click)="changeView('table')"
-              [class]="isActiveView('table') ? 'bg-everywhere-primary text-white' : 'text-gray-600 hover:text-gray-900'"
-              class="px-3 py-2 text-sm font-medium rounded-l-lg transition-colors">
-              <i class="fas fa-table"></i>
-            </button>
-            <button
-              (click)="changeView('cards')"
-              [class]="isActiveView('cards') ? 'bg-everywhere-primary text-white' : 'text-gray-600 hover:text-gray-900'"
-              class="px-3 py-2 text-sm font-medium transition-colors">
-              <i class="fas fa-th"></i>
-            </button>
-            <button
-              (click)="changeView('list')"
-              [class]="isActiveView('list') ? 'bg-everywhere-primary text-white' : 'text-gray-600 hover:text-gray-900'"
-              class="px-3 py-2 text-sm font-medium rounded-r-lg transition-colors">
-              <i class="fas fa-list"></i>
-            </button>
-          </div>
-
-          <!-- Items per page -->
-          <select
-            [(ngModel)]="itemsPerPage"
-            (change)="applyFilters()"
-            class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-everywhere-primary">
-            <option value="5">5 por página</option>
-            <option value="10">10 por página</option>
-            <option value="25">25 por página</option>
-            <option value="50">50 por página</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Selected Items Actions -->
-      <div *ngIf="selectedItems.length > 0" class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-        <div class="flex items-center justify-between">
-          <span class="text-sm font-medium text-blue-800">
-            {{ selectedItems.length }} elemento(s) seleccionado(s)
-          </span>
-          <div class="flex items-center space-x-2">
-            <button
-              (click)="clearSelection()"
-              class="text-sm text-blue-600 hover:text-blue-800 underline">
-              Limpiar selección
-            </button>
+          <div>
+            <select
+              [(ngModel)]="selectedStatus"
+              (change)="onStatusChange()"
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+              <option value="todos">Todos los estados</option>
+              <option value="activos">Solo activos</option>
+              <option value="inactivos">Solo inactivos</option>
+            </select>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Content Area -->
-    <div class="p-6">
       <!-- Loading State -->
-      <div *ngIf="loading" class="flex justify-center items-center h-64">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-everywhere-primary"></div>
+      <div *ngIf="loading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="flex flex-col items-center justify-center py-16 px-6">
+          <div
+            class="w-16 h-16 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary rounded-2xl flex items-center justify-center mb-4">
+            <i class="fas fa-spinner fa-spin text-white text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Cargando Counters</h3>
+          <p class="text-gray-600">Por favor espera mientras obtenemos los datos...</p>
+        </div>
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!loading && filteredCounters.length === 0" class="text-center py-12">
-        <div class="w-24 h-24 mx-auto mb-4 text-gray-300">
-          <i class="fas fa-tachometer-alt text-6xl"></i>
+      <div *ngIf="!loading && filteredCounters.length === 0"
+        class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="flex flex-col items-center justify-center py-16 px-6">
+          <div class="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mb-6">
+            <i class="fas fa-tachometer-alt text-gray-400 text-3xl"></i>
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-3">No se encontraron counters</h3>
+          <p class="text-gray-600 text-center max-w-md mb-6">
+            {{ searchTerm || selectedStatus !== 'todos' ? 'No hay counters que coincidan con tu búsqueda.' : 'Aún no has creado ningún counter.
+            ¡Comienza creando tu primer counter!' }}
+          </p>
+          <button (click)="abrirModalCrear()"
+            class="bg-everywhere-primary hover:bg-everywhere-secondary text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl">
+            <i class="fas fa-plus"></i>
+            {{ searchTerm || selectedStatus !== 'todos' ? 'Crear Nuevo Counter' : 'Crear Primer Counter' }}
+          </button>
         </div>
-        <h3 class="text-lg font-medium text-gray-900 mb-2">No hay counters</h3>
-        <p class="text-gray-500 mb-6">
-          {{ searchTerm || selectedStatus !== 'todos' ? 'No se encontraron counters con los filtros aplicados.' : 'Comienza creando tu primer counter.' }}
-        </p>
-        <button
-          *ngIf="!searchTerm && selectedStatus === 'todos'"
-          (click)="abrirModalCrear()"
-          class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-200">
-          <i class="fas fa-plus mr-2"></i>
-          Crear Counter
-        </button>
       </div>
 
-      <!-- Table View -->
-      <div *ngIf="!loading && filteredCounters.length > 0 && currentView === 'table'" class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-6 py-3 text-left">
-                <input
-                  type="checkbox"
-                  [checked]="allSelected"
-                  [indeterminate]="someSelected"
-                  (change)="toggleAllSelection()"
-                  class="h-4 w-4 text-everywhere-primary focus:ring-everywhere-primary border-gray-300 rounded">
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  (click)="sortBy('nombre')">
-                <div class="flex items-center space-x-1">
-                  <span>Nombre</span>
-                  <i [class]="sortColumn === 'nombre' ? (sortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down') : 'fas fa-sort'" class="text-gray-400"></i>
-                </div>
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  (click)="sortBy('codigo')">
-                <div class="flex items-center space-x-1">
-                  <span>Código</span>
-                  <i [class]="sortColumn === 'codigo' ? (sortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down') : 'fas fa-sort'" class="text-gray-400"></i>
-                </div>
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                  (click)="sortBy('estado')">
-                <div class="flex items-center space-x-1">
-                  <span>Estado</span>
-                  <i [class]="sortColumn === 'estado' ? (sortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down') : 'fas fa-sort'" class="text-gray-400"></i>
-                </div>
-              </th>
-              <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr *ngFor="let counter of paginatedCounters; trackBy: trackByCounterId"
-                class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4">
-                <input
-                  type="checkbox"
-                  [checked]="isSelected(counter.id)"
-                  (change)="toggleSelection(counter.id)"
-                  class="h-4 w-4 text-everywhere-primary focus:ring-everywhere-primary border-gray-300 rounded">
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 h-8 w-8">
-                    <div class="h-8 w-8 rounded-full bg-gradient-to-r from-everywhere-primary to-everywhere-secondary flex items-center justify-center">
-                      <i class="fas fa-tachometer-alt text-white text-sm"></i>
-                    </div>
-                  </div>
-                  <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900">{{ counter.nombre }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                  {{ counter.codigo }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span [class]="counter.estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                      class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
-                  {{ counter.estadoText }}
-                </span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="relative inline-block text-left">
-                  <button
-                    (click)="toggleActionMenu(counter.id, $event)"
-                    class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </button>
+      <!-- Data Content -->
+      <div *ngIf="!loading && filteredCounters.length > 0" class="space-y-2">
 
-                  <!-- Action Menu -->
-                  <div *ngIf="showActionMenu === counter.id"
-                       class="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-                    <div class="py-1">
-                      <button
-                        (click)="editarCounter(counter)"
-                        class="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-edit mr-3 text-blue-500"></i>
-                        Editar
-                      </button>
-                      <button
-                        (click)="confirmarEliminar(counter)"
-                        [class]="counter.estado ? 'text-red-700 hover:bg-red-50' : 'text-green-700 hover:bg-green-50'"
-                        class="flex items-center w-full px-4 py-2 text-sm">
-                        <i [class]="counter.estado ? 'fas fa-ban mr-3 text-red-500' : 'fas fa-check mr-3 text-green-500'"></i>
-                        {{ counter.estado ? 'Desactivar' : 'Activar' }}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <!-- Data Header -->
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-4">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
 
-      <!-- Cards View -->
-      <div *ngIf="!loading && filteredCounters.length > 0 && currentView === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div *ngFor="let counter of paginatedCounters; trackBy: trackByCounterId"
-             class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 border border-gray-200">
-          <div class="p-6">
-            <!-- Card Header -->
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex items-center">
-                <input
-                  type="checkbox"
-                  [checked]="isSelected(counter.id)"
-                  (change)="toggleSelection(counter.id)"
-                  class="h-4 w-4 text-everywhere-primary focus:ring-everywhere-primary border-gray-300 rounded mr-3">
-                <div class="h-10 w-10 rounded-full bg-gradient-to-r from-everywhere-primary to-everywhere-secondary flex items-center justify-center">
-                  <i class="fas fa-tachometer-alt text-white"></i>
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-database text-red-600"></i>
+                  <h2 class="text-xl font-bold text-gray-900">Lista de Counters</h2>
                 </div>
               </div>
-              <div class="relative">
-                <button
-                  (click)="toggleQuickActions(counter.id, $event)"
-                  class="p-1 text-gray-400 hover:text-gray-600 transition-colors">
-                  <i class="fas fa-ellipsis-v"></i>
+
+              <div class="flex gap-3">
+                <button (click)="loadCounters()"
+                  class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5">
+                  <i class="fas fa-sync-alt"></i>
+                  <span>Actualizar</span>
                 </button>
-
-                <!-- Quick Actions Menu -->
-                <div *ngIf="showQuickActions === counter.id"
-                     class="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-                  <div class="py-1">
-                    <button
-                      (click)="editarCounter(counter)"
-                      class="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      <i class="fas fa-edit mr-2 text-blue-500"></i>
-                      Editar
-                    </button>
-                    <button
-                      (click)="confirmarEliminar(counter)"
-                      [class]="counter.estado ? 'text-red-700 hover:bg-red-50' : 'text-green-700 hover:bg-green-50'"
-                      class="flex items-center w-full px-3 py-2 text-sm">
-                      <i [class]="counter.estado ? 'fas fa-ban mr-2 text-red-500' : 'fas fa-check mr-2 text-green-500'"></i>
-                      {{ counter.estado ? 'Desactivar' : 'Activar' }}
-                    </button>
-                  </div>
-                </div>
+                <button (click)="abrirModalCrear()"
+                  class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 shadow-lg">
+                  <i class="fas fa-plus"></i>
+                  <span>Nuevo Counter</span>
+                </button>
               </div>
-            </div>
-
-            <!-- Card Content -->
-            <div class="space-y-3">
-              <h3 class="text-lg font-semibold text-gray-900 truncate">{{ counter.nombre }}</h3>
-
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-500">Código:</span>
-                <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                  {{ counter.codigo }}
-                </span>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-500">Estado:</span>
-                <span [class]="counter.estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                      class="px-2 py-1 text-xs font-semibold rounded-full">
-                  {{ counter.estadoText }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Card Actions -->
-            <div class="mt-6 flex space-x-2">
-              <button
-                (click)="editarCounter(counter)"
-                class="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                <i class="fas fa-edit mr-1"></i>
-                Editar
-              </button>
-              <button
-                (click)="confirmarEliminar(counter)"
-                [class]="counter.estado ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-green-50 text-green-600 hover:bg-green-100'"
-                class="flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                <i [class]="counter.estado ? 'fas fa-ban mr-1' : 'fas fa-check mr-1'"></i>
-                {{ counter.estado ? 'Desactivar' : 'Activar' }}
-              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- List View -->
-      <div *ngIf="!loading && filteredCounters.length > 0 && currentView === 'list'" class="bg-white rounded-lg shadow overflow-hidden">
-        <ul class="divide-y divide-gray-200">
-          <li *ngFor="let counter of paginatedCounters; trackBy: trackByCounterId"
-              class="px-6 py-4 hover:bg-gray-50 transition-colors">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-4">
-                <input
-                  type="checkbox"
-                  [checked]="isSelected(counter.id)"
-                  (change)="toggleSelection(counter.id)"
-                  class="h-4 w-4 text-everywhere-primary focus:ring-everywhere-primary border-gray-300 rounded">
-
-                <div class="h-8 w-8 rounded-full bg-gradient-to-r from-everywhere-primary to-everywhere-secondary flex items-center justify-center">
-                  <i class="fas fa-tachometer-alt text-white text-sm"></i>
-                </div>
-
-                <div class="flex-1">
-                  <div class="flex items-center space-x-4">
-                    <h3 class="text-sm font-medium text-gray-900">{{ counter.nombre }}</h3>
-                    <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                      {{ counter.codigo }}
-                    </span>
-                    <span [class]="counter.estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
-                          class="px-2 py-1 text-xs font-semibold rounded-full">
-                      {{ counter.estadoText }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex items-center space-x-2">
-                <button
-                  (click)="editarCounter(counter)"
-                  class="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button
-                  (click)="confirmarEliminar(counter)"
-                  [class]="counter.estado ? 'text-red-600 hover:bg-red-50' : 'text-green-600 hover:bg-green-50'"
-                  class="p-2 rounded-md transition-colors">
-                  <i [class]="counter.estado ? 'fas fa-ban' : 'fas fa-check'"></i>
-                </button>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Pagination -->
-      <div *ngIf="!loading && filteredCounters.length > 0" class="mt-6 flex items-center justify-between bg-white px-6 py-3 rounded-lg shadow">
-        <div class="text-sm text-gray-700">
-          Mostrando {{ (currentPage - 1) * itemsPerPage + 1 }} a {{ Math.min(currentPage * itemsPerPage, totalItems) }} de {{ totalItems }} resultados
-        </div>
-
-        <nav class="flex items-center space-x-2">
-          <button
-            (click)="changePage(currentPage - 1)"
-            [disabled]="currentPage === 1"
-            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-            <i class="fas fa-chevron-left"></i>
-            Anterior
-          </button>
-
-          <div class="flex space-x-1">
-            <button
-              *ngFor="let page of [].constructor(totalPages); let i = index"
-              (click)="changePage(i + 1)"
-              [class]="currentPage === i + 1 ? 'bg-everywhere-primary text-white' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-              class="px-3 py-2 text-sm font-medium border rounded-md transition-colors">
-              {{ i + 1 }}
+        <!-- Bulk Actions Bar -->
+        <div
+          class="bg-blue-600 text-white px-8 py-4 flex justify-between items-center animate-in slide-in-from-top duration-300 rounded-2xl"
+          *ngIf="selectedItems.length > 0">
+          <div class="flex items-center gap-3 font-semibold">
+            <i class="fas fa-check-circle"></i>
+            <span>{{ selectedItems.length }} elemento{{ selectedItems.length === 1 ? '' : 's' }} seleccionado{{
+              selectedItems.length === 1 ? '' : 's' }}</span>
+          </div>
+          <div class="flex gap-3">
+            <button (click)="clearSelection()"
+              class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-times"></i>
+              Cancelar
             </button>
           </div>
+        </div>
 
-          <button
-            (click)="changePage(currentPage + 1)"
-            [disabled]="currentPage === totalPages"
-            class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-            Siguiente
-            <i class="fas fa-chevron-right ml-1"></i>
-          </button>
-        </nav>
+        <!-- Table View -->
+        <div *ngIf="currentView === 'table'"
+          class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <!-- Table Header -->
+              <thead class="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+                <tr>
+                  <th class="w-12 p-5 text-center">
+                    <label class="relative inline-block cursor-pointer">
+                      <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
+                        (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0">
+                      <span
+                        class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
+                        [class.bg-red-600]="allSelected" [class.border-red-600]="allSelected">
+                        <i class="fas fa-check text-white text-xs" [class.hidden]="!allSelected"></i>
+                      </span>
+                    </label>
+                  </th>
+
+                  <th
+                    class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                    (click)="sortBy('nombre')">
+                    <div class="flex items-center gap-2">
+                      <span>Nombre</span>
+                      <div class="flex flex-col">
+                        <i class="fas fa-caret-up text-xs"
+                          [class.text-red-600]="sortColumn === 'nombre' && sortDirection === 'asc'"
+                          [class.text-gray-400]="sortColumn !== 'nombre' || sortDirection !== 'asc'"></i>
+                        <i class="fas fa-caret-down text-xs -mt-1"
+                          [class.text-red-600]="sortColumn === 'nombre' && sortDirection === 'desc'"
+                          [class.text-gray-400]="sortColumn !== 'nombre' || sortDirection !== 'desc'"></i>
+                      </div>
+                    </div>
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                    (click)="sortBy('codigo')">
+                    <div class="flex items-center gap-2">
+                      <span>Código</span>
+                      <div class="flex flex-col">
+                        <i class="fas fa-caret-up text-xs"
+                          [class.text-red-600]="sortColumn === 'codigo' && sortDirection === 'asc'"
+                          [class.text-gray-400]="sortColumn !== 'codigo' || sortDirection !== 'asc'"></i>
+                        <i class="fas fa-caret-down text-xs -mt-1"
+                          [class.text-red-600]="sortColumn === 'codigo' && sortDirection === 'desc'"
+                          [class.text-gray-400]="sortColumn !== 'codigo' || sortDirection !== 'desc'"></i>
+                      </div>
+                    </div>
+                  </th>
+                  <th
+                    class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                    (click)="sortBy('estado')">
+                    <div class="flex items-center gap-2">
+                      <span>Estado</span>
+                      <div class="flex flex-col">
+                        <i class="fas fa-caret-up text-xs"
+                          [class.text-red-600]="sortColumn === 'estado' && sortDirection === 'asc'"
+                          [class.text-gray-400]="sortColumn !== 'estado' || sortDirection !== 'asc'"></i>
+                        <i class="fas fa-caret-down text-xs -mt-1"
+                          [class.text-red-600]="sortColumn === 'estado' && sortDirection === 'desc'"
+                          [class.text-gray-400]="sortColumn !== 'estado' || sortDirection !== 'desc'"></i>
+                      </div>
+                    </div>
+                  </th>
+                  <th class="px-6 py-4 text-center text-xs font-bold text-gray-600 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+
+              <!-- Table Body -->
+              <tbody class="divide-y divide-gray-200">
+                <tr *ngFor="let counter of paginatedCounters; trackBy: trackByCounterId"
+                  class="hover:bg-gray-50 transition-colors duration-200">
+
+                  <!-- Checkbox -->
+                  <td class="p-5 text-center">
+                    <label class="relative inline-block cursor-pointer">
+                      <input type="checkbox" [checked]="isSelected(counter.id)" (change)="toggleSelection(counter.id)"
+                        class="absolute opacity-0 w-0 h-0">
+                      <span
+                        class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
+                        [class.bg-red-600]="isSelected(counter.id)" [class.border-red-600]="isSelected(counter.id)">
+                        <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(counter.id)"></i>
+                      </span>
+                    </label>
+                  </td>
+
+                  <!-- Nombre -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10">
+                        <div class="h-10 w-10 rounded-full bg-gradient-to-r from-everywhere-primary to-everywhere-secondary flex items-center justify-center">
+                          <i class="fas fa-tachometer-alt text-white"></i>
+                        </div>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">{{ counter.nombre }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                      {{ counter.codigo }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span [class]="counter.estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                      class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium">
+                      {{ counter.estadoText }}
+                    </span>
+                  </td>
+                  <!-- Acciones -->
+                  <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <div class="flex justify-center items-center gap-2">
+                      <button (click)="editarCounter(counter)"
+                        class="w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        title="Editar counter">
+                        <i class="fas fa-edit text-sm"></i>
+                      </button>
+                      <button (click)="confirmarEliminar(counter)"
+                        [class]="counter.estado ? 'bg-red-100 hover:bg-red-200 text-red-600' : 'bg-green-100 hover:bg-green-200 text-green-600'"
+                        class="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        [title]="counter.estado ? 'Desactivar counter' : 'Activar counter'">
+                        <i class="fas fa-trash text-sm"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cards View -->
+        <div *ngIf="currentView === 'cards'"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div *ngFor="let counter of paginatedCounters; trackBy: trackByCounterId"
+            class="relative group">
+            
+            <!-- Checkbox overlay -->
+            <div class="absolute top-4 right-4 z-10">
+              <label class="relative inline-block cursor-pointer">
+                <input type="checkbox" [checked]="isSelected(counter.id)" (change)="toggleSelection(counter.id)"
+                  class="absolute opacity-0 w-0 h-0">
+                <span
+                  class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100 shadow-md"
+                  [class.bg-red-600]="isSelected(counter.id)" [class.border-red-600]="isSelected(counter.id)">
+                  <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(counter.id)"></i>
+                </span>
+              </label>
+            </div>
+
+            <!-- Module Card -->
+            <app-module-card [data]="adaptCounterToModuleCard(counter)"></app-module-card>
+            
+            <!-- Action buttons overlay -->
+            <div class="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button (click)="editarCounter(counter)"
+                class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg backdrop-blur-sm">
+                <i class="fas fa-edit"></i>Editar
+              </button>
+              <button (click)="confirmarEliminar(counter)"
+                class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg backdrop-blur-sm">
+                <i class="fas fa-trash"></i>Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div *ngIf="currentView === 'list'"
+          class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden divide-y divide-gray-200">
+          <div *ngFor="let counter of paginatedCounters; trackBy: trackByCounterId" class="p-6 hover:bg-gray-50 transition-colors duration-200">
+            <div class="flex items-center justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-4 mb-2">
+                  <label class="relative inline-block cursor-pointer">
+                    <input type="checkbox" [checked]="isSelected(counter.id)" (change)="toggleSelection(counter.id)"
+                      class="absolute opacity-0 w-0 h-0">
+                    <span
+                      class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
+                      [class.bg-red-600]="isSelected(counter.id)" [class.border-red-600]="isSelected(counter.id)">
+                      <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(counter.id)"></i>
+                    </span>
+                  </label>
+                  <span [class]="counter.estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                    {{ counter.estadoText }}
+                  </span>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ counter.nombre }}</h3>
+                <div class="flex items-center gap-6 text-sm text-gray-600">
+                  <span><i class="fas fa-code mr-1"></i>Código: {{ counter.codigo }}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 ml-4">
+                <button (click)="editarCounter(counter)"
+                  class="w-10 h-10 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105"
+                  title="Editar counter">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button (click)="confirmarEliminar(counter)"
+                  [class]="counter.estado ? 'bg-red-100 hover:bg-red-200 text-red-600' : 'bg-green-100 hover:bg-green-200 text-green-600'"
+                  class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105"
+                  [title]="counter.estado ? 'Desactivar counter' : 'Activar counter'">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+          <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <!-- Items per page selector -->
+            <div class="flex items-center gap-2 text-sm text-gray-700 font-medium">
+              <span>Mostrar:</span>
+              <select [(ngModel)]="itemsPerPage" (change)="applyFilters()"
+                class="border border-gray-300 rounded-lg px-3 py-2 bg-white font-medium">
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+              <span>por página</span>
+            </div>
+
+            <!-- Results info -->
+            <div class="text-sm font-semibold text-gray-700">
+              Mostrando {{ Math.min((currentPage - 1) * itemsPerPage + 1, totalItems) }} -
+              {{ Math.min(currentPage * itemsPerPage, totalItems) }} de {{ totalItems }} counter{{ totalItems === 1 ?
+              '' : 's' }}
+            </div>
+
+            <!-- Navigation buttons -->
+            <nav class="flex items-center gap-2" *ngIf="totalPages > 1">
+              <button [disabled]="currentPage === 1" (click)="changePage(currentPage - 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              <div class="flex items-center gap-1">
+                <button *ngFor="let page of [].constructor(totalPages); let i = index"
+                  (click)="changePage(i + 1)"
+                  class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-200"
+                  [class]="(i + 1) === currentPage ? 'bg-everywhere-primary text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'">
+                  {{ i + 1 }}
+                </button>
+              </div>
+
+              <button [disabled]="currentPage === totalPages" (click)="changePage(currentPage + 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </nav>
+          </div>
+        </div>
       </div>
-    </div>
+    </main>
   </div>
 </div>
 
-<!-- Modal Crear/Editar Counter -->
-<div *ngIf="mostrarModalCrear" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-  <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-    <div class="px-6 py-4 border-b border-gray-200">
+<!-- Modal para crear/editar counter -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+  *ngIf="mostrarModalCrear" (click)="cerrarModal()">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+    (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white px-8 py-6 rounded-t-3xl">
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-900">
-          {{ editandoCounter ? 'Editar Counter' : 'Nuevo Counter' }}
-        </h3>
-        <button
-          (click)="cerrarModal()"
-          class="text-gray-400 hover:text-gray-600 transition-colors">
-          <i class="fas fa-times"></i>
+        <h2 class="text-2xl font-bold">{{ editandoCounter ? 'Editar' : 'Crear Nuevo' }} Counter</h2>
+        <button (click)="cerrarModal()"
+          class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
+          <i class="fas fa-times text-xl"></i>
         </button>
       </div>
     </div>
 
-    <form [formGroup]="counterForm" (ngSubmit)="guardarCounter()">
-      <div class="px-6 py-4 space-y-4">
-        <!-- Nombre -->
-        <div>
-          <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">
-            Nombre *
-          </label>
-          <input
-            type="text"
-            id="nombre"
-            formControlName="nombre"
-            placeholder="Ingrese el nombre del counter"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-everywhere-primary focus:border-everywhere-primary transition-colors"
-            [class.border-red-500]="counterForm.get('nombre')?.invalid && counterForm.get('nombre')?.touched">
-          <div *ngIf="counterForm.get('nombre')?.invalid && counterForm.get('nombre')?.touched" class="mt-1 text-sm text-red-600">
-            <span *ngIf="counterForm.get('nombre')?.errors?.['required']">El nombre es obligatorio</span>
-            <span *ngIf="counterForm.get('nombre')?.errors?.['minlength']">El nombre debe tener al menos 3 caracteres</span>
-          </div>
-        </div>
+    <!-- Form Content -->
+    <form [formGroup]="counterForm" (ngSubmit)="guardarCounter()" class="p-8 space-y-6">
 
-        <!-- Código -->
-        <div>
-          <label for="codigo" class="block text-sm font-medium text-gray-700 mb-1">
-            Código *
-          </label>
-          <input
-            type="text"
-            id="codigo"
-            formControlName="codigo"
-            placeholder="Ingrese el código del counter"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-everywhere-primary focus:border-everywhere-primary transition-colors"
-            [class.border-red-500]="counterForm.get('codigo')?.invalid && counterForm.get('codigo')?.touched">
-          <div *ngIf="counterForm.get('codigo')?.invalid && counterForm.get('codigo')?.touched" class="mt-1 text-sm text-red-600">
-            <span *ngIf="counterForm.get('codigo')?.errors?.['required']">El código es obligatorio</span>
-            <span *ngIf="counterForm.get('codigo')?.errors?.['minlength']">El código debe tener al menos 2 caracteres</span>
+      <!-- Nombre -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-3">
+          <i class="fas fa-tag mr-2 text-red-600"></i>Nombre *
+        </label>
+        <div class="relative">
+          <input type="text" formControlName="nombre"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+            placeholder="Ingrese el nombre del counter">
+          <div class="absolute inset-y-0 right-0 flex items-center justify-center px-3 pointer-events-none">
+            <i class="fas fa-edit text-gray-400"></i>
+          </div>
+          <div *ngIf="counterForm.get('nombre')?.invalid && counterForm.get('nombre')?.touched"
+            class="absolute -bottom-6 left-0 text-red-500 text-sm">
+            <span *ngIf="counterForm.get('nombre')?.errors?.['required']">
+              El nombre es obligatorio
+            </span>
+            <span *ngIf="counterForm.get('nombre')?.errors?.['minlength']">
+              El nombre debe tener al menos 3 caracteres
+            </span>
           </div>
         </div>
       </div>
 
-      <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3 rounded-b-lg">
-        <button
-          type="button"
-          (click)="cerrarModal()"
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-          Cancelar
+      <!-- Código -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-3">
+          <i class="fas fa-code mr-2 text-red-600"></i>Código *
+        </label>
+        <div class="relative">
+          <input type="text" formControlName="codigo"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+            placeholder="Ingrese el código del counter">
+          <div class="absolute inset-y-0 right-0 flex items-center justify-center px-3 pointer-events-none">
+            <i class="fas fa-edit text-gray-400"></i>
+          </div>
+          <div *ngIf="counterForm.get('codigo')?.invalid && counterForm.get('codigo')?.touched"
+            class="absolute -bottom-6 left-0 text-red-500 text-sm">
+            <span *ngIf="counterForm.get('codigo')?.errors?.['required']">
+              El código es obligatorio
+            </span>
+            <span *ngIf="counterForm.get('codigo')?.errors?.['minlength']">
+              El código debe tener al menos 2 caracteres
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+        <button type="button" (click)="cerrarModal()"
+          class="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium">
+          <i class="fas fa-times mr-2"></i>Cancelar
         </button>
-        <button
-          type="submit"
-          [disabled]="counterForm.invalid || loading"
-          class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-everywhere-primary to-everywhere-secondary rounded-md hover:from-everywhere-secondary hover:to-everywhere-primary disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
-          <i *ngIf="loading" class="fas fa-spinner fa-spin mr-2"></i>
-          {{ editandoCounter ? 'Actualizar' : 'Crear' }}
+        <button type="submit" [disabled]="counterForm.invalid || loading"
+          class="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg">
+          <i class="fas fa-spinner fa-spin mr-2" *ngIf="loading"></i>
+          <i class="fas fa-save mr-2" *ngIf="!loading"></i>
+          {{ editandoCounter ? 'Actualizar' : 'Crear' }} Counter
         </button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- Modal Confirmación Eliminar -->
-<div *ngIf="mostrarModalEliminar" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-  <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-    <div class="px-6 py-4 border-b border-gray-200">
+<!-- Modal de confirmación de eliminación -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+  *ngIf="mostrarModalEliminar" (click)="cerrarModalEliminar()">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-6 rounded-t-3xl">
       <div class="flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-900">
-          {{ counterAEliminar?.estado ? 'Desactivar Counter' : 'Activar Counter' }}
-        </h3>
-        <button
-          (click)="cerrarModalEliminar()"
-          class="text-gray-400 hover:text-gray-600 transition-colors">
-          <i class="fas fa-times"></i>
+        <h2 class="text-xl font-bold">
+          <i class="fas fa-exclamation-triangle mr-3"></i>Eliminar Counter
+        </h2>
+        <button (click)="cerrarModalEliminar()"
+          class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
+          <i class="fas fa-times text-sm"></i>
         </button>
       </div>
     </div>
 
-    <div class="px-6 py-4">
-      <div class="flex items-center mb-4">
-        <div [class]="counterAEliminar?.estado ? 'bg-red-100' : 'bg-green-100'"
-             class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full">
-          <i [class]="counterAEliminar?.estado ? 'fas fa-ban text-red-600' : 'fas fa-check text-green-600'" class="text-xl"></i>
+    <!-- Modal Content -->
+    <div class="p-8">
+      <div class="text-center mb-8">
+        <div class="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i class="fas fa-trash text-red-600 text-3xl"></i>
         </div>
-      </div>
-      <div class="text-center">
-        <p class="text-sm text-gray-500">
-          ¿Estás seguro de que deseas {{ counterAEliminar?.estado ? 'desactivar' : 'activar' }} el counter
-          <strong>{{ counterAEliminar?.nombre }}</strong>?
-        </p>
-        <p *ngIf="counterAEliminar?.estado" class="text-xs text-red-600 mt-2">
-          Al desactivar el counter, no estará disponible en el sistema.
-        </p>
-        <p *ngIf="!counterAEliminar?.estado" class="text-xs text-green-600 mt-2">
-          Al activar el counter, estará disponible nuevamente en el sistema.
-        </p>
-      </div>
-    </div>
 
-    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3 rounded-b-lg">
-      <button
-        type="button"
-        (click)="cerrarModalEliminar()"
-        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-        Cancelar
-      </button>
-      <button
-        (click)="confirmarEliminacionModal()"
-        [disabled]="loading"
-        [class]="counterAEliminar?.estado ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500' : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'"
-        class="px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-        <i *ngIf="loading" class="fas fa-spinner fa-spin mr-2"></i>
-        {{ counterAEliminar?.estado ? 'Desactivar' : 'Activar' }}
-      </button>
+        <h3 class="text-xl font-bold text-gray-900 mb-4">
+          ¿Eliminar este counter?
+        </h3>
+
+        <div *ngIf="counterAEliminar" class="bg-gray-50 rounded-xl p-4 mb-6">
+          <p class="text-gray-600 text-sm mb-2">Counter a eliminar:</p>
+          <p class="font-semibold text-gray-900">{{ counterAEliminar.nombre }}</p>
+          <p class="text-gray-500 text-sm mt-1">
+            Código: {{ counterAEliminar.codigo }}
+          </p>
+        </div>
+
+        <p class="text-gray-600">
+          Al eliminar el counter, no estará disponible en el sistema.
+        </p>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex gap-4">
+        <button type="button" (click)="cerrarModalEliminar()" [disabled]="loading"
+          class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium disabled:opacity-50">
+          <i class="fas fa-times mr-2"></i>Cancelar
+        </button>
+        <button type="button" (click)="confirmarEliminacionModal()" [disabled]="loading"
+          class="flex-1 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-xl transition-all duration-200 font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+          <i class="fas fa-spinner fa-spin mr-2" *ngIf="loading"></i>
+          <i class="fas fa-trash mr-2" *ngIf="!loading"></i>
+          {{ loading ? 'Eliminando...' : 'Sí, Eliminar' }}
+        </button>
+      </div>
     </div>
   </div>
 </div>

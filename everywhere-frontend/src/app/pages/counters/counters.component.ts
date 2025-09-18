@@ -1,10 +1,11 @@
-import { Component, OnInit, HostListener, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CounterService } from '../../core/service/Counter/counter.service';
 import { CounterRequest, CounterResponse } from '../../shared/models/Counter/counter.model';
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { ModuleCardComponent, ModuleCardData } from '../../shared/components/ui/module-card/module-card.component';
 
 // Interface para la tabla de counters
 export interface CounterTabla {
@@ -22,7 +23,8 @@ export interface CounterTabla {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    SidebarComponent
+    SidebarComponent,
+    ModuleCardComponent
   ],
   templateUrl: './counters.component.html',
   styleUrls: ['./counters.component.css']
@@ -96,6 +98,25 @@ export class CountersComponent implements OnInit {
   sortColumn: string = 'nombre';
   sortDirection: 'asc' | 'desc' = 'asc';
 
+  // Función para adaptar counter a formato module-card
+  adaptCounterToModuleCard(counter: CounterTabla): ModuleCardData {
+    return {
+      title: counter.nombre,
+      description: `Código: ${counter.codigo}`,
+      route: '', // No necesitamos navegación para las tarjetas de counter
+      icon: '',
+      iconType: 'counters',
+      status: {
+        text: counter.estadoText,
+        type: counter.estado ? 'active' : 'neutral'
+      },
+      action: {
+        text: 'Gestionar'
+      },
+      featured: false
+    };
+  }
+
   // Variables para selección múltiple
   selectedItems: number[] = [];
   allSelected: boolean = false;
@@ -105,10 +126,6 @@ export class CountersComponent implements OnInit {
   currentPage = 1;
   itemsPerPage = 10;
   totalItems = 0;
-
-  // Dropdowns and menus
-  showActionMenu: number | null = null;
-  showQuickActions: number | null = null;
 
   // Estadísticas
   totalCounters = 0;
@@ -404,24 +421,6 @@ export class CountersComponent implements OnInit {
     this.totalCounters = this.counters.length;
     this.totalActivos = this.counters.filter(c => c.estado).length;
     this.totalInactivos = this.totalCounters - this.totalActivos;
-  }
-
-  // Action menus
-  toggleActionMenu(counterId: number, event: Event): void {
-    event.stopPropagation();
-    this.showActionMenu = this.showActionMenu === counterId ? null : counterId;
-  }
-
-  toggleQuickActions(counterId: number, event: Event): void {
-    event.stopPropagation();
-    this.showQuickActions = this.showQuickActions === counterId ? null : counterId;
-  }
-
-  // Listener para cerrar menus al hacer click fuera
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    this.showActionMenu = null;
-    this.showQuickActions = null;
   }
 
   // Sidebar methods
