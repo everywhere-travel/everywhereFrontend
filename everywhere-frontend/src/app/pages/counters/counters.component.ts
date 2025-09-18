@@ -14,6 +14,8 @@ export interface CounterTabla {
   codigo: string;
   estado: boolean;
   estadoText: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
 }
 
 @Component({
@@ -23,8 +25,7 @@ export interface CounterTabla {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    SidebarComponent,
-    ModuleCardComponent
+    SidebarComponent
   ],
   templateUrl: './counters.component.html',
   styleUrls: ['./counters.component.css']
@@ -148,10 +149,20 @@ export class CountersComponent implements OnInit {
     this.loadCounters();
   }
 
+  // Validador para campos opcionales con longitud mínima
+  private optionalMinLength(minLength: number) {
+    return (control: any) => {
+      if (!control.value || control.value.length === 0) {
+        return null; // Campo vacío es válido
+      }
+      return control.value.length >= minLength ? null : { minlength: { requiredLength: minLength, actualLength: control.value.length } };
+    };
+  }
+
   private initializeForm(): void {
     this.counterForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3)]],
-      codigo: ['', [Validators.required, Validators.minLength(2)]]
+      codigo: ['', [this.optionalMinLength(2)]]
     });
   }
 
@@ -179,7 +190,9 @@ export class CountersComponent implements OnInit {
       nombre: counter.nombre || '',
       codigo: counter.codigo || '',
       estado: counter.estado || false,
-      estadoText: counter.estado ? 'Activo' : 'Inactivo'
+      estadoText: counter.estado ? 'Activo' : 'Inactivo',
+      fechaCreacion: counter.fechaCreacion || '',
+      fechaActualizacion: counter.fechaActualizacion || ''
     }));
   }
 
@@ -344,7 +357,11 @@ export class CountersComponent implements OnInit {
       let valueA = (a as any)[column];
       let valueB = (b as any)[column];
 
-      if (typeof valueA === 'string') {
+      // Manejo especial para fechas
+      if (column === 'fechaCreacion' || column === 'fechaActualizacion') {
+        valueA = new Date(valueA);
+        valueB = new Date(valueB);
+      } else if (typeof valueA === 'string') {
         valueA = valueA.toLowerCase();
         valueB = valueB.toLowerCase();
       }
@@ -456,6 +473,20 @@ export class CountersComponent implements OnInit {
 
   getTotalCountersCount(): number {
     return this.totalCounters;
+  }
+
+  // Métodos para formatear fechas
+  formatDate(dateString: string): string {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleDateString('es-ES');
+  }
+
+  formatTime(dateString: string): string {
+    if (!dateString) return '';
+    return new Date(dateString).toLocaleTimeString('es-ES', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
   }
 
   // TrackBy function for performance
