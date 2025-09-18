@@ -76,6 +76,10 @@
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(79, 70, 229, 0.05));
   color: #6366f1;
 }
+.module-icon.counters { 
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(147, 51, 234, 0.05));
+  color: #8b5cf6;
+}
 
 .module-status {
   padding: 0.375rem 0.875rem;

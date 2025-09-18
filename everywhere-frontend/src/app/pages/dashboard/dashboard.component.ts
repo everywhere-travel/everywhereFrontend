@@ -60,6 +60,15 @@ export class DashboardComponent implements OnInit {
       action: { text: 'Gestionar' }
     },
     {
+      title: 'Counters',
+      description: 'Administra los contadores del sistema',
+      icon: 'fas fa-tachometer-alt',
+      route: '/counters',
+      iconType: 'estadisticas',
+      status: { text: '5 Activos', type: 'success' },
+      action: { text: 'Gestionar' }
+    },
+    {
       title: 'Liquidaciones',
       description: 'Administra las liquidaciones',
       icon: 'fas fa-calculator',

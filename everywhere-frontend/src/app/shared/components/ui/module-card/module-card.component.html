@@ -36,6 +36,18 @@
       <svg *ngIf="data.iconType === 'estadisticas'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M18 20V10M12 20V4M6 20V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
+      
+      <svg *ngIf="data.iconType === 'counters'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+        <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="2"/>
+        <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="2"/>
+        <circle cx="7" cy="8" r="1" fill="currentColor"/>
+        <circle cx="12" cy="8" r="1" fill="currentColor"/>
+        <circle cx="17" cy="8" r="1" fill="currentColor"/>
+        <rect x="5" y="11" width="4" height="3" rx="1" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="10" y="11" width="4" height="3" rx="1" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="15" y="11" width="4" height="3" rx="1" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
     </div>
     <div [class]="getStatusClass()" *ngIf="data.status">
       {{ data.status.text }}
