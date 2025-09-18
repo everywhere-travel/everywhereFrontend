@@ -433,6 +433,8 @@ export class CountersComponent implements OnInit {
 
   onToggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
+    // Forzar detección de cambios para actualizar el layout
+    this.cdr.detectChanges();
   }
 
   // Métodos para cambiar entre vistas

@@ -1,15 +1,15 @@
-<!-- Main Container -->
-<div class="flex h-screen bg-gray-50">
-  <!-- Sidebar -->
-  <app-sidebar
-    [menuItems]="sidebarMenuItems"
-    [isCollapsed]="sidebarCollapsed"
+<!-- Layout con Sidebar -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+  <!-- Sidebar Component -->
+  <app-sidebar 
+    [isCollapsed]="sidebarCollapsed" 
+    [menuItems]="sidebarMenuItems" 
     (itemClick)="onSidebarItemClick($event)"
     (toggleSidebar)="onToggleSidebar()">
   </app-sidebar>
 
-  <!-- Main Content -->
-  <div class="flex-1 flex flex-col overflow-hidden">
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
     <!-- Header -->
     <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
       <div class="flex items-center justify-between">
@@ -38,9 +38,7 @@
           <span>Nuevo Counter</span>
         </button>
       </div>
-    </header>
-
-    <!-- Controls Section -->
+    </header>    <!-- Controls Section -->
     <div class="bg-white border-b border-gray-200 px-6 py-4">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
         <!-- Search and Filters -->
@@ -130,7 +128,7 @@
     </div>
 
     <!-- Content Area -->
-    <div class="flex-1 overflow-auto p-6">
+    <div class="p-6">
       <!-- Loading State -->
       <div *ngIf="loading" class="flex justify-center items-center h-64">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-everywhere-primary"></div>
@@ -562,3 +560,4 @@
     </div>
   </div>
 </div>
+
