@@ -1,0 +1,647 @@
+<!-- Layout con Sidebar -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+  <!-- Sidebar Component -->
+  <app-sidebar
+    [isCollapsed]="sidebarCollapsed"
+    [menuItems]="sidebarMenuItems"
+    (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()">
+  </app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+    <!-- Header Section -->
+    <header
+      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
+      </div>
+
+      <div class="max-w-full mx-auto px-6 py-6 relative z-10">
+        <!-- Mobile Menu Button -->
+        <button (click)="onToggleSidebar()"
+          class="lg:hidden bg-white/20 hover:bg-white/30 p-2 rounded-lg transition-colors duration-200 mb-4">
+          <i class="fas fa-bars text-white"></i>
+        </button>
+
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+          <!-- Left side: Title and description -->
+          <div class="flex-1">
+            <div class="flex items-center gap-4 mb-3">
+              <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
+                <i class="fas fa-building text-2xl"></i>
+              </div>
+              <div>
+                <h1 class="text-3xl lg:text-4xl font-bold tracking-tight">
+                  Gestión de Sucursales
+                </h1>
+                <p class="text-white/90 text-lg mt-1">
+                  Administra las sucursales de tu empresa
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right side: Statistics -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 lg:gap-6 w-full lg:w-auto">
+            <!-- Total Sucursales -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-white/80 text-sm font-medium">Total</p>
+                  <p class="text-2xl lg:text-3xl font-bold">{{ getTotalSucursalesCount() }}</p>
+                </div>
+                <div class="bg-white/20 p-2 rounded-xl">
+                  <i class="fas fa-building text-lg"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sucursales Activas -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-white/80 text-sm font-medium">Activas</p>
+                  <p class="text-2xl lg:text-3xl font-bold">{{ getActiveSucursalesCount() }}</p>
+                </div>
+                <div class="bg-emerald-500/30 p-2 rounded-xl">
+                  <i class="fas fa-check-circle text-lg"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sucursales Inactivas -->
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-white/80 text-sm font-medium">Inactivas</p>
+                  <p class="text-2xl lg:text-3xl font-bold">{{ getInactiveSucursalesCount() }}</p>
+                </div>
+                <div class="bg-red-500/30 p-2 rounded-xl">
+                  <i class="fas fa-times-circle text-lg"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-full mx-auto px-6 py-6 space-y-6">
+      <!-- Search & Filters Panel -->
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <!-- Panel Header -->
+        <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
+          <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">Filtros y Búsqueda</h3>
+              <p class="text-sm text-gray-600 mt-1">Encuentra sucursales de forma rápida y eficiente</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button (click)="clearSearch()"
+                class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200">
+                <i class="fas fa-eraser mr-2"></i>
+                Limpiar
+              </button>
+              <button (click)="abrirModalCrear()"
+                class="btn-gradient px-6 py-2 text-sm font-semibold text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <i class="fas fa-plus mr-2"></i>
+                Nueva Sucursal
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Controls -->
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Search Input -->
+          <div class="lg:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Búsqueda General</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-search text-gray-400"></i>
+              </div>
+              <input [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()"
+                type="text" placeholder="Buscar por descripción, dirección, teléfono o email..."
+                class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D9043D] focus:border-transparent transition-colors duration-200">
+            </div>
+          </div>
+
+          <!-- Status Filter -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+            <select [(ngModel)]="selectedStatus" (ngModelChange)="onStatusChange()"
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D9043D] focus:border-transparent transition-colors duration-200">
+              <option value="todos">Todos los estados</option>
+              <option value="activos">Solo Activas</option>
+              <option value="inactivos">Solo Inactivas</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="flex flex-col items-center justify-center py-16 px-6">
+          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-[#D9043D] mb-4"></div>
+          <p class="text-gray-600 text-lg font-medium">Cargando sucursales...</p>
+          <p class="text-gray-500 text-sm mt-2">Por favor espera un momento</p>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && filteredSucursales.length === 0"
+        class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="flex flex-col items-center justify-center py-16 px-6">
+          <div class="bg-gray-100 rounded-full p-6 mb-6">
+            <i class="fas fa-building text-4xl text-gray-400"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">No se encontraron sucursales</h3>
+          <p class="text-gray-600 text-center mb-6">
+            No hay sucursales que coincidan con los criterios de búsqueda actuales.
+          </p>
+          <button (click)="clearSearch()"
+            class="btn-gradient px-6 py-3 text-sm font-semibold text-white rounded-lg">
+            Limpiar Filtros
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Content -->
+      <div *ngIf="!loading && filteredSucursales.length > 0" class="space-y-2">
+
+        <!-- Data Header -->
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div class="flex items-center gap-4">
+                <h3 class="text-lg font-semibold text-gray-900">
+                  Sucursales ({{ filteredSucursales.length }})
+                </h3>
+                <div class="text-sm text-gray-600">
+                  Mostrando {{ Math.min(itemsPerPage, filteredSucursales.length) }} de {{ filteredSucursales.length }}
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <!-- View Toggle -->
+                <div class="flex bg-gray-100 rounded-lg p-1">
+                  <button (click)="changeView('table')" [class.bg-white]="isActiveView('table')"
+                    [class.shadow-sm]="isActiveView('table')"
+                    class="px-3 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                    <i class="fas fa-table"></i>
+                  </button>
+                  <button (click)="changeView('cards')" [class.bg-white]="isActiveView('cards')"
+                    [class.shadow-sm]="isActiveView('cards')"
+                    class="px-3 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                    <i class="fas fa-th-large"></i>
+                  </button>
+                  <button (click)="changeView('list')" [class.bg-white]="isActiveView('list')"
+                    [class.shadow-sm]="isActiveView('list')"
+                    class="px-3 py-2 text-sm font-medium rounded-md transition-all duration-200">
+                    <i class="fas fa-list"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div
+          class="bg-blue-50 border border-blue-200 rounded-2xl px-6 py-4 flex items-center justify-between transition-all duration-300"
+          *ngIf="selectedItems.length > 0">
+          <div class="flex items-center gap-3">
+            <div class="bg-blue-100 p-2 rounded-lg">
+              <i class="fas fa-check-square text-blue-600"></i>
+            </div>
+            <span class="text-blue-800 font-medium">{{ selectedItems.length }} sucursal(es) seleccionada(s)</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <button (click)="clearSelection()"
+              class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200">
+              Deseleccionar todo
+            </button>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div *ngIf="currentView === 'table'"
+          class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gradient-to-r from-gray-50 to-gray-100">
+                <tr>
+                  <th scope="col" class="px-6 py-4 text-left">
+                    <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
+                      (change)="toggleAllSelection()"
+                      class="rounded border-gray-300 text-[#D9043D] focus:ring-[#D9043D]">
+                  </th>
+                  <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <button (click)="sortBy('descripcion')" class="flex items-center gap-2 hover:text-gray-900">
+                      Descripción
+                      <i class="fas fa-sort text-gray-400"></i>
+                    </button>
+                  </th>
+                  <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <button (click)="sortBy('direccion')" class="flex items-center gap-2 hover:text-gray-900">
+                      Dirección
+                      <i class="fas fa-sort text-gray-400"></i>
+                    </button>
+                  </th>
+                  <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <button (click)="sortBy('telefono')" class="flex items-center gap-2 hover:text-gray-900">
+                      Teléfono
+                      <i class="fas fa-sort text-gray-400"></i>
+                    </button>
+                  </th>
+                  <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <button (click)="sortBy('email')" class="flex items-center gap-2 hover:text-gray-900">
+                      Email
+                      <i class="fas fa-sort text-gray-400"></i>
+                    </button>
+                  </th>
+                  <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <button (click)="sortBy('estado')" class="flex items-center gap-2 hover:text-gray-900">
+                      Estado
+                      <i class="fas fa-sort text-gray-400"></i>
+                    </button>
+                  </th>
+                  <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let sucursal of paginatedSucursales; trackBy: trackBySucursalId"
+                  class="hover:bg-gray-50 transition-colors duration-200">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <input type="checkbox" [checked]="isSelected(sucursal.id)" (change)="toggleSelection(sucursal.id)"
+                      class="rounded border-gray-300 text-[#D9043D] focus:ring-[#D9043D]">
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10">
+                        <div class="h-10 w-10 rounded-lg bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+                          <i class="fas fa-building text-green-600"></i>
+                        </div>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">{{ sucursal.descripcion }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="text-sm text-gray-900">{{ sucursal.direccion }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ sucursal.telefono }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ sucursal.email }}</div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span [class]="sucursal.estado ? 'status-active' : 'status-inactive'"
+                      class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium">
+                      <i [class]="sucursal.estado ? 'fas fa-check-circle' : 'fas fa-times-circle'" class="mr-1"></i>
+                      {{ sucursal.estadoText }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex items-center justify-end gap-2">
+                      <button (click)="editarSucursal(sucursal)" title="Editar"
+                        class="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-2 rounded-lg transition-all duration-200">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button (click)="confirmarEliminar(sucursal)"
+                        [title]="sucursal.estado ? 'Desactivar' : 'Activar'"
+                        [class]="sucursal.estado ? 'text-red-600 hover:text-red-900 hover:bg-red-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'"
+                        class="p-2 rounded-lg transition-all duration-200">
+                        <i [class]="sucursal.estado ? 'fas fa-ban' : 'fas fa-check'" class=""></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cards View -->
+        <div *ngIf="currentView === 'cards'"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div *ngFor="let sucursal of paginatedSucursales; trackBy: trackBySucursalId"
+            class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
+            <div class="p-6">
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex-1">
+                  <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ sucursal.descripcion }}</h3>
+                </div>
+              </div>
+
+              <div class="space-y-3 mb-6">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600">Dirección:</span>
+                  <span class="text-sm text-gray-900 truncate max-w-32" [title]="sucursal.direccion">{{ sucursal.direccion }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600">Teléfono:</span>
+                  <span class="text-sm text-gray-900">{{ sucursal.telefono || 'N/A' }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600">Email:</span>
+                  <span class="text-sm text-gray-900 truncate max-w-32" [title]="sucursal.email">{{ sucursal.email || 'N/A' }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600">Estado:</span>
+                  <span [class]="sucursal.estado ? 'status-active' : 'status-inactive'"
+                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium">
+                    <i [class]="sucursal.estado ? 'fas fa-check-circle' : 'fas fa-times-circle'" class="mr-1"></i>
+                    {{ sucursal.estadoText }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="flex gap-2 pt-4 border-t border-gray-100">
+                <button (click)="editarSucursal(sucursal)"
+                  class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2">
+                  <i class="fas fa-edit"></i>Editar
+                </button>
+                <button (click)="confirmarEliminar(sucursal)"
+                  [class]="sucursal.estado ? 'flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2' : 'flex-1 bg-green-50 hover:bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2'">
+                  <i [class]="sucursal.estado ? 'fas fa-ban' : 'fas fa-check'"></i>
+                  {{ sucursal.estado ? 'Desactivar' : 'Activar' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div *ngIf="currentView === 'list'"
+          class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+          <div class="divide-y divide-gray-200">
+            <div *ngFor="let sucursal of paginatedSucursales; trackBy: trackBySucursalId"
+              class="p-6 hover:bg-gray-50 transition-colors duration-200">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                  <input type="checkbox" [checked]="isSelected(sucursal.id)" (change)="toggleSelection(sucursal.id)"
+                    class="rounded border-gray-300 text-[#D9043D] focus:ring-[#D9043D]">
+                  <div class="flex-shrink-0">
+                    <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+                      <i class="fas fa-building text-green-600 text-lg"></i>
+                    </div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-lg font-semibold text-gray-900 truncate">{{ sucursal.descripcion }}</p>
+                    <div class="mt-1 flex items-center gap-4 text-sm text-gray-600">
+                      <span><i class="fas fa-map-marker-alt mr-1"></i>{{ sucursal.direccion }}</span>
+                      <span><i class="fas fa-phone mr-1"></i>{{ sucursal.telefono }}</span>
+                      <span><i class="fas fa-envelope mr-1"></i>{{ sucursal.email }}</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span [class]="sucursal.estado ? 'status-active' : 'status-inactive'"
+                      class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium">
+                      <i [class]="sucursal.estado ? 'fas fa-check-circle' : 'fas fa-times-circle'" class="mr-1"></i>
+                      {{ sucursal.estadoText }}
+                    </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button (click)="editarSucursal(sucursal)" title="Editar"
+                    class="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-2 rounded-lg transition-all duration-200">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button (click)="confirmarEliminar(sucursal)"
+                    [title]="sucursal.estado ? 'Desactivar' : 'Activar'"
+                    [class]="sucursal.estado ? 'text-red-600 hover:text-red-900 hover:bg-red-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'"
+                    class="p-2 rounded-lg transition-all duration-200">
+                    <i [class]="sucursal.estado ? 'fas fa-ban' : 'fas fa-check'"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+          <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div class="text-sm text-gray-700">
+              Mostrando {{ Math.min((currentPage - 1) * itemsPerPage + 1, filteredSucursales.length) }} a
+              {{ Math.min(currentPage * itemsPerPage, filteredSucursales.length) }} de {{ filteredSucursales.length }}
+              resultados
+            </div>
+            <div class="flex items-center gap-2">
+              <button (click)="changePage(currentPage - 1)" [disabled]="currentPage === 1"
+                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              <ng-container *ngFor="let page of [].constructor(totalPages); let i = index">
+                <button *ngIf="i + 1 === 1 || i + 1 === totalPages || Math.abs(i + 1 - currentPage) <= 2"
+                  (click)="changePage(i + 1)" [class.bg-[#D9043D]]="currentPage === i + 1"
+                  [class.text-white]="currentPage === i + 1" [class.border-[#D9043D]]="currentPage === i + 1"
+                  class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                  {{ i + 1 }}
+                </button>
+                <span *ngIf="i + 1 === 2 && currentPage > 4" class="px-2 text-gray-500">...</span>
+                <span *ngIf="i + 1 === totalPages - 1 && currentPage < totalPages - 3" class="px-2 text-gray-500">...</span>
+              </ng-container>
+
+              <button (click)="changePage(currentPage + 1)" [disabled]="currentPage === totalPages"
+                class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal para crear/editar sucursal -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+  *ngIf="mostrarModalCrear" (click)="cerrarModal()">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+    (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white px-8 py-6 rounded-t-3xl">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold">{{ editandoSucursal ? 'Editar' : 'Crear Nueva' }} Sucursal</h2>
+        <button (click)="cerrarModal()"
+          class="text-white/80 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-colors duration-200">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Form Content -->
+    <form [formGroup]="sucursalForm" (ngSubmit)="guardarSucursal()" class="p-8 space-y-6">
+
+      <!-- Descripción -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-3">
+          Descripción
+        </label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-building text-gray-400"></i>
+          </div>
+          <input type="text" formControlName="descripcion" placeholder="Ej: Sucursal Centro"
+            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D9043D] focus:border-transparent transition-colors duration-200"
+            [class.error-border]="sucursalForm.get('descripcion')?.invalid && sucursalForm.get('descripcion')?.touched && sucursalForm.get('descripcion')?.value">
+          @if (sucursalForm.get('descripcion')?.invalid && sucursalForm.get('descripcion')?.touched && sucursalForm.get('descripcion')?.value) {
+            <div class="mt-2 text-sm text-red-600">
+              @if (sucursalForm.get('descripcion')?.errors?.['minlength']) {
+                <span>Mínimo 3 caracteres</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Dirección -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-3">
+          Dirección
+        </label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-map-marker-alt text-gray-400"></i>
+          </div>
+          <input type="text" formControlName="direccion" placeholder="Ej: Av. Principal 123, Lima"
+            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D9043D] focus:border-transparent transition-colors duration-200"
+            [class.error-border]="sucursalForm.get('direccion')?.invalid && sucursalForm.get('direccion')?.touched && sucursalForm.get('direccion')?.value">
+          @if (sucursalForm.get('direccion')?.invalid && sucursalForm.get('direccion')?.touched && sucursalForm.get('direccion')?.value) {
+            <div class="mt-2 text-sm text-red-600">
+              @if (sucursalForm.get('direccion')?.errors?.['minlength']) {
+                <span>Mínimo 5 caracteres</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Teléfono -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-3">
+          Teléfono
+        </label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-phone text-gray-400"></i>
+          </div>
+          <input type="tel" formControlName="telefono" placeholder="Ej: +51 987654321"
+            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D9043D] focus:border-transparent transition-colors duration-200"
+            [class.error-border]="sucursalForm.get('telefono')?.invalid && sucursalForm.get('telefono')?.touched && sucursalForm.get('telefono')?.value">
+          @if (sucursalForm.get('telefono')?.invalid && sucursalForm.get('telefono')?.touched && sucursalForm.get('telefono')?.value) {
+            <div class="mt-2 text-sm text-red-600">
+              @if (sucursalForm.get('telefono')?.errors?.['minlength']) {
+                <span>Mínimo 7 caracteres</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-3">
+          Email
+        </label>
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <i class="fas fa-envelope text-gray-400"></i>
+          </div>
+          <input type="email" formControlName="email" placeholder="Ej: sucursal@empresa.com"
+            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-[#D9043D] focus:border-transparent transition-colors duration-200"
+            [class.error-border]="sucursalForm.get('email')?.invalid && sucursalForm.get('email')?.touched && sucursalForm.get('email')?.value">
+          @if (sucursalForm.get('email')?.invalid && sucursalForm.get('email')?.touched && sucursalForm.get('email')?.value) {
+            <div class="mt-2 text-sm text-red-600">
+              @if (sucursalForm.get('email')?.errors?.['email']) {
+                <span>Formato de email inválido</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+        <button type="button" (click)="cerrarModal()"
+          class="px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors duration-200">
+          Cancelar
+        </button>
+        <button type="submit" [disabled]="sucursalForm.invalid || loading"
+          class="btn-gradient px-8 py-3 text-sm font-semibold text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
+          @if (loading) {
+            <i class="fas fa-spinner fa-spin mr-2"></i>
+          }
+          {{ editandoSucursal ? 'Actualizar' : 'Crear' }} Sucursal
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+  *ngIf="mostrarModalEliminar" (click)="cerrarModalEliminar()">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-6 rounded-t-3xl">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold">
+          {{ sucursalAEliminar?.estado ? 'Desactivar' : 'Activar' }} Sucursal
+        </h2>
+        <button (click)="cerrarModalEliminar()"
+          class="text-white/80 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-colors duration-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="p-8">
+      <div class="text-center mb-8">
+        <div [class]="sucursalAEliminar?.estado ? 'bg-red-100' : 'bg-green-100'" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i [class]="sucursalAEliminar?.estado ? 'fas fa-ban text-red-600' : 'fas fa-check text-green-600'" class="text-3xl"></i>
+        </div>
+
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">
+          ¿Estás seguro de {{ sucursalAEliminar?.estado ? 'desactivar' : 'activar' }} esta sucursal?
+        </h3>
+
+        <div class="bg-gray-50 rounded-xl p-4 mb-6">
+          <div class="text-sm text-gray-600 space-y-1">
+            <div><strong>Descripción:</strong> {{ sucursalAEliminar?.descripcion }}</div>
+            <div><strong>Dirección:</strong> {{ sucursalAEliminar?.direccion }}</div>
+            <div><strong>Estado actual:</strong> {{ sucursalAEliminar?.estado ? 'Activa' : 'Inactiva' }}</div>
+          </div>
+        </div>
+
+        <p class="text-gray-600 text-sm">
+          {{ sucursalAEliminar?.estado ? 'La sucursal será desactivada y no estará disponible para nuevas operaciones.' : 'La sucursal será reactivada y estará disponible para operaciones.' }}
+        </p>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex gap-4">
+        <button (click)="cerrarModalEliminar()"
+          class="flex-1 px-4 py-3 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors duration-200">
+          Cancelar
+        </button>
+        <button (click)="confirmarEliminacionModal()" [disabled]="loading"
+          [class]="sucursalAEliminar?.estado ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+          class="flex-1 px-4 py-3 text-sm font-semibold text-white rounded-xl transition-colors duration-200 disabled:opacity-50">
+          <i *ngIf="loading" class="fas fa-spinner fa-spin mr-2"></i>
+          {{ sucursalAEliminar?.estado ? 'Desactivar' : 'Activar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
