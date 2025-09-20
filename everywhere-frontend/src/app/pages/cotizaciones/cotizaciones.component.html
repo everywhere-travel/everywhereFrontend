@@ -829,180 +829,105 @@
               <span class="text-red-500 ml-1">*</span>
             </h3>
 
-            <!-- Selector de Tipo de Cliente -->
-            <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-3">
-                Tipo de Cliente
-              </label>
-              <select formControlName="tipoClienteSeleccionado" (change)="onSelectChange($event)"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent bg-white shadow-sm"
-                [class.border-red-300]="isFieldInvalid(cotizacionForm, 'personaId')">
-                <option value="">Seleccionar tipo de cliente</option>
-                <option value="natural">Persona Natural</option>
-                <option value="juridica">Persona Jurídica</option>
-              </select>
-            </div>
-
-            <!-- Sección de Búsqueda y Selección -->
-            <div *ngIf="tipoClienteSeleccionado" class="space-y-6">
-
-              <!-- Cliente ya seleccionado -->
-              <div *ngIf="clienteSeleccionado" class="bg-white border-2 border-green-200 rounded-xl p-5">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                      <i class="fas fa-check text-green-600 text-lg"></i>
-                    </div>
-                    <div>
-                      <p class="font-semibold text-gray-900 text-lg">{{ getSelectedClienteName() }}</p>
-                      <p class="text-sm text-gray-500 flex items-center mt-1">
-                        <i class="fas fa-tag mr-1"></i>
-                        {{ tipoClienteSeleccionado === 'natural' ? 'Persona Natural' : 'Persona Jurídica' }}
-                      </p>
-                    </div>
-                  </div>
-                  <button type="button" (click)="resetClienteSeleccionado()"
-                    class="px-4 py-2 text-everywhere-primary hover:bg-everywhere-primary/10 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                    <i class="fas fa-edit"></i>
-                    <span class="text-sm font-medium">Cambiar</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Formulario de búsqueda -->
-              <div *ngIf="!clienteSeleccionado" class="bg-white rounded-xl border border-gray-200 p-5">
-                <h4 class="text-sm font-semibold text-gray-800 mb-4 flex items-center">
-                  <div class="w-6 h-6 bg-everywhere-primary/10 rounded-lg flex items-center justify-center mr-2">
-                    <i class="fas fa-search text-everywhere-primary text-xs"></i>
-                  </div>
-                  Buscar {{ tipoClienteSeleccionado === 'natural' ? 'Persona Natural' : 'Persona Jurídica' }}
-                </h4>
-
-                <!-- Criterios de búsqueda para Persona Natural -->
-                <div *ngIf="tipoClienteSeleccionado === 'natural'" class="space-y-4">
-                  <div class="grid grid-cols-3 gap-3">
-                    <label
-                      class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200"
-                      [class.border-everywhere-primary]="criterioBusquedaNatural === 'nombres'"
-                      [class.bg-everywhere-primary/5]="criterioBusquedaNatural === 'nombres'">
-                      <input type="radio" value="nombres" [checked]="criterioBusquedaNatural === 'nombres'"
-                        (change)="onCriterioBusquedaChange('nombres')"
-                        class="text-everywhere-primary focus:ring-everywhere-primary">
-                      <span class="ml-2 text-sm font-medium">Nombres</span>
-                    </label>
-                    <label
-                      class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200"
-                      [class.border-everywhere-primary]="criterioBusquedaNatural === 'apellidos'"
-                      [class.bg-everywhere-primary/5]="criterioBusquedaNatural === 'apellidos'">
-                      <input type="radio" value="apellidos" [checked]="criterioBusquedaNatural === 'apellidos'"
-                        (change)="onCriterioBusquedaChange('apellidos')"
-                        class="text-everywhere-primary focus:ring-everywhere-primary">
-                      <span class="ml-2 text-sm font-medium">Apellidos</span>
-                    </label>
-                    <label
-                      class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200"
-                      [class.border-everywhere-primary]="criterioBusquedaNatural === 'documento'"
-                      [class.bg-everywhere-primary/5]="criterioBusquedaNatural === 'documento'">
-                      <input type="radio" value="documento" [checked]="criterioBusquedaNatural === 'documento'"
-                        (change)="onCriterioBusquedaChange('documento')"
-                        class="text-everywhere-primary focus:ring-everywhere-primary">
-                      <span class="ml-2 text-sm font-medium">Documento</span>
-                    </label>
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- Criterios de búsqueda para Persona Jurídica -->
-              <div *ngIf="tipoClienteSeleccionado === 'juridica'" class="space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                  <label
-                    class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200"
-                    [class.border-everywhere-primary]="criterioBusquedaJuridica === 'ruc'"
-                    [class.bg-everywhere-primary/5]="criterioBusquedaJuridica === 'ruc'">
-                    <input type="radio" value="ruc" [checked]="criterioBusquedaJuridica === 'ruc'"
-                      (change)="onCriterioBusquedaChange('ruc')"
-                      class="text-everywhere-primary focus:ring-everywhere-primary">
-                    <span class="ml-2 text-sm font-medium">RUC</span>
-                  </label>
-                  <label
-                    class="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors duration-200"
-                    [class.border-everywhere-primary]="criterioBusquedaJuridica === 'razonSocial'"
-                    [class.bg-everywhere-primary/5]="criterioBusquedaJuridica === 'razonSocial'">
-                    <input type="radio" value="razonSocial" [checked]="criterioBusquedaJuridica === 'razonSocial'"
-                      (change)="onCriterioBusquedaChange('razonSocial')"
-                      class="text-everywhere-primary focus:ring-everywhere-primary">
-                    <span class="ml-2 text-sm font-medium">Razón Social</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Campo de búsqueda -->
-              <div class="space-y-3">
-                <div class="flex gap-3">
-                  <div class="flex-1 relative">
-                    <input type="text" formControlName="terminoBusquedaCliente" [placeholder]="'Ingrese ' + (tipoClienteSeleccionado === 'natural' ?
-                                 (criterioBusquedaNatural === 'nombres' ? 'nombres' :
-                                  criterioBusquedaNatural === 'apellidos' ? 'apellidos' : 'documento') :
-                                 (criterioBusquedaJuridica === 'ruc' ? 'RUC' : 'razón social'))"
-                      class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent pr-4">
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <i class="fas fa-search text-gray-400"></i>
-                    </div>
-                  </div>
-                  <button type="button" (click)="buscarClientes()"
-                    [disabled]="!terminoBusquedaCliente.trim() || buscandoClientes"
-                    class="px-6 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white rounded-xl hover:from-[#BF4968] hover:to-[#A04057] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2">
-                    <i *ngIf="!buscandoClientes" class="fas fa-search"></i>
-                    <i *ngIf="buscandoClientes" class="fas fa-spinner fa-spin"></i>
-                    <span class="font-medium">{{ buscandoClientes ? 'Buscando...' : 'Buscar' }}</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Resultados de búsqueda -->
-              <div *ngIf="personasEncontradas.length > 0" class="space-y-3">
-                <h5 class="text-sm font-semibold text-gray-800 flex items-center">
-                  <i class="fas fa-list mr-2 text-everywhere-primary"></i>
-                  Resultados encontrados ({{ personasEncontradas.length }})
-                </h5>
-                <div class="space-y-2 max-h-60 overflow-y-auto">
-                  <div *ngFor="let persona of personasEncontradas"
-                    class="bg-white border border-gray-200 rounded-lg p-4 hover:border-everywhere-primary hover:bg-everywhere-primary/5 cursor-pointer transition-all duration-200"
-                    (click)="seleccionarCliente(persona)">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-everywhere-primary/10 rounded-lg flex items-center justify-center">
-                          <i class="fas fa-user text-everywhere-primary"></i>
-                        </div>
-                        <div>
-                          <p class="font-semibold text-gray-900">{{ getClienteDisplayName(persona) }}</p>
-                          <p class="text-sm text-gray-500 flex items-center">
-                            <i class="fas fa-tag mr-1"></i>
-                            {{ tipoClienteSeleccionado === 'natural' ? 'Persona Natural' : 'Persona Jurídica' }}
-                          </p>
-                        </div>
-                      </div>
-                      <div class="text-everywhere-primary">
-                        <i class="fas fa-arrow-right"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- No se encontraron resultados -->
-              <div *ngIf="!buscandoClientes && terminoBusquedaCliente && personasEncontradas.length === 0"
-                class="text-center py-8 bg-gray-50 rounded-xl">
-                <div class="flex flex-col items-center space-y-3">
-                  <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                    <i class="fas fa-search text-gray-400 text-xl"></i>
+            <!-- Cliente ya seleccionado -->
+            <div *ngIf="clienteSeleccionado" class="bg-white border-2 border-green-200 rounded-xl p-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                  <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-check text-green-600 text-lg"></i>
                   </div>
                   <div>
-                    <p class="text-gray-600 font-medium">No se encontraron resultados</p>
-                    <p class="text-sm text-gray-500">Intenta con otros términos de búsqueda</p>
+                    <p class="font-semibold text-gray-900 text-base">{{ getSelectedClienteName() }}</p>
+                    <p class="text-sm text-gray-500 flex items-center mt-1">
+                      <i class="fas fa-tag mr-1"></i>
+                      {{ getClienteType(clienteSeleccionado) }}
+                    </p>
                   </div>
                 </div>
+                <button type="button" (click)="resetClienteSeleccionado()"
+                  class="px-4 py-2 text-everywhere-primary hover:bg-everywhere-primary/10 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                  <i class="fas fa-edit"></i>
+                  <span class="text-sm font-medium">Cambiar</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Búsqueda simple de cliente -->
+            <div *ngIf="!clienteSeleccionado" class="space-y-3">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input 
+                  type="text" 
+                  [formControl]="clienteSearchControl"
+                  placeholder="Buscar cliente por nombre, DNI, RUC..." 
+                  class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:border-everywhere-primary focus:ring-2 focus:ring-everywhere-primary/20 transition-all duration-200 bg-gray-50 focus:bg-white"
+                  [class.border-red-300]="isFieldInvalid(cotizacionForm, 'personaId')"
+                  autocomplete="off">
+                <button 
+                  *ngIf="clienteSearchControl.value" 
+                  (click)="clearClienteSearch()"
+                  type="button"
+                  class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              
+              <!-- Lista de clientes compacta -->
+              <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+
+                <!-- Indicador de búsqueda -->
+                <div *ngIf="buscandoClientes" class="flex items-center justify-center py-3 bg-gray-50">
+                  <div class="flex items-center space-x-2 text-everywhere-primary">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span class="text-sm">Buscando...</span>
+                  </div>
+                </div>
+
+                <!-- Lista deslizable de clientes -->
+                <div *ngIf="!buscandoClientes" class="max-h-72 overflow-y-auto">
+                  <!-- Resultados encontrados -->
+                  <div *ngFor="let persona of personasEncontradas; let i = index"
+                    class="border-b border-gray-100 last:border-b-0 hover:bg-everywhere-primary/5 cursor-pointer transition-colors"
+                    (click)="seleccionarCliente(persona)">
+                    <div class="p-3 flex items-center justify-between">
+                      <div class="flex items-center space-x-3 flex-1 min-w-0">
+                        <!-- Avatar del cliente -->
+                        <div class="w-8 h-8 bg-gradient-to-br from-everywhere-primary to-everywhere-secondary rounded-lg flex items-center justify-center flex-shrink-0">
+                          <i class="fas fa-user text-white text-xs"></i>
+                        </div>
+                        <!-- Información del cliente -->
+                        <div class="flex-1 min-w-0">
+                          <p class="font-medium text-gray-900 truncate text-sm">{{ getClienteDisplayName(persona) }}</p>
+                          <div class="flex items-center space-x-2 mt-0.5">
+                            <span class="text-xs text-gray-500">{{ getClienteType(persona) }}</span>
+                            <span *ngIf="hasDocumento(persona)" class="text-xs text-gray-400">{{ getClienteDocumento(persona) }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Icono de selección -->
+                      <div class="text-everywhere-primary">
+                        <i class="fas fa-chevron-right text-xs"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Estado cuando no hay clientes -->
+                  <div *ngIf="personasEncontradas.length === 0" class="text-center py-8 bg-gray-50">
+                    <div class="flex flex-col items-center space-y-3">
+                      <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                        <i class="fas fa-search text-gray-400"></i>
+                      </div>
+                      <div>
+                        <p class="text-gray-600 font-medium text-sm">No se encontraron clientes</p>
+                        <p class="text-xs text-gray-500 mt-1">
+                          {{ clienteSearchControl.value ? 'Intenta con otros términos' : 'No hay clientes registrados' }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div> 
               </div>
             </div>
           </div>

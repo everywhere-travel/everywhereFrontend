@@ -1,7 +1,9 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 // Services
@@ -232,6 +234,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   detalleForm!: FormGroup;
   grupoHotelForm!: FormGroup;
   nuevaCategoriaForm!: FormGroup;
+  clienteSearchControl!: FormControl;
 
   // ===== DATA ARRAYS =====
   cotizaciones: CotizacionResponse[] = [];
@@ -254,6 +257,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // ===== CLIENT SELECTION =====
   personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
+  todosLosClientes: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
   buscandoClientes = false;
   clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | null = null;
 
@@ -313,6 +317,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       searchTerm: ['']
     });
 
+    // Client search control for real-time search
+    this.clienteSearchControl = new FormControl('');
+
     // Nueva categoría form
     this.nuevaCategoriaForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3)]],
@@ -335,11 +342,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       cantNinos: [0, [Validators.min(0)]],
       moneda: ['USD', [Validators.required]],
       observacion: [''],
-      // Client selection fields
-      tipoClienteSeleccionado: [''],
-      criterioBusquedaNatural: ['nombres'],
-      criterioBusquedaJuridica: ['ruc'],
-      terminoBusquedaCliente: ['']
+      // Eliminados los campos complejos de búsqueda de cliente
     });
 
     // Detalle form para productos fijos
@@ -364,6 +367,32 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.searchTerm = term;
       this.filterCotizaciones();
     });
+
+    // Setup real-time client search
+    this.setupClienteSearch();
+  }
+
+  private setupClienteSearch(): void {
+    this.clienteSearchControl.valueChanges
+      .pipe(
+        debounceTime(200), // Reducido para respuesta más rápida
+        distinctUntilChanged(),
+        switchMap(searchTerm => {
+          this.buscandoClientes = true;
+          return this.buscarClientesEnTiempoReal(searchTerm?.trim() || '');
+        })
+      )
+      .subscribe(
+        (resultados) => {
+          this.personasEncontradas = resultados;
+          this.buscandoClientes = false;
+        },
+        (error) => {
+          console.error('Error en búsqueda de clientes:', error);
+          this.personasEncontradas = this.todosLosClientes.slice(0, 20);
+          this.buscandoClientes = false;
+        }
+      );
   }
 
   private loadInitialData(): void {
@@ -415,6 +444,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       // Combinar ambas listas
       this.personas = [...personasNaturales, ...personasJuridicas];
+      
+      // Almacenar todos los clientes para el filtrado inicial
+      this.todosLosClientes = [...this.personas];
+      this.personasEncontradas = [...this.todosLosClientes].slice(0, 20); // Mostrar primeros 20 inicialmente
 
       // Poblar cache y display map para evitar llamadas HTTP posteriores
       this.personas.forEach(persona => {
@@ -434,6 +467,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     } catch (error) {
       this.showError('Error al cargar los clientes. Algunas funciones pueden no estar disponibles.');
       this.personas = [];
+      this.todosLosClientes = [];
+      this.personasEncontradas = [];
     }
   }
 
@@ -571,20 +606,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.cotizacionForm.reset({
       cantAdultos: 1,
       cantNinos: 0,
-      moneda: 'USD',
-      tipoClienteSeleccionado: '',
-      criterioBusquedaNatural: 'nombres',
-      criterioBusquedaJuridica: 'ruc',
-      terminoBusquedaCliente: ''
+      moneda: 'USD'
     });
     this.detallesFijos = [];
     this.gruposHoteles = [];
     this.deletedDetalleIds = [];
 
     // Reset client selection variables
-    this.personasEncontradas = [];
+    this.personasEncontradas = this.todosLosClientes.slice(0, 20); // Mostrar clientes inmediatamente
     this.clienteSeleccionado = null;
     this.buscandoClientes = false;
+    this.clienteSearchControl.setValue('', { emitEvent: false });
   }
 
   private setupDatesForNew(): void {
@@ -656,16 +688,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const persona = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
       if (persona) {
         this.clienteSeleccionado = persona;
-        this.cotizacionForm.patchValue({
-          tipoClienteSeleccionado: persona.tipo === 'JURIDICA' ? 'juridica' : 'natural'
-        });
         return;
       }
     } catch (error) {
       this.showError('Error al cargar los datos del cliente para edición.');
     }
     // Si no se encuentra, resetea
-    this.cotizacionForm.patchValue({ tipoClienteSeleccionado: '' });
     this.clienteSeleccionado = null;
   }
 
@@ -1509,120 +1537,76 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     return cotizacion.id;
   }
 
-  // Client selection methods
-  onSelectChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    const value = target.value as 'natural' | 'juridica' | '';
-    this.onTipoClienteChange(value);
+  // ============================================
+  // CLIENT SEARCH METHODS (SIMPLIFIED)
+  // ============================================
+  
+  private async buscarClientesEnTiempoReal(searchTerm: string): Promise<(PersonaNaturalResponse | PersonaJuridicaResponse)[]> {
+    if (!searchTerm || searchTerm.length < 1) {
+      // Si no hay término de búsqueda, mostrar todos los clientes (primeros 20)
+      return this.todosLosClientes.slice(0, 20);
+    }
+
+    try {
+      const term = searchTerm.toLowerCase();
+      const resultados: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
+
+      // Filtrar todos los clientes cargados
+      const clientesFiltrados = this.todosLosClientes.filter(persona => {
+        if ('nombres' in persona && 'apellidos' in persona) {
+          // Persona Natural
+          const nombres = (persona.nombres || '').toLowerCase();
+          const apellidos = (persona.apellidos || '').toLowerCase();
+          const documento = (persona.documento || '').toLowerCase();
+          const nombreCompleto = `${nombres} ${apellidos}`.trim();
+          
+          return nombres.includes(term) || 
+                 apellidos.includes(term) || 
+                 documento.includes(term) ||
+                 nombreCompleto.includes(term);
+        } else if ('razonSocial' in persona) {
+          // Persona Jurídica
+          const razonSocial = (persona.razonSocial || '').toLowerCase();
+          const ruc = (persona.ruc || '').toLowerCase();
+          
+          return razonSocial.includes(term) || ruc.includes(term);
+        }
+        return false;
+      });
+
+      // Ordenar por relevancia (exactitud de coincidencia)
+      clientesFiltrados.sort((a, b) => {
+        const aText = this.getClienteDisplayName(a).toLowerCase();
+        const bText = this.getClienteDisplayName(b).toLowerCase();
+        
+        const aStartsWith = aText.startsWith(term);
+        const bStartsWith = bText.startsWith(term);
+        
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        
+        return aText.length - bText.length; // Más corto = más relevante
+      });
+
+      return clientesFiltrados.slice(0, 20); // Máximo 20 resultados
+      
+    } catch (error) {
+      console.error('Error en búsqueda de clientes:', error);
+      return this.todosLosClientes.slice(0, 20); // Fallback a mostrar todos
+    }
   }
 
-  onTipoClienteChange(tipo: 'natural' | 'juridica' | ''): void {
-    this.cotizacionForm.patchValue({
-      tipoClienteSeleccionado: tipo,
-      terminoBusquedaCliente: '',
-      personaId: ''
-    });
-    this.personasEncontradas = [];
-    this.clienteSeleccionado = null;
+  clearClienteSearch(): void {
+    this.clienteSearchControl.setValue('', { emitEvent: false });
+    // Al limpiar, mostrar todos los clientes nuevamente
+    this.personasEncontradas = this.todosLosClientes.slice(0, 20);
+    this.buscandoClientes = false;
   }
 
   resetClienteSeleccionado(): void {
-    const currentTipo = this.cotizacionForm.get('tipoClienteSeleccionado')?.value;
-    this.onTipoClienteChange(currentTipo);
-  }
-
-  onCriterioBusquedaChange(criterio: string): void {
-    const tipoCliente = this.cotizacionForm.get('tipoClienteSeleccionado')?.value;
-    if (tipoCliente === 'natural') {
-      this.cotizacionForm.patchValue({ criterioBusquedaNatural: criterio });
-    } else if (tipoCliente === 'juridica') {
-      this.cotizacionForm.patchValue({ criterioBusquedaJuridica: criterio });
-    }
-    this.cotizacionForm.patchValue({ terminoBusquedaCliente: '' });
-    this.personasEncontradas = [];
-  }
-
-  async buscarClientes(): Promise<void> {
-    const terminoBusqueda = this.cotizacionForm.get('terminoBusquedaCliente')?.value?.trim();
-    const tipoCliente = this.cotizacionForm.get('tipoClienteSeleccionado')?.value;
-
-    if (!terminoBusqueda || !tipoCliente) {
-      return;
-    }
-
-    this.buscandoClientes = true;
-    this.personasEncontradas = [];
-
-    try {
-      if (tipoCliente === 'natural') {
-        await this.buscarPersonasNaturales();
-      } else if (tipoCliente === 'juridica') {
-        await this.buscarPersonasJuridicas();
-      }
-    } catch (error) {
-      this.personasEncontradas = [];
-    } finally {
-      this.buscandoClientes = false;
-    }
-  }
-
-  private async buscarPersonasNaturales(): Promise<void> {
-    const termino = this.cotizacionForm.get('terminoBusquedaCliente')?.value?.trim().toLowerCase();
-    const criterio = this.cotizacionForm.get('criterioBusquedaNatural')?.value;
-
-    try {
-      const todasLasPersonas = await this.personaNaturalService.findAll().toPromise() || [];
-      let resultado: PersonaNaturalResponse[] = [];
-
-      switch (criterio) {
-        case 'nombres':
-          resultado = todasLasPersonas.filter(p =>
-            p.nombres?.toLowerCase().includes(termino)
-          );
-          break;
-        case 'apellidos':
-          resultado = todasLasPersonas.filter(p =>
-            p.apellidos?.toLowerCase().includes(termino)
-          );
-          break;
-        case 'documento':
-          resultado = todasLasPersonas.filter(p =>
-            p.documento === termino.toUpperCase()
-          );
-          break;
-      }
-
-      this.personasEncontradas = resultado.slice(0, 10); // Limitar a 10 resultados
-    } catch (error) {
-      this.personasEncontradas = [];
-    }
-  }
-
-  private async buscarPersonasJuridicas(): Promise<void> {
-    const termino = this.cotizacionForm.get('terminoBusquedaCliente')?.value?.trim().toLowerCase();
-    const criterio = this.cotizacionForm.get('criterioBusquedaJuridica')?.value;
-
-    try {
-      const todasLasPersonas = await this.personaJuridicaService.findAll().toPromise() || [];
-      let resultado: PersonaJuridicaResponse[] = [];
-
-      switch (criterio) {
-        case 'ruc':
-          resultado = todasLasPersonas.filter(p =>
-            p.ruc === termino.toUpperCase()
-          );
-          break;
-        case 'razonSocial':
-          resultado = todasLasPersonas.filter(p =>
-            p.razonSocial?.toLowerCase().includes(termino)
-          );
-          break;
-      }
-
-      this.personasEncontradas = resultado.slice(0, 10); // Limitar a 10 resultados
-    } catch (error) {
-      this.personasEncontradas = [];
-    }
+    this.clienteSeleccionado = null;
+    this.cotizacionForm.patchValue({ personaId: '' });
+    this.clearClienteSearch();
   }
 
   seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse): void {
@@ -1630,12 +1614,54 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const personaId = typeof (persona as any).persona === 'object'
       ? (persona as any).persona.id
       : (persona as any).persona || persona.id;
+      
     this.clienteSeleccionado = persona;
-    this.cotizacionForm.patchValue({
-      personaId: personaId,
-      terminoBusquedaCliente: ''
-    });
-    this.personasEncontradas = [];
+    this.cotizacionForm.patchValue({ personaId: personaId });
+    this.clearClienteSearch();
+  }
+
+  getClienteType(persona: any): string {
+    if (!persona) return 'Cliente';
+    
+    // Si es personaDisplay (nuevo modelo unificado)
+    if ('tipo' in persona) {
+      return persona.tipo === 'JURIDICA' ? 'Persona Jurídica' : 'Persona Natural';
+    }
+    
+    // Compatibilidad con modelos antiguos
+    if ('ruc' in persona && persona.ruc) {
+      return 'Persona Jurídica';
+    }
+    
+    return 'Persona Natural';
+  }
+
+  getClienteDocumento(persona: any): string {
+    if (!persona) return '';
+    
+    // Si es persona jurídica, devolver RUC
+    if ('ruc' in persona && persona.ruc) {
+      return persona.ruc;
+    }
+    
+    // Si es persona natural, devolver documento
+    if ('documento' in persona && persona.documento) {
+      return persona.documento;
+    }
+    
+    return '';
+  }
+
+  hasDocumento(persona: any): boolean {
+    if (!persona) return false;
+    
+    return ('documento' in persona && persona.documento) || 
+           ('ruc' in persona && persona.ruc);
+  }
+
+  getSelectedClienteName(): string {
+    if (!this.clienteSeleccionado) return '';
+    return this.getClienteDisplayName(this.clienteSeleccionado);
   }
 
   getClienteDisplayName(persona: any): string {
@@ -1659,28 +1685,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return `${persona.razonSocial || 'Empresa'}${ruc}`.trim();
     }
     return 'Cliente';
-  }
-
-  getSelectedClienteName(): string {
-    if (!this.clienteSeleccionado) return '';
-    return this.getClienteDisplayName(this.clienteSeleccionado);
-  }
-
-  // Getters for template access
-  get tipoClienteSeleccionado(): string {
-    return this.cotizacionForm.get('tipoClienteSeleccionado')?.value || '';
-  }
-
-  get criterioBusquedaNatural(): string {
-    return this.cotizacionForm.get('criterioBusquedaNatural')?.value || 'nombres';
-  }
-
-  get criterioBusquedaJuridica(): string {
-    return this.cotizacionForm.get('criterioBusquedaJuridica')?.value || 'ruc';
-  }
-
-  get terminoBusquedaCliente(): string {
-    return this.cotizacionForm.get('terminoBusquedaCliente')?.value || '';
   }
 
   // Métodos para estadísticas en el header
