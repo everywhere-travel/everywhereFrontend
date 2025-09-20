@@ -606,7 +606,7 @@
           Crear Nueva Categoría
         </h3>
 
-        <form [formGroup]="nuevaCategoriaForm" (ngSubmit)="crearNuevaCategoria()" class="space-y-4">
+        <div class="space-y-4">
           <div class="grid grid-cols-1 gap-4">
             <!-- Nombre de la categoría -->
             <div>
@@ -635,7 +635,7 @@
 
           <!-- Botones del formulario -->
           <div class="flex gap-3 pt-2">
-            <button type="submit" [disabled]="nuevaCategoriaForm.invalid || creandoCategoria"
+            <button type="button" (click)="crearNuevaCategoria()" [disabled]="nuevaCategoriaForm.invalid || creandoCategoria"
               class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center">
               <i *ngIf="!creandoCategoria" class="fas fa-plus mr-2"></i>
               <i *ngIf="creandoCategoria" class="fas fa-spinner fa-spin mr-2"></i>
@@ -647,7 +647,7 @@
               Limpiar
             </button>
           </div>
-        </form>
+        </div>
       </div>
 
       <!-- Estadísticas de categorías -->
@@ -814,20 +814,22 @@
 
     <!-- Modal Body -->
     <div class="p-8">
-      <form [formGroup]="cotizacionForm" (ngSubmit)="onSubmitCotizacion()">
+      <div [formGroup]="cotizacionForm" (ngSubmit)="onSubmitCotizacion()">
 
-        <!-- Sección Cliente -->
-        <div class="mb-8">
-          <div
-            class="bg-gradient-to-r from-[#D9043D]/5 to-[#BF4968]/5 rounded-2xl p-6 border border-everywhere-primary/10">
-            <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-              <div
-                class="w-8 h-8 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-xl flex items-center justify-center mr-3">
-                <i class="fas fa-user text-white text-sm"></i>
-              </div>
-              Información del Cliente
-              <span class="text-red-500 ml-1">*</span>
-            </h3>
+        <!-- Sección Cliente e Información del Paquete en fila -->
+        <div class="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Sección Cliente -->
+          <div>
+            <div
+              class="bg-gradient-to-r from-[#D9043D]/5 to-[#BF4968]/5 rounded-2xl p-6 border border-everywhere-primary/10">
+              <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <div
+                  class="w-8 h-8 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-xl flex items-center justify-center mr-3">
+                  <i class="fas fa-user text-white text-sm"></i>
+                </div>
+                Información del Cliente
+                <span class="text-red-500 ml-1">*</span>
+              </h3>
 
             <!-- Cliente ya seleccionado -->
             <div *ngIf="clienteSeleccionado" class="bg-white border-2 border-green-200 rounded-xl p-2">
@@ -875,18 +877,18 @@
               </div>
               
               <!-- Lista de clientes compacta -->
-              <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div class="bg-white border border-gray-200 rounded-lg overflow-hidden h-80 flex flex-col">
 
-                <!-- Indicador de búsqueda -->
-                <div *ngIf="buscandoClientes" class="flex items-center justify-center py-3 bg-gray-50">
-                  <div class="flex items-center space-x-2 text-everywhere-primary">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span class="text-sm">Buscando...</span>
+                <!-- Lista deslizable de clientes - SIEMPRE VISIBLE -->
+                <div class="flex-1 overflow-y-auto">
+                  <!-- Indicador de búsqueda si está activa -->
+                  <div *ngIf="buscandoClientes" class="flex items-center justify-center py-2 bg-gray-50 border-b">
+                    <div class="flex items-center space-x-2 text-everywhere-primary">
+                      <i class="fas fa-spinner fa-spin text-xs"></i>
+                      <span class="text-xs">Buscando...</span>
+                    </div>
                   </div>
-                </div>
 
-                <!-- Lista deslizable de clientes -->
-                <div *ngIf="!buscandoClientes" class="max-h-72 overflow-y-auto">
                   <!-- Resultados encontrados -->
                   <div *ngFor="let persona of personasEncontradas; let i = index"
                     class="border-b border-gray-100 last:border-b-0 hover:bg-everywhere-primary/5 cursor-pointer transition-colors"
@@ -941,6 +943,179 @@
           </div>
         </div>
 
+          <!-- Información del Paquete -->
+          <div>
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 h-80 flex flex-col">
+              <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <div
+                  class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3">
+                  <i class="fas fa-map-marked-alt text-white text-sm"></i>
+                </div>
+                Información del Paquete
+              </h3>
+
+              <div class="space-y-4 flex-1 overflow-y-auto">
+                <!-- Origen - Destino (fila completa) -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Origen - Destino
+                    <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <input type="text" formControlName="origenDestino" placeholder="Ej: Lima - Cusco"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10 text-sm"
+                      [class.border-red-300]="isFieldInvalid(cotizacionForm, 'origenDestino')">
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <i class="fas fa-route text-gray-400 text-xs"></i>
+                    </div>
+                  </div>
+                  <div *ngIf="isFieldInvalid(cotizacionForm, 'origenDestino')"
+                    class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
+                    <p class="text-xs text-red-600 flex items-center">
+                      <i class="fas fa-exclamation-circle mr-1"></i>
+                      {{ getFieldError(cotizacionForm, 'origenDestino') }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Fechas en 2 columnas -->
+                <div class="grid grid-cols-2 gap-3">
+                  <!-- Fecha de Salida -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Fecha de Salida
+                      <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" formControlName="fechaSalida"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                      [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaSalida')">
+                    <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaSalida')"
+                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
+                      <p class="text-xs text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        {{ getFieldError(cotizacionForm, 'fechaSalida') }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Fecha de Regreso -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Fecha de Regreso
+                      <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" formControlName="fechaRegreso"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                      [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaRegreso')">
+                    <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaRegreso')"
+                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
+                      <p class="text-xs text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        {{ getFieldError(cotizacionForm, 'fechaRegreso') }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Cantidad de personas en 2 columnas -->
+                <div class="grid grid-cols-2 gap-3">
+                  <!-- Cantidad de Adultos -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Cantidad de Adultos
+                      <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                      <input type="number" formControlName="cantAdultos" min="1" placeholder="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-8 text-sm"
+                        [class.border-red-300]="isFieldInvalid(cotizacionForm, 'cantAdultos')">
+                      <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <i class="fas fa-user text-gray-400 text-xs"></i>
+                      </div>
+                    </div>
+                    <div *ngIf="isFieldInvalid(cotizacionForm, 'cantAdultos')"
+                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
+                      <p class="text-xs text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        {{ getFieldError(cotizacionForm, 'cantAdultos') }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Cantidad de Niños -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Cantidad de Niños
+                    </label>
+                    <div class="relative">
+                      <input type="number" formControlName="cantNinos" min="0" placeholder="0"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-8 text-sm"
+                        [class.border-red-300]="isFieldInvalid(cotizacionForm, 'cantNinos')">
+                      <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <i class="fas fa-child text-gray-400 text-xs"></i>
+                      </div>
+                    </div>
+                    <div *ngIf="isFieldInvalid(cotizacionForm, 'cantNinos')"
+                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
+                      <p class="text-xs text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        {{ getFieldError(cotizacionForm, 'cantNinos') }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Forma de Pago y Moneda en 2 columnas -->
+                <div class="grid grid-cols-2 gap-3">
+                  <!-- Forma de Pago -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Forma de Pago
+                      <span class="text-red-500">*</span>
+                    </label>
+                    <select formControlName="formaPagoId"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                      [class.border-red-300]="isFieldInvalid(cotizacionForm, 'formaPagoId')">
+                      <option value="">Seleccionar forma de pago</option>
+                      <option *ngFor="let formaPago of formasPago" [value]="formaPago.id">
+                        {{ formaPago.descripcion }}
+                      </option>
+                    </select>
+                    <div *ngIf="isFieldInvalid(cotizacionForm, 'formaPagoId')"
+                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
+                      <p class="text-xs text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        {{ getFieldError(cotizacionForm, 'formaPagoId') }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Moneda -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Moneda
+                      <span class="text-red-500">*</span>
+                    </label>
+                    <select formControlName="moneda"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                      [class.border-red-300]="isFieldInvalid(cotizacionForm, 'moneda')">
+                      <option value="USD">Dólares (USD)</option>
+                      <option value="PEN">Soles (PEN)</option>
+                    </select>
+                    <div *ngIf="isFieldInvalid(cotizacionForm, 'moneda')"
+                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
+                      <p class="text-xs text-red-600 flex items-center">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        {{ getFieldError(cotizacionForm, 'moneda') }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Información Básica -->
         <div class="mb-8">
           <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
@@ -979,8 +1154,15 @@
                   Fecha de Vencimiento
                 </label>
                 <input type="datetime-local" formControlName="fechaVencimiento"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-                  readonly>
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaVencimiento')">
+                <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaVencimiento')"
+                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                  <p class="text-sm text-red-600 flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    {{ getFieldError(cotizacionForm, 'fechaVencimiento') }}
+                  </p>
+                </div>
               </div>
 
               <!-- Estado de Cotización -->
@@ -1032,173 +1214,6 @@
           </div>
         </div>
 
-        <!-- Información del Paquete -->
-        <div class="mb-8">
-          <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
-            <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-              <div
-                class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3">
-                <i class="fas fa-map-marked-alt text-white text-sm"></i>
-              </div>
-              Información del Paquete
-            </h3>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <!-- Origen - Destino -->
-              <div class="md:col-span-2">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Origen - Destino
-                  <span class="text-red-500">*</span>
-                </label>
-                <div class="relative">
-                  <input type="text" formControlName="origenDestino" placeholder="Ej: Lima - Cusco - Arequipa"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10"
-                    [class.border-red-300]="isFieldInvalid(cotizacionForm, 'origenDestino')">
-                  <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <i class="fas fa-route text-gray-400"></i>
-                  </div>
-                </div>
-                <div *ngIf="isFieldInvalid(cotizacionForm, 'origenDestino')"
-                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                  <p class="text-sm text-red-600 flex items-center">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    {{ getFieldError(cotizacionForm, 'origenDestino') }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Fecha de Salida -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha de Salida
-                  <span class="text-red-500">*</span>
-                </label>
-                <div class="relative">
-                  <input type="date" formControlName="fechaSalida"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaSalida')">
-                </div>
-                <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaSalida')"
-                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                  <p class="text-sm text-red-600 flex items-center">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    {{ getFieldError(cotizacionForm, 'fechaSalida') }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Fecha de Regreso -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Fecha de Regreso
-                  <span class="text-red-500">*</span>
-                </label>
-                <div class="relative">
-                  <input type="date" formControlName="fechaRegreso"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaRegreso')">
-                </div>
-                <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaRegreso')"
-                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                  <p class="text-sm text-red-600 flex items-center">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    {{ getFieldError(cotizacionForm, 'fechaRegreso') }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Cantidad de Adultos -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Cantidad de Adultos
-                  <span class="text-red-500">*</span>
-                </label>
-                <div class="relative">
-                  <input type="number" formControlName="cantAdultos" min="1" placeholder="1"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10"
-                    [class.border-red-300]="isFieldInvalid(cotizacionForm, 'cantAdultos')">
-                  <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <i class="fas fa-user text-gray-400"></i>
-                  </div>
-                </div>
-                <div *ngIf="isFieldInvalid(cotizacionForm, 'cantAdultos')"
-                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                  <p class="text-sm text-red-600 flex items-center">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    {{ getFieldError(cotizacionForm, 'cantAdultos') }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Cantidad de Niños -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Cantidad de Niños
-                </label>
-                <div class="relative">
-                  <input type="number" formControlName="cantNinos" min="0" placeholder="0"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10"
-                    [class.border-red-300]="isFieldInvalid(cotizacionForm, 'cantNinos')">
-                  <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <i class="fas fa-child text-gray-400"></i>
-                  </div>
-                </div>
-                <div *ngIf="isFieldInvalid(cotizacionForm, 'cantNinos')"
-                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                  <p class="text-sm text-red-600 flex items-center">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    {{ getFieldError(cotizacionForm, 'cantNinos') }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Forma de Pago -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Forma de Pago
-                  <span class="text-red-500">*</span>
-                </label>
-                <select formControlName="formaPagoId"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  [class.border-red-300]="isFieldInvalid(cotizacionForm, 'formaPagoId')">
-                  <option value="">Seleccionar forma de pago</option>
-                  <option *ngFor="let forma of formasPago" [value]="forma.id">
-                    {{ forma.descripcion }}
-                  </option>
-                </select>
-                <div *ngIf="isFieldInvalid(cotizacionForm, 'formaPagoId')"
-                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                  <p class="text-sm text-red-600 flex items-center">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    {{ getFieldError(cotizacionForm, 'formaPagoId') }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Moneda -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Moneda
-                  <span class="text-red-500">*</span>
-                </label>
-                <select formControlName="moneda"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  [class.border-red-300]="isFieldInvalid(cotizacionForm, 'moneda')">
-                  <option value="USD">Dólares (USD)</option>
-                  <option value="PEN">Soles (PEN)</option>
-                </select>
-                <div *ngIf="isFieldInvalid(cotizacionForm, 'moneda')"
-                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
-                  <p class="text-sm text-red-600 flex items-center">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    {{ getFieldError(cotizacionForm, 'moneda') }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Productos Fijos -->
         <div class="mb-8">
           <div class="bg-gradient-to-r from-purple-50 to-violet-50 rounded-2xl p-6 border border-purple-200">
@@ -1218,7 +1233,7 @@
                 </div>
                 Agregar Producto
               </h4>
-              <form [formGroup]="detalleForm" (ngSubmit)="agregarDetalleFijo()">
+              <div>
                 <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   <!-- Proveedor -->
                   <div class="lg:col-span-2">
@@ -1271,7 +1286,7 @@
 
                   <!-- Botón Agregar -->
                   <div class="flex items-end">
-                    <button type="submit"
+                    <button type="button" (click)="agregarDetalleFijo()"
                       class="w-full px-4 py-2 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-lg hover:from-purple-600 hover:to-violet-700 transition-all duration-200 text-sm font-medium flex items-center justify-center space-x-1">
                       <i class="fas fa-plus"></i>
                       <span>Agregar</span>
@@ -1285,7 +1300,7 @@
                   <input type="text" formControlName="descripcion" placeholder="Descripción del producto (opcional)"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
                 </div>
-              </form>
+              </div>
             </div>
 
             <!-- Lista de productos fijos -->
@@ -1403,7 +1418,7 @@
                   <span>Gestionar Grupos</span>
                 </button>
               </div>
-              <form [formGroup]="grupoHotelForm" (ngSubmit)="crearGrupoHotel()">
+              <div>
                 <div class="flex gap-4 items-end">
                   <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
@@ -1423,7 +1438,7 @@
                     </button>
                   </div>
                 </div>
-              </form>
+              </div>
             </div>
 
             <!-- Lista de grupos -->
@@ -1458,7 +1473,7 @@
 
                 <!-- Formulario para agregar detalles al grupo -->
                 <div class="p-4 bg-gray-50/50">
-                  <form [formGroup]="detalleForm" (ngSubmit)="agregarDetalleAGrupo(gi)">
+                  <div>
                     <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                       <div class="md:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
@@ -1491,14 +1506,14 @@
                           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                       </div>
                       <div class="flex items-end">
-                        <button type="submit"
+                        <button type="button" (click)="agregarDetalleAGrupo(gi)"
                           class="w-full px-3 py-2 bg-everywhere-primary text-white rounded-lg hover:bg-everywhere-secondary transition-colors duration-200 text-sm">
                           <i class="fas fa-plus mr-1"></i>
                           Agregar
                         </button>
                       </div>
                     </div>
-                  </form>
+                  </div>
                 </div>
 
                 <!-- Lista de detalles del grupo -->
@@ -1615,7 +1630,6 @@
             </div>
           </div>
         </div>
-      </form>
+      </div>
     </div>
   </div>
-</div>

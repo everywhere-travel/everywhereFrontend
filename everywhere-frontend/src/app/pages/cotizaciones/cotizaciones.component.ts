@@ -368,18 +368,33 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.filterCotizaciones();
     });
 
-    // Setup real-time client search
-    this.setupClienteSearch();
+    // Setup real-time client search DESPUÉS de cargar datos iniciales
+    // this.setupClienteSearch(); // Movido a loadInitialData
   }
 
   private setupClienteSearch(): void {
+    // Inicializar con todos los clientes disponibles
+    if (this.todosLosClientes.length > 0) {
+      this.personasEncontradas = [...this.todosLosClientes];
+      this.buscandoClientes = false; // IMPORTANTE: Asegurar que NO esté buscando
+      console.log('Clientes inicializados en setupClienteSearch:', this.personasEncontradas.length); // Debug
+    }
+
     this.clienteSearchControl.valueChanges
       .pipe(
         debounceTime(200), // Reducido para respuesta más rápida
         distinctUntilChanged(),
         switchMap(searchTerm => {
           this.buscandoClientes = true;
-          return this.buscarClientesEnTiempoReal(searchTerm?.trim() || '');
+          const termino = searchTerm?.trim() || '';
+          
+          // Si no hay término de búsqueda, mostrar todos los clientes
+          if (!termino) {
+            this.buscandoClientes = false; // No buscar si no hay término
+            return of(this.todosLosClientes);
+          }
+          
+          return this.buscarClientesEnTiempoReal(termino);
         })
       )
       .subscribe(
@@ -389,7 +404,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         },
         (error) => {
           console.error('Error en búsqueda de clientes:', error);
-          this.personasEncontradas = this.todosLosClientes.slice(0, 20);
+          this.personasEncontradas = this.todosLosClientes;
           this.buscandoClientes = false;
         }
       );
@@ -413,6 +428,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return this.loadCotizaciones();
     }).finally(() => {
       this.isLoading = false;
+      
+      // Configurar búsqueda de clientes DESPUÉS de cargar todos los datos
+      this.setupClienteSearch();
+      console.log('Setup completo. Clientes disponibles:', this.personasEncontradas.length); // Debug
     });
   }
 
@@ -447,7 +466,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       
       // Almacenar todos los clientes para el filtrado inicial
       this.todosLosClientes = [...this.personas];
-      this.personasEncontradas = [...this.todosLosClientes].slice(0, 20); // Mostrar primeros 20 inicialmente
+      this.personasEncontradas = [...this.todosLosClientes]; // Mostrar todos los clientes inicialmente
+      
+      console.log('Clientes cargados:', this.personasEncontradas.length); // Debug
 
       // Poblar cache y display map para evitar llamadas HTTP posteriores
       this.personas.forEach(persona => {
@@ -613,10 +634,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.deletedDetalleIds = [];
 
     // Reset client selection variables
-    this.personasEncontradas = this.todosLosClientes.slice(0, 20); // Mostrar clientes inmediatamente
+    this.personasEncontradas = [...this.todosLosClientes]; // Mostrar todos los clientes disponibles
+    
+    // FORZAR carga si está vacío
+    if (this.personasEncontradas.length === 0 && this.personas.length > 0) {
+      this.personasEncontradas = [...this.personas];
+    }
+    
     this.clienteSeleccionado = null;
     this.buscandoClientes = false;
     this.clienteSearchControl.setValue('', { emitEvent: false });
+    
+    console.log('OpenModal - Clientes disponibles:', this.personasEncontradas.length); // Debug
   }
 
   private setupDatesForNew(): void {
@@ -1599,7 +1628,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   clearClienteSearch(): void {
     this.clienteSearchControl.setValue('', { emitEvent: false });
     // Al limpiar, mostrar todos los clientes nuevamente
-    this.personasEncontradas = this.todosLosClientes.slice(0, 20);
+    this.personasEncontradas = [...this.todosLosClientes];
     this.buscandoClientes = false;
   }
 
