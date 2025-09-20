@@ -2,51 +2,85 @@
   <div class="module-header">
     <div [class]="getIconClass()">
       <!-- SVG Icons based on iconType -->
-      <svg *ngIf="data.iconType === 'cotizaciones'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2"/>
-        <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
-        <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
-        <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
-      </svg>
-      
-      <svg *ngIf="data.iconType === 'clientes'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2"/>
-        <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-        <path d="M23 21V19C23 18.1645 22.7155 17.3541 22.2094 16.6977C21.7033 16.0414 20.9998 15.5742 20.2 15.3706" stroke="currentColor" stroke-width="2"/>
-        <path d="M16 3.13A4 4 0 0 1 16 10.87" stroke="currentColor" stroke-width="2"/>
-      </svg>
-      
-      <svg *ngIf="data.iconType === 'liquidaciones'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-        <line x1="1" y1="10" x2="23" y2="10" stroke="currentColor" stroke-width="2"/>
-      </svg>
-      
-      <svg *ngIf="data.iconType === 'productos'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M21 16V8C20.9996 7.64928 20.9071 7.30481 20.7315 7.00116C20.556 6.69751 20.3037 6.44536 20 6.27L13 2.27C12.696 2.09446 12.3511 2.00205 12 2.00205C11.6489 2.00205 11.304 2.09446 11 2.27L4 6.27C3.69626 6.44536 3.44398 6.69751 3.26846 7.00116C3.09294 7.30481 3.00036 7.64928 3 8V16C3.00036 16.3507 3.09294 16.6952 3.26846 16.9988C3.44398 17.3025 3.69626 17.5546 4 17.73L11 21.73C11.304 21.9055 11.6489 21.998 12 21.998C12.3511 21.998 12.696 21.9055 13 21.73L20 17.73C20.3037 17.5546 20.556 17.3025 20.7315 16.9988C20.9071 16.6952 20.9996 16.3507 21 16Z" stroke="currentColor" stroke-width="2"/>
-        <polyline points="3.27,6.96 12,12.01 20.73,6.96" stroke="currentColor" stroke-width="2"/>
-        <line x1="12" y1="22.08" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
-      </svg>
-      
-      <svg *ngIf="data.iconType === 'reportes'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2"/>
-        <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
-        <path d="M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="2"/>
-      </svg>
-      
-      <svg *ngIf="data.iconType === 'estadisticas'" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M18 20V10M12 20V4M6 20V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      @if (data.iconType === 'cotizaciones') {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2"/>
+          <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
+          <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"/>
+          <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      }
+
+      @if (data.iconType === 'clientes') {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" stroke-width="2"/>
+          <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+          <path d="M23 21V19C23 18.1645 22.7155 17.3541 22.2094 16.6977C21.7033 16.0414 20.9998 15.5742 20.2 15.3706" stroke="currentColor" stroke-width="2"/>
+          <path d="M16 3.13A4 4 0 0 1 16 10.87" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      }
+
+      @if (data.iconType === 'liquidaciones') {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="4" width="22" height="16" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+          <line x1="1" y1="10" x2="23" y2="10" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      }
+
+      @if (data.iconType === 'productos') {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21 16V8C20.9996 7.64928 20.9071 7.30481 20.7315 7.00116C20.556 6.69751 20.3037 6.44536 20 6.27L13 2.27C12.696 2.09446 12.3511 2.00205 12 2.00205C11.6489 2.00205 11.304 2.09446 11 2.27L4 6.27C3.69626 6.44536 3.44398 6.69751 3.26846 7.00116C3.09294 7.30481 3.00036 7.64928 3 8V16C3.00036 16.3507 3.09294 16.6952 3.26846 16.9988C3.44398 17.3025 3.69626 17.5546 4 17.73L11 21.73C11.304 21.9055 11.6489 21.998 12 21.998C12.3511 21.998 12.696 21.9055 13 21.73L20 17.73C20.3037 17.5546 20.556 17.3025 20.7315 16.9988C20.9071 16.6952 20.9996 16.3507 21 16Z" stroke="currentColor" stroke-width="2"/>
+          <polyline points="3.27,6.96 12,12.01 20.73,6.96" stroke="currentColor" stroke-width="2"/>
+          <line x1="12" y1="22.08" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      }
+
+      @if (data.iconType === 'reportes') {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2"/>
+          <polyline points="14,2 14,8 20,8" stroke="currentColor" stroke-width="2"/>
+          <path d="M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      }
+
+      @if (data.iconType === 'estadisticas') {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 20V10M12 20V4M6 20V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      }
+
+      @if (data.iconType === 'counters') {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+          <line x1="8" y1="21" x2="16" y2="21" stroke="currentColor" stroke-width="2"/>
+          <line x1="12" y1="17" x2="12" y2="21" stroke="currentColor" stroke-width="2"/>
+          <circle cx="7" cy="8" r="1" fill="currentColor"/>
+          <circle cx="12" cy="8" r="1" fill="currentColor"/>
+          <circle cx="17" cy="8" r="1" fill="currentColor"/>
+          <rect x="5" y="11" width="4" height="3" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="10" y="11" width="4" height="3" rx="1" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="15" y="11" width="4" height="3" rx="1" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      }
+
+      @if (data.iconType === 'sucursales') {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 21H21M5 21V7L13 2L21 7V21M9 9H11M9 13H11M9 17H11M13 9H15M13 13H15M13 17H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      }
     </div>
-    <div [class]="getStatusClass()" *ngIf="data.status">
-      {{ data.status.text }}
-    </div>
+    @if (data.status) {
+      <div [class]="getStatusClass()">
+        {{ data.status.text }}
+      </div>
+    }
   </div>
-  
+
   <div class="module-content">
     <h4>{{ data.title }}</h4>
     <p>{{ data.description }}</p>
   </div>
-  
+
   <div class="module-action">
     <span>{{ data.action?.text || 'Acceder' }}</span>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

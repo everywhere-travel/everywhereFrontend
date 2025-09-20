@@ -1,0 +1,276 @@
+/* Sucursales Component Styles */
+
+/* Custom scrollbar for content area */
+.content-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content-area::-webkit-scrollbar-track {
+  background-color: #f3f4f6;
+}
+
+.content-area::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 9999px;
+}
+
+.content-area::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
+
+/* Animation for loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Custom focus states */
+.focus-visible:focus {
+  outline: 2px solid #D9043D;
+  outline-offset: 2px;
+}
+
+/* Hover effects for cards */
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom checkbox styles */
+input[type="checkbox"]:indeterminate {
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M4 8h8'/%3e%3c/svg%3e");
+  background-color: #D9043D;
+  border-color: #D9043D;
+}
+
+/* Modal backdrop animation */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* Custom transitions */
+.transition-all-200 {
+  transition: all 0.2s ease-in-out;
+}
+
+.transition-shadow {
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+/* Gradient backgrounds */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, theme('colors.everywhere-primary'), theme('colors.everywhere-secondary'));
+}
+
+.bg-gradient-hover {
+  background: linear-gradient(135deg, theme('colors.everywhere-secondary'), theme('colors.everywhere-primary'));
+}
+
+/* Status indicators */
+.status-active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-inactive {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Button hover effects */
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 4, 61, 0.3);
+}
+
+/* Table row hover effect */
+.table-row-hover:hover {
+  background-color: rgba(249, 250, 251, 0.8);
+}
+
+/* Action menu positioning */
+.action-menu {
+  z-index: 9999;
+}
+
+/* Responsive design helpers */
+@media (max-width: 640px) {
+  .mobile-stack {
+    flex-direction: column;
+  }
+
+  .mobile-full {
+    width: 100%;
+  }
+}
+
+/* Custom utilities for better UX */
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.border-focus {
+  border-color: theme('colors.everywhere-primary');
+  box-shadow: 0 0 0 3px rgba(217, 4, 61, 0.1);
+}
+
+/* Animation delays for staggered effects */
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+/* Enhanced button styles */
+.btn-gradient {
+  background: linear-gradient(135deg, #D9043D, #BF4968);
+  border: none;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+  background: linear-gradient(135deg, #BF4968, #D9043D);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(217, 4, 61, 0.3);
+}
+
+/* Card animation on load */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Pulse animation for loading states */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom scrollbar for modals */
+.modal-content::-webkit-scrollbar {
+  width: 4px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background-color: #f9fafb;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 9999px;
+}
+
+/* Enhanced focus styles for accessibility */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(217, 4, 61, 0.2);
+}
+
+/* Grid layout helpers */
+.grid-auto-fit {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.grid-auto-fill {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+/* Enhanced table styles */
+.table-striped tr:nth-child(even) {
+  background-color: rgba(249, 250, 251, 0.5);
+}
+
+.table-hover tr:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Loading skeleton styles */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Error state styles */
+.error-border {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.error-text {
+  color: #dc2626;
+}
+
+/* Success state styles */
+.success-border {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.success-text {
+  color: #059669;
+}
+
+/* Custom dropdown styles */
+.dropdown-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.dropdown-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 150ms, transform 150ms;
+}
+
+.dropdown-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.dropdown-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 150ms, transform 150ms;
+}
