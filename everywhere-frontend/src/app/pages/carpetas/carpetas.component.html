@@ -86,6 +86,12 @@
                   title="Atrás">
                   <i class="fas fa-arrow-left text-gray-600"></i>
                 </button>
+                
+                <button (click)="actualizarVistaNavegacion()" [disabled]="breadcrumbLoading"
+                  class="p-1 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Actualizar">
+                  <i class="fas fa-sync-alt text-gray-600" [class.animate-spin]="breadcrumbLoading"></i>
+                </button>
               </div>
 
               <!-- Breadcrumb Trail -->
@@ -245,12 +251,19 @@
 
                     <!-- Actions -->
                     <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                      <button (click)="crearCarpetaEn(node.carpeta); $event.stopPropagation()"
+                        class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-blue-600"
+                        title="Crear carpeta aquí">
+                        <i class="fas fa-plus text-xs"></i>
+                      </button>
                       <button (click)="editarCarpeta(node.carpeta); $event.stopPropagation()"
-                        class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-green-600">
+                        class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-green-600"
+                        title="Editar carpeta">
                         <i class="fas fa-edit text-xs"></i>
                       </button>
                       <button (click)="confirmarEliminar(node.carpeta); $event.stopPropagation()"
-                        class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-red-600">
+                        class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-red-600"
+                        title="Eliminar carpeta">
                         <i class="fas fa-trash text-xs"></i>
                       </button>
                     </div>
@@ -298,12 +311,19 @@
       </span>
 
       <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+        <button (click)="crearCarpetaEn(node.carpeta); $event.stopPropagation()"
+          class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-blue-600"
+          title="Crear carpeta aquí">
+          <i class="fas fa-plus text-xs"></i>
+        </button>
         <button (click)="editarCarpeta(node.carpeta); $event.stopPropagation()"
-          class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-green-600">
+          class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-green-600"
+          title="Editar carpeta">
           <i class="fas fa-edit text-xs"></i>
         </button>
         <button (click)="confirmarEliminar(node.carpeta); $event.stopPropagation()"
-          class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-red-600">
+          class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-red-600"
+          title="Eliminar carpeta">
           <i class="fas fa-trash text-xs"></i>
         </button>
       </div>

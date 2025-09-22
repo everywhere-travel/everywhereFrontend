@@ -730,6 +730,46 @@ export class CarpetasComponent implements OnInit {
   }
 
   // =================================================================
+  // MÉTODOS ADICIONALES
+  // =================================================================
+
+  /**
+   * Actualiza la vista de navegación breadcrumb
+   */
+  actualizarVistaNavegacion(): void {
+    if (this.breadcrumbLoading) return;
+    
+    // Si estamos en carpeta raíz
+    if (!this.carpetaActual) {
+      this.cargarNivelRaiz();
+    } else {
+      // Recargar la carpeta actual
+      this.navegarACarpeta(this.carpetaActual);
+    }
+  }
+
+  /**
+   * Crea una nueva carpeta dentro de la carpeta especificada
+   */
+  crearCarpetaEn(carpetaPadre: CarpetaResponse): void {
+    // Establecer la carpeta padre como contexto para la creación
+    this.carpetaActual = carpetaPadre;
+    
+    // Abrir modal de crear carpeta
+    this.editandoCarpeta = false;
+    this.carpetaSeleccionada = null;
+    
+    // Limpiar el formulario
+    this.carpetaForm.reset();
+    this.carpetaForm.patchValue({
+      nombre: '',
+      descripcion: ''
+    });
+    
+    this.mostrarModalCrear = true;
+  }
+
+  // =================================================================
   // NOTIFICACIONES
   // =================================================================
 
