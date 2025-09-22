@@ -838,9 +838,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Handle proveedor
     if (formValue.proveedorId) {
       const proveedorId = Number(formValue.proveedorId);
-      console.log('Buscando proveedor con ID:', proveedorId);
       proveedor = this.proveedores.find(p => p.id === proveedorId) || null;
-      console.log('Proveedor encontrado:', proveedor);
     } else if (formValue.nuevoProveedor?.trim()) {
       // This would create a new proveedor, for now we'll simulate it
       proveedor = {
@@ -849,15 +847,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         creado: new Date().toISOString(),
         actualizado: new Date().toISOString()
       } as ProveedorResponse;
-      console.log('Proveedor nuevo creado:', proveedor);
     }
 
     let producto = null;
     if (formValue.productoId) {
       const productoId = Number(formValue.productoId);
-      console.log('Buscando producto con ID:', productoId);
       producto = this.productos.find(p => p.id === productoId) || null;
-      console.log('Producto encontrado:', producto);
     }
 
     // Validar que tengamos al menos un producto
@@ -887,14 +882,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       isTemporary: true
     };
 
-    console.log('nuevoDetalle creado:', nuevoDetalle);
-    console.log('- proveedor en detalle:', nuevoDetalle.proveedor);
-    console.log('- producto en detalle:', nuevoDetalle.producto);
-
-    this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista
-
-    console.log('detallesFijos después del unshift:', this.detallesFijos);
-    console.log('detallesFijos.length después:', this.detallesFijos.length);
+    this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista 
 
     // Limpiar TODOS los campos del formulario después de agregar
     this.detalleForm.patchValue({
@@ -955,6 +943,47 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     if (index >= 0 && index < this.detallesFijos.length) {
       const detalle = this.detallesFijos[index];
       detalle.total = (detalle.precioHistorico * detalle.cantidad) + detalle.comision;
+    }
+  }
+
+  // Método para manejar cambios en productos de grupos de hoteles
+  onGrupoProductoChange(groupIndex: number, detailIndex: number, field: string, value: any): void {
+    if (groupIndex >= 0 && groupIndex < this.gruposHoteles.length) {
+      const grupo = this.gruposHoteles[groupIndex];
+      if (detailIndex >= 0 && detailIndex < grupo.detalles.length) {
+        const detalle = grupo.detalles[detailIndex];
+
+        switch (field) {
+          case 'proveedorId':
+            detalle.proveedor = value ? this.proveedores.find(p => p.id === Number(value)) || null : null;
+            break;
+          case 'productoId':
+            detalle.producto = value ? this.productos.find(p => p.id === Number(value)) : undefined;
+            break;
+          case 'cantidad':
+            detalle.cantidad = Number(value) || 1;
+            this.recalcularTotalDetalleGrupo(groupIndex, detailIndex);
+            break;
+          case 'precioHistorico':
+            detalle.precioHistorico = Number(value) || 0;
+            this.recalcularTotalDetalleGrupo(groupIndex, detailIndex);
+            break;
+        }
+
+        // Recalcular total del grupo
+        grupo.total = grupo.detalles.reduce((sum, d) => sum + d.total, 0);
+      }
+    }
+  }
+
+  // Recalcular total de un detalle específico en un grupo
+  recalcularTotalDetalleGrupo(groupIndex: number, detailIndex: number): void {
+    if (groupIndex >= 0 && groupIndex < this.gruposHoteles.length) {
+      const grupo = this.gruposHoteles[groupIndex];
+      if (detailIndex >= 0 && detailIndex < grupo.detalles.length) {
+        const detalle = grupo.detalles[detailIndex];
+        detalle.total = detalle.precioHistorico * detalle.cantidad;
+      }
     }
   }
 
