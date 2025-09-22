@@ -507,9 +507,11 @@ export class CarpetasComponent implements OnInit {
           this.recargarCarpetaActual();
           this.cerrarModal();
           this.loading = false;
+          this.mostrarExito(`Carpeta "${carpetaRequest.nombre}" creada exitosamente`);
         },
         error: (error) => {
           console.error('Error al crear carpeta:', error);
+          this.mostrarError('Error al crear la carpeta');
           this.loading = false;
         }
       });
@@ -607,6 +609,89 @@ export class CarpetasComponent implements OnInit {
       });
     } else {
       this.cargarRaices();
+    }
+
+    // Si estamos en vista árbol, actualizar también el árbol conservando expansiones
+    if (this.currentViewMode === 'tree') {
+      this.actualizarArbolConservandoEstado();
+    }
+  }
+
+  /**
+   * Actualiza el árbol conservando el estado de expansión
+   */
+  private actualizarArbolConservandoEstado(): void {
+    // Guardar IDs de nodos expandidos
+    const nodosExpandidos = this.obtenerNodosExpandidos(this.treeNodes);
+
+    // Recargar el árbol
+    this.cargarArbolRaices().then(() => {
+      // Restaurar expansiones
+      this.restaurarExpansiones(this.treeNodes, nodosExpandidos);
+    });
+  }
+
+  /**
+   * Obtiene recursivamente los IDs de todos los nodos expandidos
+   */
+  private obtenerNodosExpandidos(nodes: TreeNode[]): number[] {
+    const expandidos: number[] = [];
+
+    for (const node of nodes) {
+      if (node.expanded) {
+        expandidos.push(node.carpeta.id);
+        // Recursivamente obtener hijos expandidos
+        expandidos.push(...this.obtenerNodosExpandidos(node.children));
+      }
+    }
+
+    return expandidos;
+  }
+
+  /**
+   * Restaura recursivamente las expansiones de los nodos
+   */
+  private async restaurarExpansiones(nodes: TreeNode[], nodosExpandidos: number[]): Promise<void> {
+    for (const node of nodes) {
+      if (nodosExpandidos.includes(node.carpeta.id)) {
+        // Expandir el nodo
+        await this.expandirNodo(node);
+
+        // Recursivamente restaurar hijos
+        if (node.children.length > 0) {
+          await this.restaurarExpansiones(node.children, nodosExpandidos);
+        }
+      }
+    }
+  }
+
+  /**
+   * Expande un nodo específico cargando sus hijos
+   */
+  private async expandirNodo(node: TreeNode): Promise<void> {
+    if (node.expanded || node.loading) return;
+
+    node.loading = true;
+
+    try {
+      const hijos = await this.carpetaService.findHijosCarpeta(node.carpeta.id).toPromise() || [];
+
+      node.children = hijos.map(carpeta => ({
+        carpeta,
+        expanded: false,
+        loading: false,
+        children: [],
+        hasChildren: true,
+        level: node.level + 1
+      }));
+
+      node.expanded = true;
+      node.hasChildren = hijos.length > 0;
+
+    } catch (error) {
+      console.error('Error al cargar hijos del nodo:', error);
+    } finally {
+      node.loading = false;
     }
   }
 
@@ -738,13 +823,18 @@ export class CarpetasComponent implements OnInit {
    */
   actualizarVistaNavegacion(): void {
     if (this.breadcrumbLoading) return;
-    
-    // Si estamos en carpeta raíz
-    if (!this.carpetaActual) {
-      this.cargarNivelRaiz();
-    } else {
-      // Recargar la carpeta actual
-      this.navegarACarpeta(this.carpetaActual);
+
+    if (this.currentViewMode === 'breadcrumb') {
+      // Si estamos en carpeta raíz
+      if (!this.carpetaActual) {
+        this.cargarNivelRaiz();
+      } else {
+        // Recargar la carpeta actual
+        this.navegarACarpeta(this.carpetaActual);
+      }
+    } else if (this.currentViewMode === 'tree') {
+      // Actualizar árbol conservando estado de expansión
+      this.actualizarArbolConservandoEstado();
     }
   }
 
@@ -754,18 +844,18 @@ export class CarpetasComponent implements OnInit {
   crearCarpetaEn(carpetaPadre: CarpetaResponse): void {
     // Establecer la carpeta padre como contexto para la creación
     this.carpetaActual = carpetaPadre;
-    
+
     // Abrir modal de crear carpeta
     this.editandoCarpeta = false;
     this.carpetaSeleccionada = null;
-    
+
     // Limpiar el formulario
     this.carpetaForm.reset();
     this.carpetaForm.patchValue({
       nombre: '',
       descripcion: ''
     });
-    
+
     this.mostrarModalCrear = true;
   }
 
