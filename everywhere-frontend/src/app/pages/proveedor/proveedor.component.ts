@@ -23,7 +23,7 @@ export interface ProveedorTabla {
   styleUrls: ['./proveedor.component.css'],
   imports: [
     CommonModule,
-    FormsModule, 
+    FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
     ErrorModalComponent
@@ -74,7 +74,7 @@ export class ProveedorComponent implements OnInit {
     {
       id: 'liquidaciones',
       title: 'Liquidaciones',
-      icon: 'fas fa-calculator',
+      icon: 'fas fa-credit-card',
       route: '/liquidaciones'
     },
     {
@@ -159,11 +159,11 @@ export class ProveedorComponent implements OnInit {
   editandoProveedor = false;
   proveedorSeleccionado: ProveedorResponse | null = null;
   proveedorAEliminar: ProveedorResponse | null = null;
-  
+
   // Error modal data
   errorModalData: ErrorModalData | null = null;
   backendErrorData: BackendErrorResponse | null = null;
-  
+
   searchTerm = '';
   currentView: 'table' | 'cards' | 'list' = 'table';
 
@@ -185,10 +185,10 @@ export class ProveedorComponent implements OnInit {
   // Menu states
   showActionMenu: number | null = null;
   showQuickActions: number | null = null;
-  
+
   // Estadísticas
   totalProveedores = 0;
-  
+
   // Math object for template use
   Math = Math;
 
@@ -254,9 +254,9 @@ export class ProveedorComponent implements OnInit {
     if (this.proveedorForm.valid) {
       this.loading = true;
       const proveedorRequest: ProveedorRequest = this.proveedorForm.value;
-      
+
       this.proveedorService.createProveedor(proveedorRequest).subscribe({
-        next: (response) => { 
+        next: (response) => {
           this.loadProveedores();
           this.cerrarModal();
           this.loading = false;
@@ -273,7 +273,7 @@ export class ProveedorComponent implements OnInit {
     if (this.proveedorForm.valid && this.proveedorSeleccionado) {
       this.loading = true;
       const proveedorRequest: ProveedorRequest = this.proveedorForm.value;
-      
+
       this.proveedorService.updateProveedor(this.proveedorSeleccionado.id, proveedorRequest).subscribe({
         next: (response) => {
           this.loadProveedores();
@@ -291,12 +291,12 @@ export class ProveedorComponent implements OnInit {
   editarProveedor(proveedor: ProveedorTabla): void {
     this.editandoProveedor = true;
     this.proveedorSeleccionado = this.proveedores.find(p => p.id === proveedor.id) || null;
-    
+
     if (this.proveedorSeleccionado) {
       this.proveedorForm.patchValue({
         nombre: this.proveedorSeleccionado.nombre || ''
       });
-      
+
       this.mostrarModalCrear = true;
     }
   }
@@ -322,7 +322,7 @@ export class ProveedorComponent implements OnInit {
 
   // Nuevo método para confirmar eliminación desde el modal
   confirmarEliminacionModal(): void {
-    if (this.proveedorAEliminar) { 
+    if (this.proveedorAEliminar) {
       this.eliminarProveedorDefinitivo(this.proveedorAEliminar.id);
     }
   }
@@ -337,14 +337,14 @@ export class ProveedorComponent implements OnInit {
       error: (error) => {
         this.loading = false;
         this.cerrarModalEliminar();
-        
+
         // Usar el servicio de manejo de errores
         const { modalData, backendError } = this.errorHandler.handleHttpError(error, 'eliminar proveedor');
-        
+
         this.errorModalData = modalData;
         this.backendErrorData = backendError || null;
         this.mostrarModalError = true;
-        
+
         console.error('Error al eliminar proveedor:', error);
       }
     });
@@ -457,7 +457,7 @@ export class ProveedorComponent implements OnInit {
 
     this.filteredProveedores = filtered;
     this.totalItems = filtered.length;
-    
+
     // Aplicar ordenamiento
     this.applySorting();
   }
@@ -475,11 +475,11 @@ export class ProveedorComponent implements OnInit {
 
   applySorting(): void {
     if (!this.filteredProveedores.length) return;
-    
+
     this.filteredProveedores.sort((a, b) => {
       let aValue: any = '';
       let bValue: any = '';
-      
+
       switch (this.sortColumn) {
         case 'nombre':
           aValue = a.nombre || '';
@@ -496,7 +496,7 @@ export class ProveedorComponent implements OnInit {
         default:
           return 0;
       }
-      
+
       if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -505,8 +505,8 @@ export class ProveedorComponent implements OnInit {
 
   getSortIcon(column: string): string {
     if (this.sortColumn !== column) return 'fas fa-sort text-gray-400';
-    return this.sortDirection === 'asc' 
-      ? 'fas fa-sort-up text-blue-500' 
+    return this.sortDirection === 'asc'
+      ? 'fas fa-sort-up text-blue-500'
       : 'fas fa-sort-down text-blue-500';
   }
 
@@ -536,14 +536,14 @@ export class ProveedorComponent implements OnInit {
     const totalPages = this.totalPages;
     const currentPage = this.currentPage;
     const visiblePages: number[] = [];
-    
+
     const startPage = Math.max(1, currentPage - 2);
     const endPage = Math.min(totalPages, currentPage + 2);
-    
+
     for (let i = startPage; i <= endPage; i++) {
       visiblePages.push(i);
     }
-    
+
     return visiblePages;
   }
 
@@ -582,7 +582,7 @@ export class ProveedorComponent implements OnInit {
   }
 
   // Sidebar methods
-  onSidebarItemClick(item: SidebarMenuItem): void { 
+  onSidebarItemClick(item: SidebarMenuItem): void {
     if (item.route) {
       this.router.navigate([item.route]);
     }
