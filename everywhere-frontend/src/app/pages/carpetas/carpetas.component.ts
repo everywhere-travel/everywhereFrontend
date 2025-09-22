@@ -597,7 +597,11 @@ export class CarpetasComponent implements OnInit {
   }
 
   private recargarCarpetaActual(): void {
-    if (this.carpetaActual) {
+    if (this.currentViewMode === 'breadcrumb') {
+      // En vista navegación, recargar el nivel actual
+      this.recargarNivelActualBreadcrumb();
+    } else if (this.carpetaActual) {
+      // Para otras vistas, usar navegación normal
       this.navegarACarpeta({
         id: this.carpetaActual.id,
         nombre: this.carpetaActual.nombre || '',
@@ -614,6 +618,26 @@ export class CarpetasComponent implements OnInit {
     // Si estamos en vista árbol, actualizar también el árbol conservando expansiones
     if (this.currentViewMode === 'tree') {
       this.actualizarArbolConservandoEstado();
+    }
+  }
+
+  private async recargarNivelActualBreadcrumb(): Promise<void> {
+    this.breadcrumbLoading = true;
+    try {
+      if (this.carpetaActual) {
+        // Recargar hijos de la carpeta actual
+        const hijos = await this.carpetaService.findHijosCarpeta(this.carpetaActual.id).toPromise() || [];
+        this.carpetasEnNivelActual = hijos;
+      } else {
+        // Estamos en la raíz, recargar raíces
+        this.carpetasEnNivelActual = await this.carpetaService.findRaicesCarpeta().toPromise() || [];
+      }
+      this.aplicarFiltrosBreadcrumb();
+    } catch (error) {
+      console.error('Error al recargar nivel actual:', error);
+      this.mostrarError('Error al actualizar la vista');
+    } finally {
+      this.breadcrumbLoading = false;
     }
   }
 
@@ -825,13 +849,8 @@ export class CarpetasComponent implements OnInit {
     if (this.breadcrumbLoading) return;
 
     if (this.currentViewMode === 'breadcrumb') {
-      // Si estamos en carpeta raíz
-      if (!this.carpetaActual) {
-        this.cargarNivelRaiz();
-      } else {
-        // Recargar la carpeta actual
-        this.navegarACarpeta(this.carpetaActual);
-      }
+      // Usar el nuevo método para recargar el nivel actual
+      this.recargarNivelActualBreadcrumb();
     } else if (this.currentViewMode === 'tree') {
       // Actualizar árbol conservando estado de expansión
       this.actualizarArbolConservandoEstado();
