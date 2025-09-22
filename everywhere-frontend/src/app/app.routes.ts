@@ -110,6 +110,12 @@ export const routes: Routes = [
       import('./pages/estadistica/estadistica.component').then(m => m.EstadisticaComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'carpetas',
+    loadComponent: () =>
+      import('./pages/carpetas/carpetas.component').then(m => m.CarpetasComponent),
+    canActivate: [authGuard]
+  },
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/auth/login' }
 ];

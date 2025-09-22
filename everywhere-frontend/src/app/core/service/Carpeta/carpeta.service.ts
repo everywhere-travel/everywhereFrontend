@@ -68,4 +68,8 @@ export class CarpetaService {
     return this.http.get<CarpetaResponse[]>(`${this.apiUrl}/${id}/camino`);
   }
 
+  findHijosCarpeta(id: number): Observable<CarpetaResponse[]> {
+    return this.http.get<CarpetaResponse[]>(`${this.apiUrl}/hijos/${id}`);
+  }
+
 }
