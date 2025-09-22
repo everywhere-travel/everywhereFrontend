@@ -112,6 +112,15 @@ export class DashboardComponent implements OnInit {
       iconType: 'reportes',
       status: { text: '56 Generados', type: 'success' },
       action: { text: 'Generar' }
+    },
+    {
+      title: 'Gestor de Archivos',
+      description: 'Explorador de carpetas y documentos',
+      icon: 'fas fa-folder-open',
+      route: '/carpetas',
+      iconType: 'reportes',
+      status: { text: 'Organiza archivos', type: 'neutral' },
+      action: { text: 'Explorar' }
     }
   ];
 
