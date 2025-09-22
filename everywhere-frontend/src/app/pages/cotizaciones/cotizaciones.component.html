@@ -1,5 +1,4 @@
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
-
   <!-- Sidebar Component -->
   <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
     (toggleSidebar)="onToggleSidebar()">
@@ -7,7 +6,6 @@
 
   <!-- Main Content Area -->
   <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
-
     <!-- Messages Section -->
     <div class="fixed top-4 right-4 z-50 space-y-2">
       <!-- Success Message -->
@@ -53,7 +51,9 @@
               </div>
               <div>
                 <h1 class="text-4xl font-bold">Gestión de Cotizaciones</h1>
-                <p class="text-xl opacity-90 mt-2">Administra y organiza todas tus cotizaciones de manera eficiente</p>
+                <p class="text-xl opacity-90 mt-2">
+                  Administra y organiza todas tus cotizaciones de manera eficiente
+                </p>
               </div>
             </div>
 
@@ -66,8 +66,10 @@
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ getTotalCotizaciones() }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Cotización{{
-                    getTotalCotizaciones() === 1 ? '' : 'es' }} Total{{ getTotalCotizaciones() === 1 ? '' : 'es' }}
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Cotización{{ getTotalCotizaciones() === 1 ? '' : 'es' }} Total{{
+                    getTotalCotizaciones() === 1 ? '' : 'es'
+                    }}
                   </div>
                 </div>
               </div>
@@ -79,8 +81,9 @@
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ getCotizacionesAprobadas() }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Aprobada{{
-                    getCotizacionesAprobadas() === 1 ? '' : 's' }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Aprobada{{ getCotizacionesAprobadas() === 1 ? '' : 's' }}
+                  </div>
                 </div>
               </div>
 
@@ -91,7 +94,9 @@
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ getCotizacionesPorConfirmar() }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Por Confirmar</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Por Confirmar
+                  </div>
                 </div>
               </div>
             </div>
@@ -131,19 +136,25 @@
 
             <!-- View Controls -->
             <div class="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
-              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                [class]="currentView === 'table' ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'"
-                (click)="changeView('table')" title="Vista de Tabla">
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" [class]="
+                  currentView === 'table'
+                    ? 'bg-white text-everywhere-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                " (click)="changeView('table')" title="Vista de Tabla">
                 <i class="fas fa-table mr-2"></i>Tabla
               </button>
-              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                [class]="currentView === 'cards' ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'"
-                (click)="changeView('cards')" title="Vista de Tarjetas">
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" [class]="
+                  currentView === 'cards'
+                    ? 'bg-white text-everywhere-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                " (click)="changeView('cards')" title="Vista de Tarjetas">
                 <i class="fas fa-th mr-2"></i>Tarjetas
               </button>
-              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                [class]="currentView === 'list' ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'"
-                (click)="changeView('list')" title="Vista de Lista">
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" [class]="
+                  currentView === 'list'
+                    ? 'bg-white text-everywhere-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                " (click)="changeView('list')" title="Vista de Lista">
                 <i class="fas fa-list mr-2"></i>Lista
               </button>
             </div>
@@ -157,7 +168,7 @@
             <div class="relative">
               <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
               <input type="text" placeholder="Buscar por código, cliente o destino..." formControlName="searchTerm"
-                class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+                class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white" />
               <button *ngIf="searchForm.get('searchTerm')?.value"
                 class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                 (click)="clearSearch()">
@@ -187,7 +198,9 @@
           <i class="fas fa-file-invoice-dollar text-4xl text-gray-400"></i>
         </div>
         <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay cotizaciones</h3>
-        <p class="text-gray-600 mb-6">No se encontraron cotizaciones con los criterios de búsqueda.</p>
+        <p class="text-gray-600 mb-6">
+          No se encontraron cotizaciones con los criterios de búsqueda.
+        </p>
         <button (click)="mostrarFormularioCrear()"
           class="inline-flex items-center px-6 py-3 bg-everywhere-primary text-white rounded-xl font-semibold hover:bg-everywhere-secondary transition-all duration-200">
           <i class="fas fa-plus mr-2"></i>
@@ -201,7 +214,6 @@
         <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-4">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-3">
                   <i class="fas fa-database text-red-600"></i>
@@ -231,8 +243,10 @@
           *ngIf="selectedItems.length > 0">
           <div class="flex items-center gap-3 font-semibold">
             <i class="fas fa-check-circle"></i>
-            <span>{{ selectedItems.length }} cotización{{ selectedItems.length === 1 ? '' : 'es' }} seleccionada{{
-              selectedItems.length === 1 ? '' : 's' }}</span>
+            <span>{{ selectedItems.length }} cotización{{
+              selectedItems.length === 1 ? '' : 'es'
+              }}
+              seleccionada{{ selectedItems.length === 1 ? '' : 's' }}</span>
           </div>
           <div class="flex gap-3">
             <button (click)="editarSeleccionados()"
@@ -264,7 +278,7 @@
                   <th class="w-12 p-5 text-center">
                     <label class="relative inline-block cursor-pointer">
                       <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
-                        (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0">
+                        (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0" />
                       <span
                         class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
                         [class.bg-red-600]="allSelected || someSelected"
@@ -274,16 +288,29 @@
                       </span>
                     </label>
                   </th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Código
                   </th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destino
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cliente
                   </th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fechas</th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pax</th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Moneda</th>
-                  <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Destino
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fechas
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Pax
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Moneda
+                  </th>
+                  <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
                   </th>
                 </tr>
               </thead>
@@ -296,7 +323,7 @@
                   <td class="p-5 text-center">
                     <label class="relative inline-block cursor-pointer">
                       <input type="checkbox" [checked]="isSelected(cotizacion.id)"
-                        (change)="toggleSelection(cotizacion.id)" class="absolute opacity-0 w-0 h-0">
+                        (change)="toggleSelection(cotizacion.id)" class="absolute opacity-0 w-0 h-0" />
                       <span
                         class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
                         [class.bg-red-600]="isSelected(cotizacion.id)"
@@ -311,8 +338,12 @@
                         <i class="fas fa-file-invoice text-everywhere-primary"></i>
                       </div>
                       <div>
-                        <div class="text-sm font-medium text-gray-900">{{ cotizacion.codigoCotizacion }}</div>
-                        <div class="text-sm text-gray-500">{{ formatDate(cotizacion.fechaEmision) }}</div>
+                        <div class="text-sm font-medium text-gray-900">
+                          {{ cotizacion.codigoCotizacion }}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                          {{ formatDate(cotizacion.fechaEmision) }}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -320,11 +351,17 @@
                     {{ getPersonaDisplayName(cotizacion.personas?.id || 0) }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ cotizacion.origenDestino || 'No especificado' }}</div>
+                    <div class="text-sm text-gray-900">
+                      {{ cotizacion.origenDestino || 'No especificado' }}
+                    </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-900">{{ formatDate(cotizacion.fechaSalida) }}</div>
-                    <div class="text-sm text-gray-500">{{ formatDate(cotizacion.fechaRegreso) }}</div>
+                    <div class="text-sm text-gray-900">
+                      {{ formatDate(cotizacion.fechaSalida) }}
+                    </div>
+                    <div class="text-sm text-gray-500">
+                      {{ formatDate(cotizacion.fechaRegreso) }}
+                    </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-900">
@@ -346,7 +383,9 @@
                     </span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{ cotizacion.moneda || 'USD' }}</div>
+                    <div class="text-sm font-medium text-gray-900">
+                      {{ cotizacion.moneda || 'USD' }}
+                    </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex justify-end space-x-2">
@@ -358,26 +397,28 @@
                       <!-- Botón de eliminar con presión mantenida -->
                       <button (mousedown)="iniciarEliminacion(cotizacion)" (mouseup)="cancelarEliminacion()"
                         (mouseleave)="cancelarEliminacion()" (touchstart)="iniciarEliminacion(cotizacion)"
-                        (touchend)="cancelarEliminacion()" [class]="'relative inline-flex items-center p-2 rounded-lg transition-all duration-200 ' +
-                               (presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id
-                                ? 'text-white bg-red-600'
-                                : 'text-red-600 hover:text-red-900 hover:bg-red-50')" [title]="presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id
-                               ? 'Mantenga presionado 3 segundos para eliminar...'
-                               : 'Mantener presionado 3 segundos para eliminar'" type="button">
-
+                        (touchend)="cancelarEliminacion()" [class]="
+                          'relative inline-flex items-center p-2 rounded-lg transition-all duration-200 ' +
+                          (presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id
+                            ? 'text-white bg-red-600'
+                            : 'text-red-600 hover:text-red-900 hover:bg-red-50')
+                        " [title]="
+                          presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id
+                            ? 'Mantenga presionado 3 segundos para eliminar...'
+                            : 'Mantener presionado 3 segundos para eliminar'
+                        " type="button">
                         <!-- Icono de basura -->
                         <i class="fas fa-trash relative z-10"></i>
 
                         <!-- Barra de progreso -->
                         <div *ngIf="presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id"
                           class="absolute inset-0 bg-red-700 rounded-lg transition-all duration-100 ease-linear"
-                          [style.width.%]="getPorcentajeProgreso()">
-                        </div>
+                          [style.width.%]="getPorcentajeProgreso()"></div>
 
                         <!-- Contador visual -->
                         <span *ngIf="presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id"
                           class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-600 text-white text-xs px-2 py-1 rounded shadow-lg z-20">
-                          {{ (3 - getMath().floor(tiempoPresionado / 1000)) }}s
+                          {{ 3 - getMath().floor(tiempoPresionado / 1000) }}s
                         </span>
                       </button>
                     </div>
@@ -394,12 +435,11 @@
           <div *ngFor="let cotizacion of filteredCotizaciones; trackBy: trackByCotizacion"
             class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group relative"
             [class.border-red-500]="isSelected(cotizacion.id)" [class.shadow-red-200]="isSelected(cotizacion.id)">
-
             <!-- Checkbox de selección -->
             <div class="absolute top-4 left-4 z-10">
               <label class="relative inline-block cursor-pointer">
                 <input type="checkbox" [checked]="isSelected(cotizacion.id)" (change)="toggleSelection(cotizacion.id)"
-                  class="absolute opacity-0 w-0 h-0">
+                  class="absolute opacity-0 w-0 h-0" />
                 <span
                   class="w-6 h-6 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center transition-all duration-200 hover:border-red-500 shadow-sm"
                   [class.bg-red-600]="isSelected(cotizacion.id)" [class.border-red-600]="isSelected(cotizacion.id)">
@@ -424,8 +464,12 @@
                     <i class="fas fa-file-invoice-dollar text-everywhere-primary text-sm"></i>
                   </div>
                   <div>
-                    <h3 class="text-lg font-bold text-gray-900">{{ cotizacion.codigoCotizacion }}</h3>
-                    <div class="text-sm text-gray-500">{{ formatDate(cotizacion.fechaEmision) }}</div>
+                    <h3 class="text-lg font-bold text-gray-900">
+                      {{ cotizacion.codigoCotizacion }}
+                    </h3>
+                    <div class="text-sm text-gray-500">
+                      {{ formatDate(cotizacion.fechaEmision) }}
+                    </div>
                   </div>
                 </div>
 
@@ -443,8 +487,11 @@
                     <i class="fas fa-map-marker-alt mr-2 text-green-500"></i>
                     Destino:
                   </span>
-                  <span class="text-sm text-gray-900 font-medium text-right">{{ cotizacion.origenDestino || 'No
-                    especificado' }}</span>
+                  <span class="text-sm text-gray-900 font-medium text-right">{{
+                    cotizacion.origenDestino ||
+                    'No
+                    especificado'
+                    }}</span>
                 </div>
 
                 <div class="flex items-center justify-between">
@@ -480,7 +527,9 @@
                     <i class="fas fa-dollar-sign mr-2 text-green-600"></i>
                     Moneda:
                   </span>
-                  <span class="text-sm text-gray-900 font-medium">{{ cotizacion.moneda || 'USD' }}</span>
+                  <span class="text-sm text-gray-900 font-medium">{{
+                    cotizacion.moneda || 'USD'
+                    }}</span>
                 </div>
               </div>
 
@@ -493,8 +542,11 @@
                   (mouseleave)="cancelarEliminacion()" (touchstart)="iniciarEliminacion(cotizacion)"
                   (touchend)="cancelarEliminacion()"
                   class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105"
-                  [class.bg-red-600]="presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id"
-                  [class.text-white]="presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id">
+                  [class.bg-red-600]="
+                    presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id
+                  " [class.text-white]="
+                    presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id
+                  ">
                   <i class="fas fa-trash"></i>Eliminar
                 </button>
               </div>
@@ -507,14 +559,13 @@
           <div *ngFor="let cotizacion of filteredCotizaciones; trackBy: trackByCotizacion"
             class="bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200 p-4"
             [class.border-red-500]="isSelected(cotizacion.id)" [class.bg-red-50]="isSelected(cotizacion.id)">
-
             <div class="flex items-center justify-between">
               <!-- Información principal en una sola línea -->
               <div class="flex items-center gap-4 flex-1">
                 <!-- Checkbox -->
                 <label class="relative inline-block cursor-pointer">
                   <input type="checkbox" [checked]="isSelected(cotizacion.id)" (change)="toggleSelection(cotizacion.id)"
-                    class="absolute opacity-0 w-0 h-0">
+                    class="absolute opacity-0 w-0 h-0" />
                   <span
                     class="w-5 h-5 bg-white border-2 border-gray-300 rounded flex items-center justify-center transition-all duration-200 hover:border-red-500"
                     [class.bg-red-600]="isSelected(cotizacion.id)" [class.border-red-600]="isSelected(cotizacion.id)">
@@ -523,18 +574,24 @@
                 </label>
 
                 <!-- Código -->
-                <span class="font-semibold text-gray-900 min-w-0 flex-shrink-0">{{ cotizacion.codigoCotizacion }}</span>
+                <span class="font-semibold text-gray-900 min-w-0 flex-shrink-0">{{
+                  cotizacion.codigoCotizacion
+                  }}</span>
 
                 <!-- Cliente -->
-                <span class="text-gray-700 min-w-0 truncate">{{ getPersonaDisplayName(cotizacion.personas?.id || 0)
+                <span class="text-gray-700 min-w-0 truncate">{{
+                  getPersonaDisplayName(cotizacion.personas?.id || 0)
                   }}</span>
 
                 <!-- Destino -->
-                <span class="text-gray-600 min-w-0 flex-shrink-0">{{ cotizacion.origenDestino || 'Sin destino' }}</span>
+                <span class="text-gray-600 min-w-0 flex-shrink-0">{{
+                  cotizacion.origenDestino || 'Sin destino'
+                  }}</span>
 
                 <!-- Fechas -->
                 <span class="text-gray-600 text-sm min-w-0 flex-shrink-0">
-                  {{ formatDate(cotizacion.fechaSalida) }} - {{ formatDate(cotizacion.fechaRegreso) }}
+                  {{ formatDate(cotizacion.fechaSalida) }} -
+                  {{ formatDate(cotizacion.fechaRegreso) }}
                 </span>
 
                 <!-- Pasajeros -->
@@ -559,10 +616,11 @@
                 <button (mousedown)="iniciarEliminacion(cotizacion)" (mouseup)="cancelarEliminacion()"
                   (mouseleave)="cancelarEliminacion()" (touchstart)="iniciarEliminacion(cotizacion)"
                   (touchend)="cancelarEliminacion()"
-                  class="p-2 text-red-600 hover:bg-red-100 rounded transition-colors duration-200"
-                  [class.bg-red-600]="presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id"
-                  [class.text-white]="presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id"
-                  title="Mantener presionado para eliminar">
+                  class="p-2 text-red-600 hover:bg-red-100 rounded transition-colors duration-200" [class.bg-red-600]="
+                    presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id
+                  " [class.text-white]="
+                    presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id
+                  " title="Mantener presionado para eliminar">
                   <i class="fas fa-trash text-sm"></i>
                 </button>
               </div>
@@ -575,48 +633,49 @@
 </div>
 
 <!-- Modal para Gestión de Categorías -->
-<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-5"
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
   *ngIf="mostrarGestionGrupos" (click)="cerrarVistaGestionGrupos()">
-  <div class="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[85vh] overflow-y-auto"
+  <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
     (click)="$event.stopPropagation()">
-
     <!-- Modal Header -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-8 py-6 rounded-t-3xl">
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-4 rounded-t-2xl">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-2xl font-bold flex items-center">
-            <i class="fas fa-tags mr-3"></i>
+          <h2 class="text-xl font-bold flex items-center">
+            <i class="fas fa-tags mr-2"></i>
             Gestión de Categorías
           </h2>
-          <p class="text-white/90 mt-1">Administra las categorías disponibles para los grupos de hoteles</p>
+          <p class="text-white/90 text-sm mt-1">
+            Administra las categorías disponibles para los grupos de hoteles
+          </p>
         </div>
         <button (click)="cerrarVistaGestionGrupos()"
           class="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200">
-          <i class="fas fa-times text-xl"></i>
+          <i class="fas fa-times text-lg"></i>
         </button>
       </div>
     </div>
 
     <!-- Modal Body -->
-    <div class="p-8">
+    <div class="p-4">
       <!-- Formulario para crear nueva categoría -->
-      <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 mb-6 border border-green-200">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+      <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-4 border border-green-200">
+        <h3 class="text-base font-semibold text-gray-900 mb-3 flex items-center">
           <i class="fas fa-plus-circle text-green-600 mr-2"></i>
           Crear Nueva Categoría
         </h3>
 
-        <div class="space-y-4">
+        <div class="space-y-3" [formGroup]="nuevaCategoriaForm">
           <div class="grid grid-cols-1 gap-4">
             <!-- Nombre de la categoría -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 Nombre de la Categoría *
               </label>
-              <input type="text" formControlName="nombre" placeholder="Ej: Hoteles 5 Estrellas, Hostales, Resorts..."
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                [class.border-red-500]="nuevaCategoriaForm.get('nombre')?.invalid && nuevaCategoriaForm.get('nombre')?.touched">
-              <div *ngIf="nuevaCategoriaForm.get('nombre')?.invalid && nuevaCategoriaForm.get('nombre')?.touched"
+              <input type="text" formControlName="nombre" placeholder="Ej: Económico, VIP, Premium..."
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                [class.border-red-500]="nuevaCategoriaForm.get('nombre')?.invalid && nuevaCategoriaForm.get('nombre')?.touched" />
+              <div *ngIf=" nuevaCategoriaForm.get('nombre')?.invalid && nuevaCategoriaForm.get('nombre')?.touched"
                 class="text-red-500 text-sm mt-1">
                 El nombre de la categoría es requerido (mínimo 3 caracteres)
               </div>
@@ -628,61 +687,42 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">
               Descripción (Opcional)
             </label>
-            <textarea formControlName="descripcion" placeholder="Describe esta categoría de hoteles..." rows="2"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none">
-              </textarea>
+            <textarea formControlName="descripcion" placeholder="Describe esta categoría de hoteles..." rows="1"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none">
+            </textarea>
           </div>
 
           <!-- Botones del formulario -->
-          <div class="flex gap-3 pt-2">
+          <div class="flex gap-2">
             <button type="button" (click)="crearNuevaCategoria()"
               [disabled]="nuevaCategoriaForm.invalid || creandoCategoria"
-              class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center">
-              <i *ngIf="!creandoCategoria" class="fas fa-plus mr-2"></i>
-              <i *ngIf="creandoCategoria" class="fas fa-spinner fa-spin mr-2"></i>
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center text-sm">
+              <i *ngIf="!creandoCategoria" class="fas fa-plus mr-1 text-xs"></i>
+              <i *ngIf="creandoCategoria" class="fas fa-spinner fa-spin mr-1 text-xs"></i>
               {{ creandoCategoria ? 'Creando...' : 'Crear Categoría' }}
             </button>
             <button type="button" (click)="limpiarFormularioNuevaCategoria()"
-              class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 flex items-center">
-              <i class="fas fa-eraser mr-2"></i>
+              class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 flex items-center text-sm">
+              <i class="fas fa-eraser mr-1 text-xs"></i>
               Limpiar
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Estadísticas de categorías -->
-      <div *ngIf="categorias.length > 0"
-        class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 mb-6 border border-blue-200">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
-          Estadísticas de Categorías
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ categorias.length }}</div>
-            <div class="text-sm text-gray-600">Total Categorías</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-green-600">{{ categorias.length }}</div>
-            <div class="text-sm text-gray-600">Disponibles</div>
-          </div>
-        </div>
-      </div>
-
       <!-- Estado vacío -->
-      <div *ngIf="categorias.length === 0" class="text-center py-12">
-        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <i class="fas fa-tags text-blue-600 text-2xl"></i>
+      <div *ngIf="categorias.length === 0" class="text-center py-8">
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+          <i class="fas fa-tags text-blue-600 text-lg"></i>
         </div>
-        <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay categorías creadas</h3>
-        <p class="text-gray-600 mb-6">Crea categorías para organizar los grupos de hoteles</p>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No hay categorías creadas</h3>
+        <p class="text-gray-600 text-sm mb-4">Crea categorías para organizar los grupos de hoteles</p>
       </div>
 
       <!-- Tabla de categorías -->
       <div *ngIf="categorias.length > 0" class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
-          <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+        <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+          <h3 class="text-md font-semibold text-gray-900 flex items-center">
             <i class="fas fa-list text-gray-600 mr-2"></i>
             Lista de Categorías ({{ categorias.length }})
           </h3>
@@ -692,13 +732,20 @@
           <table class="w-full">
             <thead class="bg-gray-100">
               <tr>
-                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creación
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ID
                 </th>
-                <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Act.
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Nombre
                 </th>
-                <th class="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Creación
+                </th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Última Act.
+                </th>
+                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Acciones
                 </th>
               </tr>
             </thead>
@@ -706,84 +753,69 @@
               <tr *ngFor="let categoria of categorias; let i = index"
                 class="hover:bg-gray-50 transition-colors duration-200"
                 [class.bg-yellow-50]="categoriaEditandose === i">
-
                 <!-- ID -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                   {{ categoria.id }}
                 </td>
 
                 <!-- Nombre (editable) -->
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-4 py-3 whitespace-nowrap">
                   <div *ngIf="categoriaEditandose !== i">
                     <div class="text-sm font-medium text-gray-900">{{ categoria.nombre }}</div>
                   </div>
                   <div *ngIf="categoriaEditandose === i">
                     <input type="text" [(ngModel)]="categoria.nombre"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      placeholder="Nombre de la categoría">
+                      class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      placeholder="Nombre de la categoría" />
                   </div>
                 </td>
 
                 <!-- Fecha de creación -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                   {{ formatearFecha(categoria.fechaCreacion) }}
                 </td>
 
                 <!-- Fecha de actualización -->
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                   {{ formatearFecha(categoria.fechaActualizacion) }}
                 </td>
 
                 <!-- Acciones -->
-                <td class="px-6 py-4 whitespace-nowrap text-center">
-                  <div class="flex items-center justify-center space-x-2">
-
+                <td class="px-4 py-3 whitespace-nowrap text-center">
+                  <div class="flex items-center justify-center space-x-1">
                     <!-- Botones cuando NO está editando -->
-                    <div *ngIf="categoriaEditandose !== i" class="flex space-x-2">
+                    <div *ngIf="categoriaEditandose !== i" class="flex space-x-1">
                       <button (click)="editarCategoria(i)"
-                        class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                        class="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
                         title="Editar categoría">
-                        <i class="fas fa-edit text-sm"></i>
+                        <i class="fas fa-edit text-xs"></i>
                       </button>
                       <button (click)="confirmarEliminarCategoria(i)"
-                        class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                        class="p-1 text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
                         title="Eliminar categoría">
-                        <i class="fas fa-trash text-sm"></i>
+                        <i class="fas fa-trash text-xs"></i>
                       </button>
                     </div>
 
                     <!-- Botones cuando SÍ está editando -->
-                    <div *ngIf="categoriaEditandose === i" class="flex space-x-2">
+                    <div *ngIf="categoriaEditandose === i" class="flex space-x-1">
                       <button (click)="guardarEdicionCategoria(i)"
-                        class="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors duration-200"
+                        class="p-1 text-green-600 hover:bg-green-50 rounded transition-colors duration-200"
                         title="Guardar cambios">
-                        <i class="fas fa-check text-sm"></i>
+                        <i class="fas fa-check text-xs"></i>
                       </button>
                       <button (click)="cancelarEdicionCategoria(i)"
-                        class="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                        class="p-1 text-gray-600 hover:bg-gray-50 rounded transition-colors duration-200"
                         title="Cancelar edición">
-                        <i class="fas fa-times text-sm"></i>
+                        <i class="fas fa-times text-xs"></i>
                       </button>
                     </div>
-
                   </div>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
-
-      <!-- Botón de cerrar -->
-      <div class="mt-8 flex justify-between items-center">
-        <div class="text-sm text-gray-500">
-          Gestiona las categorías que estarán disponibles al crear grupos de hoteles
-        </div>
-        <button (click)="cerrarVistaGestionGrupos()"
-          class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center">
-          <i class="fas fa-check mr-2"></i>
-          Cerrar Gestión
-        </button>
       </div>
     </div>
   </div>
@@ -794,17 +826,20 @@
   *ngIf="mostrarFormulario" (click)="cerrarFormulario()">
   <div class="bg-white rounded-3xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-y-auto"
     (click)="$event.stopPropagation()">
-
     <!-- Modal Header -->
-    <div class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white px-8 py-6 rounded-t-3xl">
+    <div class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white px-8 py-4 rounded-t-3xl">
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-2xl font-bold">
             {{ editandoCotizacion ? 'Editar Cotización' : 'Nueva Cotización' }}
           </h2>
           <p class="text-white/90 mt-1">
-            {{ editandoCotizacion ? 'Modifica los datos de la cotización' : 'Completa la información para crear la
-            cotización' }}
+            {{
+            editandoCotizacion
+            ? 'Modifica los datos de la cotización'
+            : 'Completa la información para crear la
+            cotización'
+            }}
           </p>
         </div>
         <button (click)="cerrarFormulario()" class="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200">
@@ -814,310 +849,10 @@
     </div>
 
     <!-- Modal Body -->
-    <div class="p-8">
-      <div [formGroup]="cotizacionForm" (ngSubmit)="onSubmitCotizacion()">
-
-        <!-- Sección Cliente e Información del Paquete en fila -->
-        <div class="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Sección Cliente -->
-          <div>
-            <div
-              class="bg-gradient-to-r from-[#D9043D]/5 to-[#BF4968]/5 rounded-2xl p-6 border border-everywhere-primary/10">
-              <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <div
-                  class="w-8 h-8 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-xl flex items-center justify-center mr-3">
-                  <i class="fas fa-user text-white text-sm"></i>
-                </div>
-                Información del Cliente
-                <span class="text-red-500 ml-1">*</span>
-              </h3>
-
-              <!-- Cliente ya seleccionado -->
-              <div *ngIf="clienteSeleccionado" class="bg-white border-2 border-green-200 rounded-xl p-2">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center space-x-4">
-                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                      <i class="fas fa-check text-green-600 text-lg"></i>
-                    </div>
-                    <div>
-                      <p class="font-semibold text-gray-900 text-base">{{ getSelectedClienteName() }}</p>
-                      <p class="text-sm text-gray-500 flex items-center mt-1">
-                        <i class="fas fa-tag mr-1"></i>
-                        {{ getClienteType(clienteSeleccionado) }}
-                      </p>
-                    </div>
-                  </div>
-                  <button type="button" (click)="resetClienteSeleccionado()"
-                    class="px-4 py-2 text-everywhere-primary hover:bg-everywhere-primary/10 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                    <i class="fas fa-edit"></i>
-                    <span class="text-sm font-medium">Cambiar</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Búsqueda simple de cliente -->
-              <div *ngIf="!clienteSeleccionado" class="space-y-3">
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-400"></i>
-                  </div>
-                  <input type="text" [formControl]="clienteSearchControl"
-                    placeholder="Buscar cliente por nombre, DNI, RUC..."
-                    class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:border-everywhere-primary focus:ring-2 focus:ring-everywhere-primary/20 transition-all duration-200 bg-gray-50 focus:bg-white"
-                    [class.border-red-300]="isFieldInvalid(cotizacionForm, 'personaId')" autocomplete="off">
-                  <button *ngIf="clienteSearchControl.value" (click)="clearClienteSearch()" type="button"
-                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="fas fa-times"></i>
-                  </button>
-                </div>
-
-                <!-- Lista de clientes compacta -->
-                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden h-80 flex flex-col">
-
-                  <!-- Lista deslizable de clientes - SIEMPRE VISIBLE -->
-                  <div class="flex-1 overflow-y-auto">
-                    <!-- Indicador de búsqueda si está activa -->
-                    <div *ngIf="buscandoClientes" class="flex items-center justify-center py-2 bg-gray-50 border-b">
-                      <div class="flex items-center space-x-2 text-everywhere-primary">
-                        <i class="fas fa-spinner fa-spin text-xs"></i>
-                        <span class="text-xs">Buscando...</span>
-                      </div>
-                    </div>
-
-                    <!-- Resultados encontrados -->
-                    <div *ngFor="let persona of personasEncontradas; let i = index"
-                      class="border-b border-gray-100 last:border-b-0 hover:bg-everywhere-primary/5 cursor-pointer transition-colors"
-                      (click)="seleccionarCliente(persona)">
-                      <div class="p-3 flex items-center justify-between">
-                        <div class="flex items-center space-x-3 flex-1 min-w-0">
-                          <!-- Avatar del cliente -->
-                          <div
-                            class="w-8 h-8 bg-gradient-to-br from-everywhere-primary to-everywhere-secondary rounded-lg flex items-center justify-center flex-shrink-0">
-                            <i class="fas fa-user text-white text-xs"></i>
-                          </div>
-                          <!-- Información del cliente -->
-                          <div class="flex-1 min-w-0">
-                            <p class="font-medium text-gray-900 truncate text-sm">{{ getClienteDisplayName(persona) }}
-                            </p>
-                            <div class="flex items-center space-x-2 mt-0.5">
-                              <span class="text-xs text-gray-500">{{ getClienteType(persona) }}</span>
-                              <span *ngIf="hasDocumento(persona)" class="text-xs text-gray-400">{{
-                                getClienteDocumento(persona) }}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <!-- Icono de selección -->
-                        <div class="text-everywhere-primary">
-                          <i class="fas fa-chevron-right text-xs"></i>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Estado cuando no hay clientes -->
-                    <div *ngIf="personasEncontradas.length === 0" class="text-center py-8 bg-gray-50">
-                      <div class="flex flex-col items-center space-y-3">
-                        <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                          <i class="fas fa-search text-gray-400"></i>
-                        </div>
-                        <div>
-                          <p class="text-gray-600 font-medium text-sm">No se encontraron clientes</p>
-                          <p class="text-xs text-gray-500 mt-1">
-                            {{ clienteSearchControl.value ? 'Intenta con otros términos' : 'No hay clientes registrados'
-                            }}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div *ngIf="isFieldInvalid(cotizacionForm, 'personaId')"
-              class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p class="text-sm text-red-600 flex items-center">
-                <i class="fas fa-exclamation-circle mr-2"></i>
-                {{ getFieldError(cotizacionForm, 'personaId') }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Información del Paquete -->
-          <div>
-            <div
-              class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 h-80 flex flex-col">
-              <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <div
-                  class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3">
-                  <i class="fas fa-map-marked-alt text-white text-sm"></i>
-                </div>
-                Información del Paquete
-              </h3>
-
-              <div class="space-y-4 flex-1 overflow-y-auto">
-                <!-- Origen - Destino (fila completa) -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Origen - Destino
-                    <span class="text-red-500">*</span>
-                  </label>
-                  <div class="relative">
-                    <input type="text" formControlName="origenDestino" placeholder="Ej: Lima - Cusco"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10 text-sm"
-                      [class.border-red-300]="isFieldInvalid(cotizacionForm, 'origenDestino')">
-                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                      <i class="fas fa-route text-gray-400 text-xs"></i>
-                    </div>
-                  </div>
-                  <div *ngIf="isFieldInvalid(cotizacionForm, 'origenDestino')"
-                    class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
-                    <p class="text-xs text-red-600 flex items-center">
-                      <i class="fas fa-exclamation-circle mr-1"></i>
-                      {{ getFieldError(cotizacionForm, 'origenDestino') }}
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Fechas en 2 columnas -->
-                <div class="grid grid-cols-2 gap-3">
-                  <!-- Fecha de Salida -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Fecha de Salida
-                      <span class="text-red-500">*</span>
-                    </label>
-                    <input type="date" formControlName="fechaSalida"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                      [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaSalida')">
-                    <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaSalida')"
-                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
-                      <p class="text-xs text-red-600 flex items-center">
-                        <i class="fas fa-exclamation-circle mr-1"></i>
-                        {{ getFieldError(cotizacionForm, 'fechaSalida') }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Fecha de Regreso -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Fecha de Regreso
-                      <span class="text-red-500">*</span>
-                    </label>
-                    <input type="date" formControlName="fechaRegreso"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                      [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaRegreso')">
-                    <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaRegreso')"
-                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
-                      <p class="text-xs text-red-600 flex items-center">
-                        <i class="fas fa-exclamation-circle mr-1"></i>
-                        {{ getFieldError(cotizacionForm, 'fechaRegreso') }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Cantidad de personas en 2 columnas -->
-                <div class="grid grid-cols-2 gap-3">
-                  <!-- Cantidad de Adultos -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Cantidad de Adultos
-                      <span class="text-red-500">*</span>
-                    </label>
-                    <div class="relative">
-                      <input type="number" formControlName="cantAdultos" min="1" placeholder="1"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-8 text-sm"
-                        [class.border-red-300]="isFieldInvalid(cotizacionForm, 'cantAdultos')">
-                      <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <i class="fas fa-user text-gray-400 text-xs"></i>
-                      </div>
-                    </div>
-                    <div *ngIf="isFieldInvalid(cotizacionForm, 'cantAdultos')"
-                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
-                      <p class="text-xs text-red-600 flex items-center">
-                        <i class="fas fa-exclamation-circle mr-1"></i>
-                        {{ getFieldError(cotizacionForm, 'cantAdultos') }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Cantidad de Niños -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Cantidad de Niños
-                    </label>
-                    <div class="relative">
-                      <input type="number" formControlName="cantNinos" min="0" placeholder="0"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-8 text-sm"
-                        [class.border-red-300]="isFieldInvalid(cotizacionForm, 'cantNinos')">
-                      <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <i class="fas fa-child text-gray-400 text-xs"></i>
-                      </div>
-                    </div>
-                    <div *ngIf="isFieldInvalid(cotizacionForm, 'cantNinos')"
-                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
-                      <p class="text-xs text-red-600 flex items-center">
-                        <i class="fas fa-exclamation-circle mr-1"></i>
-                        {{ getFieldError(cotizacionForm, 'cantNinos') }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Forma de Pago y Moneda en 2 columnas -->
-                <div class="grid grid-cols-2 gap-3">
-                  <!-- Forma de Pago -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Forma de Pago
-                      <span class="text-red-500">*</span>
-                    </label>
-                    <select formControlName="formaPagoId"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                      [class.border-red-300]="isFieldInvalid(cotizacionForm, 'formaPagoId')">
-                      <option value="">Seleccionar forma de pago</option>
-                      <option *ngFor="let formaPago of formasPago" [value]="formaPago.id">
-                        {{ formaPago.descripcion }}
-                      </option>
-                    </select>
-                    <div *ngIf="isFieldInvalid(cotizacionForm, 'formaPagoId')"
-                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
-                      <p class="text-xs text-red-600 flex items-center">
-                        <i class="fas fa-exclamation-circle mr-1"></i>
-                        {{ getFieldError(cotizacionForm, 'formaPagoId') }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Moneda -->
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Moneda
-                      <span class="text-red-500">*</span>
-                    </label>
-                    <select formControlName="moneda"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
-                      [class.border-red-300]="isFieldInvalid(cotizacionForm, 'moneda')">
-                      <option value="USD">Dólares (USD)</option>
-                      <option value="PEN">Soles (PEN)</option>
-                    </select>
-                    <div *ngIf="isFieldInvalid(cotizacionForm, 'moneda')"
-                      class="mt-1 p-2 bg-red-50 border border-red-200 rounded-lg">
-                      <p class="text-xs text-red-600 flex items-center">
-                        <i class="fas fa-exclamation-circle mr-1"></i>
-                        {{ getFieldError(cotizacionForm, 'moneda') }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
+    <div class="p-6">
+      <form [formGroup]="cotizacionForm" (ngSubmit)="onSubmitCotizacion()">
         <!-- Información Básica -->
-        <div class="mb-8">
+        <div class="mb-6">
           <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
             <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
               <div
@@ -1135,32 +870,41 @@
                 </label>
                 <input type="text" formControlName="codigoCotizacion"
                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-                  readonly>
+                  readonly />
               </div>
 
               <!-- Fecha de Emisión -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Fecha de Emisión
+                  <span class="text-red-500">*</span>
                 </label>
                 <input type="datetime-local" formControlName="fechaEmision"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-                  readonly>
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaEmision')" />
+                <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaEmision')"
+                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                  <p class="text-sm text-red-600 flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    La fecha de emisión es requerida
+                  </p>
+                </div>
               </div>
 
               <!-- Fecha de Vencimiento -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Fecha de Vencimiento
+                  <span class="text-red-500">*</span>
                 </label>
                 <input type="datetime-local" formControlName="fechaVencimiento"
                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaVencimiento')">
+                  [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaVencimiento')" />
                 <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaVencimiento')"
                   class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
                   <p class="text-sm text-red-600 flex items-center">
                     <i class="fas fa-exclamation-circle mr-2"></i>
-                    {{ getFieldError(cotizacionForm, 'fechaVencimiento') }}
+                    La fecha de vencimiento es requerida
                   </p>
                 </div>
               </div>
@@ -1214,8 +958,253 @@
           </div>
         </div>
 
+        <!-- Sección Cliente e Información del Paquete en fila -->
+        <div class="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Sección Cliente -->
+          <div>
+            <div
+              class="bg-gradient-to-r from-[#D9043D]/5 to-[#BF4968]/5 rounded-2xl p-6 border border-everywhere-primary/10 h-full flex flex-col">
+              <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <div
+                  class="w-8 h-8 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-xl flex items-center justify-center mr-3">
+                  <i class="fas fa-user text-white text-sm"></i>
+                </div>
+                Información del Cliente
+                <span class="text-red-500 ml-1">*</span>
+              </h3>
+
+              <!-- Cliente ya seleccionado -->
+              <div *ngIf="clienteSeleccionado" class="bg-white border-2 border-black-200 rounded-xl p-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                      <lucide-icon name="circle-user-round" class="text-green-600 text-lg"></lucide-icon>
+                    </div>
+                    <div>
+                      <p class="font-semibold text-gray-900 text-base">
+                        {{ getSelectedClienteName() }}
+                      </p>
+                      <p class="text-sm text-gray-500 flex items-center mt-1">
+                        <i class="fas fa-tag mr-1"></i>
+                        {{ getClienteType(clienteSeleccionado) }}
+                      </p>
+                    </div>
+                  </div>
+                  <button type="button" (click)="resetClienteSeleccionado()"
+                    class="px-4 py-2 text-everywhere-primary hover:bg-everywhere-primary/10 rounded-lg transition-colors duration-200 flex items-center space-x-2">
+                    <lucide-icon name="refresh-ccw" class="w-5 h-5"></lucide-icon>
+                    <span class="text-sm font-medium">Cambiar</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Búsqueda simple de cliente -->
+              <div *ngIf="!clienteSeleccionado" class="space-y-3">
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                  </div>
+                  <input type="text" [formControl]="clienteSearchControl"
+                    placeholder="Buscar cliente por nombre, DNI, RUC..."
+                    class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:border-everywhere-primary focus:ring-2 focus:ring-everywhere-primary/20 transition-all duration-200 bg-gray-50 focus:bg-white"
+                    [class.border-red-300]="isFieldInvalid(cotizacionForm, 'personaId')" autocomplete="off" />
+                  <button *ngIf="clienteSearchControl.value" (click)="clearClienteSearch()" type="button"
+                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+
+                <!-- Lista de clientes compacta -->
+                <div class="bg-white border border-gray-200 rounded-lg overflow-hidden h-80 flex flex-col">
+                  <!-- Lista deslizable de clientes - SIEMPRE VISIBLE -->
+                  <div class="flex-1 overflow-y-auto">
+                    <!-- Indicador de búsqueda si está activa -->
+                    <div *ngIf="buscandoClientes" class="flex items-center justify-center py-2 bg-gray-50 border-b">
+                      <div class="flex items-center space-x-2 text-everywhere-primary">
+                        <i class="fas fa-spinner fa-spin text-xs"></i>
+                        <span class="text-xs">Buscando...</span>
+                      </div>
+                    </div>
+
+                    <!-- Resultados encontrados -->
+                    <div *ngFor="let persona of personasEncontradas; let i = index"
+                      class="border-b border-gray-100 last:border-b-0 hover:bg-everywhere-primary/5 cursor-pointer transition-colors"
+                      (click)="seleccionarCliente(persona)">
+                      <div class="p-3 flex items-center justify-between">
+                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                          <!-- Avatar del cliente -->
+                          <div
+                            class="w-8 h-8 bg-gradient-to-br from-everywhere-primary to-everywhere-secondary rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-user text-white text-xs"></i>
+                          </div>
+                          <!-- Información del cliente -->
+                          <div class="flex-1 min-w-0">
+                            <p class="font-medium text-gray-900 truncate text-sm">
+                              {{ getClienteDisplayName(persona) }}
+                            </p>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                              <span class="text-xs text-gray-500">{{
+                                getClienteType(persona)
+                                }}</span>
+                              <span *ngIf="hasDocumento(persona)" class="text-xs text-gray-400">{{
+                                getClienteDocumento(persona)
+                                }}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <!-- Icono de selección -->
+                        <div class="text-everywhere-primary">
+                          <i class="fas fa-chevron-right text-xs"></i>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Estado cuando no hay clientes -->
+                    <div *ngIf="personasEncontradas.length === 0" class="text-center py-8 bg-gray-50">
+                      <div class="flex flex-col items-center space-y-3">
+                        <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                          <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <div>
+                          <p class="text-gray-600 font-medium text-sm">
+                            No se encontraron clientes
+                          </p>
+                          <p class="text-xs text-gray-500 mt-1">
+                            {{
+                            clienteSearchControl.value
+                            ? 'Intenta con otros términos'
+                            : 'No hay clientes registrados'
+                            }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="isFieldInvalid(cotizacionForm, 'personaId')"
+              class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p class="text-sm text-red-600 flex items-center">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                {{ getFieldError(cotizacionForm, 'personaId') }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Información del Paquete -->
+          <div>
+            <div
+              class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 h-full flex flex-col">
+              <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <div
+                  class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3">
+                  <i class="fas fa-map-marked-alt text-white text-sm"></i>
+                </div>
+                Información del Paquete
+              </h3>
+
+              <div class="space-y-4 flex-1 overflow-y-auto">
+                <!-- Origen - Destino -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Origen - Destino
+                  </label>
+                  <div class="relative">
+                    <input type="text" formControlName="origenDestino" placeholder="Ej: Lima - Cusco"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-10 text-sm" />
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <i class="fas fa-route text-gray-400 text-xs"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fechas en 2 columnas -->
+                <div class="grid grid-cols-2 gap-3">
+                  <!-- Fecha de Salida -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Fecha de Salida
+                    </label>
+                    <input type="date" formControlName="fechaSalida"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Fecha de Regreso -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Fecha de Regreso
+                    </label>
+                    <input type="date" formControlName="fechaRegreso"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm" />
+                  </div>
+                </div>
+
+                <!-- Cantidad de personas en 2 columnas -->
+                <div class="grid grid-cols-2 gap-3">
+                  <!-- Cantidad de Adultos -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Cantidad de Adultos
+                    </label>
+                    <div class="relative">
+                      <input type="number" formControlName="cantAdultos" min="1" placeholder="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-8 text-sm" />
+                      <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <i class="fas fa-user text-gray-400 text-xs"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Cantidad de Niños -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Cantidad de Niños
+                    </label>
+                    <div class="relative">
+                      <input type="number" formControlName="cantNinos" min="0" placeholder="0"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent pr-8 text-sm" />
+                      <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <i class="fas fa-child text-gray-400 text-xs"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Forma de Pago y Moneda -->
+                <div class="grid grid-cols-2 gap-3">
+                  <!-- Forma de Pago -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Forma de Pago
+                    </label>
+                    <select formControlName="formaPagoId"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar forma de pago</option>
+                      <option *ngFor="let formaPago of formasPago" [value]="formaPago.id">
+                        {{ formaPago.descripcion }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Moneda -->
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2"> Moneda </label>
+                    <select formControlName="moneda"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm">
+                      <option value="USD">Dólares (USD)</option>
+                      <option value="PEN">Soles (PEN)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Productos Fijos -->
-        <div class="mb-8">
+        <div class="mb-6">
           <div class="bg-gradient-to-r from-purple-50 to-violet-50 rounded-2xl p-6 border border-purple-200">
             <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
               <div
@@ -1226,172 +1215,206 @@
             </h3>
 
             <!-- Formulario para agregar producto -->
-            <div class="bg-white rounded-xl p-6 mb-6 border border-purple-100">
-              <h4 class="text-md font-semibold text-gray-800 mb-4 flex items-center">
-                <div class="w-6 h-6 bg-purple-100 rounded-lg flex items-center justify-center mr-2">
-                  <i class="fas fa-plus text-purple-600 text-xs"></i>
+            <div class="bg-white rounded-xl p-6 border border-purple-100">
+              <div>
+                <div class="grid gap-3 items-end"
+                  style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Precio Unitario</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Comisión</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Total</label>
+                  </div>
+                  <div class="text-center">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Acciones</label>
+                  </div>
                 </div>
-                Agregar Producto
-              </h4>
-              <div [formGroup]="detalleForm">
-                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              </div>
+              <div *ngFor="let detalle of detallesFijos; let i = index">
+                <div class="grid gap-3 items-end"
+                  style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                   <!-- Proveedor -->
-                  <div class="lg:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Proveedor</label>
+                  <div>
+                    <select [value]="detalle.proveedor?.id || ''"
+                      (change)="onProductoChange(i, 'proveedorId', $any($event.target).value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Sin proveedor</option>
+                      <option *ngFor="let proveedor of proveedores" [value]="proveedor.id"
+                        [selected]="proveedor.id === detalle.proveedor?.id">
+                        {{ proveedor.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Producto -->
+                  <div>
+                    <select [value]="detalle.producto?.id || ''"
+                      (change)="onProductoChange(i, 'productoId', $any($event.target).value)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let producto of productos" [value]="producto.id"
+                        [selected]="producto.id === detalle.producto?.id">
+                        {{ producto.tipo }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Cantidad -->
+                  <div>
+                    <input type="number" [value]="detalle.cantidad"
+                      (input)="onProductoChange(i, 'cantidad', $any($event.target).value)" min="1"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Descripción -->
+                  <div>
+                    <input type="text" [value]="detalle.descripcion"
+                      (input)="onProductoChange(i, 'descripcion', $any($event.target).value)" placeholder="Descripción"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Precio Unitario -->
+                  <div>
+                    <input type="number" [value]="detalle.precioHistorico"
+                      (input)="onProductoChange(i, 'precioHistorico', $any($event.target).value)" step="0.01" min="0"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Comisión -->
+                  <div>
+                    <input type="number" [value]="detalle.comision"
+                      (input)="onProductoChange(i, 'comision', $any($event.target).value)" step="0.01" min="0"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Total -->
+                  <div>
+                    <div
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm font-semibold text-purple-600 bg-purple-50 text-center">
+                      ${{ detalle.total | number : '1.2-2' }}
+                    </div>
+                  </div>
+
+                  <!-- Acciones -->
+                  <div class="text-center">
+                    <button type="button" (click)="eliminarDetalleFijo(i)"
+                      class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors duration-200">
+                      <i class="fas fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="my-2"></div>
+              </div>
+              <div [formGroup]="detalleForm">
+                <!-- Una sola fila con todos los campos -->
+                <div class="grid gap-3 items-end"
+                  style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                  <!-- Proveedor -->
+                  <div>
                     <select formControlName="proveedorId"
                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
-                      <option value="">Seleccionar proveedor</option>
+                      <option value="">Opcional</option>
                       <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
                         {{ proveedor.nombre }}
                       </option>
                     </select>
-                    <input type="text" formControlName="nuevoProveedor" placeholder="O escribir nuevo proveedor"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm mt-2">
                   </div>
 
-                  <!-- Tipo (Producto) -->
+                  <!-- Producto -->
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Tipo *</label>
                     <select formControlName="productoId"
                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                       [class.border-red-300]="isFieldInvalid(detalleForm, 'productoId')">
-                      <option value="">Seleccionar tipo</option>
+                      <option value="">Seleccionar</option>
                       <option *ngFor="let producto of productos" [value]="producto.id">
                         {{ producto.tipo }}
                       </option>
                     </select>
                   </div>
+
                   <!-- Cantidad -->
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Cantidad *</label>
                     <input type="number" formControlName="cantidad" min="1" placeholder="1"
                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-                      [class.border-red-300]="isFieldInvalid(detalleForm, 'cantidad')">
+                      [class.border-red-300]="isFieldInvalid(detalleForm, 'cantidad')" />
                   </div>
 
-                  <!-- Precio Compra USD -->
+                  <!-- Descripción -->
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Precio Compra USD *</label>
+                    <input type="text" formControlName="descripcion" placeholder="Descripción del producto"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Precio Unitario -->
+                  <div>
                     <input type="number" formControlName="precioHistorico" step="0.01" min="0" placeholder="0.00"
                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-                      [class.border-red-300]="isFieldInvalid(detalleForm, 'precioHistorico')">
+                      [class.border-red-300]="isFieldInvalid(detalleForm, 'precioHistorico')" />
                   </div>
 
-                  <!-- Comisión -->
+                  <!-- Comision -->
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Comisión</label>
                     <input type="number" formControlName="comision" step="0.01" min="0" placeholder="0.00"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                      [class.border-red-300]="isFieldInvalid(detalleForm, 'comision')" />
+                  </div>
+
+                  <!-- Total -->
+                  <div>
+                    <input type="text" [value]="calcularTotalDetalle() | currency : 'USD' : 'symbol' : '1.2-2'"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-medium text-gray-700 text-center"
+                      readonly />
                   </div>
 
                   <!-- Botón Agregar -->
-                  <div class="flex items-end">
+                  <div class="text-center">
                     <button type="button" (click)="agregarDetalleFijo()"
-                      class="w-full px-4 py-2 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-lg hover:from-purple-600 hover:to-violet-700 transition-all duration-200 text-sm font-medium flex items-center justify-center space-x-1">
+                      class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-lg hover:from-purple-600 hover:to-violet-700 transition-all duration-200 text-sm font-medium">
                       <i class="fas fa-plus"></i>
-                      <span>Agregar</span>
                     </button>
                   </div>
                 </div>
-
-                <!-- Descripción -->
-                <div class="mt-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-                  <input type="text" formControlName="descripcion" placeholder="Descripción del producto (opcional)"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
-                </div>
               </div>
             </div>
 
-            <!-- Lista de productos fijos -->
-            <div *ngIf="detallesFijos.length === 0"
-              class="text-center py-12 bg-white rounded-xl border border-purple-100">
-              <div class="flex flex-col items-center space-y-3">
-                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
-                  <i class="fas fa-box-open text-purple-600 text-2xl"></i>
-                </div>
-                <div>
-                  <p class="text-gray-600 font-medium">No hay productos fijos agregados</p>
-                  <p class="text-sm text-gray-500">Agrega productos usando el formulario de arriba</p>
-                </div>
-              </div>
-            </div>
-
-            <div *ngIf="detallesFijos.length > 0" class="bg-white rounded-xl border border-purple-100 overflow-hidden">
-              <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                  <thead class="bg-gradient-to-r from-purple-50 to-violet-50">
-                    <tr>
-                      <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Proveedor</th>
-                      <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Tipo</th>
-                      <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Cantidad</th>
-                      <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Descripción</th>
-                      <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Precio USD</th>
-                      <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Comisión</th>
-                      <th class="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Total USD</th>
-                      <th class="px-4 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                        Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
-                    <tr *ngFor="let detalle of detallesFijos; let i = index"
-                      class="hover:bg-gray-50 transition-colors duration-200">
-                      <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ detalle.proveedor?.nombre || 'Sin proveedor' }}
-                      </td>
-                      <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ detalle.producto?.tipo || 'Sin tipo' }}
-                      </td>
-                      <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ detalle.cantidad }}
-                      </td>
-                      <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ detalle.descripcion || '-' }}
-                      </td>
-                      <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                        ${{ detalle.precioHistorico | number:'1.2-2' }}
-                      </td>
-                      <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                        ${{ detalle.comision | number:'1.2-2' }}
-                      </td>
-                      <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold text-purple-600">
-                        ${{ detalle.total | number:'1.2-2' }}
-                      </td>
-                      <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button type="button" (click)="eliminarDetalleFijo(i)"
-                          class="text-red-600 hover:text-red-900 transition-colors duration-200 p-2 rounded-lg hover:bg-red-50">
-                          <i class="fas fa-trash"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+            <!-- Estado vacío solo cuando no hay productos -->
+            <div *ngIf="detallesFijos.length === 0" class="text-center py-8 text-gray-500">
+              <div class="flex flex-col items-center space-y-2">
+                <i class="fas fa-box-open text-3xl text-purple-300"></i>
+                <p class="text-sm">Los productos agregados aparecerán arriba del formulario</p>
               </div>
             </div>
           </div>
         </div>
-
         <!-- Total Productos Fijos -->
         <div *ngIf="detallesFijos.length > 0" class="mt-4 flex justify-end">
           <div class="bg-everywhere-primary/10 px-4 py-2 rounded-lg">
             <span class="text-sm font-medium text-gray-700">
               Tarifa Productos Fijos:
               <span class="font-bold text-everywhere-primary">
-                ${{ calcularTotalFijos() | number:'1.2-2' }} USD
+                ${{ calcularTotalFijos() | number : '1.2-2' }} USD
               </span>
             </span>
           </div>
         </div>
 
         <!-- Grupos de Hoteles -->
-        <div class="mb-8">
+        <div class="mb-6">
           <div class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-200">
             <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
               <div
@@ -1415,12 +1438,11 @@
                 <button type="button" (click)="mostrarVistaGestionGrupos()"
                   class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all duration-200 text-sm font-medium flex items-center space-x-2">
                   <i class="fas fa-cogs"></i>
-                  <span>Gestionar Grupos</span>
+                  <span>Gestionar Categorías</span>
                 </button>
               </div>
               <div>
-                <div class="flex gap-4 items-end">
-                  <div [formGroup]="grupoHotelForm"> <div class="flex gap-4 items-end"></div>
+                <div [formGroup]="grupoHotelForm" class="flex gap-3 items-end">
                   <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
                     <select formControlName="categoria"
@@ -1431,207 +1453,224 @@
                       </option>
                     </select>
                   </div>
-                  <div>
-                    <button type="submit"
-                      class="px-6 py-2 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-lg hover:from-orange-600 hover:to-amber-700 transition-all duration-200 text-sm font-medium flex items-center space-x-2">
-                      <i class="fas fa-plus"></i>
+                  <div class="flex-shrink-0">
+                    <button type="button" (click)="crearGrupoHotel()"
+                      class="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-lg hover:from-orange-600 hover:to-amber-700 transition-all duration-200 text-sm font-medium flex items-center space-x-2">
+                      <i class="fas fa-plus text-xs"></i>
                       <span>Crear Grupo</span>
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Lista de grupos -->
-            <div *ngIf="gruposHoteles.length === 0"
-              class="text-center py-12 bg-white rounded-xl border border-orange-100">
-              <div class="flex flex-col items-center space-y-3">
-                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-                  <i class="fas fa-hotel text-orange-600 text-2xl"></i>
-                </div>
-                <div>
-                  <p class="text-gray-600 font-medium">No hay grupos de hoteles creados</p>
-                  <p class="text-sm text-gray-500">Crea un grupo usando el formulario de arriba</p>
-                </div>
-              </div>
-            </div>
-
-            <div *ngFor="let grupo of gruposHoteles; let gi = index" class="mb-6">
-              <div class="border border-gray-200 rounded-xl overflow-hidden">
-                <div class="bg-gray-50 px-4 py-3 flex items-center justify-between">
-                  <h4 class="font-medium text-gray-900">
-                    Grupo {{ grupo.categoria.nombre }}
-                  </h4>
-                  <div class="flex items-center gap-4">
-                    <span class="text-sm font-medium text-everywhere-primary">
-                      Total: ${{ grupo.total | number:'1.2-2' }} USD
-                    </span>
-                    <button type="button" (click)="eliminarGrupoHotel(gi)" class="text-red-600 hover:text-red-900">
-                      <i class="fas fa-trash"></i>
-                    </button>
+              <!-- Lista de grupos -->
+              <div *ngIf="gruposHoteles.length === 0"
+                class="text-center py-12 bg-white rounded-xl border border-orange-100 mt-6">
+                <div class="flex flex-col items-center space-y-3">
+                  <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-hotel text-orange-600 text-2xl"></i>
+                  </div>
+                  <div>
+                    <p class="text-gray-600 font-medium">No hay grupos de hoteles creados</p>
+                    <p class="text-sm text-gray-500">
+                      Crea un grupo usando el formulario de arriba
+                    </p>
                   </div>
                 </div>
+              </div>
 
-                <!-- Formulario para agregar detalles al grupo -->
-                <div class="p-4 bg-gray-50/50">
-                  <div>
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                      <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
-                        <select formControlName="proveedorId"
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                          <option value="">Seleccionar proveedor</option>
-                          <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
-                            {{ proveedor.nombre }}
-                          </option>
-                        </select>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                        <select formControlName="productoId"
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                          <option value="">Seleccionar tipo</option>
-                          <option *ngFor="let producto of productos" [value]="producto.id">
-                            {{ producto.tipo }}
-                          </option>
-                        </select>
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Precio USD</label>
-                        <input type="number" formControlName="precioHistorico" step="0.01" min="0"
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                      </div>
-                      <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-                        <input type="number" formControlName="cantidad" min="1"
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                      </div>
-                      <div class="flex items-end">
-                        <button type="button" (click)="agregarDetalleAGrupo(gi)"
-                          class="w-full px-3 py-2 bg-everywhere-primary text-white rounded-lg hover:bg-everywhere-secondary transition-colors duration-200 text-sm">
-                          <i class="fas fa-plus mr-1"></i>
-                          Agregar
-                        </button>
+              <div *ngFor="let grupo of gruposHoteles; let gi = index" class="mb-6 mt-6">
+                <div class="border border-gray-200 rounded-xl overflow-hidden">
+                  <div class="bg-gray-50 px-4 py-3 flex items-center justify-between">
+                    <h4 class="font-medium text-gray-900">Grupo {{ grupo.categoria.nombre }}</h4>
+                    <div class="flex items-center gap-4">
+                      <span class="text-sm font-medium text-everywhere-primary">
+                        Total: ${{ grupo.total | number : '1.2-2' }} USD
+                      </span>
+                      <button type="button" (click)="eliminarGrupoHotel(gi)" class="text-red-600 hover:text-red-900">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Formulario para agregar detalles al grupo -->
+                  <div class="p-4 bg-gray-50/50">
+                    <div [formGroup]="detalleForm">
+                      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div class="md:col-span-2">
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                          <select formControlName="proveedorId"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="">Seleccionar proveedor</option>
+                            <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
+                              {{ proveedor.nombre }}
+                            </option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                          <select formControlName="productoId"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                            <option value="">Seleccionar tipo</option>
+                            <option *ngFor="let producto of productos" [value]="producto.id">
+                              {{ producto.tipo }}
+                            </option>
+                          </select>
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Precio USD</label>
+                          <input type="number" formControlName="precioHistorico" step="0.01" min="0"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                          <input type="number" formControlName="cantidad" min="1"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+                        <div class="flex items-end">
+                          <button type="button" (click)="agregarDetalleAGrupo(gi)"
+                            class="w-full px-3 py-2 bg-everywhere-primary text-white rounded-lg hover:bg-everywhere-secondary transition-colors duration-200 text-sm">
+                            <i class="fas fa-plus mr-1"></i>
+                            Agregar
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <!-- Lista de detalles del grupo -->
-                <div *ngIf="grupo.detalles.length > 0" class="overflow-x-auto">
-                  <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                      <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Proveedor</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Precio USD</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total USD</th>
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                      <tr *ngFor="let detalle of grupo.detalles; let di = index">
-                        <td class="px-4 py-3 text-sm text-gray-900">{{ detalle.proveedor?.nombre || 'Sin proveedor' }}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-900">{{ detalle.producto?.tipo || 'Sin tipo' }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-900">{{ detalle.cantidad }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-900">${{ detalle.precioHistorico | number:'1.2-2' }}
-                        </td>
-                        <td class="px-4 py-3 text-sm font-medium text-gray-900">${{ detalle.total | number:'1.2-2' }}
-                        </td>
-                        <td class="px-4 py-3 text-right text-sm">
-                          <button type="button" (click)="eliminarDetalleDeGrupo(gi, di)"
-                            class="text-red-600 hover:text-red-900">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Resumen de Cotización -->
-          <div class="mb-8">
-            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-200">
-              <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-                <div
-                  class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
-                  <i class="fas fa-calculator text-white text-sm"></i>
-                </div>
-                Resumen de Cotización
-              </h3>
-
-              <div class="bg-white rounded-xl p-6 border border-emerald-100">
-                <div class="space-y-4">
-                  <!-- Tarifa Productos Fijos -->
-                  <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span class="text-gray-700 font-medium">Tarifa Productos Fijos:</span>
-                    <span class="font-semibold text-gray-900">${{ calcularTotalFijos() | number:'1.2-2' }} USD</span>
-                  </div>
-
-                  <!-- Tarifas por Grupo -->
-                  <div *ngFor="let grupo of gruposHoteles"
-                    class="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span class="text-gray-700 font-medium">Tarifa Grupo {{ grupo.categoria.nombre }}:</span>
-                    <span class="font-semibold text-gray-900">${{ grupo.total | number:'1.2-2' }} USD</span>
-                  </div>
-
-                  <!-- Cotización más económica -->
-                  <div
-                    class="flex justify-between items-center py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg px-4 border border-emerald-200">
-                    <span class="font-semibold text-gray-900 text-lg">Cotización más económica:</span>
-                    <span class="font-bold text-emerald-600 text-2xl">
-                      ${{ calcularCotizacionEconomica() | number:'1.2-2' }} USD
-                    </span>
+                  <!-- Lista de detalles del grupo -->
+                  <div *ngIf="grupo.detalles.length > 0" class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Proveedor
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Tipo
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Cantidad
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Precio USD
+                          </th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                            Total USD
+                          </th>
+                          <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                            Acciones
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody class="bg-white divide-y divide-gray-200">
+                        <tr *ngFor="let detalle of grupo.detalles; let di = index">
+                          <td class="px-4 py-3 text-sm text-gray-900">
+                            {{ detalle.proveedor?.nombre || 'Sin proveedor' }}
+                          </td>
+                          <td class="px-4 py-3 text-sm text-gray-900">
+                            {{ detalle.producto?.tipo || 'Sin tipo' }}
+                          </td>
+                          <td class="px-4 py-3 text-sm text-gray-900">{{ detalle.cantidad }}</td>
+                          <td class="px-4 py-3 text-sm text-gray-900">
+                            ${{ detalle.precioHistorico | number : '1.2-2' }}
+                          </td>
+                          <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                            ${{ detalle.total | number : '1.2-2' }}
+                          </td>
+                          <td class="px-4 py-3 text-right text-sm">
+                            <button type="button" (click)="eliminarDetalleDeGrupo(gi, di)"
+                              class="text-red-600 hover:text-red-900">
+                              <i class="fas fa-trash"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <!-- Observaciones -->
-          <div class="mb-8">
-            <div class="bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-6 border border-slate-200">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <div
-                  class="w-8 h-8 bg-gradient-to-r from-slate-500 to-gray-600 rounded-xl flex items-center justify-center mr-3">
-                  <i class="fas fa-sticky-note text-white text-sm"></i>
-                </div>
-                Observaciones
-              </h3>
-              <textarea formControlName="observacion" rows="4"
-                placeholder="Observaciones adicionales sobre la cotización..."
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none bg-white"></textarea>
-            </div>
-          </div>
-
-          <!-- Botones de acción -->
-          <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-            <div class="flex flex-col sm:flex-row gap-4 justify-end">
-              <button type="button" (click)="cerrarFormulario()"
-                class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-semibold flex items-center justify-center space-x-2">
-                <i class="fas fa-times"></i>
-                <span>Cancelar</span>
-              </button>
-              <button type="submit" [disabled]="cotizacionForm.invalid || isLoading"
-                class="px-8 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white rounded-xl hover:from-[#BF4968] hover:to-[#A04057] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg flex items-center justify-center space-x-2">
-                <span *ngIf="!isLoading" class="flex items-center space-x-2">
-                  <i class="fas fa-save"></i>
-                  <span>{{ editandoCotizacion ? 'Actualizar' : 'Crear' }} Cotización</span>
-                </span>
-                <span *ngIf="isLoading" class="flex items-center space-x-2">
-                  <i class="fas fa-spinner fa-spin"></i>
-                  <span>Guardando...</span>
-                </span>
-              </button>
             </div>
           </div>
         </div>
-      </div>
+
+        <!-- Resumen de Cotización -->
+        <div class="mb-6">
+          <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <div
+                class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
+                <i class="fas fa-calculator text-white text-sm"></i>
+              </div>
+              Resumen de Cotización
+            </h3>
+
+            <div class="bg-white rounded-xl p-6 border border-emerald-100">
+              <div class="space-y-4">
+                <!-- Tarifa Productos Fijos -->
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span class="text-gray-700 font-medium">Tarifa Productos Fijos:</span>
+                  <span class="font-semibold text-gray-900">${{ calcularTotalFijos() | number : '1.2-2' }} USD</span>
+                </div>
+
+                <!-- Tarifas por Grupo -->
+                <div *ngFor="let grupo of gruposHoteles"
+                  class="flex justify-between items-center py-2 border-b border-gray-100">
+                  <span class="text-gray-700 font-medium">Tarifa Grupo {{ grupo.categoria.nombre }}:</span>
+                  <span class="font-semibold text-gray-900">${{ grupo.total | number : '1.2-2' }} USD</span>
+                </div>
+
+                <!-- Cotización más económica -->
+                <div
+                  class="flex justify-between items-center py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg px-4 border border-emerald-200">
+                  <span class="font-semibold text-gray-900 text-lg">Cotización más económica:</span>
+                  <span class="font-bold text-emerald-600 text-2xl">
+                    ${{ calcularCotizacionEconomica() | number : '1.2-2' }} USD
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="mb-6">
+          <div class="bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-6 border border-slate-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <div
+                class="w-8 h-8 bg-gradient-to-r from-slate-500 to-gray-600 rounded-xl flex items-center justify-center mr-3">
+                <i class="fas fa-sticky-note text-white text-sm"></i>
+              </div>
+              Observaciones
+            </h3>
+            <textarea formControlName="observacion" rows="4"
+              placeholder="Observaciones adicionales sobre la cotización..."
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none bg-white"></textarea>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+          <div class="flex flex-col sm:flex-row gap-4 justify-end">
+            <button type="button" (click)="cerrarFormulario()"
+              class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-semibold flex items-center justify-center space-x-2">
+              <i class="fas fa-times"></i>
+              <span>Cancelar</span>
+            </button>
+            <button type="submit" [disabled]="cotizacionForm.invalid || isLoading"
+              class="px-8 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white rounded-xl hover:from-[#BF4968] hover:to-[#A04057] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg flex items-center justify-center space-x-2">
+              <span *ngIf="!isLoading" class="flex items-center space-x-2">
+                <i class="fas fa-save"></i>
+                <span>{{ editandoCotizacion ? 'Actualizar' : 'Crear' }} Cotización</span>
+              </span>
+              <span *ngIf="isLoading" class="flex items-center space-x-2">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Guardando...</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 </div>

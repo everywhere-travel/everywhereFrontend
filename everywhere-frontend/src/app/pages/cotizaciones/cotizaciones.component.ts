@@ -1,9 +1,10 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, importProvidersFrom } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { Subscription, of } from 'rxjs';
+import { LucideAngularModule } from 'lucide-angular';
 import { environment } from '../../../environments/environment';
 
 // Services
@@ -62,7 +63,7 @@ interface GrupoHotelTemp {
   standalone: true,
   templateUrl: './cotizaciones.component.html',
   styleUrls: ['./cotizaciones.component.css'],
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent]
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent, LucideAngularModule]
 })
 export class CotizacionesComponent implements OnInit, OnDestroy {
   // ===== CACHE AND MAPPING =====
@@ -83,7 +84,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private productoService = inject(ProductoService);
   private proveedorService = inject(ProveedorService);
   private categoriaService = inject(CategoriaService);
-  private cdr = inject(ChangeDetectorRef);
   private clienteSearchSubscription: Subscription | null = null;
 
   // ===== UI STATE =====
@@ -331,8 +331,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.cotizacionForm = this.fb.group({
       codigoCotizacion: [{ value: '', disabled: true }],
       personaId: ['', [Validators.required]],
-      fechaEmision: [{ value: '', disabled: true }],
-      fechaVencimiento: [{ value: '', disabled: true }],
+      fechaEmision: ['', [Validators.required]],
+      fechaVencimiento: ['', [Validators.required]],
       estadoCotizacionId: ['', [Validators.required]],
       sucursalId: ['', [Validators.required]],
       origenDestino: ['', [Validators.required]],
@@ -655,11 +655,21 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private setupDatesForNew(): void {
+    // Crear fecha actual en UTC-5 (Colombia/Perú)
     const now = new Date();
-    const vencimiento = new Date(now.getTime() + (20 * 60 * 60 * 1000)); // 20 horas después
+    const utcMinus5 = new Date(now.getTime() - (5 * 60 * 60 * 1000)); // UTC-5
+
+    // Crear fecha de vencimiento el mismo día a las 11pm UTC-5
+    const vencimiento = new Date(utcMinus5);
+    vencimiento.setHours(23, 0, 0, 0); // 11:00 PM, 0 minutos, 0 segundos, 0 milisegundos
+
+    // Si ya pasaron las 11pm del día actual, mover al siguiente día a las 11pm
+    if (utcMinus5.getHours() >= 23) {
+      vencimiento.setDate(vencimiento.getDate() + 1);
+    }
 
     this.cotizacionForm.patchValue({
-      fechaEmision: this.formatDateTimeLocal(now),
+      fechaEmision: this.formatDateTimeLocal(utcMinus5),
       fechaVencimiento: this.formatDateTimeLocal(vencimiento),
       codigoCotizacion: this.generateNextCode()
     });
@@ -799,20 +809,38 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Función para calcular el total en tiempo real del formulario de detalle
+  calcularTotalDetalle(): number {
+    const cantidad = this.detalleForm.get('cantidad')?.value || 0;
+    const precioUnitario = this.detalleForm.get('precioHistorico')?.value || 0;
+    return cantidad * precioUnitario;
+  }
+
   // Detalle cotización methods (Productos Fijos)
   agregarDetalleFijo(): void {
+    console.log('=== INICIO agregarDetalleFijo ===');
+    console.log('detallesFijos antes:', this.detallesFijos);
+    console.log('detallesFijos.length antes:', this.detallesFijos.length);
+
     if (this.detalleForm.invalid) {
+      console.log('Formulario inválido:', this.detalleForm.errors);
       this.markFormGroupTouched(this.detalleForm);
       return;
     }
 
     const formValue = this.detalleForm.value;
+    console.log('formValue:', formValue);
+    console.log('proveedores disponibles:', this.proveedores);
+    console.log('productos disponibles:', this.productos);
+
     let proveedor = null;
 
     // Handle proveedor
     if (formValue.proveedorId) {
       const proveedorId = Number(formValue.proveedorId);
+      console.log('Buscando proveedor con ID:', proveedorId);
       proveedor = this.proveedores.find(p => p.id === proveedorId) || null;
+      console.log('Proveedor encontrado:', proveedor);
     } else if (formValue.nuevoProveedor?.trim()) {
       // This would create a new proveedor, for now we'll simulate it
       proveedor = {
@@ -821,13 +849,29 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         creado: new Date().toISOString(),
         actualizado: new Date().toISOString()
       } as ProveedorResponse;
+      console.log('Proveedor nuevo creado:', proveedor);
     }
 
-    const producto = this.productos.find(p => p.id === Number(formValue.productoId));
+    let producto = null;
+    if (formValue.productoId) {
+      const productoId = Number(formValue.productoId);
+      console.log('Buscando producto con ID:', productoId);
+      producto = this.productos.find(p => p.id === productoId) || null;
+      console.log('Producto encontrado:', producto);
+    }
+
+    // Validar que tengamos al menos un producto
+    if (!producto) {
+      console.error('No se pudo encontrar el producto seleccionado');
+      this.errorMessage = 'Error: No se pudo encontrar el producto seleccionado';
+      setTimeout(() => this.errorMessage = '', 3000);
+      return;
+    }
+
     const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
-    const precioHistorico = formValue.precioHistorico || 0;
-    const comision = formValue.comision || 0;
-    const cantidad = formValue.cantidad || 1;
+    const precioHistorico = Number(formValue.precioHistorico) || 0;
+    const comision = Number(formValue.comision) || 0;
+    const cantidad = Number(formValue.cantidad) || 1;
     const unidad = formValue.unidad || 1;
 
     const nuevoDetalle: DetalleCotizacionTemp = {
@@ -839,25 +883,79 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       comision,
       cantidad,
       unidad,
-      total: precioHistorico + comision,
+      total: (precioHistorico * cantidad) + comision,
       isTemporary: true
     };
 
-    this.detallesFijos.push(nuevoDetalle);
-    this.detalleForm.reset({
-      cantidad: 1,
-      unidad: 1,
-      comision: 0,
-      precioHistorico: 0
-    });
-  }
+    console.log('nuevoDetalle creado:', nuevoDetalle);
+    console.log('- proveedor en detalle:', nuevoDetalle.proveedor);
+    console.log('- producto en detalle:', nuevoDetalle.producto);
 
-  eliminarDetalleFijo(index: number): void {
+    this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista
+
+    console.log('detallesFijos después del unshift:', this.detallesFijos);
+    console.log('detallesFijos.length después:', this.detallesFijos.length);
+
+    // Limpiar TODOS los campos del formulario después de agregar
+    this.detalleForm.patchValue({
+      proveedorId: '',        // Limpiar proveedor
+      productoId: '',         // Limpiar producto
+      descripcion: '',        // Limpiar descripción
+      precioHistorico: 0,     // Limpiar precio
+      comision: 0,           // Limpiar comisión
+      cantidad: 1            // Resetear cantidad a 1
+    });
+
+    // Mensaje de éxito
+    this.successMessage = 'Producto agregado correctamente';
+    setTimeout(() => this.successMessage = '', 3000);
+
+    console.log('=== FIN agregarDetalleFijo ===');
+  }  eliminarDetalleFijo(index: number): void {
     const detalle = this.detallesFijos[index];
     if (detalle.id && !detalle.isTemporary) {
       this.deletedDetalleIds.push(detalle.id);
     }
     this.detallesFijos.splice(index, 1);
+  }
+
+  // Métodos para manejar cambios directos en productos editables
+  onProductoChange(index: number, field: string, value: any): void {
+    if (index >= 0 && index < this.detallesFijos.length) {
+      const detalle = this.detallesFijos[index];
+
+      switch (field) {
+        case 'proveedorId':
+          detalle.proveedor = value ? this.proveedores.find(p => p.id === Number(value)) || null : null;
+          break;
+        case 'productoId':
+          detalle.producto = value ? this.productos.find(p => p.id === Number(value)) : undefined;
+          break;
+        case 'descripcion':
+          detalle.descripcion = value || '';
+          break;
+        case 'cantidad':
+          detalle.cantidad = Number(value) || 1;
+          this.recalcularTotalDetalle(index);
+          break;
+        case 'precioHistorico':
+          detalle.precioHistorico = Number(value) || 0;
+          this.recalcularTotalDetalle(index);
+          break;
+        case 'comision':
+          detalle.comision = Number(value) || 0;
+          this.recalcularTotalDetalle(index);
+          break;
+      }
+    }
+  }
+
+  // Recalcular total de un detalle específico
+  recalcularTotalDetalle(index: number): void {
+    if (index >= 0 && index < this.detallesFijos.length) {
+      const detalle = this.detallesFijos[index];
+      detalle.total = (detalle.precioHistorico * detalle.cantidad) + detalle.comision;
+    }
   }
 
   undoEliminarDetalle(): void {
@@ -1289,10 +1387,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       }
       // Create/update detalles
       await this.procesarDetalles(cotizacionResponse.id);
+
+      // Show success message
+      const successMessage = this.editandoCotizacion
+        ? 'Cotización actualizada exitosamente!'
+        : 'Cotización creada exitosamente!';
+      this.showSuccess(successMessage);
+
       // Reload data and close form
       await this.loadCotizaciones();
       this.cerrarFormulario();
     } catch (error) {
+      console.error('Error en onSubmitCotizacion:', error);
       this.showError('Error al guardar la cotización. Por favor, verifique los datos e intente nuevamente.');
     } finally {
       this.isLoading = false;
