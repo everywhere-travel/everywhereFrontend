@@ -28,5 +28,6 @@ export interface ViajeroResponse {
   fechaVencimientoDocumento: string;
   creado: string;
   actualizado: string;
+  genero: string;
   persona: PersonaResponse;
 }

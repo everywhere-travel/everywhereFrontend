@@ -97,4 +97,11 @@ export class ViajeroService {
   deleteById(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseURL}/${id}`);
   }
+
+  /**
+   * Exporta viajeros por IDs - llama al endpoint /export/json
+   */
+  exportViajeros(viajeroIds: number[]): Observable<ViajeroResponse[]> {
+    return this.http.post<ViajeroResponse[]>(`${this.baseURL}/export/json`, viajeroIds);
+  }
 }

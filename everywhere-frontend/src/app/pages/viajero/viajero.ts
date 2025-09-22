@@ -6,6 +6,21 @@ import { ViajeroService } from '../../core/service/viajero/viajero.service';
 import { ViajeroRequest, ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 
+// Interfaces for export functionality
+interface ExportedViajero {
+  id: number;
+  nombres: string;
+  apellidos: string;
+  nombreCompleto: string;
+  clasificacionEdad: 'Adulto' | 'Niño' | 'Infante';
+  genero: string;
+  fechaNacimiento: string;
+  numeroDocumento: string;
+  telefono: string;
+  email: string;
+  viajeroOriginal: ViajeroResponse;
+}
+
 @Component({
   selector: 'app-viajero',
   standalone: true,
@@ -176,6 +191,13 @@ export class Viajero implements OnInit {
   mostrarModalCrearViajero = false;
   editandoViajero: ViajeroResponse | null = null;
   isSubmitting = false;
+
+  // Export functionality
+  mostrarModalExportar = false;
+  viajerosProcesados: ExportedViajero[] = [];
+  exportandoViajeros = false;
+  copiandoTexto = false;
+  ultimoTextoCopiado = '';
 
   // Form
   viajeroForm: FormGroup;
@@ -782,7 +804,7 @@ export class Viajero implements OnInit {
     };
 
     if (this.editandoViajero) {
-      // Actualizar viajero existente 
+      // Actualizar viajero existente
 
       this.viajeroService.update(this.editandoViajero.id, viajeroRequest).subscribe({
         next: (response) => {
@@ -797,7 +819,7 @@ export class Viajero implements OnInit {
         }
       });
     } else {
-      // Crear nuevo viajero 
+      // Crear nuevo viajero
 
       this.viajeroService.save(viajeroRequest).subscribe({
         next: (response) => {
@@ -856,5 +878,254 @@ export class Viajero implements OnInit {
     }
     return pages;
   }
-  
+
+  // =================================================================
+  // EXPORT FUNCTIONALITY
+  // =================================================================
+
+  /**
+   * Abre el modal de exportación de viajeros seleccionados
+   */
+  exportarViajeros(): void {
+    if (this.selectedItems.length === 0) {
+      return;
+    }
+
+    this.exportandoViajeros = true;
+
+    // Llamada real al backend
+    this.viajeroService.exportViajeros(this.selectedItems).subscribe({
+      next: (viajerosExportados) => {
+        this.viajerosProcesados = this.procesarViajeros(viajerosExportados);
+        this.exportandoViajeros = false;
+        this.mostrarModalExportar = true;
+      },
+      error: (error) => {
+        console.error('Error al exportar viajeros:', error);
+        // Fallback: procesar localmente si falla el backend
+        const viajerosFiltrados = this.viajeros.filter(v => this.selectedItems.includes(v.id));
+        this.viajerosProcesados = this.procesarViajeros(viajerosFiltrados);
+        this.exportandoViajeros = false;
+        this.mostrarModalExportar = true;
+      }
+    });
+  }
+
+  /**
+   * Procesa y clasifica los viajeros según las especificaciones
+   */
+  private procesarViajeros(viajeros: ViajeroResponse[]): ExportedViajero[] {
+    const procesados = viajeros.map(viajero => {
+      const edad = this.calcularEdad(viajero.fechaNacimiento);
+      const clasificacion = this.clasificarPorEdad(edad);
+
+      return {
+        id: viajero.id,
+        nombres: viajero.nombres,
+        apellidos: `${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`.trim(),
+        nombreCompleto: `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`.trim(),
+        clasificacionEdad: clasificacion,
+        genero: 'No especificado', // Campo no disponible en el modelo actual
+        fechaNacimiento: this.formatDateForExport(viajero.fechaNacimiento),
+        numeroDocumento: viajero.numeroDocumento,
+        telefono: viajero.persona?.telefono || '',
+        email: viajero.persona?.email || 'vmroxana28@gmail.com',
+        viajeroOriginal: viajero
+      };
+    });
+
+    // Ordenar según especificaciones: Adultos -> Niños -> Infantes
+    return procesados.sort((a, b) => {
+      const ordenPrioridad = { 'Adulto': 1, 'Niño': 2, 'Infante': 3 };
+      return ordenPrioridad[a.clasificacionEdad] - ordenPrioridad[b.clasificacionEdad];
+    });
+  }
+
+  /**
+   * Calcula la edad en años a partir de una fecha de nacimiento
+   */
+  private calcularEdad(fechaNacimiento: string): number {
+    const hoy = new Date();
+    const nacimiento = new Date(fechaNacimiento);
+    let edad = hoy.getFullYear() - nacimiento.getFullYear();
+    const mes = hoy.getMonth() - nacimiento.getMonth();
+
+    if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+      edad--;
+    }
+
+    return edad;
+  }
+
+  /**
+   * Clasifica al viajero por edad según las especificaciones
+   */
+  private clasificarPorEdad(edad: number): 'Adulto' | 'Niño' | 'Infante' {
+    if (edad < 2) {
+      return 'Infante';
+    } else if (edad <= 11) {
+      return 'Niño';
+    } else {
+      return 'Adulto';
+    }
+  }
+
+  /**
+   * Formatea fecha para exportación (dd/mm/yyyy)
+   */
+  private formatDateForExport(fecha: string): string {
+    const date = new Date(fecha);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  /**
+   * Cierra el modal de exportación
+   */
+  cerrarModalExportar(): void {
+    this.mostrarModalExportar = false;
+    this.viajerosProcesados = [];
+  }
+
+  /**
+   * Obtiene el ícono para cada clasificación de edad
+   */
+  getClasificacionIcon(clasificacion: string): string {
+    switch (clasificacion) {
+      case 'Adulto': return 'fas fa-user';
+      case 'Niño': return 'fas fa-child';
+      case 'Infante': return 'fas fa-baby';
+      default: return 'fas fa-user';
+    }
+  }
+
+  /**
+   * Obtiene la clase CSS para cada clasificación de edad
+   */
+  getClasificacionClass(clasificacion: string): string {
+    switch (clasificacion) {
+      case 'Adulto': return 'bg-blue-100 text-blue-800';
+      case 'Niño': return 'bg-green-100 text-green-800';
+      case 'Infante': return 'bg-pink-100 text-pink-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  }
+
+  /**
+   * Obtiene el conteo de viajeros por clasificación
+   */
+  getCountByClassification(clasificacion: 'Adulto' | 'Niño' | 'Infante'): number {
+    return this.viajerosProcesados.filter(v => v.clasificacionEdad === clasificacion).length;
+  }
+
+  /**
+   * Descarga los datos procesados como archivo JSON
+   */
+  descargarJSON(): void {
+    const dataStr = JSON.stringify(this.viajerosProcesados, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `viajeros_exportados_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+
+    // Limpiar el objeto URL
+    URL.revokeObjectURL(link.href);
+  }
+
+  /**
+   * Copia texto al portapapeles y muestra confirmación visual
+   */
+  async copiarAlPortapapeles(texto: string, campo: string): Promise<void> {
+    try {
+      this.copiandoTexto = true;
+      this.ultimoTextoCopiado = campo;
+
+      await navigator.clipboard.writeText(texto);
+      console.log(`${campo} copiado al portapapeles: ${texto}`);
+
+      // Mostrar feedback visual por 2 segundos
+      setTimeout(() => {
+        this.copiandoTexto = false;
+        this.ultimoTextoCopiado = '';
+      }, 2000);
+
+    } catch (err) {
+      console.error('Error al copiar al portapapeles:', err);
+      // Fallback para navegadores que no soportan clipboard API
+      this.copiarConFallback(texto);
+      this.copiandoTexto = false;
+    }
+  }
+
+  /**
+   * Método fallback para copiar texto en navegadores antiguos
+   */
+  private copiarConFallback(texto: string): void {
+    const textArea = document.createElement('textarea');
+    textArea.value = texto;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      document.execCommand('copy');
+      console.log('Texto copiado usando fallback');
+    } catch (err) {
+      console.error('Error en fallback de copia:', err);
+    }
+
+    document.body.removeChild(textArea);
+  }
+
+  /**
+   * Copia todos los datos de un viajero en formato estructurado
+   */
+  async copiarTodosLosDatos(viajero: ExportedViajero): Promise<void> {
+    const datosCompletos = `DATOS DEL VIAJERO
+═══════════════════
+
+👤 INFORMACIÓN PERSONAL
+Nombres: ${viajero.nombres}
+Apellidos: ${viajero.apellidos}
+Nombre Completo: ${viajero.nombreCompleto}
+Clasificación: ${viajero.clasificacionEdad}
+Género: ${viajero.genero}
+Fecha de Nacimiento: ${viajero.fechaNacimiento}
+Número de Documento: ${viajero.numeroDocumento}
+
+📞 CONTACTO
+Teléfono: ${viajero.telefono || 'No disponible'}
+Email: ${viajero.email}
+
+🆔 DETALLES ADICIONALES
+ID: #${viajero.id}
+Nacionalidad: ${viajero.viajeroOriginal.nacionalidad}
+Tipo de Documento: ${viajero.viajeroOriginal.tipoDocumento}
+
+────────────────────
+Exportado el: ${new Date().toLocaleString()}`;
+
+    await this.copiarAlPortapapeles(datosCompletos, 'Datos Completos del Viajero');
+  }
+
+  /**
+   * Copia solo los nombres del viajero
+   */
+  async copiarSoloNombres(viajero: ExportedViajero): Promise<void> {
+    await this.copiarAlPortapapeles(viajero.nombres, 'Solo Nombres');
+  }
+
+  /**
+   * Copia solo los apellidos del viajero
+   */
+  async copiarSoloApellidos(viajero: ExportedViajero): Promise<void> {
+    await this.copiarAlPortapapeles(viajero.apellidos, 'Solo Apellidos');
+  }
+
 }
