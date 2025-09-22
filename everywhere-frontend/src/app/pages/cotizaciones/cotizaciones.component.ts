@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { Subscription, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 // Services
@@ -83,6 +83,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private productoService = inject(ProductoService);
   private proveedorService = inject(ProveedorService);
   private categoriaService = inject(CategoriaService);
+  private cdr = inject(ChangeDetectorRef);
+  private clienteSearchSubscription: Subscription | null = null;
 
   // ===== UI STATE =====
   isLoading = false;
@@ -234,7 +236,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   detalleForm!: FormGroup;
   grupoHotelForm!: FormGroup;
   nuevaCategoriaForm!: FormGroup;
-  clienteSearchControl!: FormControl;
+  clienteSearchControl: FormControl = new FormControl('');
 
   // ===== DATA ARRAYS =====
   cotizaciones: CotizacionResponse[] = [];
@@ -277,10 +279,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForms();
     this.loadInitialData();
+    this.setupClienteSearch();
   }
 
   ngOnDestroy(): void {
     // Limpiar intervalo si existe
+    this.clienteSearchSubscription?.unsubscribe();
     if (this.intervaloPulsacion) {
       clearInterval(this.intervaloPulsacion);
       this.intervaloPulsacion = null;
@@ -316,9 +320,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.searchForm = this.fb.group({
       searchTerm: ['']
     });
-
-    // Client search control for real-time search
-    this.clienteSearchControl = new FormControl('');
 
     // Nueva categoría form
     this.nuevaCategoriaForm = this.fb.group({
@@ -373,47 +374,46 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private setupClienteSearch(): void {
-    // Inicializar con todos los clientes disponibles
-    if (this.todosLosClientes.length > 0) {
-      this.personasEncontradas = [...this.todosLosClientes];
-      this.buscandoClientes = false; // IMPORTANTE: Asegurar que NO esté buscando
-      console.log('Clientes inicializados en setupClienteSearch:', this.personasEncontradas.length); // Debug
+    // Asegurar que tenemos la lista completa de clientes
+    if (this.personas.length > 0) {
+      this.todosLosClientes = [...this.personas];
     }
 
-    this.clienteSearchControl.valueChanges
+    // Mostrar todos los clientes inicialmente
+    this.personasEncontradas = [...this.todosLosClientes];
+    this.buscandoClientes = false;
+
+    this.clienteSearchSubscription?.unsubscribe();
+
+    this.clienteSearchSubscription = this.clienteSearchControl.valueChanges
       .pipe(
-        debounceTime(200), // Reducido para respuesta más rápida
+        debounceTime(300), // Reducido para respuesta más rápida
         distinctUntilChanged(),
         switchMap(searchTerm => {
           this.buscandoClientes = true;
           const termino = searchTerm?.trim() || '';
-          
+
           // Si no hay término de búsqueda, mostrar todos los clientes
-          if (!termino) {
-            this.buscandoClientes = false; // No buscar si no hay término
-            return of(this.todosLosClientes);
-          }
-          
-          return this.buscarClientesEnTiempoReal(termino);
-        })
-      )
-      .subscribe(
-        (resultados) => {
+          const resultados = this.todosLosClientes.filter(persona =>
+            this.getClienteDisplayName(persona).toLowerCase().includes(termino)
+          );
           this.personasEncontradas = resultados;
           this.buscandoClientes = false;
-        },
-        (error) => {
-          console.error('Error en búsqueda de clientes:', error);
-          this.personasEncontradas = this.todosLosClientes;
+          return of(null);
+        })
+      )
+      .subscribe({
+        error: (err) => {
+          console.error('Error en la búsqueda de clientes:', err);
           this.buscandoClientes = false;
         }
-      );
+      });
   }
 
   private loadInitialData(): void {
     this.isLoading = true;
 
-    // 🔄 Cargar personas PRIMERO antes que las cotizaciones
+    // Cargar personas PRIMERO antes que las cotizaciones
     Promise.all([
       this.loadPersonas(),
       this.loadFormasPago(),
@@ -423,26 +423,16 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.loadProveedores(),
       this.loadCategorias()
     ]).then(() => {
-      // 🔄 Después de cargar todo lo demás, cargar cotizaciones
-
       return this.loadCotizaciones();
     }).finally(() => {
       this.isLoading = false;
-      
-      // Configurar búsqueda de clientes DESPUÉS de cargar todos los datos
-      this.setupClienteSearch();
-      console.log('Setup completo. Clientes disponibles:', this.personasEncontradas.length); // Debug
     });
   }
 
   private async loadCotizaciones(): Promise<void> {
     try {
-
-
       this.cotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
-
       this.filterCotizaciones();
-
     } catch (error) {
       this.showError('Error al cargar las cotizaciones. Por favor, recargue la página.');
       this.cotizaciones = [];
@@ -451,24 +441,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadPersonas(): Promise<void> {
     try {
-
-
       // Cargar personas naturales
       const personasNaturales = await this.personaNaturalService.findAll().toPromise() || [];
-
-
       // Cargar personas jurídicas
       const personasJuridicas = await this.personaJuridicaService.findAll().toPromise() || [];
-
-
       // Combinar ambas listas
       this.personas = [...personasNaturales, ...personasJuridicas];
-      
       // Almacenar todos los clientes para el filtrado inicial
       this.todosLosClientes = [...this.personas];
       this.personasEncontradas = [...this.todosLosClientes]; // Mostrar todos los clientes inicialmente
-      
-      console.log('Clientes cargados:', this.personasEncontradas.length); // Debug
 
       // Poblar cache y display map para evitar llamadas HTTP posteriores
       this.personas.forEach(persona => {
@@ -479,7 +460,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
             nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
-
           const cached = this.personasCache[persona.id];
           this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
         }
@@ -506,7 +486,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       this.estadosCotizacion = await this.estadoCotizacionService.getAllEstadosCotizacion().toPromise() || [];
     } catch (error) {
-
       this.estadosCotizacion = [];
     }
   }
@@ -515,7 +494,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
     } catch (error) {
-
       this.sucursales = [];
     }
   }
@@ -524,7 +502,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       this.productos = await this.productoService.getAllProductos().toPromise() || [];
     } catch (error) {
-
       this.productos = [];
     }
   }
@@ -533,7 +510,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       this.proveedores = await this.proveedorService.findAllProveedor().toPromise() || [];
     } catch (error) {
-
       this.proveedores = [];
     }
   }
@@ -542,20 +518,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       this.categorias = [];
       const response = await this.categoriaService.findAll().toPromise();
-
       this.categorias = response || [];
-
     } catch (error) {
-
-
-
-      // 🔍 Información adicional de debugging
-      if (error && typeof error === 'object') {
-
-
-
-      }
-
       this.categorias = [];
     }
   }
@@ -599,21 +563,56 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Form methods
   async mostrarFormularioCrear(): Promise<void> {
-    this.resetForm();
-    this.mostrarFormulario = true;
-    this.editandoCotizacion = false;
-    this.setupDatesForNew();
+    try {
+      this.isLoading = true; // Inicia la carga, igual que en 'editar'
 
-    await this.loadCategorias();
+      // Asegura que los clientes estén cargados antes de continuar
+      if (this.todosLosClientes.length === 0) {
+        await this.loadPersonas();
+      }
+
+      this.resetForm(); // Prepara el formulario y la lista de clientes
+      this.editandoCotizacion = false;
+      this.cotizacionEditandoId = null;
+      this.setupDatesForNew();
+      this.mostrarFormulario = true; // Abre el modal al final
+
+    } catch (error) {
+      console.error('Error al mostrar formulario:', error);
+      this.showError('Error al preparar el formulario de cotización');
+    } finally {
+      // Se asegura de que el indicador de carga se oculte siempre
+      this.isLoading = false;
+    }
   }
 
   async mostrarFormularioEditar(cotizacion: CotizacionResponse): Promise<void> {
-    this.editandoCotizacion = true;
-    this.cotizacionEditandoId = cotizacion.id;
-    this.mostrarFormulario = true;
+    try {
+      this.isLoading = true; // Inicia la carga
 
-    await this.loadCategorias();
-    this.loadCotizacionForEdit(cotizacion);
+      // Asegura que los datos base (clientes, categorías) estén disponibles
+      if (this.todosLosClientes.length === 0) {
+        await this.loadPersonas();
+      }
+      if (this.categorias.length === 0) {
+        await this.loadCategorias();
+      }
+
+      this.resetForm(); // Limpia el estado del formulario anterior
+      this.editandoCotizacion = true;
+      this.cotizacionEditandoId = cotizacion.id;
+
+      // Carga los datos específicos de la cotización que se va a editar
+      await this.loadCotizacionForEdit(cotizacion);
+
+      this.mostrarFormulario = true; // Muestra el modal con los datos ya cargados
+
+    } catch (error) {
+      this.showError('Error al cargar el formulario de edición');
+    } finally {
+      // Se asegura de que el indicador de carga se oculte, incluso si hay un error
+      this.isLoading = false;
+    }
   }
 
   cerrarFormulario(): void {
@@ -624,28 +623,35 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private resetForm(): void {
+    // CORRECCIÓN: Damos valores iniciales a todos los campos del formulario
     this.cotizacionForm.reset({
+      personaId: '',
+      estadoCotizacionId: '',
+      sucursalId: '',
+      origenDestino: '',
+      fechaSalida: '',
+      fechaRegreso: '',
+      formaPagoId: '',
       cantAdultos: 1,
       cantNinos: 0,
-      moneda: 'USD'
+      moneda: 'USD',
+      observacion: ''
     });
+
+    // Limpieza de los detalles de la cotización
     this.detallesFijos = [];
     this.gruposHoteles = [];
     this.deletedDetalleIds = [];
 
-    // Reset client selection variables
-    this.personasEncontradas = [...this.todosLosClientes]; // Mostrar todos los clientes disponibles
-    
-    // FORZAR carga si está vacío
-    if (this.personasEncontradas.length === 0 && this.personas.length > 0) {
-      this.personasEncontradas = [...this.personas];
-    }
-    
+    // Reseteo de la selección de cliente
     this.clienteSeleccionado = null;
     this.buscandoClientes = false;
+
+    // LA LÍNEA CLAVE (que ya tenías): Rellena la lista de clientes para que se muestre
+    this.personasEncontradas = [...this.todosLosClientes];
+
+    // Limpia el campo de búsqueda visualmente
     this.clienteSearchControl.setValue('', { emitEvent: false });
-    
-    console.log('OpenModal - Clientes disponibles:', this.personasEncontradas.length); // Debug
   }
 
   private setupDatesForNew(): void {
@@ -768,9 +774,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private addDetalleToGrupoHotel(detalle: DetalleCotizacionResponse): void {
     const categoriaId = detalle.categoria?.id;
-
     let grupo = this.gruposHoteles.find(g => g.categoria.id === categoriaId);
-
     if (!grupo) {
       const categoriaObj = this.categorias.find(c => c.id === categoriaId);
 
@@ -1370,7 +1374,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     const request: DetalleCotizacionRequest = {
-      cantidad: detalle.cantidad || 1,                    // ✅ Default 1
+      cantidad: detalle.cantidad || 1,                   // ✅ Default 1
       unidad: detalle.unidad || 1,                       // ✅ Default 1
       descripcion: detalle.descripcion || '',            // ✅ Default empty
       categoria: categoria,                              // ✅ Cambio: categoriaId → categoria
@@ -1378,7 +1382,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       precioHistorico: detalle.precioHistorico || 0      // ✅ Default 0
     };
 
-    // ✅ Validación final antes de enviar
+    // Validación final antes de enviar
     if (!request.categoria) {
       throw new Error('categoria es requerido para crear detalle');
     }
@@ -1429,10 +1433,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       // Mostrar progreso en consola cada segundo
       if (this.tiempoPresionado % 1000 === 0)
 
-      // Después de 3 segundos (3000ms), proceder con eliminación
-      if (this.tiempoPresionado >= 3000) {
-        this.completarEliminacion();
-      }
+        // Después de 3 segundos (3000ms), proceder con eliminación
+        if (this.tiempoPresionado >= 3000) {
+          this.completarEliminacion();
+        }
     }, 100);
   }
 
@@ -1569,7 +1573,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // ============================================
   // CLIENT SEARCH METHODS (SIMPLIFIED)
   // ============================================
-  
+
   private async buscarClientesEnTiempoReal(searchTerm: string): Promise<(PersonaNaturalResponse | PersonaJuridicaResponse)[]> {
     if (!searchTerm || searchTerm.length < 1) {
       // Si no hay término de búsqueda, mostrar todos los clientes (primeros 20)
@@ -1588,16 +1592,16 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           const apellidos = (persona.apellidos || '').toLowerCase();
           const documento = (persona.documento || '').toLowerCase();
           const nombreCompleto = `${nombres} ${apellidos}`.trim();
-          
-          return nombres.includes(term) || 
-                 apellidos.includes(term) || 
-                 documento.includes(term) ||
-                 nombreCompleto.includes(term);
+
+          return nombres.includes(term) ||
+            apellidos.includes(term) ||
+            documento.includes(term) ||
+            nombreCompleto.includes(term);
         } else if ('razonSocial' in persona) {
           // Persona Jurídica
           const razonSocial = (persona.razonSocial || '').toLowerCase();
           const ruc = (persona.ruc || '').toLowerCase();
-          
+
           return razonSocial.includes(term) || ruc.includes(term);
         }
         return false;
@@ -1607,18 +1611,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       clientesFiltrados.sort((a, b) => {
         const aText = this.getClienteDisplayName(a).toLowerCase();
         const bText = this.getClienteDisplayName(b).toLowerCase();
-        
+
         const aStartsWith = aText.startsWith(term);
         const bStartsWith = bText.startsWith(term);
-        
+
         if (aStartsWith && !bStartsWith) return -1;
         if (!aStartsWith && bStartsWith) return 1;
-        
+
         return aText.length - bText.length; // Más corto = más relevante
       });
 
       return clientesFiltrados.slice(0, 20); // Máximo 20 resultados
-      
+
     } catch (error) {
       console.error('Error en búsqueda de clientes:', error);
       return this.todosLosClientes.slice(0, 20); // Fallback a mostrar todos
@@ -1627,8 +1631,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   clearClienteSearch(): void {
     this.clienteSearchControl.setValue('', { emitEvent: false });
-    // Al limpiar, mostrar todos los clientes nuevamente
-    this.personasEncontradas = [...this.todosLosClientes];
+    // Al limpiar, asegurar que se muestren todos los clientes
+    if (this.personas.length > 0) {
+      this.todosLosClientes = [...this.personas];
+      this.personasEncontradas = [...this.todosLosClientes];
+    }
     this.buscandoClientes = false;
   }
 
@@ -1643,7 +1650,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const personaId = typeof (persona as any).persona === 'object'
       ? (persona as any).persona.id
       : (persona as any).persona || persona.id;
-      
+
     this.clienteSeleccionado = persona;
     this.cotizacionForm.patchValue({ personaId: personaId });
     this.clearClienteSearch();
@@ -1651,41 +1658,28 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   getClienteType(persona: any): string {
     if (!persona) return 'Cliente';
-    
     // Si es personaDisplay (nuevo modelo unificado)
-    if ('tipo' in persona) {
-      return persona.tipo === 'JURIDICA' ? 'Persona Jurídica' : 'Persona Natural';
-    }
-    
+    if ('tipo' in persona) return persona.tipo === 'JURIDICA' ? 'Persona Jurídica' : 'Persona Natural';
     // Compatibilidad con modelos antiguos
-    if ('ruc' in persona && persona.ruc) {
-      return 'Persona Jurídica';
-    }
-    
+    if ('ruc' in persona && persona.ruc) return 'Persona Jurídica';
+
     return 'Persona Natural';
   }
 
   getClienteDocumento(persona: any): string {
     if (!persona) return '';
-    
     // Si es persona jurídica, devolver RUC
-    if ('ruc' in persona && persona.ruc) {
-      return persona.ruc;
-    }
-    
+    if ('ruc' in persona && persona.ruc) return persona.ruc;
     // Si es persona natural, devolver documento
-    if ('documento' in persona && persona.documento) {
-      return persona.documento;
-    }
-    
+    if ('documento' in persona && persona.documento) return persona.documento;
+
     return '';
   }
 
   hasDocumento(persona: any): boolean {
     if (!persona) return false;
-    
-    return ('documento' in persona && persona.documento) || 
-           ('ruc' in persona && persona.ruc);
+
+    return ('documento' in persona && persona.documento) || ('ruc' in persona && persona.ruc);
   }
 
   getSelectedClienteName(): string {
