@@ -911,6 +911,24 @@ export class Viajero implements OnInit {
   }
 
   /**
+   * Remover tildes y caracteres especiales de un texto
+   */
+  private removerTildes(texto: string): string {
+    return texto
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/ñ/g, 'n')
+      .replace(/Ñ/g, 'N');
+  }
+
+  /**
+   * Convierte nombres y apellidos a mayúsculas sin tildes para exportación
+   */
+  private formatearNombreParaExportacion(texto: string): string {
+    return this.removerTildes(texto).toUpperCase();
+  }
+
+  /**
    * Procesa y clasifica los viajeros según las especificaciones
    */
   private procesarViajeros(viajeros: ViajeroResponse[]): ExportedViajero[] {
@@ -918,11 +936,16 @@ export class Viajero implements OnInit {
       const edad = this.calcularEdad(viajero.fechaNacimiento);
       const clasificacion = this.clasificarPorEdad(edad);
 
+      // Formatear nombres para exportación (mayúsculas sin tildes)
+      const nombresFormateados = this.formatearNombreParaExportacion(viajero.nombres);
+      const apellidosFormateados = `${this.formatearNombreParaExportacion(viajero.apellidoPaterno)} ${this.formatearNombreParaExportacion(viajero.apellidoMaterno)}`.trim();
+      const nombreCompletoFormateado = `${nombresFormateados} ${apellidosFormateados}`.trim();
+
       return {
         id: viajero.id,
-        nombres: viajero.nombres,
-        apellidos: `${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`.trim(),
-        nombreCompleto: `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`.trim(),
+        nombres: nombresFormateados,
+        apellidos: apellidosFormateados,
+        nombreCompleto: nombreCompletoFormateado,
         clasificacionEdad: clasificacion,
         fechaNacimiento: this.formatDateForExport(viajero.fechaNacimiento),
         numeroDocumento: viajero.numeroDocumento,
