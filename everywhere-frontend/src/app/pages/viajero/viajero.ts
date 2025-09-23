@@ -13,7 +13,6 @@ interface ExportedViajero {
   apellidos: string;
   nombreCompleto: string;
   clasificacionEdad: 'Adulto' | 'Niño' | 'Infante';
-  genero: string;
   fechaNacimiento: string;
   numeroDocumento: string;
   telefono: string;
@@ -925,10 +924,9 @@ export class Viajero implements OnInit {
         apellidos: `${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`.trim(),
         nombreCompleto: `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`.trim(),
         clasificacionEdad: clasificacion,
-        genero: 'No especificado', // Campo no disponible en el modelo actual
         fechaNacimiento: this.formatDateForExport(viajero.fechaNacimiento),
         numeroDocumento: viajero.numeroDocumento,
-        telefono: viajero.persona?.telefono || '',
+        telefono: viajero.persona?.telefono || 'N/A',
         email: viajero.persona?.email || 'vmroxana28@gmail.com',
         viajeroOriginal: viajero
       };
@@ -1095,7 +1093,6 @@ Nombres: ${viajero.nombres}
 Apellidos: ${viajero.apellidos}
 Nombre Completo: ${viajero.nombreCompleto}
 Clasificación: ${viajero.clasificacionEdad}
-Género: ${viajero.genero}
 Fecha de Nacimiento: ${viajero.fechaNacimiento}
 Número de Documento: ${viajero.numeroDocumento}
 
