@@ -247,7 +247,7 @@
           <div class="flex gap-3">
             <button (click)="exportarViajeros()" [disabled]="exportandoViajeros"
               class="bg-white/20 border border-white/30 hover:bg-purple-600 hover:border-purple-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-              <i class="fas fa-download" [class.fa-spin]="exportandoViajeros"></i>
+              <i class="fas fa-download" [class.animate-pulse]="exportandoViajeros"></i>
               <span *ngIf="!exportandoViajeros">Exportar</span>
               <span *ngIf="exportandoViajeros">Procesando...</span>
             </button>
