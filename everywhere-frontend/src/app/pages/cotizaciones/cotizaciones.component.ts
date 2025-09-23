@@ -1905,9 +1905,24 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // ===== MÉTODOS PARA MODAL DE VISTA =====
   getTotalCotizacionCompleta(): number {
     if (!this.cotizacionCompleta?.detalles) return 0;
-    return this.cotizacionCompleta.detalles.reduce((total, detalle) => {
-      return total + ((detalle.precioHistorico || 0) + (detalle.comision || 0)) * (detalle.cantidad || 1);
-    }, 0);
+
+  const totalFijos = this.getTotalProductosFijos();
+
+  // Obtener las categorías no fijas (excluyendo categoría 1)
+  const categoriasNoFijas = this.getCategoriasNoFijas();
+  
+  if (categoriasNoFijas.length === 0) {
+    return totalFijos;
+  }
+
+  // Calcular el total de cada categoría y obtener el más económico
+  const totalesPorCategoria = categoriasNoFijas.map(categoria => 
+    this.getTotalCategoria(this.getDetallesByCategoria(categoria.id))
+  );
+
+  const grupoMasEconomico = Math.min(...totalesPorCategoria);
+  
+  return totalFijos + grupoMasEconomico;
   }
 
   getDetallesByCategoria(categoriaId: number): any[] {
