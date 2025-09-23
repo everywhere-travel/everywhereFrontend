@@ -668,6 +668,45 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   cerrarModalVer(): void {
     this.mostrarModalVer = false;
     this.cotizacionCompleta = null;
+    this.isLoading = false;
+  }
+
+  // Método para obtener subtotal de una categoría
+  getSubtotalCategoria(detalles: any[]): number {
+    return detalles.reduce((sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1), 0);
+  }
+
+  // Método para editar desde el modal
+  editarDesdeModa(): void {
+    if (this.cotizacionCompleta) {
+      this.mostrarFormularioEditar({ 
+        id: this.cotizacionCompleta.id, 
+        codigoCotizacion: this.cotizacionCompleta.codigoCotizacion 
+      } as any);
+      this.cerrarModalVer();
+    }
+  }
+
+  // Métodos auxiliares para la visualización
+  getCategoriasNoFijas(): any[] {
+    return this.getCategoriasConDetalles().filter(c => c.id !== 1);
+  }
+
+  hasCategoriasNoFijas(): boolean {
+    return this.getCategoriasNoFijas().length > 0;
+  }
+
+  getTotalCategoria(detalles: any[]): number {
+    return detalles.reduce((sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1), 0);
+  }
+
+  getTotalProductosFijos(): number {
+    const fijos = this.getDetallesByCategoria(1);
+    return fijos.reduce((sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1), 0);
+  }
+
+  hasProductosFijos(): boolean {
+    return this.getDetallesByCategoria(1).length > 0;
   }
 
   cerrarFormulario(): void {
@@ -1897,22 +1936,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     });
     
     return Array.from(categoriasMap.values());
-  }
-
-  getSubtotalCategoria(detalles: any[]): number {
-    return detalles.reduce((sum, d) => {
-      return sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1);
-    }, 0);
-  }
-
-  editarDesdeModa(): void {
-    if (this.cotizacionCompleta) {
-      this.cerrarModalVer();
-      this.mostrarFormularioEditar({
-        id: this.cotizacionCompleta.id,
-        codigoCotizacion: this.cotizacionCompleta.codigoCotizacion
-      } as any);
-    }
   }
 
   // ============================================
