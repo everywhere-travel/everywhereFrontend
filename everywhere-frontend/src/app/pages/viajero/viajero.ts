@@ -59,9 +59,7 @@ export class Viajero implements OnInit {
       id: 'cotizaciones',
       title: 'Cotizaciones',
       icon: 'fas fa-file-invoice',
-      route: '/cotizaciones',
-      badge: '12',
-      badgeColor: 'blue'
+      route: '/cotizaciones'
     },
     {
       id: 'liquidaciones',
@@ -72,7 +70,7 @@ export class Viajero implements OnInit {
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box',
+      icon: 'fas fa-box', 
       children: [
         {
           id: 'productos',
@@ -91,6 +89,38 @@ export class Viajero implements OnInit {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores'
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      children: [
+        {
+          id: 'counters',
+          title: 'Counters',
+          icon: 'fas fa-users-line',
+          route: '/counters'
+        },
+        {
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales'
+        }
+      ]
+    },
+    {
+      id: 'archivos',
+      title: 'Gestión de Archivos',
+      icon: 'fas fa-folder', 
+      children: [
+        {
+          id: 'carpetas',
+          title: 'Explorador',
+          icon: 'fas fa-folder-open',
+          route: '/carpetas'
         }
       ]
     },

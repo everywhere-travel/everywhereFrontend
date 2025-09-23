@@ -43,7 +43,7 @@ export class ProveedorComponent implements OnInit {
     {
       id: 'clientes',
       title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
+      icon: 'fas fa-users', 
       children: [
         {
           id: 'personas',
@@ -80,7 +80,7 @@ export class ProveedorComponent implements OnInit {
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box',
+      icon: 'fas fa-box', 
       active: true,
       children: [
         {
@@ -100,6 +100,38 @@ export class ProveedorComponent implements OnInit {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores'
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      children: [
+        {
+          id: 'counters',
+          title: 'Counters',
+          icon: 'fas fa-users-line',
+          route: '/counters'
+        },
+        {
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales'
+        }
+      ]
+    },
+    {
+      id: 'archivos',
+      title: 'Gestión de Archivos',
+      icon: 'fas fa-folder', 
+      children: [
+        {
+          id: 'carpetas',
+          title: 'Explorador',
+          icon: 'fas fa-folder-open',
+          route: '/carpetas'
         }
       ]
     },

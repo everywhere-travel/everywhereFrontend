@@ -130,7 +130,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     {
       id: 'clientes',
       title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
+      icon: 'fas fa-users', 
       children: [
         {
           id: 'personas',
@@ -145,9 +145,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           route: '/viajero'
         },
         {
-          id: 'viajero-frecuente',
-          title: 'Viajero Frecuente',
-          icon: 'fas fa-star',
+          id: 'viajeros-frecuentes',
+          title: 'Viajeros Frecuentes',
+          icon: 'fas fa-crown',
           route: '/viajero-frecuente'
         }
       ]
@@ -155,9 +155,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     {
       id: 'cotizaciones',
       title: 'Cotizaciones',
-      icon: 'fas fa-file-invoice-dollar',
-      active: true,
-      route: '/cotizaciones'
+      icon: 'fas fa-file-invoice',
+      route: '/cotizaciones',
+      active: true
     },
     {
       id: 'liquidaciones',
@@ -168,7 +168,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box',
+      icon: 'fas fa-box', 
       children: [
         {
           id: 'productos',
@@ -187,6 +187,38 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores'
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      children: [
+        {
+          id: 'counters',
+          title: 'Counters',
+          icon: 'fas fa-users-line',
+          route: '/counters'
+        },
+        {
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales'
+        }
+      ]
+    },
+    {
+      id: 'archivos',
+      title: 'Gestión de Archivos',
+      icon: 'fas fa-folder', 
+      children: [
+        {
+          id: 'carpetas',
+          title: 'Explorador',
+          icon: 'fas fa-folder-open',
+          route: '/carpetas'
         }
       ]
     },

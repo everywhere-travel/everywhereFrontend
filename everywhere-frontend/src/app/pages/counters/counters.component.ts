@@ -42,22 +42,40 @@ export class CountersComponent implements OnInit {
       route: '/dashboard'
     },
     {
-      id: 'cotizaciones',
-      title: 'Cotizaciones',
-      icon: 'fas fa-file-invoice-dollar',
-      route: '/cotizaciones'
+      id: 'clientes',
+      title: 'Gestión de Clientes',
+      icon: 'fas fa-users', 
+      children: [
+        {
+          id: 'personas',
+          title: 'Clientes',
+          icon: 'fas fa-address-card',
+          route: '/personas'
+        },
+        {
+          id: 'viajeros',
+          title: 'Viajeros',
+          icon: 'fas fa-passport',
+          route: '/viajero'
+        },
+        {
+          id: 'viajeros-frecuentes',
+          title: 'Viajeros Frecuentes',
+          icon: 'fas fa-crown',
+          route: '/viajero-frecuente'
+        }
+      ]
     },
     {
-      id: 'counters',
-      title: 'Counters',
-      icon: 'fas fa-tachometer-alt',
-      route: '/counters',
-      active: true
+      id: 'cotizaciones',
+      title: 'Cotizaciones',
+      icon: 'fas fa-file-invoice',
+      route: '/cotizaciones'
     },
     {
       id: 'liquidaciones',
       title: 'Liquidaciones',
-      icon: 'fas fa-calculator',
+      icon: 'fas fa-credit-card',
       route: '/liquidaciones'
     },
     {
@@ -70,6 +88,89 @@ export class CountersComponent implements OnInit {
           title: 'Productos',
           icon: 'fas fa-cube',
           route: '/productos'
+        },
+        {
+          id: 'proveedores',
+          title: 'Proveedores',
+          icon: 'fas fa-truck',
+          route: '/proveedores'
+        },
+        {
+          id: 'operadores',
+          title: 'Operadores',
+          icon: 'fas fa-headset',
+          route: '/operadores'
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      active: true,
+      children: [
+        {
+          id: 'counters',
+          title: 'Counters',
+          icon: 'fas fa-users-line',
+          route: '/counters'
+        },
+        {
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales'
+        }
+      ]
+    },
+    {
+      id: 'archivos',
+      title: 'Gestión de Archivos',
+      icon: 'fas fa-folder', 
+      children: [
+        {
+          id: 'carpetas',
+          title: 'Explorador',
+          icon: 'fas fa-folder-open',
+          route: '/carpetas'
+        }
+      ]
+    },
+    {
+      id: 'reportes',
+      title: 'Reportes y Analytics',
+      icon: 'fas fa-chart-bar',
+      children: [
+        {
+          id: 'estadisticas',
+          title: 'Estadísticas',
+          icon: 'fas fa-chart-line',
+          route: '/estadistica'
+        },
+        {
+          id: 'reportes-general',
+          title: 'Reportes Generales',
+          icon: 'fas fa-file-pdf',
+          route: '/reportes'
+        }
+      ]
+    },
+    {
+      id: 'configuracion',
+      title: 'Configuración',
+      icon: 'fas fa-cog',
+      children: [
+        {
+          id: 'usuarios',
+          title: 'Usuarios',
+          icon: 'fas fa-user-shield',
+          route: '/usuarios'
+        },
+        {
+          id: 'sistema',
+          title: 'Sistema',
+          icon: 'fas fa-server',
+          route: '/configuracion'
         }
       ]
     }
