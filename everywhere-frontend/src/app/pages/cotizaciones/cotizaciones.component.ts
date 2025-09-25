@@ -88,6 +88,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // ===== UI STATE =====
   isLoading = false;
+  loading: boolean = false;
   mostrarModalCrear = false;
   mostrarFormulario = false;
   editandoCotizacion = false;
@@ -95,6 +96,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   mostrarModalVer = false;
   sidebarCollapsed = false;
   currentView: 'table' | 'cards' | 'list' = 'table';
+
+  // Estadísticas
+  totalCotizaciones = 0;
 
   // ===== MESSAGES =====
   errorMessage: string = '';
@@ -132,7 +136,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     {
       id: 'clientes',
       title: 'Gestión de Clientes',
-      icon: 'fas fa-users', 
+      icon: 'fas fa-users',
       children: [
         {
           id: 'personas',
@@ -170,7 +174,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box', 
+      icon: 'fas fa-box',
       children: [
         {
           id: 'productos',
@@ -214,7 +218,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     {
       id: 'archivos',
       title: 'Gestión de Archivos',
-      icon: 'fas fa-folder', 
+      icon: 'fas fa-folder',
       children: [
         {
           id: 'carpetas',
@@ -290,6 +294,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // ===== SEARCH AND FILTERS =====
   searchTerm = '';
   filteredCotizaciones: CotizacionResponse[] = [];
+  cotizacionesFiltradas: CotizacionConDetallesResponseDTO[] = [];
 
   // ===== CLIENT SELECTION =====
   personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
@@ -465,11 +470,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadCotizaciones(): Promise<void> {
     try {
+      this.loading = true;
+      this.isLoading = true;
+
       this.cotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
       this.filterCotizaciones();
     } catch (error) {
       this.showError('Error al cargar las cotizaciones. Por favor, recargue la página.');
       this.cotizaciones = [];
+    } finally {
+      this.loading = false;
+      this.isLoading = false;
     }
   }
 
@@ -490,12 +501,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         if (persona.id) {
           this.personasCache[persona.id] = {
             id: persona.id,
-            identificador: persona.ruc || persona.dni || persona.cedula || '',
+            identificador: persona.ruc || persona.documento || persona.cedula || '',
             nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
           const cached = this.personasCache[persona.id];
-          this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+          // Mejorar el formato del display para asegurar que se muestre el documento
+          if (cached.identificador) {
+            this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+          } else {
+            this.personasDisplayMap[persona.id] = cached.nombre;
+          }
         }
       });
 
@@ -592,6 +608,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           cotizacion.origenDestino?.toLowerCase().includes(term);
       });
     }
+    // Update totalItems after filtering
+    this.totalItems = this.filteredCotizaciones.length;
     this.updateSelectionState();
   }
 
@@ -652,12 +670,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   async mostrarModalVerCotizacion(cotizacion: CotizacionResponse): Promise<void> {
     try {
       this.isLoading = true;
-      
+
       // Cargar datos completos de la cotización
       await this.loadCotizacionCompleta(cotizacion.id);
-      
+
       this.mostrarModalVer = true;
-      
+
     } catch (error) {
       this.showError('Error al cargar los detalles de la cotización');
     } finally {
@@ -679,9 +697,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // Método para editar desde el modal
   editarDesdeModa(): void {
     if (this.cotizacionCompleta) {
-      this.mostrarFormularioEditar({ 
-        id: this.cotizacionCompleta.id, 
-        codigoCotizacion: this.cotizacionCompleta.codigoCotizacion 
+      this.mostrarFormularioEditar({
+        id: this.cotizacionCompleta.id,
+        codigoCotizacion: this.cotizacionCompleta.codigoCotizacion
       } as any);
       this.cerrarModalVer();
     }
@@ -794,7 +812,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       // MEJORA: Usar el nuevo método que trae TODOS los detalles
       this.cotizacionCompleta = await this.cotizacionService.getCotizacionConDetalles(cotizacionId).toPromise() || null;
-      
+
       if (!this.cotizacionCompleta) {
         throw new Error('No se pudo cargar la cotización completa');
       }
@@ -803,7 +821,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       if (this.editandoCotizacion) {
         await this.populateFormFromCotizacionCompleta(this.cotizacionCompleta);
       }
-      
+
     } catch (error) {
       console.error('Error al cargar cotización completa:', error);
       this.showError('Error al cargar los datos completos de la cotización.');
@@ -875,7 +893,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private addDetalleToGrupoHotelFromCompleta(detalle: any, categoria: any): void {
     const categoriaId = categoria?.id;
     let grupo = this.gruposHoteles.find(g => g.categoria.id === categoriaId);
-    
+
     if (!grupo && categoria) {
       grupo = {
         categoria: categoria,
@@ -1079,7 +1097,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       isTemporary: true
     };
 
-    this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista 
+    this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista
 
     // Limpiar TODOS los campos del formulario después de agregar
     this.detalleForm.patchValue({
@@ -1096,7 +1114,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     setTimeout(() => this.successMessage = '', 3000);
 
     console.log('=== FIN agregarDetalleFijo ===');
-  }  eliminarDetalleFijo(index: number): void {
+  } eliminarDetalleFijo(index: number): void {
     const detalle = this.detallesFijos[index];
     if (detalle.id && !detalle.isTemporary) {
       this.deletedDetalleIds.push(detalle.id);
@@ -1906,23 +1924,23 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   getTotalCotizacionCompleta(): number {
     if (!this.cotizacionCompleta?.detalles) return 0;
 
-  const totalFijos = this.getTotalProductosFijos();
+    const totalFijos = this.getTotalProductosFijos();
 
-  // Obtener las categorías no fijas (excluyendo categoría 1)
-  const categoriasNoFijas = this.getCategoriasNoFijas();
-  
-  if (categoriasNoFijas.length === 0) {
-    return totalFijos;
-  }
+    // Obtener las categorías no fijas (excluyendo categoría 1)
+    const categoriasNoFijas = this.getCategoriasNoFijas();
 
-  // Calcular el total de cada categoría y obtener el más económico
-  const totalesPorCategoria = categoriasNoFijas.map(categoria => 
-    this.getTotalCategoria(this.getDetallesByCategoria(categoria.id))
-  );
+    if (categoriasNoFijas.length === 0) {
+      return totalFijos;
+    }
 
-  const grupoMasEconomico = Math.min(...totalesPorCategoria);
-  
-  return totalFijos + grupoMasEconomico;
+    // Calcular el total de cada categoría y obtener el más económico
+    const totalesPorCategoria = categoriasNoFijas.map(categoria =>
+      this.getTotalCategoria(this.getDetallesByCategoria(categoria.id))
+    );
+
+    const grupoMasEconomico = Math.min(...totalesPorCategoria);
+
+    return totalFijos + grupoMasEconomico;
   }
 
   getDetallesByCategoria(categoriaId: number): any[] {
@@ -1932,13 +1950,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   getCategoriasConDetalles(): any[] {
     if (!this.cotizacionCompleta?.detalles) return [];
-    
+
     const categoriasMap = new Map();
-    
+
     this.cotizacionCompleta.detalles.forEach(detalle => {
       const categoriaId = detalle.categoria?.id || 1;
       const categoriaNombre = detalle.categoria?.nombre || 'Productos Fijos';
-      
+
       if (!categoriasMap.has(categoriaId)) {
         categoriasMap.set(categoriaId, {
           id: categoriaId,
@@ -1946,10 +1964,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           detalles: []
         });
       }
-      
+
       categoriasMap.get(categoriaId).detalles.push(detalle);
     });
-    
+
     return Array.from(categoriasMap.values());
   }
 
@@ -2125,7 +2143,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   refreshData(): void {
-    this.loadProductos();
+    this.loadCotizaciones();
   }
 
   editarSeleccionados(): void {
@@ -2203,6 +2221,22 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
   }
 
+  calcularEstadisticas(): void {
+    this.totalCotizaciones = this.cotizaciones.length;
+  }
+
+
+  get totalPages(): number {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    return Math.ceil(this.totalItems / itemsPerPageNum);
+  }
+
+  onItemsPerPageChange(): void {
+    this.itemsPerPage = Number(this.itemsPerPage);
+    this.currentPage = 1;
+    this.calcularEstadisticas();
+  }
+
   // Métodos para selección múltiple
   toggleAllSelection(): void {
     if (this.allSelected) {
@@ -2225,5 +2259,35 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   isSelected(id: number): boolean {
     return this.selectedItems.includes(id);
+  }
+
+    // Métodos para paginación (remover el getter duplicado)
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+
+    if (end - start < 2 * delta) {
+      if (start === 1) {
+        end = Math.min(total, start + 2 * delta);
+      } else if (end === total) {
+        start = Math.max(1, end - 2 * delta);
+      }
+    }
+
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 }
