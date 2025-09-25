@@ -22,7 +22,7 @@ import { CategoriaService } from '../../core/service/Categoria/categoria.service
 
 import { personaDisplay } from '../../shared/models/Persona/persona.model';
 // Models
-import { CotizacionRequest, CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
+import { CotizacionRequest, CotizacionResponse, CotizacionConDetallesResponseDTO } from '../../shared/models/Cotizacion/cotizacion.model';
 import { DetalleCotizacionRequest, DetalleCotizacionResponse } from '../../shared/models/Cotizacion/detalleCotizacion.model';
 import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
@@ -88,12 +88,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // ===== UI STATE =====
   isLoading = false;
+  loading: boolean = false;
   mostrarModalCrear = false;
   mostrarFormulario = false;
   editandoCotizacion = false;
   mostrarGestionGrupos = false;
+  mostrarModalVer = false;
   sidebarCollapsed = false;
   currentView: 'table' | 'cards' | 'list' = 'table';
+
+  // Estadísticas
+  totalCotizaciones = 0;
 
   // ===== MESSAGES =====
   errorMessage: string = '';
@@ -103,6 +108,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // ===== SELECTION STATE =====
   cotizacionSeleccionada: CotizacionResponse | null = null;
+  cotizacionCompleta: CotizacionConDetallesResponseDTO | null = null;
   cotizacionEditandoId: number | null = null;
 
   selectedItems: number[] = [];
@@ -130,7 +136,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     {
       id: 'clientes',
       title: 'Gestión de Clientes',
-      icon: 'fas fa-users', 
+      icon: 'fas fa-users',
       children: [
         {
           id: 'personas',
@@ -168,7 +174,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box', 
+      icon: 'fas fa-box',
       children: [
         {
           id: 'productos',
@@ -212,7 +218,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     {
       id: 'archivos',
       title: 'Gestión de Archivos',
-      icon: 'fas fa-folder', 
+      icon: 'fas fa-folder',
       children: [
         {
           id: 'carpetas',
@@ -288,6 +294,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // ===== SEARCH AND FILTERS =====
   searchTerm = '';
   filteredCotizaciones: CotizacionResponse[] = [];
+  cotizacionesFiltradas: CotizacionConDetallesResponseDTO[] = [];
 
   // ===== CLIENT SELECTION =====
   personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
@@ -463,11 +470,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadCotizaciones(): Promise<void> {
     try {
+      this.loading = true;
+      this.isLoading = true;
+
       this.cotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
       this.filterCotizaciones();
     } catch (error) {
       this.showError('Error al cargar las cotizaciones. Por favor, recargue la página.');
       this.cotizaciones = [];
+    } finally {
+      this.loading = false;
+      this.isLoading = false;
     }
   }
 
@@ -488,12 +501,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         if (persona.id) {
           this.personasCache[persona.id] = {
             id: persona.id,
-            identificador: persona.ruc || persona.dni || persona.cedula || '',
+            identificador: persona.ruc || persona.documento || persona.cedula || '',
             nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
           const cached = this.personasCache[persona.id];
-          this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+          // Mejorar el formato del display para asegurar que se muestre el documento
+          if (cached.identificador) {
+            this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+          } else {
+            this.personasDisplayMap[persona.id] = cached.nombre;
+          }
         }
       });
 
@@ -590,6 +608,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           cotizacion.origenDestino?.toLowerCase().includes(term);
       });
     }
+    // Update totalItems after filtering
+    this.totalItems = this.filteredCotizaciones.length;
     this.updateSelectionState();
   }
 
@@ -634,8 +654,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.editandoCotizacion = true;
       this.cotizacionEditandoId = cotizacion.id;
 
-      // Carga los datos específicos de la cotización que se va a editar
-      await this.loadCotizacionForEdit(cotizacion);
+      // MEJORA: Usar getCotizacionConDetalles para obtener datos completos
+      await this.loadCotizacionCompleta(cotizacion.id);
 
       this.mostrarFormulario = true; // Muestra el modal con los datos ya cargados
 
@@ -647,10 +667,71 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
   }
 
+  async mostrarModalVerCotizacion(cotizacion: CotizacionResponse): Promise<void> {
+    try {
+      this.isLoading = true;
+
+      // Cargar datos completos de la cotización
+      await this.loadCotizacionCompleta(cotizacion.id);
+
+      this.mostrarModalVer = true;
+
+    } catch (error) {
+      this.showError('Error al cargar los detalles de la cotización');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  cerrarModalVer(): void {
+    this.mostrarModalVer = false;
+    this.cotizacionCompleta = null;
+    this.isLoading = false;
+  }
+
+  // Método para obtener subtotal de una categoría
+  getSubtotalCategoria(detalles: any[]): number {
+    return detalles.reduce((sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1), 0);
+  }
+
+  // Método para editar desde el modal
+  editarDesdeModa(): void {
+    if (this.cotizacionCompleta) {
+      this.mostrarFormularioEditar({
+        id: this.cotizacionCompleta.id,
+        codigoCotizacion: this.cotizacionCompleta.codigoCotizacion
+      } as any);
+      this.cerrarModalVer();
+    }
+  }
+
+  // Métodos auxiliares para la visualización
+  getCategoriasNoFijas(): any[] {
+    return this.getCategoriasConDetalles().filter(c => c.id !== 1);
+  }
+
+  hasCategoriasNoFijas(): boolean {
+    return this.getCategoriasNoFijas().length > 0;
+  }
+
+  getTotalCategoria(detalles: any[]): number {
+    return detalles.reduce((sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1), 0);
+  }
+
+  getTotalProductosFijos(): number {
+    const fijos = this.getDetallesByCategoria(1);
+    return fijos.reduce((sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1), 0);
+  }
+
+  hasProductosFijos(): boolean {
+    return this.getDetallesByCategoria(1).length > 0;
+  }
+
   cerrarFormulario(): void {
     this.mostrarFormulario = false;
     this.editandoCotizacion = false;
     this.cotizacionEditandoId = null;
+    this.cotizacionCompleta = null;
     this.resetForm();
   }
 
@@ -725,6 +806,108 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }, 0);
 
     return `COT-${String(maxCotizacion + 1).padStart(3, '0')}`;
+  }
+
+  private async loadCotizacionCompleta(cotizacionId: number): Promise<void> {
+    try {
+      // MEJORA: Usar el nuevo método que trae TODOS los detalles
+      this.cotizacionCompleta = await this.cotizacionService.getCotizacionConDetalles(cotizacionId).toPromise() || null;
+
+      if (!this.cotizacionCompleta) {
+        throw new Error('No se pudo cargar la cotización completa');
+      }
+
+      // Si estamos editando, poblar el formulario
+      if (this.editandoCotizacion) {
+        await this.populateFormFromCotizacionCompleta(this.cotizacionCompleta);
+      }
+
+    } catch (error) {
+      console.error('Error al cargar cotización completa:', error);
+      this.showError('Error al cargar los datos completos de la cotización.');
+      throw error;
+    }
+  }
+
+  private async populateFormFromCotizacionCompleta(cotizacion: CotizacionConDetallesResponseDTO): Promise<void> {
+    // Poblar formulario principal
+    this.cotizacionForm.patchValue({
+      codigoCotizacion: cotizacion.codigoCotizacion,
+      personaId: cotizacion.personas?.id,
+      fechaEmision: cotizacion.fechaEmision ? this.formatDateTimeLocal(new Date(cotizacion.fechaEmision)) : '',
+      fechaVencimiento: cotizacion.fechaVencimiento ? this.formatDateTimeLocal(new Date(cotizacion.fechaVencimiento)) : '',
+      estadoCotizacionId: cotizacion.estadoCotizacion?.id,
+      sucursalId: cotizacion.sucursal?.id,
+      origenDestino: cotizacion.origenDestino,
+      fechaSalida: cotizacion.fechaSalida ? this.formatDateForInput(new Date(cotizacion.fechaSalida)) : '',
+      fechaRegreso: cotizacion.fechaRegreso ? this.formatDateForInput(new Date(cotizacion.fechaRegreso)) : '',
+      formaPagoId: cotizacion.formaPago?.id,
+      cantAdultos: cotizacion.cantAdultos || 1,
+      cantNinos: cotizacion.cantNinos || 0,
+      moneda: cotizacion.moneda || 'USD',
+      observacion: cotizacion.observacion || ''
+    });
+
+    // Cargar cliente si existe
+    if (cotizacion.personas?.id) {
+      await this.loadClienteForEdit(cotizacion.personas.id);
+    }
+
+    // Cargar detalles desde la respuesta completa
+    if (cotizacion.detalles && cotizacion.detalles.length > 0) {
+      this.loadDetallesFromCotizacionCompleta(cotizacion.detalles);
+    }
+  }
+
+  private loadDetallesFromCotizacionCompleta(detalles: any[]): void {
+    // Reset arrays
+    this.detallesFijos = [];
+    this.gruposHoteles = [];
+
+    // Convertir detalles del DTO a formato local
+    detalles.forEach(detalle => {
+      const detalleConverted = {
+        id: detalle.id,
+        proveedor: detalle.proveedor,
+        producto: detalle.producto,
+        categoria: detalle.categoria?.id || 1,
+        descripcion: detalle.descripcion || 'Sin descripción',
+        precioHistorico: detalle.precioHistorico || 0,
+        comision: detalle.comision || 0,
+        cantidad: detalle.cantidad || 1,
+        unidad: detalle.unidad || 1,
+        total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
+        isTemporary: false
+      };
+
+      if (detalle.categoria?.id === 1) {
+        // Productos fijos
+        this.detallesFijos.push(detalleConverted);
+      } else {
+        // Grupos de hoteles
+        this.addDetalleToGrupoHotelFromCompleta(detalleConverted, detalle.categoria);
+      }
+    });
+  }
+
+  private addDetalleToGrupoHotelFromCompleta(detalle: any, categoria: any): void {
+    const categoriaId = categoria?.id;
+    let grupo = this.gruposHoteles.find(g => g.categoria.id === categoriaId);
+
+    if (!grupo && categoria) {
+      grupo = {
+        categoria: categoria,
+        detalles: [],
+        total: 0,
+        isTemporary: false
+      };
+      this.gruposHoteles.push(grupo);
+    }
+
+    if (grupo) {
+      grupo.detalles.push(detalle);
+      grupo.total = grupo.detalles.reduce((sum, d) => sum + d.total, 0);
+    }
   }
 
   private async loadCotizacionForEdit(cotizacion: CotizacionResponse): Promise<void> {
@@ -914,7 +1097,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       isTemporary: true
     };
 
-    this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista 
+    this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista
 
     // Limpiar TODOS los campos del formulario después de agregar
     this.detalleForm.patchValue({
@@ -931,7 +1114,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     setTimeout(() => this.successMessage = '', 3000);
 
     console.log('=== FIN agregarDetalleFijo ===');
-  }  eliminarDetalleFijo(index: number): void {
+  } eliminarDetalleFijo(index: number): void {
     const detalle = this.detallesFijos[index];
     if (detalle.id && !detalle.isTemporary) {
       this.deletedDetalleIds.push(detalle.id);
@@ -1737,6 +1920,57 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     return cotizacion.id;
   }
 
+  // ===== MÉTODOS PARA MODAL DE VISTA =====
+  getTotalCotizacionCompleta(): number {
+    if (!this.cotizacionCompleta?.detalles) return 0;
+
+    const totalFijos = this.getTotalProductosFijos();
+
+    // Obtener las categorías no fijas (excluyendo categoría 1)
+    const categoriasNoFijas = this.getCategoriasNoFijas();
+
+    if (categoriasNoFijas.length === 0) {
+      return totalFijos;
+    }
+
+    // Calcular el total de cada categoría y obtener el más económico
+    const totalesPorCategoria = categoriasNoFijas.map(categoria =>
+      this.getTotalCategoria(this.getDetallesByCategoria(categoria.id))
+    );
+
+    const grupoMasEconomico = Math.min(...totalesPorCategoria);
+
+    return totalFijos + grupoMasEconomico;
+  }
+
+  getDetallesByCategoria(categoriaId: number): any[] {
+    if (!this.cotizacionCompleta?.detalles) return [];
+    return this.cotizacionCompleta.detalles.filter(detalle => detalle.categoria?.id === categoriaId);
+  }
+
+  getCategoriasConDetalles(): any[] {
+    if (!this.cotizacionCompleta?.detalles) return [];
+
+    const categoriasMap = new Map();
+
+    this.cotizacionCompleta.detalles.forEach(detalle => {
+      const categoriaId = detalle.categoria?.id || 1;
+      const categoriaNombre = detalle.categoria?.nombre || 'Productos Fijos';
+
+      if (!categoriasMap.has(categoriaId)) {
+        categoriasMap.set(categoriaId, {
+          id: categoriaId,
+          nombre: categoriaNombre,
+          detalles: []
+        });
+      }
+
+      categoriasMap.get(categoriaId).detalles.push(detalle);
+    });
+
+    return Array.from(categoriasMap.values());
+  }
+
   // ============================================
   // CLIENT SEARCH METHODS (SIMPLIFIED)
   // ============================================
@@ -1909,7 +2143,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   refreshData(): void {
-    this.loadProductos();
+    this.loadCotizaciones();
   }
 
   editarSeleccionados(): void {
@@ -1987,6 +2221,22 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
   }
 
+  calcularEstadisticas(): void {
+    this.totalCotizaciones = this.cotizaciones.length;
+  }
+
+
+  get totalPages(): number {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    return Math.ceil(this.totalItems / itemsPerPageNum);
+  }
+
+  onItemsPerPageChange(): void {
+    this.itemsPerPage = Number(this.itemsPerPage);
+    this.currentPage = 1;
+    this.calcularEstadisticas();
+  }
+
   // Métodos para selección múltiple
   toggleAllSelection(): void {
     if (this.allSelected) {
@@ -2009,5 +2259,35 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   isSelected(id: number): boolean {
     return this.selectedItems.includes(id);
+  }
+
+    // Métodos para paginación (remover el getter duplicado)
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+
+    if (end - start < 2 * delta) {
+      if (start === 1) {
+        end = Math.min(total, start + 2 * delta);
+      } else if (end === total) {
+        start = Math.max(1, end - 2 * delta);
+      }
+    }
+
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 }
