@@ -45,7 +45,7 @@ export class SucursalesComponent implements OnInit {
     {
       id: 'clientes',
       title: 'Gestión de Clientes',
-      icon: 'fas fa-users', 
+      icon: 'fas fa-users',
       children: [
         {
           id: 'personas',
@@ -127,7 +127,7 @@ export class SucursalesComponent implements OnInit {
     {
       id: 'archivos',
       title: 'Gestión de Archivos',
-      icon: 'fas fa-folder', 
+      icon: 'fas fa-folder',
       children: [
         {
           id: 'carpetas',
@@ -437,6 +437,46 @@ export class SucursalesComponent implements OnInit {
     this.applyFilters();
   }
 
+  refreshData(): void {
+    this.loadSucursales();
+  }
+
+  onItemsPerPageChange(): void {
+    this.itemsPerPage = Number(this.itemsPerPage);
+    this.currentPage = 1;
+    this.calcularEstadisticas();
+  }
+
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+
+    if (end - start < 2 * delta) {
+      if (start === 1) {
+        end = Math.min(total, start + 2 * delta);
+      } else if (end === total) {
+        start = Math.max(1, end - 2 * delta);
+      }
+    }
+
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+
   sortBy(column: string): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -574,9 +614,9 @@ export class SucursalesComponent implements OnInit {
 
   formatTime(dateString: string): string {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleTimeString('es-ES', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return new Date(dateString).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   }
 

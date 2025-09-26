@@ -237,30 +237,28 @@
             </div>
           </div>
         </div>
-        <!-- Bulk Actions Bar -->
+        <!-- Bulk Actions Bar --> 
         <div
-          class="bg-blue-600 text-white px-8 py-4 flex justify-between items-center animate-in slide-in-from-top duration-300"
+          class="bg-blue-50 border border-blue-200 rounded-2xl px-6 py-4 flex items-center justify-between transition-all duration-300 text-white"
           *ngIf="selectedItems.length > 0">
-          <div class="flex items-center gap-3 font-semibold">
-            <i class="fas fa-check-circle"></i>
-            <span>{{ selectedItems.length }} elemento{{ selectedItems.length === 1 ? '' : 's' }} seleccionado{{
-              selectedItems.length === 1 ? '' : 's' }}</span>
+          <div class="flex items-center gap-3">
+            <div class="bg-blue-100 p-2 rounded-lg">
+              <i class="fas fa-check-square text-blue-600"></i>
+            </div>
+            <span class="text-blue-800 font-medium">{{ selectedItems.length }} elementos seleccionados</span>
           </div>
           <div class="flex gap-3">
             <button (click)="editarSeleccionados()"
-              class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-              <i class="fas fa-edit"></i>
-              Editar
+              class="bg-blue-400 border border-blue bg-blue-400 hover:bg-blue-400 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-edit"></i>Editar
             </button>
             <button (click)="eliminarSeleccionados()"
-              class="bg-white/20 border border-white/30 hover:bg-red-600 hover:border-red-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-              <i class="fas fa-trash"></i>
-              Eliminar seleccionados
+              class="bg-blue-400 border border-blue bg-blue-400 hover:bg-red-600 hover:border-red-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-trash"></i>Eliminar seleccionados
             </button>
             <button (click)="clearSelection()"
-              class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-              <i class="fas fa-times"></i>
-              Cancelar
+              class="bg-blue-400 border border-blue bg-blue-400 hover:bg-blue-400 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-times"></i>Cancelar
             </button>
           </div>
         </div>
