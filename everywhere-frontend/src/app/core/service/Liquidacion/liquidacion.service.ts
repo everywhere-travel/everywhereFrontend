@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { LiquidacionRequest,  LiquidacionResponse} from '../../../shared/models/Liquidacion/liquidacion.model';
+import { LiquidacionConDetallesResponse, LiquidacionRequest,  LiquidacionResponse} from '../../../shared/models/Liquidacion/liquidacion.model';
 import {environment} from '../../../../environments/environment';
 import {
   DetalleLiquidacionResponse, DetalleLiquidacionRequest} from '../../../shared/models/Liquidacion/detalleLiquidacion.model';
@@ -30,8 +30,8 @@ export class LiquidacionService {
     return this.http.put<LiquidacionResponse>(`${this.apiUrl}/${id}`, liquidacionRequest);
   }
 
-  getLiquidacionConDetalles(id: number): Observable<DetalleLiquidacionResponse> {
-    return this.http.get<DetalleLiquidacionResponse>(`${this.apiUrl}/${id}/con-detalles`);
+  getLiquidacionConDetalles(id: number): Observable<LiquidacionConDetallesResponse> {
+    return this.http.get<LiquidacionConDetallesResponse>(`${this.apiUrl}/${id}/con-detalles`);
   }
 
   deleteLiquidacion(id: number): Observable<void> {
