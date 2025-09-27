@@ -17,11 +17,13 @@ export interface DetalleLiquidacionResponse {
   pagoPaxPEN?: number
   creado?: string
   actualizado?: string
-  operador?: OperadorResponse
-  proveedor?: ProveedorResponse
-  viajero?: ViajeroResponse
-  producto?: ProductoResponse
+
   liquidacion?: LiquidacionResponse
+  viajero?: ViajeroResponse
+
+  producto?: ProductoResponse
+  proveedor?: ProveedorResponse
+  operador?: OperadorResponse
 }
 
 export interface DetalleLiquidacionRequest {
@@ -34,9 +36,28 @@ export interface DetalleLiquidacionRequest {
   montoDescuento?: number
   pagoPaxUSD?: number
   pagoPaxPEN?: number
+
   liquidacionId: number
   viajeroId: number
   productoId: number
   proveedorId: number
   operadorId: number
+}
+
+export interface DetalleLiquidacionSimple{
+  id: number
+  ticket?: string
+  costoTicket?: number
+  cargoServicio?: number
+  valorVenta?: number
+  facturaCompra?: string
+  boletaPasajero?: string
+  montoDescuento?: number
+  pagoPaxUSD?: number
+  pagoPaxPEN?: number
+
+  viajero?: ViajeroResponse
+  producto?: ProductoResponse
+  proveedor?: ProveedorResponse
+  operador?: OperadorResponse
 }
