@@ -81,7 +81,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/liquidaciones/liquidaciones.component').then(m => m.LiquidacionesComponent),
     canActivate: [authGuard]
-  },
+  }, 
   {
     path: 'productos',
     loadComponent: () =>

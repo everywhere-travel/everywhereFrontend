@@ -3,7 +3,7 @@ import { FormaPagoResponse} from '../FormaPago/formaPago.model'
 import { EstadoCotizacionResponse } from './estadoCotizacion.model'
 import { SucursalResponse } from '../Sucursal/sucursal.model'
 import { CarpetaResponse } from '../Carpeta/carpeta.model'
-import { PersonaResponse } from '../Persona/persona.model' 
+import { PersonaResponse } from '../Persona/persona.model'
 import { DetalleCotizacionSimpleDTO } from '../Cotizacion/detalleCotizacion.model'
 
 export interface CotizacionRequest {
@@ -30,6 +30,7 @@ export interface CotizacionResponse {
   fechaRegreso?: string
   moneda?: string
   observacion?: string
+  grupoSeleccionadoId?: number
   counter?: CounterResponse
   estadoCotizacion?: EstadoCotizacionResponse
   sucursal?: SucursalResponse
@@ -52,6 +53,7 @@ export interface CotizacionConDetallesResponseDTO {
   fechaRegreso: string
   moneda: string
   observacion?: string
+  grupoSeleccionadoId?: number
 
   // Relaciones de la cotización
   counter?: CounterResponse;

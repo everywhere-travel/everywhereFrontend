@@ -49,6 +49,7 @@ interface DetalleCotizacionTemp {
   unidad: number;
   total: number;
   isTemporary?: boolean;
+  seleccionado?: boolean; // Campo para marcar si el detalle está seleccionado
 }
 
 interface GrupoHotelTemp {
@@ -56,6 +57,7 @@ interface GrupoHotelTemp {
   detalles: DetalleCotizacionTemp[];
   total: number;
   isTemporary?: boolean;
+  seleccionado?: boolean; // Campo para marcar si el grupo está seleccionado
 }
 
 @Component({
@@ -96,6 +98,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   mostrarModalVer = false;
   sidebarCollapsed = false;
   currentView: 'table' | 'cards' | 'list' = 'table';
+
+  // ✅ Selección única de grupo de hoteles
+  grupoSeleccionadoId: number | null = null;
 
   // Estadísticas
   totalCotizaciones = 0;
@@ -756,6 +761,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.gruposHoteles = [];
     this.deletedDetalleIds = [];
 
+    // ✅ Reset de selección única de grupo
+    this.grupoSeleccionadoId = null;
+
     // Reseteo de la selección de cliente
     this.clienteSeleccionado = null;
     this.buscandoClientes = false;
@@ -810,6 +818,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadCotizacionCompleta(cotizacionId: number): Promise<void> {
     try {
+      console.log('🔄 Cargando cotización completa, ID:', cotizacionId);
       // MEJORA: Usar el nuevo método que trae TODOS los detalles
       this.cotizacionCompleta = await this.cotizacionService.getCotizacionConDetalles(cotizacionId).toPromise() || null;
 
@@ -817,8 +826,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         throw new Error('No se pudo cargar la cotización completa');
       }
 
+      console.log('✅ Cotización completa cargada:', this.cotizacionCompleta);
+
       // Si estamos editando, poblar el formulario
       if (this.editandoCotizacion) {
+        console.log('📝 Poblando formulario para edición...');
         await this.populateFormFromCotizacionCompleta(this.cotizacionCompleta);
       }
 
@@ -830,6 +842,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private async populateFormFromCotizacionCompleta(cotizacion: CotizacionConDetallesResponseDTO): Promise<void> {
+    console.log('📋 Iniciando populate form con:', cotizacion);
+
     // Poblar formulario principal
     this.cotizacionForm.patchValue({
       codigoCotizacion: cotizacion.codigoCotizacion,
@@ -848,6 +862,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       observacion: cotizacion.observacion || ''
     });
 
+    console.log('📋 Formulario poblado, valores:', this.cotizacionForm.value);
+
     // Cargar cliente si existe
     if (cotizacion.personas?.id) {
       await this.loadClienteForEdit(cotizacion.personas.id);
@@ -855,17 +871,24 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Cargar detalles desde la respuesta completa
     if (cotizacion.detalles && cotizacion.detalles.length > 0) {
-      this.loadDetallesFromCotizacionCompleta(cotizacion.detalles);
+      console.log('📦 Cargando detalles:', cotizacion.detalles);
+      this.loadDetallesFromCotizacionCompleta(cotizacion.detalles, cotizacion);
     }
   }
 
-  private loadDetallesFromCotizacionCompleta(detalles: any[]): void {
+  private loadDetallesFromCotizacionCompleta(detalles: any[], cotizacionCompleta?: any): void {
+    console.log('🔧 Iniciando carga de detalles, cantidad:', detalles.length);
+
     // Reset arrays
     this.detallesFijos = [];
     this.gruposHoteles = [];
 
     // Convertir detalles del DTO a formato local
-    detalles.forEach(detalle => {
+    detalles.forEach((detalle, index) => {
+      console.log(`📦 Procesando detalle ${index + 1}:`, detalle);
+      console.log(`🔍 Categoria del detalle:`, detalle.categoria);
+      console.log(`🔍 Campo seleccionado:`, detalle.seleccionado);
+
       const detalleConverted = {
         id: detalle.id,
         proveedor: detalle.proveedor,
@@ -877,17 +900,55 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         cantidad: detalle.cantidad || 1,
         unidad: detalle.unidad || 1,
         total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
-        isTemporary: false
+        isTemporary: false,
+        seleccionado: detalle.seleccionado || false // ✅ Incluir el estado de selección real de BD
       };
+
+      console.log(`✅ Detalle convertido categoría ${detalleConverted.categoria}, seleccionado: ${detalleConverted.seleccionado}`);
 
       if (detalle.categoria?.id === 1) {
         // Productos fijos
+        console.log(`📋 Agregando a productos fijos`);
         this.detallesFijos.push(detalleConverted);
       } else {
         // Grupos de hoteles
+        console.log(`🏨 Agregando a grupos de hoteles, categoría:`, detalle.categoria);
         this.addDetalleToGrupoHotelFromCompleta(detalleConverted, detalle.categoria);
       }
     });
+
+    console.log('🎯 Detalles fijos cargados:', this.detallesFijos.length);
+    console.log('🏨 Grupos de hoteles cargados:', this.gruposHoteles.length);
+
+    // ✅ NUEVA LÓGICA: Inferir qué grupo está seleccionado basándose en los detalles
+    this.inferirGrupoSeleccionado();
+  }
+
+  /**
+   * ✅ NUEVA LÓGICA: Infiere qué grupo está seleccionado basándose en si alguno de sus detalles tiene seleccionado=true
+   */
+  private inferirGrupoSeleccionado(): void {
+    console.log('🔍 Infiriendo grupo seleccionado basándose en detalles...');
+
+    // Reset: ningún grupo seleccionado inicialmente
+    this.grupoSeleccionadoId = null;
+    this.gruposHoteles.forEach(grupo => grupo.seleccionado = false);
+
+    // Buscar un grupo que tenga al menos un detalle seleccionado
+    for (const grupo of this.gruposHoteles) {
+      const tieneDetallesSeleccionados = grupo.detalles.some(detalle => detalle.seleccionado === true);
+
+      if (tieneDetallesSeleccionados && grupo.categoria.id) {
+        this.grupoSeleccionadoId = grupo.categoria.id;
+        grupo.seleccionado = true;
+        console.log(`✅ Grupo inferido como seleccionado: ${grupo.categoria.nombre} (tiene detalles seleccionados)`);
+        break; // Solo un grupo puede estar seleccionado
+      }
+    }
+
+    if (!this.grupoSeleccionadoId) {
+      console.log('⚠️ No se detectó ningún grupo seleccionado basándose en detalles');
+    }
   }
 
   private addDetalleToGrupoHotelFromCompleta(detalle: any, categoria: any): void {
@@ -899,7 +960,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         categoria: categoria,
         detalles: [],
         total: 0,
-        isTemporary: false
+        isTemporary: false,
+        seleccionado: false     // ✅ Inicializar como no seleccionado
       };
       this.gruposHoteles.push(grupo);
     }
@@ -993,7 +1055,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       cantidad: detalle.cantidad || 1,
       unidad: detalle.unidad || 1,
       total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
-      isTemporary: false
+      isTemporary: false,
+      seleccionado: detalle.seleccionado || false          // ✅ Campo de selección
     };
   }
 
@@ -1008,7 +1071,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           categoria: categoriaObj,
           detalles: [],
           total: 0,
-          isTemporary: false
+          isTemporary: false,
+          seleccionado: false     // ✅ Inicializar como no seleccionado
         };
         this.gruposHoteles.push(grupo);
 
@@ -1033,9 +1097,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Detalle cotización methods (Productos Fijos)
   agregarDetalleFijo(): void {
-    console.log('=== INICIO agregarDetalleFijo ===');
-    console.log('detallesFijos antes:', this.detallesFijos);
-    console.log('detallesFijos.length antes:', this.detallesFijos.length);
 
     if (this.detalleForm.invalid) {
       console.log('Formulario inválido:', this.detalleForm.errors);
@@ -1044,9 +1105,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     const formValue = this.detalleForm.value;
-    console.log('formValue:', formValue);
-    console.log('proveedores disponibles:', this.proveedores);
-    console.log('productos disponibles:', this.productos);
 
     let proveedor = null;
 
@@ -1072,7 +1130,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Validar que tengamos al menos un producto
     if (!producto) {
-      console.error('No se pudo encontrar el producto seleccionado');
       this.errorMessage = 'Error: No se pudo encontrar el producto seleccionado';
       setTimeout(() => this.errorMessage = '', 3000);
       return;
@@ -1094,7 +1151,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       cantidad,
       unidad,
       total: (precioHistorico * cantidad) + comision,
-      isTemporary: true
+      isTemporary: true,
+      seleccionado: false     // ✅ Inicializar como no seleccionado
     };
 
     this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista
@@ -1113,7 +1171,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.successMessage = 'Producto agregado correctamente';
     setTimeout(() => this.successMessage = '', 3000);
 
-    console.log('=== FIN agregarDetalleFijo ===');
   } eliminarDetalleFijo(index: number): void {
     const detalle = this.detallesFijos[index];
     if (detalle.id && !detalle.isTemporary) {
@@ -1179,8 +1236,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
             detalle.cantidad = Number(value) || 1;
             this.recalcularTotalDetalleGrupo(groupIndex, detailIndex);
             break;
+          case 'descripcion':
+            detalle.descripcion = value || '';
+            break;
           case 'precioHistorico':
             detalle.precioHistorico = Number(value) || 0;
+            this.recalcularTotalDetalleGrupo(groupIndex, detailIndex);
+            break;
+          case 'comision':
+            detalle.comision = Number(value) || 0;
             this.recalcularTotalDetalleGrupo(groupIndex, detailIndex);
             break;
         }
@@ -1197,7 +1261,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const grupo = this.gruposHoteles[groupIndex];
       if (detailIndex >= 0 && detailIndex < grupo.detalles.length) {
         const detalle = grupo.detalles[detailIndex];
-        detalle.total = detalle.precioHistorico * detalle.cantidad;
+        detalle.total = (detalle.precioHistorico * detalle.cantidad) + (detalle.comision || 0);
       }
     }
   }
@@ -1236,7 +1300,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         categoria: categoriaObj,
         detalles: [],
         total: 0,
-        isTemporary: true
+        isTemporary: true,
+        seleccionado: false     // ✅ Inicializar como no seleccionado
       };
       this.gruposHoteles.push(nuevoGrupo);
       this.grupoHotelForm.reset();
@@ -1264,6 +1329,297 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   cerrarVistaGestionGrupos(): void {
     this.mostrarGestionGrupos = false;
+  }
+
+  // ===== MÉTODOS DE SELECCIÓN DE GRUPOS =====
+
+  /**
+   * Selecciona UN SOLO grupo de hotel (selección única)
+   * Deselecciona todos los otros grupos automáticamente
+   */
+  seleccionarGrupoUnico(grupoIndex: number): void {
+    console.log('🔍 seleccionarGrupoUnico llamado con índice:', grupoIndex);
+    if (grupoIndex >= 0 && grupoIndex < this.gruposHoteles.length) {
+      const grupoSeleccionado = this.gruposHoteles[grupoIndex];
+      const categoriaId = grupoSeleccionado.categoria.id;
+      console.log('🔍 Grupo encontrado:', grupoSeleccionado.categoria.nombre, 'ID:', categoriaId);
+
+      // Si ya está seleccionado, lo deseleccionamos
+      if (this.grupoSeleccionadoId === categoriaId) {
+        this.grupoSeleccionadoId = null;
+        grupoSeleccionado.seleccionado = false;
+        console.log(`✅ Grupo ${grupoSeleccionado.categoria.nombre} deseleccionado`);
+      } else {
+        // Deseleccionar todos los grupos primero
+        this.gruposHoteles.forEach(grupo => {
+          grupo.seleccionado = false;
+        });
+
+        // Seleccionar solo el grupo actual si tiene ID válido
+        if (categoriaId !== undefined) {
+          this.grupoSeleccionadoId = categoriaId;
+          grupoSeleccionado.seleccionado = true;
+          console.log(`✅ Grupo ${grupoSeleccionado.categoria.nombre} seleccionado (único), ID:`, this.grupoSeleccionadoId);
+        }
+      }
+    } else {
+      console.error('❌ Índice de grupo inválido:', grupoIndex);
+    }
+  }
+
+  /**
+   * Verifica si un grupo está seleccionado
+   */
+  isGrupoSeleccionado(grupoIndex: number): boolean {
+    if (grupoIndex >= 0 && grupoIndex < this.gruposHoteles.length) {
+      const grupo = this.gruposHoteles[grupoIndex];
+      const categoriaId = grupo.categoria.id;
+      return categoriaId !== undefined && this.grupoSeleccionadoId === categoriaId;
+    }
+    return false;
+  }
+
+  /**
+   * Obtiene el grupo actualmente seleccionado
+   */
+  getGrupoSeleccionado(): GrupoHotelTemp | null {
+    if (this.grupoSeleccionadoId === null) {
+      return null;
+    }
+
+    return this.gruposHoteles.find(grupo =>
+      grupo.categoria.id === this.grupoSeleccionadoId
+    ) || null;
+  }
+
+  /**
+   * Obtiene todos los detalles del grupo seleccionado
+   */
+  getDetallesGrupoSeleccionado(): DetalleCotizacionTemp[] {
+    const grupoSeleccionado = this.getGrupoSeleccionado();
+    return grupoSeleccionado ? grupoSeleccionado.detalles : [];
+  }
+
+  /**
+   * Obtiene el grupo seleccionado para visualización (detecta automáticamente si hay múltiples grupos)
+   * Si solo hay un grupo con detalles, se considera seleccionado para visualización
+   */
+  getGrupoSeleccionadoEnVisualizacion(): GrupoHotelTemp | null {
+    console.log('🔍 Detectando grupo seleccionado para visualización...');
+    console.log('📊 Grupos disponibles:', this.gruposHoteles.length);
+    console.log('💾 grupoSeleccionadoId actual:', this.grupoSeleccionadoId);
+
+    // ✅ NO re-inferir aquí para evitar bucle infinito
+    // La inferencia ya se hizo al cargar los detalles
+
+    // Devolver el grupo que está marcado como seleccionado
+    if (this.grupoSeleccionadoId) {
+      const grupoSeleccionado = this.gruposHoteles.find(g => g.categoria.id === this.grupoSeleccionadoId);
+      if (grupoSeleccionado) {
+        console.log('✅ Grupo seleccionado encontrado:', grupoSeleccionado.categoria.nombre);
+        return grupoSeleccionado;
+      }
+    }
+
+    console.log('❌ No se detectó grupo seleccionado');
+    return null;
+  }
+
+  /**
+   * Verifica si un grupo está seleccionado en modo visualización
+   */
+  isGrupoSeleccionadoEnVisualizacion(grupoIndex: number): boolean {
+    if (grupoIndex >= 0 && grupoIndex < this.gruposHoteles.length) {
+      const grupo = this.gruposHoteles[grupoIndex];
+      const grupoSeleccionado = this.getGrupoSeleccionadoEnVisualizacion();
+
+      if (grupoSeleccionado && grupo.categoria.id) {
+        return grupo.categoria.id === grupoSeleccionado.categoria.id;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Selecciona o deselecciona un detalle individual
+   * Actualiza el estado del grupo padre según los detalles seleccionados
+   */
+  seleccionarDetalleGrupo(grupoIndex: number, detalleIndex: number, seleccionado: boolean): void {
+    if (grupoIndex >= 0 && grupoIndex < this.gruposHoteles.length) {
+      const grupo = this.gruposHoteles[grupoIndex];
+      if (detalleIndex >= 0 && detalleIndex < grupo.detalles.length) {
+        grupo.detalles[detalleIndex].seleccionado = seleccionado;
+
+        // Actualizar el estado del grupo basado en los detalles seleccionados
+        const detallesSeleccionados = grupo.detalles.filter(d => d.seleccionado).length;
+        const totalDetalles = grupo.detalles.length;
+
+        if (detallesSeleccionados === 0) {
+          grupo.seleccionado = false;
+        } else if (detallesSeleccionados === totalDetalles) {
+          grupo.seleccionado = true;
+        } else {
+          grupo.seleccionado = undefined; // Estado intermedio (algunos seleccionados)
+        }
+      }
+    }
+  }
+
+  /**
+   * Obtiene todos los detalles seleccionados de todos los grupos
+   */
+  obtenerDetallesSeleccionados(): DetalleCotizacionTemp[] {
+    const detallesSeleccionados: DetalleCotizacionTemp[] = [];
+
+    this.gruposHoteles.forEach(grupo => {
+      grupo.detalles.forEach(detalle => {
+        if (detalle.seleccionado) {
+          detallesSeleccionados.push(detalle);
+        }
+      });
+    });
+
+    return detallesSeleccionados;
+  }
+
+  /**
+   * Obtiene información de selección para mostrar al usuario (selección única)
+   */
+  obtenerEstadoSeleccion(): { gruposSeleccionados: number, detallesSeleccionados: number, totalGrupos: number, totalDetalles: number, grupoSeleccionado: GrupoHotelTemp | null } {
+    const grupoSeleccionado = this.getGrupoSeleccionado();
+    const gruposSeleccionados = grupoSeleccionado ? 1 : 0;
+    const detallesSeleccionados = grupoSeleccionado ? grupoSeleccionado.detalles.length : 0;
+
+    let totalDetalles = 0;
+    this.gruposHoteles.forEach(grupo => {
+      totalDetalles += grupo.detalles.length;
+    });
+
+    return {
+      gruposSeleccionados,
+      detallesSeleccionados,
+      totalGrupos: this.gruposHoteles.length,
+      totalDetalles,
+      grupoSeleccionado
+    };
+  }
+
+  /**
+   * Deselecciona todos los grupos y detalles
+   */
+  deseleccionarTodos(): void {
+    this.gruposHoteles.forEach(grupo => {
+      grupo.seleccionado = false;
+      grupo.detalles.forEach(detalle => {
+        detalle.seleccionado = false;
+      });
+    });
+  }
+
+  /**
+   * TrackBy function para optimizar *ngFor de grupos
+   */
+  trackByGrupoId(index: number, grupo: GrupoHotelTemp): any {
+    return grupo.categoria.id;
+  }
+
+  /**
+   * Cuenta los detalles seleccionados en un grupo específico
+   */
+  contarDetallesSeleccionados(grupo: GrupoHotelTemp): number {
+    return grupo.detalles.filter(d => d.seleccionado).length;
+  }
+
+  /**
+   * Guarda las selecciones actuales en el servidor
+   * Solo guarda detalles que tienen ID (no temporales)
+   */
+  async guardarSelecciones(): Promise<void> {
+    console.log('🚀 guardarSelecciones iniciado');
+    console.log('🔍 editandoCotizacion:', this.editandoCotizacion);
+    console.log('🔍 cotizacionEditandoId:', this.cotizacionEditandoId);
+    console.log('🔍 grupoSeleccionadoId:', this.grupoSeleccionadoId);
+
+    if (!this.editandoCotizacion || !this.cotizacionEditandoId) {
+      this.showError('Debe estar editando una cotización para guardar selecciones');
+      return;
+    }
+
+    try {
+      this.isLoading = true;
+
+      if (!this.grupoSeleccionadoId) {
+        this.showError('Debe seleccionar un grupo de hotel antes de guardar selecciones');
+        return;
+      }
+
+      // Recopilar solo las selecciones del grupo seleccionado
+      const selecciones: {detalleId: number, seleccionado: boolean}[] = [];
+
+      // Buscar el grupo seleccionado
+      const grupoSeleccionado = this.gruposHoteles.find(g => g.categoria.id === this.grupoSeleccionadoId);
+
+      if (!grupoSeleccionado) {
+        this.showError('No se encontró el grupo seleccionado');
+        return;
+      }
+
+      // Agregar solo los detalles del grupo seleccionado
+      grupoSeleccionado.detalles.forEach(detalle => {
+        if (detalle.id) {
+          selecciones.push({
+            detalleId: detalle.id,
+            seleccionado: true // Los detalles del grupo seleccionado deben marcarse como seleccionados
+          });
+        }
+      });
+
+      // También incluir productos fijos (siempre seleccionados)
+      this.detallesFijos.forEach(detalle => {
+        if (detalle.id) {
+          selecciones.push({
+            detalleId: detalle.id,
+            seleccionado: true // Los productos fijos siempre están seleccionados
+          });
+        }
+      });
+
+      // Marcar como NO seleccionados los detalles de otros grupos
+      this.gruposHoteles.forEach(grupo => {
+        if (grupo.categoria.id !== this.grupoSeleccionadoId) {
+          grupo.detalles.forEach(detalle => {
+            if (detalle.id) {
+              selecciones.push({
+                detalleId: detalle.id,
+                seleccionado: false // Los detalles de otros grupos deben marcarse como NO seleccionados
+              });
+            }
+          });
+        }
+      });
+
+      if (selecciones.length === 0) {
+        this.showError('No hay detalles para actualizar selecciones');
+        return;
+      }
+
+      console.log('🔍 Enviando selecciones para grupo:', this.grupoSeleccionadoId);
+      console.log('🔍 Detalles a actualizar:', selecciones);
+
+      // Usar método individual para cada detalle (ya que sabemos que funciona)
+      for (const seleccion of selecciones) {
+        await this.detalleCotizacionService.setSeleccionDetalleCotizacion(seleccion.detalleId, seleccion.seleccionado).toPromise();
+      }
+
+      const detallesSeleccionados = selecciones.filter(s => s.seleccionado).length;
+      this.showSuccess(`Selecciones guardadas exitosamente: ${detallesSeleccionados} detalles seleccionados del grupo "${grupoSeleccionado.categoria.nombre}"`);
+
+    } catch (error) {
+      console.error('Error al guardar selecciones:', error);
+      this.showError('Error al guardar las selecciones. Por favor, intente nuevamente.');
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   // Obtener total de opciones en todos los grupos
@@ -1536,7 +1892,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       cantidad,
       unidad,
       total: precioHistorico + comision,
-      isTemporary: true
+      isTemporary: true,
+      seleccionado: false     // ✅ Inicializar como no seleccionado
     };
 
     grupo.detalles.push(nuevoDetalle);
@@ -1662,6 +2019,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     if (formValue.sucursalId)
       await this.cotizacionService.setSucursal(cotizacionId, formValue.sucursalId).toPromise();
+
+    // ✅ NOTA: El grupo seleccionado se maneja a través de las selecciones de detalles
+    // No hay endpoint específico para guardar grupoSeleccionadoId en la cotización
   }
 
   private async eliminarDetallesEliminados(): Promise<void> {
@@ -1729,7 +2089,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       descripcion: detalle.descripcion || '',            // ✅ Default empty
       categoria: categoria,                              // ✅ Cambio: categoriaId → categoria
       comision: detalle.comision || 0,                   // ✅ Default 0
-      precioHistorico: detalle.precioHistorico || 0      // ✅ Default 0
+      precioHistorico: detalle.precioHistorico || 0,     // ✅ Default 0
+      seleccionado: detalle.seleccionado || false        // ✅ Campo de selección
     };
 
     // Validación final antes de enviar
@@ -1764,7 +2125,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       descripcion: detalle.descripcion || '',
       categoria: categoriaId,
       comision: detalle.comision || 0,
-      precioHistorico: detalle.precioHistorico || 0
+      precioHistorico: detalle.precioHistorico || 0,
+      seleccionado: detalle.seleccionado || false        // ✅ Campo de selección
     };
 
     await this.detalleCotizacionService.updateDetalleCotizacion(detalle.id, request).toPromise();

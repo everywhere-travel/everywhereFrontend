@@ -11,6 +11,7 @@ export interface DetalleCotizacionRequest {
   categoria?: number;        // ✅ Cambio: categoriaId → categoria
   comision?: number;         // ✅ Opcional
   precioHistorico?: number;  // ✅ Opcional
+  seleccionado?: boolean;    // ✅ Campo para marcar si está seleccionado
 }
 
 export interface DetalleCotizacionResponse {
@@ -26,6 +27,7 @@ export interface DetalleCotizacionResponse {
   categoria?: CategoriaResponse        // ✅ Cambio: categoriaId → categoria
   comision?: number
   precioHistorico?: number
+  seleccionado?: boolean
 }
 
 export interface DetalleCotizacionSimpleDTO{
@@ -37,7 +39,7 @@ export interface DetalleCotizacionSimpleDTO{
   creado?: string | Date;
   actualizado?: string | Date;
   comision?: number;
-  
+
   categoria?: CategoriaResponse;
   producto?: ProductoResponse;
   proveedor?: ProveedorResponse;
