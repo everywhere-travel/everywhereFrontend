@@ -9,6 +9,7 @@ import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/det
 import { DocumentoResponse } from '../../shared/models/Documento/documento.model';
 import { DetalleDocumentoRequest, DetalleDocumentoResponse } from '../../shared/models/Documento/detalleDocumento.model';
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { LucideAngularModule, FilePlus, FileText, File, FileCheck, CreditCard } from 'lucide-angular';
 
 // Interfaces for export functionality
 interface ExportedViajero {
@@ -34,7 +35,8 @@ interface ExportedViajero {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    SidebarComponent
+    SidebarComponent,
+    LucideAngularModule
   ]
 })
 export class Viajero implements OnInit {
@@ -252,6 +254,13 @@ export class Viajero implements OnInit {
 
   // Math object for template use
   Math = Math;
+
+  // Lucide icons for template use
+  FilePlusIcon = FilePlus;
+  FileTextIcon = FileText;
+  FileIcon = File;
+  FileCheckIcon = FileCheck;
+  CreditCardIcon = CreditCard;
 
   constructor(
     private viajeroService: ViajeroService,
