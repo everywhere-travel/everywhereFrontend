@@ -7,10 +7,6 @@ export interface ViajeroRequest {
   fechaNacimiento: string;
   nacionalidad: string;
   residencia: string;
-  tipoDocumento: string;
-  numeroDocumento: string;
-  fechaEmisionDocumento: string;
-  fechaVencimientoDocumento: string;
   persona: PersonaRequest;
 }
 
@@ -22,10 +18,6 @@ export interface ViajeroResponse {
   fechaNacimiento: string;
   nacionalidad: string;
   residencia: string;
-  tipoDocumento: string;
-  numeroDocumento: string;
-  fechaEmisionDocumento: string;
-  fechaVencimientoDocumento: string;
   creado: string;
   actualizado: string;
   persona: PersonaResponse;

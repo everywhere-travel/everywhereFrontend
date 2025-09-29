@@ -70,7 +70,7 @@ export class ViajeroFrecuente implements OnInit {
         id: 'cotizaciones',
         title: 'Cotizaciones',
         icon: 'fas fa-file-invoice',
-        route: '/cotizaciones',  
+        route: '/cotizaciones',
       },
       {
         id: 'liquidaciones',
@@ -81,7 +81,7 @@ export class ViajeroFrecuente implements OnInit {
       {
         id: 'recursos',
         title: 'Recursos',
-        icon: 'fas fa-box', 
+        icon: 'fas fa-box',
         children: [
           {
             id: 'productos',
@@ -125,7 +125,7 @@ export class ViajeroFrecuente implements OnInit {
       {
         id: 'archivos',
         title: 'Gestión de Archivos',
-        icon: 'fas fa-folder', 
+        icon: 'fas fa-folder',
         children: [
           {
             id: 'carpetas',
@@ -358,8 +358,7 @@ export class ViajeroFrecuente implements OnInit {
         vf.areolinea.toLowerCase().includes(query) ||
         vf.viajero.nombres.toLowerCase().includes(query) ||
         vf.viajero.apellidoPaterno.toLowerCase().includes(query) ||
-        vf.viajero.apellidoMaterno.toLowerCase().includes(query) ||
-        vf.viajero.numeroDocumento.toLowerCase().includes(query)
+        vf.viajero.apellidoMaterno.toLowerCase().includes(query)
       );
     }
 
@@ -624,7 +623,7 @@ export class ViajeroFrecuente implements OnInit {
 
     // Para el modo edición, configurar el viajero seleccionado en el campo de búsqueda
     this.selectedViajero = viajeroFrecuente.viajero;
-    this.viajeroSearchQuery = `${viajeroFrecuente.viajero.nombres} ${viajeroFrecuente.viajero.apellidoPaterno} ${viajeroFrecuente.viajero.apellidoMaterno} (${viajeroFrecuente.viajero.numeroDocumento})`;
+    this.viajeroSearchQuery = `${viajeroFrecuente.viajero.nombres} ${viajeroFrecuente.viajero.apellidoPaterno} ${viajeroFrecuente.viajero.apellidoMaterno}`;
   }
 
   // Método para cerrar modal de detalles
@@ -723,9 +722,8 @@ export class ViajeroFrecuente implements OnInit {
       // Con búsqueda: filtrar los que coincidan
       this.viajerosFiltrados = this.viajeros.filter((viajero: ViajeroResponse) => {
         const nombreCompleto = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`.toLowerCase();
-        const documento = viajero.numeroDocumento.toLowerCase();
 
-        return nombreCompleto.includes(query) || documento.includes(query);
+        return nombreCompleto.includes(query)
       }).slice(0, 10);
     }
 
@@ -735,14 +733,14 @@ export class ViajeroFrecuente implements OnInit {
   // TEST METHOD - Asignar datos falsos para probar
   testSearchMethod(): void {
     this.viajerosFiltrados = [
-      { id: 1, nombres: 'TEST', apellidoPaterno: 'USER', apellidoMaterno: 'FAKE', numeroDocumento: '12345678' } as any
+      { id: 1, nombres: 'TEST', apellidoPaterno: 'USER', apellidoMaterno: 'FAKE' } as any
     ];
     this.showViajeroDropdown = true;
   }
 
   selectViajero(viajero: ViajeroResponse): void {
     this.selectedViajero = viajero;
-    this.viajeroSearchQuery = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno} (${viajero.numeroDocumento})`;
+    this.viajeroSearchQuery = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`;
     this.viajeroFrecuenteForm.patchValue({ viajeroId: viajero.id });
     this.showViajeroDropdown = false;
   }

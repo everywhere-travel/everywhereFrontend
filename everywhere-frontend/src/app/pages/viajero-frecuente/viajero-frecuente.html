@@ -293,8 +293,7 @@
                       </div>
                     </div>
                   </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento
-                  </th>
+
                   <th
                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                     (click)="sortBy('creado')" [class.bg-red-50]="sortColumn === 'creado'">
@@ -361,10 +360,7 @@
                       <div class="text-sm text-gray-600">{{ viajeroFrecuente.viajero.apellidoMaterno }}</div>
                     </div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="font-mono font-medium">{{ viajeroFrecuente.viajero.tipoDocumento }}: {{
-                      viajeroFrecuente.viajero.numeroDocumento }}</span>
-                  </td>
+
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                     {{ viajeroFrecuente.creado | date:'dd/MM/yyyy' }}
                   </td>
@@ -427,8 +423,7 @@
                   <div class="font-semibold text-gray-900">{{ viajeroFrecuente.viajero.nombres }} {{
                     viajeroFrecuente.viajero.apellidoPaterno }}</div>
                   <div class="text-sm text-gray-600">{{ viajeroFrecuente.viajero.apellidoMaterno }}</div>
-                  <div class="text-xs text-gray-500 mt-1 font-mono">{{ viajeroFrecuente.viajero.tipoDocumento }}: {{
-                    viajeroFrecuente.viajero.numeroDocumento }}</div>
+
                 </div>
 
                 <div class="border-t pt-3">
@@ -510,9 +505,7 @@
                           <div class="font-semibold text-gray-900">{{ viajeroFrecuente.viajero.nombres }} {{
                             viajeroFrecuente.viajero.apellidoPaterno }} {{ viajeroFrecuente.viajero.apellidoMaterno }}
                           </div>
-                          <span class="font-mono font-medium text-gray-600 text-sm">{{
-                            viajeroFrecuente.viajero.tipoDocumento }}: {{
-                            viajeroFrecuente.viajero.numeroDocumento }}</span>
+
                         </div>
                       </div>
 
@@ -733,13 +726,7 @@
             <label class="text-sm font-semibold text-gray-600">Nacionalidad</label>
             <p class="text-gray-900 font-medium">{{ viajeroFrecuenteDetalles.viajero.nacionalidad }}</p>
           </div>
-          <div>
-            <label class="text-sm font-semibold text-gray-600">Documento</label>
-            <p class="text-gray-900 font-medium font-mono">
-              <span class="font-mono">{{ viajeroFrecuenteDetalles.viajero.tipoDocumento }}: {{
-                viajeroFrecuenteDetalles.viajero.numeroDocumento }}</span>
-            </p>
-          </div>
+
         </div>
       </div>
 
@@ -870,9 +857,7 @@
                     <div class="font-semibold text-gray-900">
                       {{ viajero.nombres }} {{ viajero.apellidoPaterno }} {{ viajero.apellidoMaterno }}
                     </div>
-                    <div class="text-sm text-gray-600">
-                      {{ viajero.tipoDocumento }}: {{ viajero.numeroDocumento }}
-                    </div>
+
                   </div>
                   <div *ngIf="selectedViajero?.id === viajero.id" class="text-blue-500">
                     <i class="fas fa-check-circle"></i>
@@ -953,11 +938,7 @@
                 editandoViajeroFrecuente.viajero.apellidoPaterno }} {{ editandoViajeroFrecuente.viajero.apellidoMaterno
                 }}</p>
             </div>
-            <div>
-              <label class="text-sm font-semibold text-gray-600">Documento</label>
-              <p class="text-gray-900 font-medium font-mono">{{ editandoViajeroFrecuente.viajero.tipoDocumento }}: {{
-                editandoViajeroFrecuente.viajero.numeroDocumento }}</p>
-            </div>
+
           </div>
         </div>
 
