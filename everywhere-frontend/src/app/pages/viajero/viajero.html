@@ -793,6 +793,84 @@
                 </div>
               </div>
             </div>
+
+            <!-- Documentos del Viajero -->
+            <div class="bg-blue-50 rounded-xl p-6">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-file-alt text-blue-600"></i>
+                Documentos Asignados
+              </h3>
+              
+              <!-- Estado de carga -->
+              <div *ngIf="cargandoDocumentos" class="text-center py-4">
+                <i class="fas fa-spinner fa-spin text-blue-600 text-xl mb-2"></i>
+                <p class="text-gray-600">Cargando documentos...</p>
+              </div>
+              
+              <!-- Lista de documentos -->
+              <div *ngIf="!cargandoDocumentos && documentosViajero.length > 0" class="space-y-4">
+                <div *ngFor="let documento of documentosViajero" 
+                     class="bg-white rounded-lg p-4 border border-blue-200 hover:shadow-md transition-all">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <h4 class="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                        <i class="fas fa-id-card text-blue-600"></i>
+                        {{ documento.documento.tipo }}
+                      </h4>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span class="text-gray-600">Número:</span>
+                          <span class="font-mono font-medium ml-1">{{ documento.numero }}</span>
+                        </div>
+                        <div *ngIf="documento.origen">
+                          <span class="text-gray-600">Origen:</span>
+                          <span class="font-medium ml-1">{{ documento.origen }}</span>
+                        </div>
+                        <div *ngIf="documento.fechaEmision">
+                          <span class="text-gray-600">Emisión:</span>
+                          <span class="font-medium ml-1">{{ documento.fechaEmision | date:'dd/MM/yyyy' }}</span>
+                        </div>
+                        <div *ngIf="documento.fechaVencimiento">
+                          <span class="text-gray-600">Vencimiento:</span>
+                          <span class="font-medium ml-1">{{ documento.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="ml-4">
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                            [class]="getDocumentoStatusClass(documento.fechaVencimiento)">
+                        <i class="fas fa-circle text-xs mr-1"></i>
+                        {{ getDocumentoStatusText(documento.fechaVencimiento) }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Estado vacío -->
+              <div *ngIf="!cargandoDocumentos && documentosViajero.length === 0" 
+                   class="text-center py-6">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i class="fas fa-file-plus text-blue-600 text-xl"></i>
+                </div>
+                <p class="text-gray-600 mb-3">Sin documentos asignados</p>
+                <button (click)="abrirModalAsignarDocumento(viajeroDetalles!)" 
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                  <i class="fas fa-plus mr-2"></i>
+                  Asignar Documento
+                </button>
+              </div>
+              
+              <!-- Botón para agregar más documentos cuando ya existen -->
+              <div *ngIf="!cargandoDocumentos && documentosViajero.length > 0" 
+                   class="border-t border-blue-200 pt-4 mt-4">
+                <button (click)="abrirModalAsignarDocumento(viajeroDetalles!)" 
+                        class="w-full px-4 py-2 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">
+                  <i class="fas fa-plus mr-2"></i>
+                  Agregar Otro Documento
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Sidebar con Avatar y Resumen -->
@@ -1253,6 +1331,73 @@
                           <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
                         </button>
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Documento -->
+                <div class="space-y-3">
+                  <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wide border-b border-gray-200 pb-1">
+                    <i class="fas fa-file-alt text-blue-600 mr-1"></i>
+                    Documento
+                  </h5>
+
+                  <div class="space-y-2 text-sm">
+                    <!-- Selector de documento -->
+                    <div *ngIf="viajero.documentos.length > 1" class="mb-3">
+                      <label class="text-xs font-semibold text-gray-600 mb-1 block">Seleccionar documento:</label>
+                      <select (change)="onDocumentoSelectionChange($event, viajero)"
+                              class="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-white">
+                        <option *ngFor="let doc of viajero.documentos; let idx = index" 
+                                [value]="idx" 
+                                [selected]="viajero.documentoSeleccionado?.id === doc.id">
+                          {{ getDocumentoDisplay(doc) }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <!-- Información del documento seleccionado -->
+                    <div *ngIf="viajero.documentoSeleccionado">
+                      <div class="flex justify-between items-center group">
+                        <span class="text-gray-600">Tipo:</span>
+                        <div class="flex items-center gap-2">
+                          <span class="font-medium">{{ viajero.documentoSeleccionado.documento.tipo }}</span>
+                          <button (click)="copiarAlPortapapeles(viajero.documentoSeleccionado.documento.tipo, 'Tipo de Documento')"
+                            class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                            title="Copiar tipo de documento">
+                            <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="flex justify-between items-center group">
+                        <span class="text-gray-600">Número:</span>
+                        <div class="flex items-center gap-2">
+                          <span class="font-medium font-mono">{{ viajero.documentoSeleccionado.numero }}</span>
+                          <button (click)="copiarAlPortapapeles(viajero.documentoSeleccionado.numero, 'Número de Documento')"
+                            class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                            title="Copiar número de documento">
+                            <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="flex justify-between items-center group">
+                        <span class="text-gray-600">Completo:</span>
+                        <div class="flex items-center gap-2">
+                          <span class="font-medium">{{ getDocumentoInfo(viajero) }}</span>
+                          <button (click)="copiarDocumento(viajero)"
+                            class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                            title="Copiar documento completo">
+                            <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Sin documento -->
+                    <div *ngIf="!viajero.documentoSeleccionado" class="text-center py-2">
+                      <span class="text-gray-500 italic text-xs">Sin documento asignado</span>
                     </div>
                   </div>
                 </div>
