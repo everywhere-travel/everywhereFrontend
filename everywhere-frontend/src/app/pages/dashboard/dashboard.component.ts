@@ -121,6 +121,15 @@ export class DashboardComponent implements OnInit {
       iconType: 'reportes',
       status: { text: 'Organiza archivos', type: 'neutral' },
       action: { text: 'Explorar' }
+    },
+    {
+      title: 'Tipos de Documentos',
+      description: 'Gestión de categorías de documentos',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      iconType: 'reportes',
+      status: { text: 'Configurar tipos', type: 'neutral' },
+      action: { text: 'Administrar' }
     }
   ];
 
