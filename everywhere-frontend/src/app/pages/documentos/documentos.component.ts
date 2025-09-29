@@ -7,6 +7,8 @@ import { DocumentoRequest, DocumentoResponse } from '../../shared/models/Documen
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
+import { ModuleCardComponent, ModuleCardData } from '../../shared/components/ui/module-card/module-card.component';
+import { StatusIndicatorComponent, StatusData } from '../../shared/components/ui/status-indicator/status-indicator.component';
 
 // Interface para la tabla de documentos
 export interface DocumentoTabla {
@@ -28,7 +30,9 @@ export interface DocumentoTabla {
     FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
-    ErrorModalComponent
+    ErrorModalComponent,
+    ModuleCardComponent,
+    StatusIndicatorComponent
   ]
 })
 export class DocumentosComponent implements OnInit {
@@ -584,6 +588,67 @@ export class DocumentosComponent implements OnInit {
   // Math utility
   get Math() {
     return Math;
+  }
+
+  // Métodos para reutilizar componentes compartidos
+  convertToModuleCard(documento: DocumentoTabla): ModuleCardData {
+    return {
+      title: this.getTipoLabel(documento.tipo),
+      description: documento.descripcion || 'Sin descripción',
+      route: '#', // No navigation for these cards
+      icon: 'fas fa-file-alt',
+      iconType: 'productos', // Usando un tipo existente como fallback
+      status: {
+        text: documento.estado ? 'Activo' : 'Inactivo',
+        type: documento.estado ? 'success' : 'warning'
+      },
+      action: {
+        text: documento.estado ? 'Desactivar' : 'Activar'
+      }
+    };
+  }
+
+  getDocumentStatusData(documento: DocumentoTabla): StatusData {
+    return {
+      status: documento.estado ? 'operational' : 'error',
+      text: documento.estado ? 'Documento Activo' : 'Documento Inactivo',
+      subtext: `Tipo: ${this.getTipoLabel(documento.tipo)}`,
+      showTime: false
+    };
+  }
+
+  onCardAction(documento: DocumentoTabla): void {
+    // Toggle status logic
+    if (documento.estado) {
+      this.confirmarCambioEstado(documento.id, false);
+    } else {
+      this.confirmarCambioEstado(documento.id, true);
+    }
+  }
+
+  private confirmarCambioEstado(id: number, nuevoEstado: boolean): void {
+    const documento = this.documentos.find(d => d.id === id);
+    if (!documento) return;
+
+    const accion = nuevoEstado ? 'activar' : 'desactivar';
+    const mensaje = `¿Estás seguro de que deseas ${accion} este documento?`;
+
+    if (confirm(mensaje)) {
+      this.cambiarEstadoDocumento(id, nuevoEstado);
+    }
+  }
+
+  private cambiarEstadoDocumento(id: number, nuevoEstado: boolean): void {
+    this.loading = true;
+    // Simular cambio de estado (aquí iría la llamada al servicio)
+    setTimeout(() => {
+      const documento = this.documentos.find(d => d.id === id);
+      if (documento) {
+        documento.estado = nuevoEstado;
+        this.onSearchChange();
+      }
+      this.loading = false;
+    }, 500);
   }
 
   // Error handling

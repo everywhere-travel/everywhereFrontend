@@ -8,74 +8,68 @@
   <!-- Main Content Area -->
   <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
 
-    <!-- Header Section -->
-    <header
-      class="bg-gradient-to-r from-red-600 to-red-700 text-white relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
-      </div>
+    <!-- Header Section Documentos con estilo de Productos -->
+<header class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12"></div>
 
-      <div class="max-w-full mx-auto px-6 py-6 relative z-10">
-        <!-- Mobile Menu Button -->
-        <button (click)="onToggleSidebar()"
-          class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
-          <i class="fas fa-bars text-xl"></i>
-        </button>
+  <div class="max-w-full mx-auto px-6 py-6 relative z-10">
+    <button (click)="onToggleSidebar()"
+      class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+      <i class="fas fa-bars text-xl"></i>
+    </button>
 
-        <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
-          <!-- Header Info -->
-          <div class="flex-1">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                <i class="fas fa-file-alt text-2xl"></i>
-              </div>
-              <div>
-                <h1 class="text-4xl font-bold">Gestión de Documentos</h1>
-                <p class="text-xl opacity-90 mt-2">Administra y organiza todos los tipos de documentos del sistema</p>
-              </div>
+    <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+      <div class="flex-1">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+            <i class="fas fa-file-alt text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-4xl font-bold">Gestión de Documentos</h1>
+            <p class="text-xl opacity-90 mt-2">Administra y organiza todos los tipos de documentos del sistema</p>
+          </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!loading">
+          <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
+              <i class="fas fa-file-alt text-white text-xl"></i>
             </div>
-
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!loading">
-              <div
-                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
-                <div class="w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center">
-                  <i class="fas fa-file-alt text-white text-xl"></i>
-                </div>
-                <div>
-                  <div class="text-2xl font-bold">{{ totalDocumentos }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Documento{{ totalDocumentos === 1 ?
-                    '' : 's' }} Total{{ totalDocumentos === 1 ? '' : 'es' }}</div>
-                </div>
-              </div>
-
-              <div
-                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
-                <div class="w-14 h-14 bg-red-600 rounded-xl flex items-center justify-center">
-                  <i class="fas fa-tags text-white text-xl"></i>
-                </div>
-                <div>
-                  <div class="text-2xl font-bold">{{ getUniqueTypesCount() }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Tipo{{ getUniqueTypesCount() === 1
-                    ? '' : 's' }} Diferente{{ getUniqueTypesCount() === 1 ? '' : 's' }}</div>
-                </div>
+            <div>
+              <div class="text-2xl font-bold">{{ totalDocumentos }}</div>
+              <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                Documento{{ totalDocumentos === 1 ? '' : 's' }} Total{{ totalDocumentos === 1 ? '' : 'es' }}
               </div>
             </div>
           </div>
 
-          <!-- Header Action -->
-          <div class="z-10">
-            <button (click)="abrirModalCrear()" [disabled]="loading"
-              class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
-              <div
-                class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+          <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-everywhere-secondary rounded-xl flex items-center justify-center">
+              <i class="fas fa-tags text-white text-xl"></i>
+            </div>
+            <div>
+              <div class="text-2xl font-bold">{{ getUniqueTypesCount() }}</div>
+              <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                Tipo{{ getUniqueTypesCount() === 1 ? '' : 's' }} Diferente{{ getUniqueTypesCount() === 1 ? '' : 's' }}
               </div>
-              <i class="fas fa-plus text-lg"></i>
-              <span>Nuevo Tipo</span>
-            </button>
+            </div>
           </div>
         </div>
       </div>
-    </header>
+
+      <div class="z-10">
+        <button (click)="abrirModalCrear()" [disabled]="loading"
+          class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+          <i class="fas fa-plus text-lg"></i>
+          <span>Nuevo Tipo</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
 
     <!-- Main Content -->
     <main class="max-w-full mx-auto px-6 py-6 space-y-6">
@@ -283,35 +277,18 @@
                   </th>
                   <th
                     class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-red-600/5 transition-colors group"
-                    (click)="sortBy('actualizado')" [class.bg-red-600/5]="sortColumn === 'actualizado'">
+                    (click)="sortBy('estado')" [class.bg-red-600/5]="sortColumn === 'estado'">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2">
-                        <i class="fas fa-calendar-edit text-gray-500"></i>
-                        <span>Actualizado</span>
+                        <i class="fas fa-toggle-on text-gray-500"></i>
+                        <span>Estado</span>
                       </div>
                       <div class="flex flex-col opacity-40 group-hover:opacity-70"
-                        [class.opacity-100]="sortColumn === 'actualizado'">
+                        [class.opacity-100]="sortColumn === 'estado'">
                         <i class="fas fa-caret-up text-xs leading-none"
-                          [class.text-red-600]="sortColumn === 'actualizado' && sortDirection === 'asc'"></i>
+                          [class.text-red-600]="sortColumn === 'estado' && sortDirection === 'asc'"></i>
                         <i class="fas fa-caret-down text-xs leading-none"
-                          [class.text-red-600]="sortColumn === 'actualizado' && sortDirection === 'desc'"></i>
-                      </div>
-                    </div>
-                  </th>
-                  <th
-                    class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-red-600/5 transition-colors group"
-                    (click)="sortBy('creado')" [class.bg-red-600/5]="sortColumn === 'creado'">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <i class="fas fa-calendar-plus text-gray-500"></i>
-                        <span>Creado</span>
-                      </div>
-                      <div class="flex flex-col opacity-40 group-hover:opacity-70"
-                        [class.opacity-100]="sortColumn === 'creado'">
-                        <i class="fas fa-caret-up text-xs leading-none"
-                          [class.text-red-600]="sortColumn === 'creado' && sortDirection === 'asc'"></i>
-                        <i class="fas fa-caret-down text-xs leading-none"
-                          [class.text-red-600]="sortColumn === 'creado' && sortDirection === 'desc'"></i>
+                          [class.text-red-600]="sortColumn === 'estado' && sortDirection === 'desc'"></i>
                       </div>
                     </div>
                   </th>
@@ -356,13 +333,12 @@
                       {{ documento.descripcion || 'Sin descripción' }}
                     </div>
                   </td>
-                  <!-- Actualizado -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {{ formatDate(documento.actualizado) }}
-                  </td>
-                  <!-- Fechas -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                    {{ formatDate(documento.creado) }}
+                  <!-- Estado -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+                      [class]="documento.estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                      {{ documento.estado ? 'Activo' : 'Inactivo' }}
+                    </span>
                   </td>
                   <!-- Acciones -->
                   <td class="px-6 py-4 whitespace-nowrap text-center">
@@ -372,10 +348,10 @@
                         title="Editar tipo de documento">
                         <i class="fas fa-edit text-sm"></i>
                       </button>
-                      <button (click)="eliminarDocumento(documento.id)"
-                        class="w-9 h-9 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
-                        title="Eliminar tipo de documento">
-                        <i class="fas fa-trash text-sm"></i>
+                      <button (click)="onCardAction(documento)"
+                        [class]="documento.estado ? 'w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105' : 'w-9 h-9 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105'"
+                        [title]="documento.estado ? 'Documento activo - Ver detalles' : 'Documento inactivo - Activar'">
+                        <i [class]="documento.estado ? 'fas fa-trash text-sm' : 'fas fa-power-off text-sm'"></i>
                       </button>
                     </div>
                   </td>
@@ -388,41 +364,36 @@
         <!-- Cards View -->
         <div *ngIf="currentView === 'cards'"
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div *ngFor="let documento of paginatedDocumentos"
-            class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
-            <div class="p-6">
-              <div class="flex items-start justify-between mb-4">
-                <div class="flex-1">
-                  <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ documento.descripcion }}</h3>
-                </div>
-              </div>
+          <div *ngFor="let documento of paginatedDocumentos" class="relative">
+            <!-- Checkbox para selección -->
+            <div class="absolute top-4 left-4 z-10" *ngIf="true">
+              <label class="relative inline-block cursor-pointer">
+                <input type="checkbox" [checked]="isSelected(documento.id)" (change)="toggleSelection(documento.id)"
+                  class="absolute opacity-0 w-0 h-0">
+                <span
+                  class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
+                  [class.bg-red-600]="isSelected(documento.id)"
+                  [class.border-red-600]="isSelected(documento.id)">
+                  <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(documento.id)"></i>
+                </span>
+              </label>
+            </div>
 
-              <div class="space-y-3 mb-6">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-gray-600">Tipo:</span>
-                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                    [class]="getTipoColorClass(documento.tipo)">
-                    {{ getTipoLabel(documento.tipo) }}
-                  </span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-gray-600">Actualizado:</span>
-                  <span class="text-sm text-gray-900">{{ formatDate(documento.actualizado) }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-gray-600">Creado:</span>
-                  <span class="text-sm text-gray-900">{{ formatDate(documento.creado) }}</span>
-                </div>
-              </div>
+            <!-- Module Card Reutilizado -->
+            <div class="relative pt-8" (click)="$event.preventDefault()">
+              <app-module-card [data]="convertToModuleCard(documento)"></app-module-card>
 
-              <div class="flex gap-2 pt-4 border-t border-gray-100">
+              <!-- Botones de acción superpuestos -->
+              <div class="absolute bottom-4 right-4 flex gap-2">
                 <button (click)="editarDocumento(documento)"
-                  class="flex-1 bg-green-50 hover:bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2">
-                  <i class="fas fa-edit"></i>Editar
+                  class="w-10 h-10 bg-green-100 hover:bg-green-200 text-green-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg"
+                  title="Editar tipo de documento">
+                  <i class="fas fa-edit"></i>
                 </button>
-                <button (click)="eliminarDocumento(documento.id)"
-                  class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2">
-                  <i class="fas fa-trash"></i>Eliminar
+                <button (click)="onCardAction(documento)"
+                  [class]="documento.estado ? 'w-10 h-10 bg-green-100 hover:bg-green-200 text-green-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg' : 'w-10 h-10 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105 shadow-lg'"
+                  [title]="documento.estado ? 'Documento activo - Ver detalles' : 'Documento inactivo - Activar'">
+                  <i [class]="documento.estado ? 'fas fa-trash text-sm' : 'fas fa-power-off'"></i>
                 </button>
               </div>
             </div>
@@ -440,12 +411,10 @@
                     [class]="getTipoColorClass(documento.tipo)">
                     {{ getTipoLabel(documento.tipo) }}
                   </span>
+                  <!-- Status Indicator Reutilizado -->
+                  <app-status-indicator [data]="getDocumentStatusData(documento)"></app-status-indicator>
                 </div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ documento.descripcion }}</h3>
-                <div class="flex items-center gap-6 text-sm text-gray-600">
-                  <span><i class="fas fa-calendar-plus mr-1"></i>Creado: {{ formatDate(documento.creado) }}</span>
-                  <span><i class="fas fa-calendar-edit mr-1"></i>Actualizado: {{ formatDate(documento.actualizado) }}</span>
-                </div>
               </div>
               <div class="flex items-center gap-2 ml-4">
                 <button (click)="editarDocumento(documento)"
@@ -453,10 +422,10 @@
                   title="Editar tipo de documento">
                   <i class="fas fa-edit"></i>
                 </button>
-                <button (click)="eliminarDocumento(documento.id)"
-                  class="w-10 h-10 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105"
-                  title="Eliminar tipo de documento">
-                  <i class="fas fa-trash"></i>
+                <button (click)="onCardAction(documento)"
+                  [class]="documento.estado ? 'w-10 h-10 bg-green-100 hover:bg-green-200 text-green-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105' : 'w-10 h-10 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105'"
+                  [title]="documento.estado ? 'Documento activo - Ver detalles' : 'Documento inactivo - Activar'">
+                  <i [class]="documento.estado ? 'fas fa-trash text-sm' : 'fas fa-power-off'"></i>
                 </button>
               </div>
             </div>
