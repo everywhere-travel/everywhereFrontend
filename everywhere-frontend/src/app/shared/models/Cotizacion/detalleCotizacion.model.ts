@@ -27,3 +27,18 @@ export interface DetalleCotizacionResponse {
   comision?: number
   precioHistorico?: number
 }
+
+export interface DetalleCotizacionSimpleDTO{
+  id: number;
+  cantidad?: number;
+  unidad?: number;
+  descripcion?: string;
+  precioHistorico?: number;
+  creado?: string | Date;
+  actualizado?: string | Date;
+  comision?: number;
+  
+  categoria?: CategoriaResponse;
+  producto?: ProductoResponse;
+  proveedor?: ProveedorResponse;
+}

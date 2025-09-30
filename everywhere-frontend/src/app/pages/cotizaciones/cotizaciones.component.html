@@ -389,6 +389,11 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex justify-end space-x-2">
+                      <button (click)="mostrarModalVerCotizacion(cotizacion)"
+                        class="inline-flex items-center p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg transition-all duration-200"
+                        title="Ver detalles">
+                        <i class="fas fa-eye"></i>
+                      </button>
                       <button (click)="mostrarFormularioEditar(cotizacion)"
                         class="inline-flex items-center p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200"
                         title="Editar">
@@ -489,8 +494,7 @@
                   </span>
                   <span class="text-sm text-gray-900 font-medium text-right">{{
                     cotizacion.origenDestino ||
-                    'No
-                    especificado'
+                    'No especificado'
                     }}</span>
                 </div>
 
@@ -534,6 +538,10 @@
               </div>
 
               <div class="flex gap-2 pt-4 border-t border-gray-100">
+                <button (click)="mostrarModalVerCotizacion(cotizacion)"
+                  class="flex-1 bg-green-50 hover:bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105">
+                  <i class="fas fa-eye"></i>Ver
+                </button>
                 <button (click)="mostrarFormularioEditar(cotizacion)"
                   class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105">
                   <i class="fas fa-edit"></i>Editar
@@ -609,6 +617,10 @@
 
               <!-- Acciones -->
               <div class="flex items-center gap-2 ml-4">
+                <button (click)="mostrarModalVerCotizacion(cotizacion)"
+                  class="p-2 text-green-600 hover:bg-green-100 rounded transition-colors duration-200" title="Ver detalles">
+                  <i class="fas fa-eye text-sm"></i>
+                </button>
                 <button (click)="mostrarFormularioEditar(cotizacion)"
                   class="p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors duration-200" title="Editar">
                   <i class="fas fa-edit text-sm"></i>
@@ -625,6 +637,52 @@
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+          <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <!-- Items per page selector -->
+            <div class="flex items-center gap-2 text-sm text-gray-700 font-medium">
+              <span>Mostrar:</span>
+              <select [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()"
+                class="border border-gray-300 rounded-lg px-3 py-2 bg-white font-medium">
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+              <span>por página</span>
+            </div>
+
+            <!-- Results info -->
+            <div class="text-sm font-semibold text-gray-700">
+              Mostrando {{ Math.min((currentPage - 1) * itemsPerPage + 1, totalItems) }} -
+              {{ Math.min(currentPage * itemsPerPage, totalItems) }} de {{ totalItems }} cotizacion{{ totalItems === 1 ?
+              '' : 'es' }}
+            </div>
+
+            <!-- Navigation buttons -->
+            <nav class="flex items-center gap-2" *ngIf="totalPages > 1">
+              <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              <div class="flex items-center gap-1">
+                <button *ngFor="let page of getVisiblePages()" (click)="goToPage(page)"
+                  class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-200"
+                  [class]="page === currentPage ? 'bg-everywhere-primary text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'">
+                  {{ page }}
+                </button>
+              </div>
+
+              <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </nav>
           </div>
         </div>
       </div>
@@ -1707,6 +1765,443 @@
           </div>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Visualización de Cotización -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-5"
+  *ngIf="mostrarModalVer" (click)="cerrarModalVer()">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-y-auto"
+    (click)="$event.stopPropagation()">
+
+    <!-- Header del Modal -->
+    <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white px-8 py-4 rounded-t-3xl">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold">
+            Visualizar Cotización
+          </h2>
+          <p class="text-white/90 mt-1" *ngIf="cotizacionCompleta">
+            {{ cotizacionCompleta.codigoCotizacion }} - {{ formatDate(cotizacionCompleta.fechaEmision) }}
+          </p>
+        </div>
+        <button (click)="cerrarModalVer()"
+          class="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido del Modal -->
+    <div class="p-6" *ngIf="cotizacionCompleta">
+
+      <!-- Información Básica -->
+      <div class="mb-6">
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
+          <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+              <i class="fas fa-info-circle text-white text-sm"></i>
+            </div>
+            Información Básica
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Código de Cotización -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Código de Cotización
+              </label>
+              <div class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-900 font-medium">
+                {{ cotizacionCompleta.codigoCotizacion }}
+              </div>
+            </div>
+
+            <!-- Fecha de Emisión -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Fecha de Emisión
+              </label>
+              <div class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-900">
+                {{ formatDateTime(cotizacionCompleta.fechaEmision) }}
+              </div>
+            </div>
+
+            <!-- Fecha de Vencimiento -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Fecha de Vencimiento
+              </label>
+              <div class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-900">
+                {{ formatDateTime(cotizacionCompleta.fechaVencimiento) }}
+              </div>
+            </div>
+
+            <!-- Estado de Cotización -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Estado de Cotización
+              </label>
+              <div class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 flex items-center">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium"
+                  [ngClass]="getEstadoBadgeClass(cotizacionCompleta.estadoCotizacion)">
+                  {{ cotizacionCompleta.estadoCotizacion?.descripcion || 'Sin estado' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Sucursal -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">
+                Sucursal
+              </label>
+              <div class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-900">
+                {{ cotizacionCompleta.sucursal?.descripcion || 'No especificada' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección Cliente e Información del Paquete en fila -->
+      <div class="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Sección Cliente -->
+        <div>
+          <div class="bg-gradient-to-r from-[#D9043D]/5 to-[#BF4968]/5 rounded-2xl p-6 border border-everywhere-primary/10 h-full flex flex-col">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <div class="w-8 h-8 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-xl flex items-center justify-center mr-3">
+                <i class="fas fa-user text-white text-sm"></i>
+              </div>
+              Información del Cliente
+            </h3>
+
+            <!-- Cliente seleccionado (solo vista) -->
+            <div class="bg-white border-2 border-gray-200 rounded-xl p-4">
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-user text-green-600 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                  <p class="font-semibold text-gray-900 text-base">
+                    {{ getPersonaDisplayName(cotizacionCompleta.personas?.id || 0) }}
+                  </p>
+                  <div class="space-y-1 mt-2">
+                    <p class="text-sm text-gray-500 flex items-center">
+                      <i class="fas fa-credit-card mr-2"></i>
+                      Forma de Pago: {{ cotizacionCompleta.formaPago?.descripcion || 'No especificada' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información del Paquete -->
+        <div>
+          <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 h-full flex flex-col">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3">
+                <i class="fas fa-map-marked-alt text-white text-sm"></i>
+              </div>
+              Información del Paquete
+            </h3>
+
+            <div class="space-y-4 flex-1">
+              <!-- Origen - Destino -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Origen - Destino
+                </label>
+                <div class="relative">
+                  <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 pr-10 text-sm">
+                    {{ cotizacionCompleta.origenDestino || 'No especificado' }}
+                  </div>
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                    <i class="fas fa-route text-gray-400 text-xs"></i>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fechas en 2 columnas -->
+              <div class="grid grid-cols-2 gap-3">
+                <!-- Fecha de Salida -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha de Salida
+                  </label>
+                  <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm">
+                    {{ formatDate(cotizacionCompleta.fechaSalida) }}
+                  </div>
+                </div>
+
+                <!-- Fecha de Regreso -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha de Regreso
+                  </label>
+                  <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm">
+                    {{ formatDate(cotizacionCompleta.fechaRegreso) }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cantidad de personas en 2 columnas -->
+              <div class="grid grid-cols-2 gap-3">
+                <!-- Cantidad de Adultos -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Cantidad de Adultos
+                  </label>
+                  <div class="relative">
+                    <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 pr-8 text-sm">
+                      {{ cotizacionCompleta.cantAdultos || 0 }}
+                    </div>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <i class="fas fa-user text-gray-400 text-xs"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Cantidad de Niños -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Cantidad de Niños
+                  </label>
+                  <div class="relative">
+                    <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 pr-8 text-sm">
+                      {{ cotizacionCompleta.cantNinos || 0 }}
+                    </div>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <i class="fas fa-child text-gray-400 text-xs"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Moneda -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Moneda
+                </label>
+                <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm">
+                  {{ cotizacionCompleta.moneda || 'USD' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Productos Fijos -->
+      <div class="mb-6" *ngIf="hasProductosFijos()">
+        <div class="bg-gradient-to-r from-purple-50 to-violet-50 rounded-2xl p-6 border border-purple-200">
+          <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mr-3">
+              <i class="fas fa-boxes text-white text-sm"></i>
+            </div>
+            Productos Fijos
+          </h3>
+
+          <!-- Tabla de productos fijos -->
+          <div class="bg-white rounded-xl border border-purple-100 overflow-hidden">
+            <!-- Header -->
+            <div class="grid gap-3 items-center p-3 border-b border-gray-100 bg-gray-50"
+              style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px;">
+              <div class="text-sm font-medium text-gray-700">Proveedor</div>
+              <div class="text-sm font-medium text-gray-700">Producto</div>
+              <div class="text-sm font-medium text-gray-700">Cantidad</div>
+              <div class="text-sm font-medium text-gray-700">Descripción</div>
+              <div class="text-sm font-medium text-gray-700">Precio Unit.</div>
+              <div class="text-sm font-medium text-gray-700">Comisión</div>
+              <div class="text-sm font-medium text-gray-700">Total</div>
+            </div>
+
+            <!-- Productos -->
+            <div *ngFor="let detalle of getDetallesByCategoria(1)" class="p-3 border-b border-gray-100 last:border-b-0">
+              <div class="grid gap-3 items-center"
+                style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px;">
+                <!-- Proveedor -->
+                <div class="text-sm text-gray-900">
+                  {{ detalle.proveedor?.nombre || 'Sin proveedor' }}
+                </div>
+                <!-- Producto -->
+                <div class="text-sm text-gray-900">
+                  {{ detalle.producto?.nombre || 'Sin producto' }}
+                </div>
+                <!-- Cantidad -->
+                <div class="text-sm text-gray-900 text-center">
+                  {{ detalle.cantidad || 1 }}
+                </div>
+                <!-- Descripción -->
+                <div class="text-sm text-gray-900 truncate" [title]="detalle.descripcion">
+                  {{ detalle.descripcion || 'Sin descripción' }}
+                </div>
+                <!-- Precio Unitario -->
+                <div class="text-sm text-gray-900 text-right">
+                  ${{ (detalle.precioHistorico || 0) | number:'1.2-2' }}
+                </div>
+                <!-- Comisión -->
+                <div class="text-sm text-gray-900 text-right">
+                  ${{ (detalle.comision || 0) | number:'1.2-2' }}
+                </div>
+                <!-- Total -->
+                <div class="text-sm font-semibold text-purple-600 text-right">
+                  ${{ ((detalle.precioHistorico || 0) + (detalle.comision || 0)) * (detalle.cantidad || 1) | number:'1.2-2' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grupos de Hoteles -->
+      <div class="mb-6" *ngIf="hasCategoriasNoFijas()">
+        <div class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-200">
+          <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mr-3">
+              <i class="fas fa-hotel text-white text-sm"></i>
+            </div>
+            Grupos de Hoteles
+          </h3>
+
+          <!-- Cada grupo -->
+          <div *ngFor="let categoria of getCategoriasNoFijas()" class="mb-4">
+            <div class="border border-gray-200 rounded-xl overflow-hidden bg-white">
+              <!-- Header del grupo -->
+              <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200">
+                <h4 class="font-medium text-gray-900 flex items-center">
+                  <i class="fas fa-tag text-orange-600 mr-2"></i>
+                  Grupo {{ categoria.nombre }}
+                </h4>
+                <span class="text-sm font-medium text-orange-600">
+                  Total: ${{ getTotalCategoria(categoria.detalles) | number:'1.2-2' }} USD
+                </span>
+              </div>
+
+              <!-- Tabla de productos del grupo -->
+              <div class="bg-white">
+                <!-- Header de tabla -->
+                <div class="grid gap-3 items-center p-3 border-b border-gray-100 bg-gray-50"
+                  style="grid-template-columns: 1.2fr 1fr 80px 100px 100px;">
+                  <div class="text-sm font-medium text-gray-700">Proveedor</div>
+                  <div class="text-sm font-medium text-gray-700">Tipo</div>
+                  <div class="text-sm font-medium text-gray-700">Cantidad</div>
+                  <div class="text-sm font-medium text-gray-700">Precio USD</div>
+                  <div class="text-sm font-medium text-gray-700">Total USD</div>
+                </div>
+
+                <!-- Productos del grupo -->
+                <div *ngFor="let detalle of categoria.detalles" class="p-3 border-b border-gray-100 last:border-b-0">
+                  <div class="grid gap-3 items-center"
+                    style="grid-template-columns: 1.2fr 1fr 80px 100px 100px;">
+                    <!-- Proveedor -->
+                    <div class="text-sm text-gray-900">
+                      {{ detalle.proveedor?.nombre || 'Sin proveedor' }}
+                    </div>
+                    <!-- Tipo -->
+                    <div class="text-sm text-gray-900">
+                      {{ detalle.producto?.nombre || 'Sin producto' }}
+                    </div>
+                    <!-- Cantidad -->
+                    <div class="text-sm text-gray-900 text-center">
+                      {{ detalle.cantidad || 1 }}
+                    </div>
+                    <!-- Precio USD -->
+                    <div class="text-sm text-gray-900 text-right">
+                      ${{ (detalle.precioHistorico || 0) | number:'1.2-2' }}
+                    </div>
+                    <!-- Total -->
+                    <div class="text-sm font-semibold text-orange-600 text-right">
+                      ${{ (detalle.precioHistorico || 0) * (detalle.cantidad || 1) | number:'1.2-2' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumen de Cotización -->
+      <div class="mb-6">
+        <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-200">
+          <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+            <div class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
+              <i class="fas fa-calculator text-white text-sm"></i>
+            </div>
+            Resumen de Cotización
+          </h3>
+
+          <div class="bg-white rounded-xl p-6 border border-emerald-100">
+            <div class="space-y-4">
+              <!-- Tarifa Productos Fijos -->
+              <div class="flex justify-between items-center py-2 border-b border-gray-100" *ngIf="hasProductosFijos()">
+                <span class="text-gray-700 font-medium">Tarifa Productos Fijos:</span>
+                <span class="font-semibold text-gray-900">
+                  ${{ getTotalProductosFijos() | number:'1.2-2' }} USD
+                </span>
+              </div>
+
+              <!-- Tarifas por Grupo -->
+              <div *ngFor="let categoria of getCategoriasNoFijas()"
+                class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-gray-700 font-medium">Tarifa Grupo {{ categoria.nombre }}:</span>
+                <span class="font-semibold text-gray-900">
+                  ${{ getTotalCategoria(categoria.detalles) | number:'1.2-2' }} USD
+                </span>
+              </div>
+
+              <!-- Total General -->
+              <div class="flex justify-between items-center py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg px-4 border border-emerald-200">
+                <span class="font-semibold text-gray-900 text-lg">Cotización más económica:</span>
+                <span class="font-bold text-emerald-600 text-2xl">
+                  ${{ getTotalCotizacionCompleta() | number:'1.2-2' }} {{ cotizacionCompleta.moneda || 'USD' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Observaciones -->
+      <div class="mb-6" *ngIf="cotizacionCompleta.observacion">
+        <div class="bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-6 border border-slate-200">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <div class="w-8 h-8 bg-gradient-to-r from-slate-500 to-gray-600 rounded-xl flex items-center justify-center mr-3">
+              <i class="fas fa-sticky-note text-white text-sm"></i>
+            </div>
+            Observaciones
+          </h3>
+          <div class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white text-gray-900 min-h-24">
+            {{ cotizacionCompleta.observacion }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+        <div class="flex flex-col sm:flex-row gap-4 justify-end">
+          <button type="button" (click)="cerrarModalVer()"
+            class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-semibold flex items-center justify-center space-x-2">
+            <i class="fas fa-times"></i>
+            <span>Cerrar</span>
+          </button>
+          <button type="button" (click)="editarDesdeModa()"
+            class="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold shadow-lg flex items-center justify-center space-x-2">
+            <i class="fas fa-edit"></i>
+            <span>Editar Cotización</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State dentro del modal -->
+    <div *ngIf="!cotizacionCompleta && isLoading" class="p-12 text-center">
+      <div class="inline-flex items-center gap-3">
+        <i class="fas fa-spinner fa-spin text-2xl text-green-600"></i>
+        <span class="text-lg font-medium text-gray-700">Cargando detalles...</span>
+      </div>
     </div>
   </div>
 </div>

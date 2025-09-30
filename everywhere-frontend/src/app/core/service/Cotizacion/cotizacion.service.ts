@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CotizacionRequest, CotizacionResponse } from '../../../shared/models/Cotizacion/cotizacion.model';
+import { CotizacionConDetallesResponseDTO, CotizacionRequest, CotizacionResponse } from '../../../shared/models/Cotizacion/cotizacion.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -28,6 +28,9 @@ export class CotizacionService {
     return this.http.get<CotizacionResponse[]>(this.apiUrl);
   }
 
+  getCotizacionConDetalles(id: number): Observable<CotizacionConDetallesResponseDTO> {
+      return this.http.get<CotizacionConDetallesResponseDTO>(`${this.apiUrl}/${id}/con-detalles`);
+    }
   updateCotizacion(id: number, cotizacionRequest: CotizacionRequest): Observable<CotizacionResponse> {
     return this.http.put<CotizacionResponse>(`${this.apiUrl}/${id}`, cotizacionRequest);
   }
