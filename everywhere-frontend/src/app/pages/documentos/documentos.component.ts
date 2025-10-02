@@ -220,11 +220,14 @@ export class DocumentosComponent implements OnInit {
   mostrarModalCrear = false;
   mostrarModalEliminar = false;
   mostrarModalError = false;
+  mostrarModalConfirmacion = false;
 
   // Formularios
   documentoForm!: FormGroup;
   editandoDocumento = false;
   documentoAEliminar: DocumentoTabla | null = null;
+  documentoAConfirmar: DocumentoTabla | null = null;
+  accionConfirmacion: 'activar' | 'desactivar' = 'activar';
 
   // Error handling
   errorModalData: ErrorModalData = {
@@ -537,6 +540,19 @@ export class DocumentosComponent implements OnInit {
     this.documentoAEliminar = null;
   }
 
+  cerrarModalConfirmacion(): void {
+    this.mostrarModalConfirmacion = false;
+    this.documentoAConfirmar = null;
+  }
+
+  confirmarCambioEstado(): void {
+    if (this.documentoAConfirmar) {
+      const nuevoEstado = this.accionConfirmacion === 'activar';
+      this.cambiarEstadoDocumento(this.documentoAConfirmar.id, nuevoEstado);
+      this.cerrarModalConfirmacion();
+    }
+  }
+
   cerrarModalError(): void {
     this.mostrarModalError = false;
     this.backendErrorData = null;
@@ -597,13 +613,31 @@ export class DocumentosComponent implements OnInit {
       description: documento.descripcion || 'Sin descripción',
       route: '#', // No navigation for these cards
       icon: 'fas fa-file-alt',
-      iconType: 'productos', // Usando un tipo existente como fallback
+      iconType: 'documentos', // Usando el tipo correcto ahora
       status: {
         text: documento.estado ? 'Activo' : 'Inactivo',
         type: documento.estado ? 'success' : 'warning'
       },
       action: {
         text: documento.estado ? 'Desactivar' : 'Activar'
+      }
+    };
+  }
+
+  convertToModuleCardForConfirmation(documento: DocumentoTabla): ModuleCardData {
+    const nuevoEstado = !documento.estado;
+    return {
+      title: this.getTipoLabel(documento.tipo),
+      description: documento.descripcion || 'Sin descripción',
+      route: '#',
+      icon: 'fas fa-file-alt',
+      iconType: 'documentos',
+      status: {
+        text: nuevoEstado ? 'Se activará' : 'Se desactivará',
+        type: nuevoEstado ? 'success' : 'warning'
+      },
+      action: {
+        text: nuevoEstado ? 'Activar' : 'Desactivar'
       }
     };
   }
@@ -618,37 +652,39 @@ export class DocumentosComponent implements OnInit {
   }
 
   onCardAction(documento: DocumentoTabla): void {
-    // Toggle status logic
-    if (documento.estado) {
-      this.confirmarCambioEstado(documento.id, false);
-    } else {
-      this.confirmarCambioEstado(documento.id, true);
-    }
-  }
-
-  private confirmarCambioEstado(id: number, nuevoEstado: boolean): void {
-    const documento = this.documentos.find(d => d.id === id);
-    if (!documento) return;
-
-    const accion = nuevoEstado ? 'activar' : 'desactivar';
-    const mensaje = `¿Estás seguro de que deseas ${accion} este documento?`;
-
-    if (confirm(mensaje)) {
-      this.cambiarEstadoDocumento(id, nuevoEstado);
-    }
+    // Mostrar modal de confirmación con la card del documento
+    this.documentoAConfirmar = documento;
+    this.accionConfirmacion = documento.estado ? 'desactivar' : 'activar';
+    this.mostrarModalConfirmacion = true;
   }
 
   private cambiarEstadoDocumento(id: number, nuevoEstado: boolean): void {
-    this.loading = true;
-    // Simular cambio de estado (aquí iría la llamada al servicio)
-    setTimeout(() => {
-      const documento = this.documentos.find(d => d.id === id);
-      if (documento) {
-        documento.estado = nuevoEstado;
-        this.onSearchChange();
-      }
-      this.loading = false;
-    }, 500);
+    // Actualizar estado inmediatamente en la UI para mejor UX
+    const documento = this.documentos.find(d => d.id === id);
+    if (documento) {
+      documento.estado = nuevoEstado;
+      documento.actualizado = this.formatDateToString(new Date());
+    }
+
+    // Aplicar filtros para actualizar la vista
+    this.aplicarFiltros();
+    this.cdr.detectChanges();
+
+    // Simular llamada al servicio (aquí iría la llamada real al backend)
+    // this.documentoService.updateDocumentoEstado(id, nuevoEstado).subscribe({
+    //   next: () => {
+    //     // Estado ya actualizado en la UI
+    //   },
+    //   error: (error) => {
+    //     // Revertir el cambio si hay error
+    //     if (documento) {
+    //       documento.estado = !nuevoEstado;
+    //       this.aplicarFiltros();
+    //       this.cdr.detectChanges();
+    //     }
+    //     this.mostrarError('Error al cambiar estado', 'No se pudo actualizar el estado del documento.');
+    //   }
+    // });
   }
 
   // Error handling

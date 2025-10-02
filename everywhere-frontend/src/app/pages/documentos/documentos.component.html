@@ -352,8 +352,8 @@
   [ngClass]="documento.estado
     ? 'w-9 h-9 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105'
     : 'w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105'"
-  [title]="documento.estado ? 'Documento activo - Eliminar' : 'Documento inactivo - Activar'">
-  <i [ngClass]="documento.estado ? 'fas fa-trash text-sm' : 'fas fa-check text-sm'"></i>
+  [title]="documento.estado ? 'Desactivar documento' : 'Activar documento'">
+  <i [ngClass]="documento.estado ? 'fas fa-times text-sm' : 'fas fa-check text-sm'"></i>
 </button>
 
                     </div>
@@ -426,9 +426,9 @@
                   <i class="fas fa-edit"></i>
                 </button>
                 <button (click)="onCardAction(documento)"
-                  [class]="documento.estado ? 'w-10 h-10 bg-green-100 hover:bg-green-200 text-green-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105' : 'w-10 h-10 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105'"
-                  [title]="documento.estado ? 'Documento activo - Ver detalles' : 'Documento inactivo - Activar'">
-                  <i [class]="documento.estado ? 'fas fa-trash text-sm' : 'fas fa-power-off'"></i>
+                  [class]="documento.estado ? 'w-10 h-10 bg-red-100 hover:bg-red-200 text-red-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105' : 'w-10 h-10 bg-green-100 hover:bg-green-200 text-green-600 rounded-xl flex items-center justify-center transition-all duration-200 hover:scale-105'"
+                  [title]="documento.estado ? 'Desactivar documento' : 'Activar documento'">
+                  <i [class]="documento.estado ? 'fas fa-times' : 'fas fa-check'"></i>
                 </button>
               </div>
             </div>
@@ -558,6 +558,68 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Modal de confirmación de cambio de estado -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+  *ngIf="mostrarModalConfirmacion" (click)="cerrarModalConfirmacion()">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-6 rounded-t-3xl">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold">
+          Confirmar {{ accionConfirmacion === 'activar' ? 'Activación' : 'Desactivación' }}
+        </h2>
+        <button (click)="cerrarModalConfirmacion()"
+          class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all duration-200">
+          <i class="fas fa-times text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="p-8">
+      <div class="text-center mb-6">
+        <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+          [class]="accionConfirmacion === 'activar' ? 'bg-green-100' : 'bg-red-100'">
+          <i [class]="accionConfirmacion === 'activar' ? 'fas fa-check text-green-600 text-2xl' : 'fas fa-times text-red-600 text-2xl'"></i>
+        </div>
+
+        <h3 class="text-xl font-bold text-gray-900 mb-4">
+          ¿{{ accionConfirmacion === 'activar' ? 'Activar' : 'Desactivar' }} este documento?
+        </h3>
+
+        <p class="text-gray-600 mb-6">
+          {{ accionConfirmacion === 'activar'
+            ? 'El documento estará disponible para uso en el sistema.'
+            : 'El documento no estará disponible para uso en el sistema.' }}
+        </p>
+      </div>
+
+      <!-- Module Card Preview -->
+      <div class="mb-6 pointer-events-none" *ngIf="documentoAConfirmar">
+        <div class="transform scale-95">
+          <app-module-card [data]="convertToModuleCardForConfirmation(documentoAConfirmar)"></app-module-card>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="flex gap-4">
+        <button type="button" (click)="cerrarModalConfirmacion()" [disabled]="loading"
+          class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold transition-all duration-300 disabled:opacity-50">
+          Cancelar
+        </button>
+        <button type="button" (click)="confirmarCambioEstado()" [disabled]="loading"
+          [class]="accionConfirmacion === 'activar'
+            ? 'flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl disabled:opacity-50'
+            : 'flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl disabled:opacity-50'">
+          <i [class]="accionConfirmacion === 'activar' ? 'fas fa-check mr-2' : 'fas fa-times mr-2'"></i>
+          {{ accionConfirmacion === 'activar' ? 'Activar' : 'Desactivar' }}
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
