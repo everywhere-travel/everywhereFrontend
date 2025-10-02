@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import { Subscription, of } from 'rxjs';
+import { Subscription, of, Observable } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 import { environment } from '../../../environments/environment';
 
@@ -36,6 +36,9 @@ import { ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 
+import { ExchangeRate } from '../../shared/models/exchange-rate.model';
+import { ExchangeService } from '../../core/service/exchange.service';
+
 interface DetalleLiquidacionTemp {
   id?: number;
   proveedor?: ProveedorResponse | null;
@@ -62,6 +65,9 @@ interface DetalleLiquidacionTemp {
   imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent, LucideAngularModule]
 })
 export class LiquidacionesComponent implements OnInit, OnDestroy {
+
+exchangeRate$!: Observable<ExchangeRate>;
+
   // ===== CACHE AND MAPPING =====
   personasCache: { [id: number]: any } = {};
   personasDisplayMap: { [id: number]: string } = {};
@@ -303,7 +309,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   tiempoPresionado = 0;
   intervaloPulsacion: any = null;
 
-  constructor() { }
+  constructor(private exchangeService: ExchangeService) { }
 
   ngOnInit(): void {
     this.initializeForms();
