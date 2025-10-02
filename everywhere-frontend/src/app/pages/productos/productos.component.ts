@@ -45,7 +45,7 @@ export class ProductosComponent implements OnInit {
     {
       id: 'clientes',
       title: 'Gestión de Clientes',
-      icon: 'fas fa-users', 
+      icon: 'fas fa-users',
       children: [
         {
           id: 'personas',
@@ -82,7 +82,7 @@ export class ProductosComponent implements OnInit {
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box', 
+      icon: 'fas fa-box',
       active: true,
       children: [
         {
@@ -102,6 +102,12 @@ export class ProductosComponent implements OnInit {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores'
+        },
+        {
+          id: 'documentos',
+          title: 'Documentos',
+          icon: 'fas fa-file-alt',
+          route: '/documentos'
         }
       ]
     },
@@ -127,7 +133,7 @@ export class ProductosComponent implements OnInit {
     {
       id: 'archivos',
       title: 'Gestión de Archivos',
-      icon: 'fas fa-folder', 
+      icon: 'fas fa-folder',
       children: [
         {
           id: 'carpetas',

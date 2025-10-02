@@ -35,13 +35,7 @@ export class ViajeroService {
     return this.http.get<ViajeroResponse[]>(`${this.baseURL}/nombres`, { params });
   }
 
-  /**
-   * Busca viajeros por número de documento
-   */
-  findByNumeroDocumento(numeroDocumento: string): Observable<ViajeroResponse[]> {
-    const params = new HttpParams().set('numeroDocumento', numeroDocumento);
-    return this.http.get<ViajeroResponse[]>(`${this.baseURL}/numeroDocumento`, { params });
-  }
+
 
   /**
    * Busca viajeros por nacionalidad
@@ -59,23 +53,9 @@ export class ViajeroService {
     return this.http.get<ViajeroResponse[]>(`${this.baseURL}/residencia`, { params });
   }
 
-  /**
-   * Busca viajeros por fecha de vencimiento del documento
-   */
-  findByFechaVencimientoDocumento(fechaVencimiento: string): Observable<ViajeroResponse[]> {
-    const params = new HttpParams().set('fechaVencimientoDocumento', fechaVencimiento);
-    return this.http.get<ViajeroResponse[]>(`${this.baseURL}/fecha-vencimiento`, { params });
-  }
 
-  /**
-   * Busca viajeros por rango de fechas de vencimiento del documento
-   */
-  findByFechaVencimientoDocumentoBetween(fechaInicio: string, fechaFin: string): Observable<ViajeroResponse[]> {
-    const params = new HttpParams()
-      .set('fechaInicio', fechaInicio)
-      .set('fechaFin', fechaFin);
-    return this.http.get<ViajeroResponse[]>(`${this.baseURL}/fecha-vencimiento-rango`, { params });
-  }
+
+
 
   /**
    * Crea un nuevo viajero

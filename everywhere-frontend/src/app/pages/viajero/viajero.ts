@@ -4,7 +4,12 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { Router } from '@angular/router';
 import { ViajeroService } from '../../core/service/viajero/viajero.service';
 import { ViajeroRequest, ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
+import { DocumentoService } from '../../core/service/Documento/documento.service';
+import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/detalle-documento.service';
+import { DocumentoResponse } from '../../shared/models/Documento/documento.model';
+import { DetalleDocumentoRequest, DetalleDocumentoResponse } from '../../shared/models/Documento/detalleDocumento.model';
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { LucideAngularModule, FilePlus, FileText, File, FileCheck, CreditCard } from 'lucide-angular';
 
 // Interfaces for export functionality
 interface ExportedViajero {
@@ -14,9 +19,10 @@ interface ExportedViajero {
   nombreCompleto: string;
   clasificacionEdad: 'Adulto' | 'Niño' | 'Infante';
   fechaNacimiento: string;
-  numeroDocumento: string;
   telefono: string;
   email: string;
+  documentos: DetalleDocumentoResponse[];
+  documentoSeleccionado?: DetalleDocumentoResponse;
   viajeroOriginal: ViajeroResponse;
 }
 
@@ -29,7 +35,8 @@ interface ExportedViajero {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    SidebarComponent
+    SidebarComponent,
+    LucideAngularModule
   ]
 })
 export class Viajero implements OnInit {
@@ -84,7 +91,7 @@ export class Viajero implements OnInit {
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box', 
+      icon: 'fas fa-box',
       children: [
         {
           id: 'productos',
@@ -128,7 +135,7 @@ export class Viajero implements OnInit {
     {
       id: 'archivos',
       title: 'Gestión de Archivos',
-      icon: 'fas fa-folder', 
+      icon: 'fas fa-folder',
       children: [
         {
           id: 'carpetas',
@@ -217,6 +224,8 @@ export class Viajero implements OnInit {
   mostrarModalEliminarMultiple = false;
   mostrarModalDetalles = false;
   viajeroDetalles: ViajeroResponse | null = null;
+  documentosViajero: DetalleDocumentoResponse[] = [];
+  cargandoDocumentos = false;
   mostrarModalCrearViajero = false;
   editandoViajero: ViajeroResponse | null = null;
   isSubmitting = false;
@@ -231,6 +240,13 @@ export class Viajero implements OnInit {
   // Form
   viajeroForm: FormGroup;
 
+  // Modal de asignación de documentos
+  mostrarModalAsignarDocumento = false;
+  viajeroParaDocumento: ViajeroResponse | null = null;
+  documentosDisponibles: DocumentoResponse[] = [];
+  documentoForm: FormGroup;
+  isSubmittingDocumento = false;
+
   // Pagination
   currentPage = 1;
   itemsPerPage = 10;
@@ -239,16 +255,27 @@ export class Viajero implements OnInit {
   // Math object for template use
   Math = Math;
 
+  // Lucide icons for template use
+  FilePlusIcon = FilePlus;
+  FileTextIcon = FileText;
+  FileIcon = File;
+  FileCheckIcon = FileCheck;
+  CreditCardIcon = CreditCard;
+
   constructor(
     private viajeroService: ViajeroService,
+    private documentoService: DocumentoService,
+    private detalleDocumentoService: DetalleDocumentoService,
     private router: Router,
     private formBuilder: FormBuilder
   ) {
     this.viajeroForm = this.createViajeroForm();
+    this.documentoForm = this.createDocumentoForm();
   }
 
   ngOnInit(): void {
     this.loadViajeros();
+    this.loadDocumentos();
   }
   // Load data
   loadViajeros(): void {
@@ -275,15 +302,8 @@ export class Viajero implements OnInit {
     const nacionalidades = new Set(this.viajeros.map(v => v.nacionalidad));
     this.estadisticas.totalNacionalidades = nacionalidades.size;
 
-    // Calcular documentos próximos a vencer (próximos 30 días)
-    const hoy = new Date();
-    const treintaDias = new Date();
-    treintaDias.setDate(hoy.getDate() + 30);
-
-    this.estadisticas.documentosVenciendo = this.viajeros.filter(viajero => {
-      const fechaVencimiento = new Date(viajero.fechaVencimientoDocumento);
-      return fechaVencimiento >= hoy && fechaVencimiento <= treintaDias;
-    }).length;
+    // Los documentos próximos a vencer ahora se manejan en DetalleDocumento
+    this.estadisticas.documentosVenciendo = 0;
   }
 
   // Search and filter methods
@@ -306,25 +326,17 @@ export class Viajero implements OnInit {
         viajero.nombres.toLowerCase().includes(query) ||
         viajero.apellidoPaterno.toLowerCase().includes(query) ||
         viajero.apellidoMaterno.toLowerCase().includes(query) ||
-        viajero.numeroDocumento.toLowerCase().includes(query) ||
+        // viajero.numeroDocumento.toLowerCase().includes(query) || // Campo eliminado
         viajero.nacionalidad.toLowerCase().includes(query) ||
         viajero.residencia.toLowerCase().includes(query)
       );
     }
 
-    // Aplicar filtro por tipo
-    if (this.filtroTipo === 'vencimiento-proximo') {
-      const hoy = new Date();
-      const treintaDias = new Date();
-      treintaDias.setDate(hoy.getDate() + 30);
-
-      filtrados = filtrados.filter(viajero => {
-        const fechaVencimiento = new Date(viajero.fechaVencimientoDocumento);
-        return fechaVencimiento >= hoy && fechaVencimiento <= treintaDias;
-      });
-    }
+    // Aplicar filtro por tipo - Esta funcionalidad se movió a DetalleDocumento
+    // Los filtros por vencimiento de documento ahora se manejan separadamente
 
     this.viajerosFiltrados = filtrados;
+    this.calcularEstadisticas();
   }
 
   clearSearch(): void {
@@ -431,7 +443,22 @@ export class Viajero implements OnInit {
   // CRUD operations
   verViajero(viajero: ViajeroResponse): void {
     this.viajeroDetalles = viajero;
+    this.documentosViajero = [];
+    this.cargandoDocumentos = true;
     this.mostrarModalDetalles = true;
+
+    // Cargar documentos del viajero
+    this.detalleDocumentoService.findByViajero(viajero.id).subscribe({
+      next: (documentos) => {
+        this.documentosViajero = documentos;
+        this.cargandoDocumentos = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar documentos del viajero:', error);
+        this.cargandoDocumentos = false;
+      }
+    });
+
     this.closeAllMenus();
   }
 
@@ -597,16 +624,7 @@ export class Viajero implements OnInit {
     }
   }
 
-  isDocumentoProximoVencer(viajero: ViajeroResponse): boolean {
-    if (!viajero.fechaVencimientoDocumento) return false;
 
-    const hoy = new Date();
-    const vencimiento = new Date(viajero.fechaVencimientoDocumento);
-    const diferencia = vencimiento.getTime() - hoy.getTime();
-    const dias = Math.ceil(diferencia / (1000 * 3600 * 24));
-
-    return dias >= 0 && dias <= 30;
-  }
 
   // Sorting
   sortBy(column: string): void {
@@ -625,10 +643,6 @@ export class Viajero implements OnInit {
         case 'nombres':
           valueA = a.nombres + ' ' + a.apellidoPaterno + ' ' + a.apellidoMaterno;
           valueB = b.nombres + ' ' + b.apellidoPaterno + ' ' + b.apellidoMaterno;
-          break;
-        case 'numeroDocumento':
-          valueA = a.numeroDocumento;
-          valueB = b.numeroDocumento;
           break;
         default:
           return 0;
@@ -670,10 +684,6 @@ export class Viajero implements OnInit {
       fechaNacimiento: [''],
       nacionalidad: [''],
       residencia: [''],
-      tipoDocumento: [''],
-      numeroDocumento: [''],
-      fechaEmisionDocumento: [''],
-      fechaVencimientoDocumento: [''],
       persona: this.formBuilder.group({
         email: [''],
         telefono: [''],
@@ -685,6 +695,77 @@ export class Viajero implements OnInit {
   // Refresh data
   refreshData(): void {
     this.loadViajeros();
+  }
+
+  // Documento form methods
+  private createDocumentoForm(): FormGroup {
+    return this.formBuilder.group({
+      documentoId: ['', Validators.required],
+      numero: ['', Validators.required],
+      fechaEmision: ['', Validators.required],
+      fechaVencimiento: ['', Validators.required],
+      origen: ['', Validators.required]
+    });
+  }
+
+  // Load documentos
+  loadDocumentos(): void {
+    this.documentoService.getAllDocumentos().subscribe({
+      next: (documentos) => {
+        this.documentosDisponibles = documentos;
+      },
+      error: (error) => {
+        console.error('Error al cargar documentos:', error);
+      }
+    });
+  }
+
+  // Modal de asignación de documentos
+  abrirModalAsignarDocumento(viajero: ViajeroResponse): void {
+    this.viajeroParaDocumento = viajero;
+    this.documentoForm.reset();
+    this.mostrarModalAsignarDocumento = true;
+  }
+
+  cerrarModalAsignarDocumento(): void {
+    this.mostrarModalAsignarDocumento = false;
+    this.viajeroParaDocumento = null;
+    this.documentoForm.reset();
+  }
+
+  onSubmitDocumento(): void {
+    if (this.documentoForm.invalid || !this.viajeroParaDocumento) {
+      Object.keys(this.documentoForm.controls).forEach(key => {
+        this.documentoForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    this.isSubmittingDocumento = true;
+    const formData = this.documentoForm.value;
+
+    const detalleDocumentoRequest: DetalleDocumentoRequest = {
+      numero: formData.numero,
+      fechaEmision: formData.fechaEmision,
+      fechaVencimiento: formData.fechaVencimiento,
+      origen: formData.origen,
+      documentoId: formData.documentoId,
+      viajeroId: this.viajeroParaDocumento.id
+    };
+
+    this.detalleDocumentoService.saveDetalle(detalleDocumentoRequest).subscribe({
+      next: (response) => {
+        this.isSubmittingDocumento = false;
+        this.cerrarModalAsignarDocumento();
+        // Aquí podrías mostrar una notificación de éxito
+        console.log('Documento asignado exitosamente:', response);
+      },
+      error: (error) => {
+        this.isSubmittingDocumento = false;
+        console.error('Error al asignar documento:', error);
+        // Aquí podrías mostrar una notificación de error
+      }
+    });
   }
 
   // Export data
@@ -703,7 +784,6 @@ export class Viajero implements OnInit {
         viajero.nombres || '',
         viajero.apellidoPaterno || '',
         viajero.apellidoMaterno || '',
-        viajero.numeroDocumento || '',
         viajero.nacionalidad || '',
         viajero.residencia || '',
         viajero.persona?.email || '',
@@ -763,7 +843,6 @@ export class Viajero implements OnInit {
 
   // Método para poblar el formulario con datos del viajero
   populateFormWithViajero(viajero: ViajeroResponse): void {
-
     this.viajeroForm.patchValue({
       nombres: viajero.nombres || '',
       apellidoPaterno: viajero.apellidoPaterno || '',
@@ -771,10 +850,6 @@ export class Viajero implements OnInit {
       fechaNacimiento: viajero.fechaNacimiento || '',
       nacionalidad: viajero.nacionalidad || '',
       residencia: viajero.residencia || '',
-      tipoDocumento: viajero.tipoDocumento || '',
-      numeroDocumento: viajero.numeroDocumento || '',
-      fechaEmisionDocumento: viajero.fechaEmisionDocumento || '',
-      fechaVencimientoDocumento: viajero.fechaVencimientoDocumento || '',
       persona: {
         email: viajero.persona?.email || '',
         telefono: viajero.persona?.telefono || '',
@@ -821,10 +896,6 @@ export class Viajero implements OnInit {
       fechaNacimiento: formData.fechaNacimiento,
       nacionalidad: formData.nacionalidad,
       residencia: formData.residencia,
-      tipoDocumento: formData.tipoDocumento,
-      numeroDocumento: formData.numeroDocumento,
-      fechaEmisionDocumento: formData.fechaEmisionDocumento,
-      fechaVencimientoDocumento: formData.fechaVencimientoDocumento,
       persona: {
         email: formData.persona.email,
         telefono: formData.persona.telefono,
@@ -915,29 +986,34 @@ export class Viajero implements OnInit {
   /**
    * Abre el modal de exportación de viajeros seleccionados
    */
-  exportarViajeros(): void {
+  async exportarViajeros(): Promise<void> {
     if (this.selectedItems.length === 0) {
       return;
     }
 
     this.exportandoViajeros = true;
 
-    // Llamada real al backend
-    this.viajeroService.exportViajeros(this.selectedItems).subscribe({
-      next: (viajerosExportados) => {
-        this.viajerosProcesados = this.procesarViajeros(viajerosExportados);
-        this.exportandoViajeros = false;
-        this.mostrarModalExportar = true;
-      },
-      error: (error) => {
-        console.error('Error al exportar viajeros:', error);
-        // Fallback: procesar localmente si falla el backend
-        const viajerosFiltrados = this.viajeros.filter(v => this.selectedItems.includes(v.id));
-        this.viajerosProcesados = this.procesarViajeros(viajerosFiltrados);
-        this.exportandoViajeros = false;
-        this.mostrarModalExportar = true;
-      }
-    });
+    try {
+      // Llamada real al backend
+      this.viajeroService.exportViajeros(this.selectedItems).subscribe({
+        next: async (viajerosExportados) => {
+          this.viajerosProcesados = await this.procesarViajeros(viajerosExportados);
+          this.exportandoViajeros = false;
+          this.mostrarModalExportar = true;
+        },
+        error: async (error) => {
+          console.error('Error al exportar viajeros:', error);
+          // Fallback: procesar localmente si falla el backend
+          const viajerosFiltrados = this.viajeros.filter(v => this.selectedItems.includes(v.id));
+          this.viajerosProcesados = await this.procesarViajeros(viajerosFiltrados);
+          this.exportandoViajeros = false;
+          this.mostrarModalExportar = true;
+        }
+      });
+    } catch (error) {
+      console.error('Error en exportación:', error);
+      this.exportandoViajeros = false;
+    }
   }
 
   /**
@@ -961,29 +1037,64 @@ export class Viajero implements OnInit {
   /**
    * Procesa y clasifica los viajeros según las especificaciones
    */
-  private procesarViajeros(viajeros: ViajeroResponse[]): ExportedViajero[] {
-    const procesados = viajeros.map(viajero => {
-      const edad = this.calcularEdad(viajero.fechaNacimiento);
-      const clasificacion = this.clasificarPorEdad(edad);
+  private async procesarViajeros(viajeros: ViajeroResponse[]): Promise<ExportedViajero[]> {
+    const procesados: ExportedViajero[] = [];
 
-      // Formatear nombres para exportación (mayúsculas sin tildes)
-      const nombresFormateados = this.formatearNombreParaExportacion(viajero.nombres);
-      const apellidosFormateados = `${this.formatearNombreParaExportacion(viajero.apellidoPaterno)} ${this.formatearNombreParaExportacion(viajero.apellidoMaterno)}`.trim();
-      const nombreCompletoFormateado = `${nombresFormateados} ${apellidosFormateados}`.trim();
+    for (const viajero of viajeros) {
+      try {
+        // Cargar documentos del viajero
+        const documentos = await this.detalleDocumentoService.findByViajero(viajero.id).toPromise() || [];
 
-      return {
-        id: viajero.id,
-        nombres: nombresFormateados,
-        apellidos: apellidosFormateados,
-        nombreCompleto: nombreCompletoFormateado,
-        clasificacionEdad: clasificacion,
-        fechaNacimiento: this.formatDateForExport(viajero.fechaNacimiento),
-        numeroDocumento: viajero.numeroDocumento,
-        telefono: viajero.persona?.telefono || 'N/A',
-        email: viajero.persona?.email || 'vmroxana28@gmail.com',
-        viajeroOriginal: viajero
-      };
-    });
+        const edad = this.calcularEdad(viajero.fechaNacimiento);
+        const clasificacion = this.clasificarPorEdad(edad);
+
+        // Formatear nombres para exportación (mayúsculas sin tildes)
+        const nombresFormateados = this.formatearNombreParaExportacion(viajero.nombres);
+        const apellidosFormateados = `${this.formatearNombreParaExportacion(viajero.apellidoPaterno)} ${this.formatearNombreParaExportacion(viajero.apellidoMaterno)}`.trim();
+        const nombreCompletoFormateado = `${nombresFormateados} ${apellidosFormateados}`.trim();
+
+        const viajeroExportado: ExportedViajero = {
+          id: viajero.id,
+          nombres: nombresFormateados,
+          apellidos: apellidosFormateados,
+          nombreCompleto: nombreCompletoFormateado,
+          clasificacionEdad: clasificacion,
+          fechaNacimiento: this.formatDateForExport(viajero.fechaNacimiento),
+          telefono: viajero.persona?.telefono || 'N/A',
+          email: viajero.persona?.email || 'vmroxana28@gmail.com',
+          documentos: documentos,
+          documentoSeleccionado: documentos.length > 0 ? documentos[0] : undefined,
+          viajeroOriginal: viajero
+        };
+
+        procesados.push(viajeroExportado);
+      } catch (error) {
+        console.error(`Error al cargar documentos del viajero ${viajero.id}:`, error);
+        // Continuar con el procesamiento sin documentos
+        const edad = this.calcularEdad(viajero.fechaNacimiento);
+        const clasificacion = this.clasificarPorEdad(edad);
+
+        const nombresFormateados = this.formatearNombreParaExportacion(viajero.nombres);
+        const apellidosFormateados = `${this.formatearNombreParaExportacion(viajero.apellidoPaterno)} ${this.formatearNombreParaExportacion(viajero.apellidoMaterno)}`.trim();
+        const nombreCompletoFormateado = `${nombresFormateados} ${apellidosFormateados}`.trim();
+
+        const viajeroExportado: ExportedViajero = {
+          id: viajero.id,
+          nombres: nombresFormateados,
+          apellidos: apellidosFormateados,
+          nombreCompleto: nombreCompletoFormateado,
+          clasificacionEdad: clasificacion,
+          fechaNacimiento: this.formatDateForExport(viajero.fechaNacimiento),
+          telefono: viajero.persona?.telefono || 'N/A',
+          email: viajero.persona?.email || 'vmroxana28@gmail.com',
+          documentos: [],
+          documentoSeleccionado: undefined,
+          viajeroOriginal: viajero
+        };
+
+        procesados.push(viajeroExportado);
+      }
+    }
 
     // Ordenar según especificaciones: Adultos -> Niños -> Infantes
     return procesados.sort((a, b) => {
@@ -1030,6 +1141,94 @@ export class Viajero implements OnInit {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
+  }
+
+  /**
+   * Cambia el documento seleccionado para un viajero en la exportación
+   */
+  seleccionarDocumento(viajero: ExportedViajero, documento: DetalleDocumentoResponse): void {
+    viajero.documentoSeleccionado = documento;
+  }
+
+  /**
+   * Obtiene el texto del documento para mostrar en el dropdown
+   */
+  getDocumentoDisplay(documento: DetalleDocumentoResponse): string {
+    return `${documento.documento.tipo}: ${documento.numero}`;
+  }
+
+  /**
+   * Obtiene la información del documento para copiar
+   */
+  getDocumentoInfo(viajero: ExportedViajero): string {
+    if (!viajero.documentoSeleccionado) {
+      return 'Sin documento';
+    }
+    return `${viajero.documentoSeleccionado.documento.tipo}: ${viajero.documentoSeleccionado.numero}`;
+  }
+
+  /**
+   * Copia la información del documento seleccionado
+   */
+  async copiarDocumento(viajero: ExportedViajero): Promise<void> {
+    const infoDocumento = this.getDocumentoInfo(viajero);
+    await this.copiarAlPortapapeles(infoDocumento, 'Documento');
+  }
+
+  /**
+   * Verifica si un documento está vencido
+   */
+  isDocumentoVencido(fechaVencimiento: string | null): boolean {
+    if (!fechaVencimiento) return false;
+    return new Date(fechaVencimiento) < new Date();
+  }
+
+  /**
+   * Verifica si un documento está próximo a vencer (30 días)
+   */
+  isDocumentoProximoVencer(fechaVencimiento: string | null): boolean {
+    if (!fechaVencimiento) return false;
+    const vencimiento = new Date(fechaVencimiento).getTime();
+    const hoy = new Date().getTime();
+    const treintaDias = 30 * 24 * 60 * 60 * 1000;
+    return (vencimiento - hoy) < treintaDias && vencimiento > hoy;
+  }
+
+  /**
+   * Obtiene la clase CSS para el estado del documento
+   */
+  getDocumentoStatusClass(fechaVencimiento: string | null): string {
+    if (this.isDocumentoVencido(fechaVencimiento)) {
+      return 'bg-red-100 text-red-800';
+    } else if (this.isDocumentoProximoVencer(fechaVencimiento)) {
+      return 'bg-yellow-100 text-yellow-800';
+    } else {
+      return 'bg-green-100 text-green-800';
+    }
+  }
+
+  /**
+   * Obtiene el texto del estado del documento
+   */
+  getDocumentoStatusText(fechaVencimiento: string | null): string {
+    if (this.isDocumentoVencido(fechaVencimiento)) {
+      return 'Vencido';
+    } else if (this.isDocumentoProximoVencer(fechaVencimiento)) {
+      return 'Por vencer';
+    } else {
+      return 'Vigente';
+    }
+  }
+
+  /**
+   * Maneja el cambio de selección de documento en el dropdown
+   */
+  onDocumentoSelectionChange(event: Event, viajero: ExportedViajero): void {
+    const target = event.target as HTMLSelectElement;
+    const index = parseInt(target.value);
+    if (index >= 0 && index < viajero.documentos.length) {
+      this.seleccionarDocumento(viajero, viajero.documentos[index]);
+    }
   }
 
   /**
@@ -1138,6 +1337,10 @@ export class Viajero implements OnInit {
    * Copia todos los datos de un viajero en formato estructurado
    */
   async copiarTodosLosDatos(viajero: ExportedViajero): Promise<void> {
+    const documentoInfo = viajero.documentoSeleccionado
+      ? `\n\n📄 DOCUMENTO SELECCIONADO\nTipo: ${viajero.documentoSeleccionado.documento.tipo}\nNúmero: ${viajero.documentoSeleccionado.numero}\nFecha Emisión: ${viajero.documentoSeleccionado.fechaEmision ? new Date(viajero.documentoSeleccionado.fechaEmision).toLocaleDateString() : 'No especificada'}\nFecha Vencimiento: ${viajero.documentoSeleccionado.fechaVencimiento ? new Date(viajero.documentoSeleccionado.fechaVencimiento).toLocaleDateString() : 'No especificada'}\nOrigen: ${viajero.documentoSeleccionado.origen || 'No especificado'}`
+      : '\n\n📄 DOCUMENTO\nSin documento asignado';
+
     const datosCompletos = `DATOS DEL VIAJERO
 ═══════════════════
 
@@ -1146,8 +1349,7 @@ Nombres: ${viajero.nombres}
 Apellidos: ${viajero.apellidos}
 Nombre Completo: ${viajero.nombreCompleto}
 Clasificación: ${viajero.clasificacionEdad}
-Fecha de Nacimiento: ${viajero.fechaNacimiento}
-Número de Documento: ${viajero.numeroDocumento}
+Fecha de Nacimiento: ${viajero.fechaNacimiento}${documentoInfo}
 
 📞 CONTACTO
 Teléfono: ${viajero.telefono || 'No disponible'}
@@ -1156,7 +1358,7 @@ Email: ${viajero.email}
 🆔 DETALLES ADICIONALES
 ID: #${viajero.id}
 Nacionalidad: ${viajero.viajeroOriginal.nacionalidad}
-Tipo de Documento: ${viajero.viajeroOriginal.tipoDocumento}
+Residencia: ${viajero.viajeroOriginal.residencia}
 
 ────────────────────
 Exportado el: ${new Date().toLocaleString()}`;
