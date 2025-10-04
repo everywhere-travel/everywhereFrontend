@@ -438,6 +438,9 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.loadViajeros()
     ]).then(() => {
       return this.loadLiquidaciones();
+    }).then(() => {
+      // Después de cargar liquidaciones, verificar y cargar clientes faltantes
+      return this.findAndLoadMissingClients();
     }).finally(() => {
       this.isLoading = false;
     });
@@ -469,23 +472,26 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.personas = [...personasNaturales, ...personasJuridicas];
       // Almacenar todos los clientes para el filtrado inicial
       this.todosLosClientes = [...this.personas];
-      this.personasEncontradas = [...this.todosLosClientes]; // Mostrar todos los clientes inicialmente
+      this.personasEncontradas = [...this.todosLosClientes];
 
-      // Poblar cache y display map para evitar llamadas HTTP posteriores
+      // Poblar cache usando ENFOQUE HÍBRIDO (tabla padre SI existe, sino tabla hija)
       this.personas.forEach(persona => {
-        if (persona.id) {
-          this.personasCache[persona.id] = {
-            id: persona.id,
+        // Intentar usar ID de tabla padre PRIMERO, si no existe usar tabla hija
+        const personaId = persona.persona?.id || persona.id;
+        
+        if (personaId) {
+          this.personasCache[personaId] = {
+            id: personaId,
             identificador: persona.ruc || persona.documento || persona.cedula || '',
             nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
-          const cached = this.personasCache[persona.id];
+          const cached = this.personasCache[personaId];
           // Mejorar el formato del display para asegurar que se muestre el documento
           if (cached.identificador) {
-            this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+            this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
           } else {
-            this.personasDisplayMap[persona.id] = cached.nombre;
+            this.personasDisplayMap[personaId] = cached.nombre;
           }
         }
       });
@@ -495,6 +501,75 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.personas = [];
       this.todosLosClientes = [];
       this.personasEncontradas = [];
+    }
+  }
+
+  /**
+   * Busca y carga clientes que aparecen en liquidaciones pero no están en el cache
+   */
+  private async findAndLoadMissingClients(): Promise<void> {
+    try {
+      // Obtener IDs únicos de personas desde las liquidaciones cargadas
+      const personaIdsEnLiquidaciones = new Set<number>();
+      this.liquidaciones.forEach(liquidacion => {
+        if (liquidacion.cotizacion?.personas?.id) {
+          personaIdsEnLiquidaciones.add(liquidacion.cotizacion.personas.id);
+        }
+      });
+
+      // Encontrar IDs que están en liquidaciones pero NO en cache
+      const idsEnCache = new Set(Object.keys(this.personasCache).map(id => parseInt(id)));
+      const idsFaltantes = Array.from(personaIdsEnLiquidaciones).filter(id => !idsEnCache.has(id));
+
+      if (idsFaltantes.length === 0) {
+        return;
+      }
+
+      // Cargar información para cada cliente faltante usando el endpoint correcto
+      const clientesFaltantes = await Promise.all(
+        idsFaltantes.map(async (personaId) => {
+          try {
+            const personaDisplay = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
+            return personaDisplay;
+          } catch (error) {
+            return null;
+          }
+        })
+      );
+
+      // Agregar clientes válidos al cache y listas
+      const clientesValidos = clientesFaltantes.filter(c => c !== null) as any[];
+      
+      clientesValidos.forEach(cliente => {
+        if (cliente.id) {
+          // Agregar al cache - mejorar datos para clientes "genéricos"
+          const esGenerico = cliente.tipo === 'GENERICA' || !cliente.identificador;
+          
+          this.personasCache[cliente.id] = {
+            id: cliente.id,
+            identificador: cliente.identificador || '',
+            nombre: cliente.nombre || `Cliente ID: ${cliente.id}`,
+            tipo: esGenerico ? 'UNKNOWN' : cliente.tipo
+          };
+          
+          const cached = this.personasCache[cliente.id];
+          if (cached.identificador) {
+            this.personasDisplayMap[cliente.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : cached.tipo === 'NATURAL' ? 'DNI' : 'DOC'}: ${cached.identificador} - ${cached.nombre}`;
+          } else {
+            this.personasDisplayMap[cliente.id] = esGenerico ? `Cliente ID: ${cliente.id} (Sin datos)` : cached.nombre;
+          }
+
+          // Agregar a las listas para búsqueda (solo si no es genérico)
+          if (!esGenerico) {
+            this.personas.push(cliente);
+            this.todosLosClientes.push(cliente);
+            this.personasEncontradas.push(cliente);
+          }
+        }
+      });
+
+    } catch (error) {
+
     }
   }
 
@@ -1050,7 +1125,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       await this.loadLiquidaciones();
       this.cerrarFormulario();
     } catch (error) {
-      console.error('Error en onSubmitLiquidacion:', error);
+
       this.showError('Error al guardar la liquidación. Por favor, verifique los datos e intente nuevamente.');
     } finally {
       this.isLoading = false;
@@ -1077,7 +1152,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         }
       }
     } catch (error) {
-      console.error('Error al procesar detalles de liquidación:', error);
+
       throw error;
     }
   }
@@ -1103,7 +1178,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
       await this.detalleLiquidacionService.createDetalleLiquidacion(detalleRequest).toPromise();
     } catch (error) {
-      console.error('Error al crear detalle de liquidación:', error);
+
       throw error;
     }
   }
@@ -1131,7 +1206,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
       await this.detalleLiquidacionService.updateDetalleLiquidacion(detalle.id, detalleRequest).toPromise();
     } catch (error) {
-      console.error('Error al actualizar detalle de liquidación:', error);
+
       throw error;
     }
   }
