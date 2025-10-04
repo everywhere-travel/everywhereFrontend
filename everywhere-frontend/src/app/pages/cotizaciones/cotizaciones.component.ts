@@ -71,6 +71,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // ===== CACHE AND MAPPING =====
   personasCache: { [id: number]: any } = {};
   personasDisplayMap: { [id: number]: string } = {};
+  loadingPersonas: Set<number> = new Set(); // Para evitar cargas duplicadas
 
   // Services injection
   private fb = inject(FormBuilder);
@@ -377,13 +378,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       personaId: ['', [Validators.required]],
       fechaEmision: ['', [Validators.required]],
       fechaVencimiento: ['', [Validators.required]],
-      estadoCotizacionId: ['', [Validators.required]],
-      sucursalId: ['', [Validators.required]],
-      origenDestino: ['', [Validators.required]],
-      fechaSalida: ['', [Validators.required]],
-      fechaRegreso: ['', [Validators.required]],
-      formaPagoId: ['', [Validators.required]],
-      cantAdultos: [1, [Validators.required, Validators.min(1)]],
+      estadoCotizacionId: [''],
+      sucursalId: [''],
+      origenDestino: [''],
+      fechaSalida: [''],
+      fechaRegreso: [''],
+      formaPagoId: [''],
+      cantAdultos: [1, [Validators.min(1)]],
       cantNinos: [0, [Validators.min(0)]],
       moneda: ['USD', [Validators.required]],
       observacion: [''],
@@ -501,26 +502,19 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.todosLosClientes = [...this.personas];
       this.personasEncontradas = [...this.todosLosClientes]; // Mostrar todos los clientes inicialmente
 
+      console.log(`✅ Personas cargadas: ${this.personas.length} (${personasNaturales.length} naturales + ${personasJuridicas.length} jurídicas)`);
+
       // Poblar cache y display map para evitar llamadas HTTP posteriores
       this.personas.forEach(persona => {
         if (persona.id) {
-          this.personasCache[persona.id] = {
-            id: persona.id,
-            identificador: persona.ruc || persona.documento || persona.cedula || '',
-            nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
-            tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
-          };
-          const cached = this.personasCache[persona.id];
-          // Mejorar el formato del display para asegurar que se muestre el documento
-          if (cached.identificador) {
-            this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
-          } else {
-            this.personasDisplayMap[persona.id] = cached.nombre;
-          }
+          this.addPersonaToCache(persona);
         }
       });
 
+      console.log(`📋 Cache poblado: ${Object.keys(this.personasCache).length} entradas`);
+
     } catch (error) {
+      console.error('Error al cargar personas:', error);
       this.showError('Error al cargar los clientes. Algunas funciones pueden no estar disponibles.');
       this.personas = [];
       this.todosLosClientes = [];
@@ -776,21 +770,23 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private setupDatesForNew(): void {
-    // Crear fecha actual en UTC-5 (Colombia/Perú)
+    // Crear fecha actual en zona horaria de Lima (UTC-5)
     const now = new Date();
-    const utcMinus5 = new Date(now.getTime() - (5 * 60 * 60 * 1000)); // UTC-5
-
-    // Crear fecha de vencimiento el mismo día a las 11pm UTC-5
-    const vencimiento = new Date(utcMinus5);
+    
+    // Obtener la fecha actual en zona horaria de Lima
+    const limaTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Lima"}));
+    
+    // Crear fecha de vencimiento el mismo día a las 11pm en hora de Lima
+    const vencimiento = new Date(limaTime);
     vencimiento.setHours(23, 0, 0, 0); // 11:00 PM, 0 minutos, 0 segundos, 0 milisegundos
 
     // Si ya pasaron las 11pm del día actual, mover al siguiente día a las 11pm
-    if (utcMinus5.getHours() >= 23) {
+    if (limaTime.getHours() >= 23) {
       vencimiento.setDate(vencimiento.getDate() + 1);
     }
 
     this.cotizacionForm.patchValue({
-      fechaEmision: this.formatDateTimeLocal(utcMinus5),
+      fechaEmision: this.formatDateTimeLocal(limaTime),
       fechaVencimiento: this.formatDateTimeLocal(vencimiento),
       codigoCotizacion: this.generateNextCode()
     });
@@ -804,6 +800,21 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  /**
+   * Obtiene la fecha y hora actual en zona horaria de Lima (UTC-5)
+   */
+  private getCurrentLimaTime(): Date {
+    const now = new Date();
+    return new Date(now.toLocaleString("en-US", {timeZone: "America/Lima"}));
+  }
+
+  /**
+   * Obtiene la fecha y hora actual en formato ISO string para Lima
+   */
+  private getCurrentLimaISOString(): string {
+    return this.getCurrentLimaTime().toISOString();
   }
 
   private generateNextCode(): string {
@@ -832,6 +843,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       if (this.editandoCotizacion) {
         console.log('📝 Poblando formulario para edición...');
         await this.populateFormFromCotizacionCompleta(this.cotizacionCompleta);
+      } else {
+        // Si estamos visualizando, también cargar los detalles para mostrar los grupos seleccionados
+        console.log('👁️ Cargando detalles para visualización...');
+        if (this.cotizacionCompleta.detalles && this.cotizacionCompleta.detalles.length > 0) {
+          this.loadDetallesFromCotizacionCompleta(this.cotizacionCompleta.detalles, this.cotizacionCompleta);
+        }
       }
 
     } catch (error) {
@@ -1010,9 +1027,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const persona = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
       if (persona) {
         this.clienteSeleccionado = persona;
+        
+        // ✅ Actualizar el personasDisplayMap para la tabla
+        const displayName = this.getClienteDisplayName(persona);
+        this.personasDisplayMap[personaId] = displayName;
+        
         return;
       }
     } catch (error) {
+      console.error('Error al cargar cliente para edición:', error);
       this.showError('Error al cargar los datos del cliente para edición.');
     }
     // Si no se encuentra, resetea
@@ -1030,33 +1053,68 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Reset arrays
     this.detallesFijos = [];
     this.gruposHoteles = [];
+    this.grupoSeleccionadoId = null; // ✅ NUEVO: Reset grupo seleccionado
 
     // Separate detalles by category
     detalles.forEach(detalle => {
       if (detalle.categoria?.id === 1) { // Productos fijos
         const detalleTemp = this.convertDetalleToTemp(detalle);
-
         this.detallesFijos.push(detalleTemp);
       } else { // Grupos de hoteles
         this.addDetalleToGrupoHotel(detalle);
       }
     });
+
+    // ✅ NUEVO: Determinar qué grupo está seleccionado basado en detalles seleccionados
+    this.determinarGrupoSeleccionado();
+  }
+
+  // ✅ NUEVO: Método para determinar qué grupo está seleccionado al cargar datos
+  private determinarGrupoSeleccionado(): void {
+    // ✅ IMPORTANTE: No tocar los productos fijos, solo procesar grupos de hoteles
+    for (const grupo of this.gruposHoteles) {
+      const tieneDetallesSeleccionados = grupo.detalles.some(detalle => detalle.seleccionado);
+      
+      if (tieneDetallesSeleccionados && grupo.categoria.id !== undefined) {
+        // Si encontramos un grupo con detalles seleccionados, ese es el grupo activo
+        this.grupoSeleccionadoId = grupo.categoria.id;
+        grupo.seleccionado = true;
+        
+        // Asegurar que TODOS los detalles del grupo estén seleccionados (consistencia)
+        grupo.detalles.forEach(detalle => {
+          detalle.seleccionado = true;
+        });
+        
+        console.log(`✅ Grupo recuperado como seleccionado: ${grupo.categoria.nombre} (ID: ${grupo.categoria.id})`);
+        return; // Solo puede haber un grupo seleccionado
+      }
+    }
+    
+    console.log('ℹ️ No se encontró ningún grupo seleccionado en los datos cargados');
+    
+    // ✅ Verificar que todos los productos fijos mantengan seleccionado=true
+    this.detallesFijos.forEach(detalle => {
+      detalle.seleccionado = true;
+    });
+    console.log(`ℹ️ Productos fijos marcados como seleccionados: ${this.detallesFijos.length}`);
   }
 
   private convertDetalleToTemp(detalle: DetalleCotizacionResponse): DetalleCotizacionTemp {
+    const categoriaId = detalle.categoria?.id ?? detalle.categoria ?? 1;
+    
     return {
       id: detalle.id,
       proveedor: detalle.proveedor,
       producto: detalle.producto,
-      categoria: (detalle.categoria?.id ?? detalle.categoria ?? 1), // Nunca undefined
+      categoria: categoriaId, // Nunca undefined
       descripcion: detalle.descripcion || 'Sin descripción',
       precioHistorico: detalle.precioHistorico || 0,
       comision: detalle.comision || 0,
       cantidad: detalle.cantidad || 1,
       unidad: detalle.unidad || 1,
       total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
-      isTemporary: false,
-      seleccionado: detalle.seleccionado || false          // ✅ Campo de selección
+      isTemporary: false, 
+      seleccionado: categoriaId === 1 ? true : (detalle.seleccionado || false)
     };
   }
 
@@ -1072,7 +1130,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           detalles: [],
           total: 0,
           isTemporary: false,
-          seleccionado: false     // ✅ Inicializar como no seleccionado
+          seleccionado: false
         };
         this.gruposHoteles.push(grupo);
 
@@ -1117,8 +1175,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       proveedor = {
         id: 0, // temporary ID
         nombre: formValue.nuevoProveedor.trim(),
-        creado: new Date().toISOString(),
-        actualizado: new Date().toISOString()
+        creado: this.getCurrentLimaISOString(),
+        actualizado: this.getCurrentLimaISOString()
       } as ProveedorResponse;
     }
 
@@ -1152,7 +1210,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       unidad,
       total: (precioHistorico * cantidad) + comision,
       isTemporary: true,
-      seleccionado: false     // ✅ Inicializar como no seleccionado
+      seleccionado: true     // ✅ PRODUCTOS FIJOS siempre seleccionados
     };
 
     this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista
@@ -1348,17 +1406,29 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       if (this.grupoSeleccionadoId === categoriaId) {
         this.grupoSeleccionadoId = null;
         grupoSeleccionado.seleccionado = false;
+        // ✅ NUEVO: Marcar todos los detalles como NO seleccionados
+        grupoSeleccionado.detalles.forEach(detalle => {
+          detalle.seleccionado = false;
+        });
         console.log(`✅ Grupo ${grupoSeleccionado.categoria.nombre} deseleccionado`);
       } else {
         // Deseleccionar todos los grupos primero
         this.gruposHoteles.forEach(grupo => {
           grupo.seleccionado = false;
+          // ✅ NUEVO: Marcar todos los detalles como NO seleccionados
+          grupo.detalles.forEach(detalle => {
+            detalle.seleccionado = false;
+          });
         });
 
         // Seleccionar solo el grupo actual si tiene ID válido
         if (categoriaId !== undefined) {
           this.grupoSeleccionadoId = categoriaId;
           grupoSeleccionado.seleccionado = true;
+          // ✅ NUEVO: Marcar todos los detalles del grupo seleccionado como seleccionados
+          grupoSeleccionado.detalles.forEach(detalle => {
+            detalle.seleccionado = true;
+          });
           console.log(`✅ Grupo ${grupoSeleccionado.categoria.nombre} seleccionado (único), ID:`, this.grupoSeleccionadoId);
         }
       }
@@ -1681,7 +1751,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // Exportar grupos a JSON
   exportarGrupos(): void {
     const datosExport = {
-      fecha: new Date().toISOString(),
+      fecha: this.getCurrentLimaISOString(),
       totalGrupos: this.gruposHoteles.length,
       totalOpciones: this.getTotalOpcionesGrupos(),
       valorTotal: this.calcularTotalGrupos(),
@@ -1691,7 +1761,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const dataStr = JSON.stringify(datosExport, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
 
-    const exportFileDefaultName = `grupos-hoteles-${new Date().toISOString().split('T')[0]}.json`;
+    const exportFileDefaultName = `grupos-hoteles-${this.getCurrentLimaISOString().split('T')[0]}.json`;
 
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -1869,8 +1939,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       proveedor = {
         id: 0,
         nombre: formValue.nuevoProveedor.trim(),
-        creado: new Date().toISOString(),
-        actualizado: new Date().toISOString()
+        creado: this.getCurrentLimaISOString(),
+        actualizado: this.getCurrentLimaISOString()
       } as ProveedorResponse;
 
     }
@@ -2224,19 +2294,89 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   getPersonaDisplayName(personaId: number): string {
-    // Usar solo datos en cache para evitar llamadas HTTP cíclicas
     if (!personaId || personaId === 0) {
       return 'Sin cliente';
     }
 
-    // Retornar desde display map si existe
-    if (this.personasDisplayMap[personaId]) {
-      return this.personasDisplayMap[personaId];
+    // Buscar en el cache
+    if (this.personasCache[personaId]) {
+      return this.personasCache[personaId].nombre;
     }
 
-    // Si no está en cache, retornar texto temporal
-    // NO hacer llamadas HTTP desde aquí para evitar loops infinitos
-    return 'Cliente no encontrado';
+    // Si no está en cache, significa que no se cargó correctamente
+    console.warn(`Persona con ID ${personaId} no encontrada en cache`);
+    return `Cliente ID: ${personaId}`;
+  }
+
+  /**
+   * Obtiene solo el número de documento del cliente por su ID
+   */
+  getPersonaDocumento(personaId: number): string {
+    if (!personaId || personaId === 0) {
+      return 'Sin documento';
+    }
+
+    // Buscar en el cache
+    if (this.personasCache[personaId]) {
+      const cached = this.personasCache[personaId];
+      if (cached.identificador) {
+        return `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador}`;
+      }
+      return 'Sin documento';
+    }
+
+    console.warn(`Persona con ID ${personaId} no encontrada en cache para documento`);
+    return 'Documento no disponible';
+  }
+
+  /**
+   * Agrega una persona al cache
+   */
+  private addPersonaToCache(persona: any): void {
+    if (!persona.id) return;
+    
+    this.personasCache[persona.id] = {
+      id: persona.id,
+      identificador: persona.ruc || persona.documento || persona.cedula || '',
+      nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
+      tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
+    };
+    
+    const cached = this.personasCache[persona.id];
+    if (cached.identificador) {
+      this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+    } else {
+      this.personasDisplayMap[persona.id] = cached.nombre;
+    }
+  }
+
+  /**
+   * Carga una persona que falta en el cache de forma asíncrona
+   */
+  private loadMissingPersona(personaId: number): void {
+    // Evitar cargas duplicadas
+    if (this.loadingPersonas.has(personaId)) {
+      return;
+    }
+    
+    this.loadingPersonas.add(personaId);
+    
+    // Cargar persona de forma asíncrona
+    this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise()
+      .then(persona => {
+        if (persona) {
+          this.todosLosClientes.push(persona);
+          this.addPersonaToCache(persona);
+          // Forzar actualización de la vista
+          this.filterCotizaciones();
+        }
+      })
+      .catch(error => {
+        console.warn(`No se pudo cargar la persona con ID ${personaId}:`, error);
+      })
+      .finally(() => {
+        this.loadingPersonas.delete(personaId);
+      });
   }
 
   getEstadoBadgeClass(estado: EstadoCotizacionResponse | null | undefined): string {
