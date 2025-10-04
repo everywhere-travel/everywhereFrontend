@@ -348,7 +348,12 @@
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
-                    {{ getPersonaDisplayName(cotizacion.personas?.id || 0) }}
+                    <div class="text-sm font-medium text-gray-900">
+                      {{ getPersonaDisplayName(cotizacion.personas?.id || 0) }}
+                    </div>
+                    <div class="text-sm text-gray-500">
+                      {{ getPersonaDocumento(cotizacion.personas?.id || 0) }}
+                    </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-900">
@@ -971,7 +976,6 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Estado de Cotización
-                  <span class="text-red-500">*</span>
                 </label>
                 <select formControlName="estadoCotizacionId"
                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -993,8 +997,7 @@
               <!-- Sucursal -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Sucursal
-                  <span class="text-red-500">*</span>
+                  Sucursal 
                 </label>
                 <select formControlName="sucursalId"
                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -1269,7 +1272,7 @@
                 class="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mr-3">
                 <i class="fas fa-boxes text-white text-sm"></i>
               </div>
-              Productos Fijos
+              Productos
             </h3>
 
             <!-- Formulario para agregar producto -->
@@ -1455,10 +1458,10 @@
         </div>
 
         <!-- Total Productos Fijos -->
-        <div *ngIf="detallesFijos.length > 0" class="mt-4 flex justify-end">
+        <div *ngIf="detallesFijos.length > 0" class="mt-2 mb-6 flex justify-end">
           <div class="bg-everywhere-primary/10 px-4 py-2 rounded-lg">
             <span class="text-sm font-medium text-gray-700">
-              Tarifa Productos Fijos:
+              Tarifa Productos:
               <span class="font-bold text-everywhere-primary">
                 ${{ calcularTotalFijos() | number : '1.2-2' }} USD
               </span>
@@ -1467,7 +1470,7 @@
         </div>
 
         <!-- Grupos de Hoteles -->
-        <div class="mb-6">
+        <div class="mb-4">
           <div class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 border border-orange-200">
             <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <div
@@ -1519,7 +1522,44 @@
               <div *ngFor="let grupo of gruposHoteles; let gi = index" class="mb-4 mt-4">
                 <div class="border border-gray-200 rounded-xl overflow-hidden">
                   <div class="bg-gray-50 px-3 py-2 flex items-center justify-between">
-                    <h4 class="font-medium text-gray-900">Grupo {{ grupo.categoria.nombre }}</h4>
+                    <div class="flex items-center gap-3">
+                      <!-- Botón de selección única del grupo -->
+                      <div class="flex items-center">
+                        <button
+                          type="button"
+                          (click)="seleccionarGrupoUnico(gi)"
+                          class="relative w-6 h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-everywhere-primary focus:ring-offset-1"
+                          [class]="isGrupoSeleccionado(gi)
+                            ? 'bg-everywhere-primary border-everywhere-primary shadow-lg'
+                            : 'bg-white border-gray-300 hover:border-everywhere-primary'"
+                          [title]="isGrupoSeleccionado(gi) ? 'Grupo seleccionado - Click para deseleccionar' : 'Click para seleccionar este grupo'"
+                          [id]="'grupo-' + gi">
+
+                          <!-- Círculo interno cuando está seleccionado -->
+                          <div
+                            *ngIf="isGrupoSeleccionado(gi)"
+                            class="absolute inset-1 bg-white rounded-full animate-in zoom-in duration-200">
+                          </div>
+
+                          <!-- Icono de check cuando está seleccionado -->
+                          <i
+                            *ngIf="isGrupoSeleccionado(gi)"
+                            class="fas fa-check absolute inset-0 flex items-center justify-center text-everywhere-primary text-xs">
+                          </i>
+                        </button>
+                        <label [for]="'grupo-' + gi" class="sr-only">Seleccionar grupo único</label>
+                      </div>
+
+                      <h4 class="font-medium text-gray-900">Grupo {{ grupo.categoria.nombre }}</h4>
+
+                      <!-- Indicador de selección -->
+                      <span
+                        *ngIf="isGrupoSeleccionado(gi)"
+                        class="text-xs bg-green-500 text-white px-3 py-1 rounded-full font-medium shadow-sm animate-in slide-in-from-right duration-300">
+                        <i class="fas fa-check-circle mr-1"></i>
+                        Grupo Seleccionado
+                      </span>
+                    </div>
                     <div class="flex items-center gap-4">
                       <span class="text-sm font-medium text-everywhere-primary">
                         Total: ${{ grupo.total | number : '1.2-2' }} USD
@@ -1535,21 +1575,27 @@
                     <div class="bg-white rounded-xl border border-gray-200">
                       <!-- Header row -->
                       <div class="grid gap-3 items-end p-3 border-b border-gray-100 bg-gray-50"
-                        style="grid-template-columns: 1.2fr 1fr 80px 100px 100px 80px;">
+                        style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                         <div>
                           <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
                         </div>
                         <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
                         </div>
                         <div>
                           <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
                         </div>
                         <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-1">Precio USD</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
                         </div>
                         <div>
-                          <label class="block text-sm font-medium text-gray-700 mb-1">Total USD</label>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Precio Unitario</label>
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Comisión</label>
+                        </div>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700 mb-1">Total</label>
                         </div>
                         <div class="text-center">
                           <label class="block text-sm font-medium text-gray-700 mb-1">Acciones</label>
@@ -1560,7 +1606,7 @@
                       <div *ngFor="let detalle of grupo.detalles; let di = index"
                         class="p-3 last:border-b-0">
                         <div class="grid gap-3 items-center"
-                          style="grid-template-columns: 1.2fr 1fr 80px 100px 100px 80px;">
+                          style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                           <!-- Proveedor -->
                           <div>
                             <select [value]="detalle.proveedor?.id || ''"
@@ -1590,14 +1636,30 @@
                           <!-- Cantidad -->
                           <div>
                             <input type="number" [value]="detalle.cantidad"
-                              (input)="onGrupoProductoChange(gi, di, 'cantidad', $any($event.target).value)" min="1"
+                              (input)="onGrupoProductoChange(gi, di, 'cantidad', $any($event.target).value); recalcularTotalDetalleGrupo(gi, di)" min="1"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
                           </div>
 
-                          <!-- Precio USD -->
+                          <!-- Descripción -->
+                          <div>
+                            <input type="text" [value]="detalle.descripcion"
+                              (input)="onGrupoProductoChange(gi, di, 'descripcion', $any($event.target).value)"
+                              placeholder="Descripción"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
+                          </div>
+
+                          <!-- Precio Unitario -->
                           <div>
                             <input type="number" [value]="detalle.precioHistorico"
-                              (input)="onGrupoProductoChange(gi, di, 'precioHistorico', $any($event.target).value)"
+                              (input)="onGrupoProductoChange(gi, di, 'precioHistorico', $any($event.target).value); recalcularTotalDetalleGrupo(gi, di)"
+                              step="0.01" min="0"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
+                          </div>
+
+                          <!-- Comisión -->
+                          <div>
+                            <input type="number" [value]="detalle.comision"
+                              (input)="onGrupoProductoChange(gi, di, 'comision', $any($event.target).value); recalcularTotalDetalleGrupo(gi, di)"
                               step="0.01" min="0"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
                           </div>
@@ -1703,7 +1765,7 @@
               <div class="space-y-4">
                 <!-- Tarifa Productos Fijos -->
                 <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span class="text-gray-700 font-medium">Tarifa Productos Fijos:</span>
+                  <span class="text-gray-700 font-medium">Tarifa Productos:</span>
                   <span class="font-semibold text-gray-900">${{ calcularTotalFijos() | number : '1.2-2' }} USD</span>
                 </div>
 
@@ -2000,7 +2062,7 @@
             <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mr-3">
               <i class="fas fa-boxes text-white text-sm"></i>
             </div>
-            Productos Fijos
+            Productos
           </h3>
 
           <!-- Tabla de productos fijos -->
@@ -2027,7 +2089,7 @@
                 </div>
                 <!-- Producto -->
                 <div class="text-sm text-gray-900">
-                  {{ detalle.producto?.nombre || 'Sin producto' }}
+                  {{ detalle.producto?.tipo || 'Sin producto' }}
                 </div>
                 <!-- Cantidad -->
                 <div class="text-sm text-gray-900 text-center">
@@ -2066,14 +2128,47 @@
           </h3>
 
           <!-- Cada grupo -->
-          <div *ngFor="let categoria of getCategoriasNoFijas()" class="mb-4">
+          <div *ngFor="let categoria of getCategoriasNoFijas(); let gi = index" class="mb-4">
             <div class="border border-gray-200 rounded-xl overflow-hidden bg-white">
               <!-- Header del grupo -->
               <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200">
-                <h4 class="font-medium text-gray-900 flex items-center">
-                  <i class="fas fa-tag text-orange-600 mr-2"></i>
-                  Grupo {{ categoria.nombre }}
-                </h4>
+                <div class="flex items-center gap-3">
+                  <!-- Indicador visual de selección (solo visual, no clickeable) -->
+                  <div class="flex items-center">
+                    <div
+                      class="relative w-6 h-6 rounded-full border-2 transition-all duration-200"
+                      [class]="isGrupoSeleccionadoEnVisualizacion(gi)
+                        ? 'bg-everywhere-primary border-everywhere-primary shadow-lg'
+                        : 'bg-white border-gray-300'"
+                      [title]="isGrupoSeleccionadoEnVisualizacion(gi) ? 'Grupo seleccionado en esta cotización' : 'Grupo no seleccionado'">
+
+                      <!-- Círculo interno cuando está seleccionado -->
+                      <div
+                        *ngIf="isGrupoSeleccionadoEnVisualizacion(gi)"
+                        class="absolute inset-1 bg-white rounded-full">
+                      </div>
+
+                      <!-- Icono de check cuando está seleccionado -->
+                      <i
+                        *ngIf="isGrupoSeleccionadoEnVisualizacion(gi)"
+                        class="fas fa-check absolute inset-0 flex items-center justify-center text-everywhere-primary text-xs">
+                      </i>
+                    </div>
+                  </div>
+
+                  <h4 class="font-medium text-gray-900 flex items-center">
+                    <i class="fas fa-tag text-orange-600 mr-2"></i>
+                    Grupo {{ categoria.nombre }}
+                  </h4>
+
+                  <!-- Indicador de selección -->
+                  <span
+                    *ngIf="isGrupoSeleccionadoEnVisualizacion(gi)"
+                    class="text-xs bg-green-500 text-white px-3 py-1 rounded-full font-medium shadow-sm">
+                    <i class="fas fa-check-circle mr-1"></i>
+                    Grupo Seleccionado
+                  </span>
+                </div>
                 <span class="text-sm font-medium text-orange-600">
                   Total: ${{ getTotalCategoria(categoria.detalles) | number:'1.2-2' }} USD
                 </span>
@@ -2083,37 +2178,47 @@
               <div class="bg-white">
                 <!-- Header de tabla -->
                 <div class="grid gap-3 items-center p-3 border-b border-gray-100 bg-gray-50"
-                  style="grid-template-columns: 1.2fr 1fr 80px 100px 100px;">
+                  style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px;">
                   <div class="text-sm font-medium text-gray-700">Proveedor</div>
-                  <div class="text-sm font-medium text-gray-700">Tipo</div>
+                  <div class="text-sm font-medium text-gray-700">Producto</div>
                   <div class="text-sm font-medium text-gray-700">Cantidad</div>
+                  <div class="text-sm font-medium text-gray-700">Descripción</div>
                   <div class="text-sm font-medium text-gray-700">Precio USD</div>
+                  <div class="text-sm font-medium text-gray-700">Comisión</div>
                   <div class="text-sm font-medium text-gray-700">Total USD</div>
                 </div>
 
                 <!-- Productos del grupo -->
                 <div *ngFor="let detalle of categoria.detalles" class="p-3 border-b border-gray-100 last:border-b-0">
                   <div class="grid gap-3 items-center"
-                    style="grid-template-columns: 1.2fr 1fr 80px 100px 100px;">
+                    style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px;">
                     <!-- Proveedor -->
                     <div class="text-sm text-gray-900">
                       {{ detalle.proveedor?.nombre || 'Sin proveedor' }}
                     </div>
                     <!-- Tipo -->
                     <div class="text-sm text-gray-900">
-                      {{ detalle.producto?.nombre || 'Sin producto' }}
+                      {{ detalle.producto?.tipo || 'Sin producto' }}
                     </div>
                     <!-- Cantidad -->
                     <div class="text-sm text-gray-900 text-center">
                       {{ detalle.cantidad || 1 }}
                     </div>
+                    <!-- Descripción -->
+                    <div class="text-sm text-gray-900 truncate" [title]="detalle.descripcion">
+                      {{ detalle.descripcion || 'Sin descripción' }}
+                    </div>
                     <!-- Precio USD -->
                     <div class="text-sm text-gray-900 text-right">
                       ${{ (detalle.precioHistorico || 0) | number:'1.2-2' }}
                     </div>
+                    <!-- Comisión -->
+                    <div class="text-sm text-gray-900 text-right">
+                      ${{ (detalle.comision || 0) | number:'1.2-2' }}
+                    </div>
                     <!-- Total -->
                     <div class="text-sm font-semibold text-orange-600 text-right">
-                      ${{ (detalle.precioHistorico || 0) * (detalle.cantidad || 1) | number:'1.2-2' }}
+                      ${{ ((detalle.precioHistorico || 0) + (detalle.comision || 0)) * (detalle.cantidad || 1) | number:'1.2-2' }}
                     </div>
                   </div>
                 </div>
@@ -2137,7 +2242,7 @@
             <div class="space-y-4">
               <!-- Tarifa Productos Fijos -->
               <div class="flex justify-between items-center py-2 border-b border-gray-100" *ngIf="hasProductosFijos()">
-                <span class="text-gray-700 font-medium">Tarifa Productos Fijos:</span>
+                <span class="text-gray-700 font-medium">Tarifa Productos:</span>
                 <span class="font-semibold text-gray-900">
                   ${{ getTotalProductosFijos() | number:'1.2-2' }} USD
                 </span>

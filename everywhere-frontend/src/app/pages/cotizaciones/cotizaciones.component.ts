@@ -49,6 +49,7 @@ interface DetalleCotizacionTemp {
   unidad: number;
   total: number;
   isTemporary?: boolean;
+  seleccionado?: boolean; // Campo para marcar si el detalle está seleccionado
 }
 
 interface GrupoHotelTemp {
@@ -56,6 +57,7 @@ interface GrupoHotelTemp {
   detalles: DetalleCotizacionTemp[];
   total: number;
   isTemporary?: boolean;
+  seleccionado?: boolean; // Campo para marcar si el grupo está seleccionado
 }
 
 @Component({
@@ -69,6 +71,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // ===== CACHE AND MAPPING =====
   personasCache: { [id: number]: any } = {};
   personasDisplayMap: { [id: number]: string } = {};
+  loadingPersonas: Set<number> = new Set(); // Para evitar cargas duplicadas
 
   // Services injection
   private fb = inject(FormBuilder);
@@ -96,6 +99,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   mostrarModalVer = false;
   sidebarCollapsed = false;
   currentView: 'table' | 'cards' | 'list' = 'table';
+
+  // ✅ Selección única de grupo de hoteles
+  grupoSeleccionadoId: number | null = null;
 
   // Estadísticas
   totalCotizaciones = 0;
@@ -372,13 +378,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       personaId: ['', [Validators.required]],
       fechaEmision: ['', [Validators.required]],
       fechaVencimiento: ['', [Validators.required]],
-      estadoCotizacionId: ['', [Validators.required]],
-      sucursalId: ['', [Validators.required]],
-      origenDestino: ['', [Validators.required]],
-      fechaSalida: ['', [Validators.required]],
-      fechaRegreso: ['', [Validators.required]],
-      formaPagoId: ['', [Validators.required]],
-      cantAdultos: [1, [Validators.required, Validators.min(1)]],
+      estadoCotizacionId: [''],
+      sucursalId: [''],
+      origenDestino: [''],
+      fechaSalida: [''],
+      fechaRegreso: [''],
+      formaPagoId: [''],
+      cantAdultos: [1, [Validators.min(1)]],
       cantNinos: [0, [Validators.min(0)]],
       moneda: ['USD', [Validators.required]],
       observacion: [''],
@@ -443,7 +449,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         error: (err) => {
-          console.error('Error en la búsqueda de clientes:', err);
+
           this.buscandoClientes = false;
         }
       });
@@ -452,7 +458,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private loadInitialData(): void {
     this.isLoading = true;
 
-    // Cargar personas PRIMERO antes que las cotizaciones
+    // Usar el MISMO orden que liquidaciones: personas PRIMERO
     Promise.all([
       this.loadPersonas(),
       this.loadFormasPago(),
@@ -462,7 +468,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.loadProveedores(),
       this.loadCategorias()
     ]).then(() => {
+      // Cargar cotizaciones AL FINAL
       return this.loadCotizaciones();
+    }).then(() => {
+      // Después de cargar cotizaciones, verificar y cargar clientes faltantes
+      return this.findAndLoadMissingClients();
     }).finally(() => {
       this.isLoading = false;
     });
@@ -486,40 +496,120 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadPersonas(): Promise<void> {
     try {
+      // Usar el mismo enfoque que funciona en liquidaciones
       // Cargar personas naturales
       const personasNaturales = await this.personaNaturalService.findAll().toPromise() || [];
       // Cargar personas jurídicas
       const personasJuridicas = await this.personaJuridicaService.findAll().toPromise() || [];
+      
+
+      
       // Combinar ambas listas
       this.personas = [...personasNaturales, ...personasJuridicas];
       // Almacenar todos los clientes para el filtrado inicial
       this.todosLosClientes = [...this.personas];
-      this.personasEncontradas = [...this.todosLosClientes]; // Mostrar todos los clientes inicialmente
+      this.personasEncontradas = [...this.todosLosClientes];
 
-      // Poblar cache y display map para evitar llamadas HTTP posteriores
+      // Poblar cache usando ENFOQUE HÍBRIDO (tabla padre SI existe, sino tabla hija)
       this.personas.forEach(persona => {
-        if (persona.id) {
-          this.personasCache[persona.id] = {
-            id: persona.id,
+        // Intentar usar ID de tabla padre PRIMERO, si no existe usar tabla hija
+        const personaId = persona.persona?.id || persona.id;
+        
+        if (personaId) {
+          this.personasCache[personaId] = {
+            id: personaId,
             identificador: persona.ruc || persona.documento || persona.cedula || '',
             nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
-          const cached = this.personasCache[persona.id];
+          const cached = this.personasCache[personaId];
+          
           // Mejorar el formato del display para asegurar que se muestre el documento
           if (cached.identificador) {
-            this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+            this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
           } else {
-            this.personasDisplayMap[persona.id] = cached.nombre;
+            this.personasDisplayMap[personaId] = cached.nombre;
           }
         }
       });
 
     } catch (error) {
+
       this.showError('Error al cargar los clientes. Algunas funciones pueden no estar disponibles.');
       this.personas = [];
       this.todosLosClientes = [];
       this.personasEncontradas = [];
+    }
+  }
+
+  /**
+   * Busca y carga clientes que aparecen en cotizaciones pero no están en el cache
+   */
+  private async findAndLoadMissingClients(): Promise<void> {
+    try {
+      // Obtener IDs únicos de personas desde las cotizaciones cargadas
+      const personaIdsEnCotizaciones = new Set<number>();
+      this.cotizaciones.forEach(cotizacion => {
+        if (cotizacion.personas?.id) {
+          personaIdsEnCotizaciones.add(cotizacion.personas.id);
+        }
+      });
+
+      // Encontrar IDs que están en cotizaciones pero NO en cache
+      const idsEnCache = new Set(Object.keys(this.personasCache).map(id => parseInt(id)));
+      const idsFaltantes = Array.from(personaIdsEnCotizaciones).filter(id => !idsEnCache.has(id));
+
+      if (idsFaltantes.length === 0) {
+        return;
+      }
+
+      // Cargar información para cada cliente faltante usando el endpoint correcto
+      const clientesFaltantes = await Promise.all(
+        idsFaltantes.map(async (personaId) => {
+          try {
+            const personaDisplay = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
+            return personaDisplay;
+          } catch (error) {
+            return null;
+          }
+        })
+      );
+
+      // Agregar clientes válidos al cache y listas
+      const clientesValidos = clientesFaltantes.filter(c => c !== null) as any[];
+      
+      clientesValidos.forEach(cliente => {
+        if (cliente.id) {
+          // Agregar al cache - mejorar datos para clientes "genéricos"
+          const esGenerico = cliente.tipo === 'GENERICA' || !cliente.identificador;
+          
+          this.personasCache[cliente.id] = {
+            id: cliente.id,
+            identificador: cliente.identificador || '',
+            nombre: cliente.nombre || `Cliente ID: ${cliente.id}`,
+            tipo: esGenerico ? 'UNKNOWN' : cliente.tipo
+          };
+          
+          const cached = this.personasCache[cliente.id];
+          if (cached.identificador) {
+            this.personasDisplayMap[cliente.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : cached.tipo === 'NATURAL' ? 'DNI' : 'DOC'}: ${cached.identificador} - ${cached.nombre}`;
+          } else {
+            this.personasDisplayMap[cliente.id] = esGenerico ? `Cliente ID: ${cliente.id} (Sin datos)` : cached.nombre;
+          }
+
+          // Agregar a las listas para búsqueda (solo si no es genérico)
+          if (!esGenerico) {
+            this.personas.push(cliente);
+            this.todosLosClientes.push(cliente);
+            this.personasEncontradas.push(cliente);
+          }
+        }
+      });
+
+
+
+    } catch (error) {
+      // Error silencioso para no saturar la consola
     }
   }
 
@@ -630,7 +720,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.mostrarFormulario = true; // Abre el modal al final
 
     } catch (error) {
-      console.error('Error al mostrar formulario:', error);
+
       this.showError('Error al preparar el formulario de cotización');
     } finally {
       // Se asegura de que el indicador de carga se oculte siempre
@@ -756,6 +846,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.gruposHoteles = [];
     this.deletedDetalleIds = [];
 
+    // ✅ Reset de selección única de grupo
+    this.grupoSeleccionadoId = null;
+
     // Reseteo de la selección de cliente
     this.clienteSeleccionado = null;
     this.buscandoClientes = false;
@@ -768,21 +861,23 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private setupDatesForNew(): void {
-    // Crear fecha actual en UTC-5 (Colombia/Perú)
+    // Crear fecha actual en zona horaria de Lima (UTC-5)
     const now = new Date();
-    const utcMinus5 = new Date(now.getTime() - (5 * 60 * 60 * 1000)); // UTC-5
-
-    // Crear fecha de vencimiento el mismo día a las 11pm UTC-5
-    const vencimiento = new Date(utcMinus5);
+    
+    // Obtener la fecha actual en zona horaria de Lima
+    const limaTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Lima"}));
+    
+    // Crear fecha de vencimiento el mismo día a las 11pm en hora de Lima
+    const vencimiento = new Date(limaTime);
     vencimiento.setHours(23, 0, 0, 0); // 11:00 PM, 0 minutos, 0 segundos, 0 milisegundos
 
     // Si ya pasaron las 11pm del día actual, mover al siguiente día a las 11pm
-    if (utcMinus5.getHours() >= 23) {
+    if (limaTime.getHours() >= 23) {
       vencimiento.setDate(vencimiento.getDate() + 1);
     }
 
     this.cotizacionForm.patchValue({
-      fechaEmision: this.formatDateTimeLocal(utcMinus5),
+      fechaEmision: this.formatDateTimeLocal(limaTime),
       fechaVencimiento: this.formatDateTimeLocal(vencimiento),
       codigoCotizacion: this.generateNextCode()
     });
@@ -798,6 +893,21 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
+  /**
+   * Obtiene la fecha y hora actual en zona horaria de Lima (UTC-5)
+   */
+  private getCurrentLimaTime(): Date {
+    const now = new Date();
+    return new Date(now.toLocaleString("en-US", {timeZone: "America/Lima"}));
+  }
+
+  /**
+   * Obtiene la fecha y hora actual en formato ISO string para Lima
+   */
+  private getCurrentLimaISOString(): string {
+    return this.getCurrentLimaTime().toISOString();
+  }
+
   private generateNextCode(): string {
     const maxCotizacion = this.cotizaciones.reduce((max, cotizacion) => {
       const codigo = cotizacion.codigoCotizacion || '';
@@ -810,7 +920,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadCotizacionCompleta(cotizacionId: number): Promise<void> {
     try {
-      // MEJORA: Usar el nuevo método que trae TODOS los detalles
       this.cotizacionCompleta = await this.cotizacionService.getCotizacionConDetalles(cotizacionId).toPromise() || null;
 
       if (!this.cotizacionCompleta) {
@@ -820,16 +929,22 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       // Si estamos editando, poblar el formulario
       if (this.editandoCotizacion) {
         await this.populateFormFromCotizacionCompleta(this.cotizacionCompleta);
+      } else {
+        // Si estamos visualizando, también cargar los detalles para mostrar los grupos seleccionados
+        if (this.cotizacionCompleta.detalles && this.cotizacionCompleta.detalles.length > 0) {
+          this.loadDetallesFromCotizacionCompleta(this.cotizacionCompleta.detalles, this.cotizacionCompleta);
+        }
       }
 
     } catch (error) {
-      console.error('Error al cargar cotización completa:', error);
+
       this.showError('Error al cargar los datos completos de la cotización.');
       throw error;
     }
   }
 
   private async populateFormFromCotizacionCompleta(cotizacion: CotizacionConDetallesResponseDTO): Promise<void> {
+
     // Poblar formulario principal
     this.cotizacionForm.patchValue({
       codigoCotizacion: cotizacion.codigoCotizacion,
@@ -848,6 +963,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       observacion: cotizacion.observacion || ''
     });
 
+
+
     // Cargar cliente si existe
     if (cotizacion.personas?.id) {
       await this.loadClienteForEdit(cotizacion.personas.id);
@@ -855,17 +972,22 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Cargar detalles desde la respuesta completa
     if (cotizacion.detalles && cotizacion.detalles.length > 0) {
-      this.loadDetallesFromCotizacionCompleta(cotizacion.detalles);
+
+      this.loadDetallesFromCotizacionCompleta(cotizacion.detalles, cotizacion);
     }
   }
 
-  private loadDetallesFromCotizacionCompleta(detalles: any[]): void {
+  private loadDetallesFromCotizacionCompleta(detalles: any[], cotizacionCompleta?: any): void {
+
+
     // Reset arrays
     this.detallesFijos = [];
     this.gruposHoteles = [];
 
     // Convertir detalles del DTO a formato local
-    detalles.forEach(detalle => {
+    detalles.forEach((detalle, index) => {
+
+
       const detalleConverted = {
         id: detalle.id,
         proveedor: detalle.proveedor,
@@ -877,17 +999,54 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         cantidad: detalle.cantidad || 1,
         unidad: detalle.unidad || 1,
         total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
-        isTemporary: false
+        isTemporary: false,
+        seleccionado: detalle.seleccionado || false // ✅ Incluir el estado de selección real de BD
       };
+
+
 
       if (detalle.categoria?.id === 1) {
         // Productos fijos
+
         this.detallesFijos.push(detalleConverted);
       } else {
         // Grupos de hoteles
+
         this.addDetalleToGrupoHotelFromCompleta(detalleConverted, detalle.categoria);
       }
     });
+
+
+
+    // ✅ NUEVA LÓGICA: Inferir qué grupo está seleccionado basándose en los detalles
+    this.inferirGrupoSeleccionado();
+  }
+
+  /**
+   * ✅ NUEVA LÓGICA: Infiere qué grupo está seleccionado basándose en si alguno de sus detalles tiene seleccionado=true
+   */
+  private inferirGrupoSeleccionado(): void {
+
+
+    // Reset: ningún grupo seleccionado inicialmente
+    this.grupoSeleccionadoId = null;
+    this.gruposHoteles.forEach(grupo => grupo.seleccionado = false);
+
+    // Buscar un grupo que tenga al menos un detalle seleccionado
+    for (const grupo of this.gruposHoteles) {
+      const tieneDetallesSeleccionados = grupo.detalles.some(detalle => detalle.seleccionado === true);
+
+      if (tieneDetallesSeleccionados && grupo.categoria.id) {
+        this.grupoSeleccionadoId = grupo.categoria.id;
+        grupo.seleccionado = true;
+
+        break; // Solo un grupo puede estar seleccionado
+      }
+    }
+
+    if (!this.grupoSeleccionadoId) {
+
+    }
   }
 
   private addDetalleToGrupoHotelFromCompleta(detalle: any, categoria: any): void {
@@ -899,7 +1058,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         categoria: categoria,
         detalles: [],
         total: 0,
-        isTemporary: false
+        isTemporary: false,
+        seleccionado: false     // ✅ Inicializar como no seleccionado
       };
       this.gruposHoteles.push(grupo);
     }
@@ -948,9 +1108,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const persona = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
       if (persona) {
         this.clienteSeleccionado = persona;
+        
+        // ✅ Actualizar el personasDisplayMap para la tabla
+        const displayName = this.getClienteDisplayName(persona);
+        this.personasDisplayMap[personaId] = displayName;
+        
         return;
       }
     } catch (error) {
+
       this.showError('Error al cargar los datos del cliente para edición.');
     }
     // Si no se encuentra, resetea
@@ -968,32 +1134,68 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Reset arrays
     this.detallesFijos = [];
     this.gruposHoteles = [];
+    this.grupoSeleccionadoId = null; // ✅ NUEVO: Reset grupo seleccionado
 
     // Separate detalles by category
     detalles.forEach(detalle => {
       if (detalle.categoria?.id === 1) { // Productos fijos
         const detalleTemp = this.convertDetalleToTemp(detalle);
-
         this.detallesFijos.push(detalleTemp);
       } else { // Grupos de hoteles
         this.addDetalleToGrupoHotel(detalle);
       }
     });
+
+    // ✅ NUEVO: Determinar qué grupo está seleccionado basado en detalles seleccionados
+    this.determinarGrupoSeleccionado();
+  }
+
+  // ✅ NUEVO: Método para determinar qué grupo está seleccionado al cargar datos
+  private determinarGrupoSeleccionado(): void {
+    // ✅ IMPORTANTE: No tocar los productos fijos, solo procesar grupos de hoteles
+    for (const grupo of this.gruposHoteles) {
+      const tieneDetallesSeleccionados = grupo.detalles.some(detalle => detalle.seleccionado);
+      
+      if (tieneDetallesSeleccionados && grupo.categoria.id !== undefined) {
+        // Si encontramos un grupo con detalles seleccionados, ese es el grupo activo
+        this.grupoSeleccionadoId = grupo.categoria.id;
+        grupo.seleccionado = true;
+        
+        // Asegurar que TODOS los detalles del grupo estén seleccionados (consistencia)
+        grupo.detalles.forEach(detalle => {
+          detalle.seleccionado = true;
+        });
+        
+
+        return; // Solo puede haber un grupo seleccionado
+      }
+    }
+    
+
+    
+    // ✅ Verificar que todos los productos fijos mantengan seleccionado=true
+    this.detallesFijos.forEach(detalle => {
+      detalle.seleccionado = true;
+    });
+
   }
 
   private convertDetalleToTemp(detalle: DetalleCotizacionResponse): DetalleCotizacionTemp {
+    const categoriaId = detalle.categoria?.id ?? detalle.categoria ?? 1;
+    
     return {
       id: detalle.id,
       proveedor: detalle.proveedor,
       producto: detalle.producto,
-      categoria: (detalle.categoria?.id ?? detalle.categoria ?? 1), // Nunca undefined
+      categoria: categoriaId, // Nunca undefined
       descripcion: detalle.descripcion || 'Sin descripción',
       precioHistorico: detalle.precioHistorico || 0,
       comision: detalle.comision || 0,
       cantidad: detalle.cantidad || 1,
       unidad: detalle.unidad || 1,
       total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
-      isTemporary: false
+      isTemporary: false, 
+      seleccionado: categoriaId === 1 ? true : (detalle.seleccionado || false)
     };
   }
 
@@ -1008,7 +1210,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           categoria: categoriaObj,
           detalles: [],
           total: 0,
-          isTemporary: false
+          isTemporary: false,
+          seleccionado: false
         };
         this.gruposHoteles.push(grupo);
 
@@ -1033,20 +1236,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Detalle cotización methods (Productos Fijos)
   agregarDetalleFijo(): void {
-    console.log('=== INICIO agregarDetalleFijo ===');
-    console.log('detallesFijos antes:', this.detallesFijos);
-    console.log('detallesFijos.length antes:', this.detallesFijos.length);
 
     if (this.detalleForm.invalid) {
-      console.log('Formulario inválido:', this.detalleForm.errors);
+
       this.markFormGroupTouched(this.detalleForm);
       return;
     }
 
     const formValue = this.detalleForm.value;
-    console.log('formValue:', formValue);
-    console.log('proveedores disponibles:', this.proveedores);
-    console.log('productos disponibles:', this.productos);
 
     let proveedor = null;
 
@@ -1059,8 +1256,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       proveedor = {
         id: 0, // temporary ID
         nombre: formValue.nuevoProveedor.trim(),
-        creado: new Date().toISOString(),
-        actualizado: new Date().toISOString()
+        creado: this.getCurrentLimaISOString(),
+        actualizado: this.getCurrentLimaISOString()
       } as ProveedorResponse;
     }
 
@@ -1072,7 +1269,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Validar que tengamos al menos un producto
     if (!producto) {
-      console.error('No se pudo encontrar el producto seleccionado');
       this.errorMessage = 'Error: No se pudo encontrar el producto seleccionado';
       setTimeout(() => this.errorMessage = '', 3000);
       return;
@@ -1094,7 +1290,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       cantidad,
       unidad,
       total: (precioHistorico * cantidad) + comision,
-      isTemporary: true
+      isTemporary: true,
+      seleccionado: true     // ✅ PRODUCTOS FIJOS siempre seleccionados
     };
 
     this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista
@@ -1113,7 +1310,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.successMessage = 'Producto agregado correctamente';
     setTimeout(() => this.successMessage = '', 3000);
 
-    console.log('=== FIN agregarDetalleFijo ===');
   } eliminarDetalleFijo(index: number): void {
     const detalle = this.detallesFijos[index];
     if (detalle.id && !detalle.isTemporary) {
@@ -1179,8 +1375,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
             detalle.cantidad = Number(value) || 1;
             this.recalcularTotalDetalleGrupo(groupIndex, detailIndex);
             break;
+          case 'descripcion':
+            detalle.descripcion = value || '';
+            break;
           case 'precioHistorico':
             detalle.precioHistorico = Number(value) || 0;
+            this.recalcularTotalDetalleGrupo(groupIndex, detailIndex);
+            break;
+          case 'comision':
+            detalle.comision = Number(value) || 0;
             this.recalcularTotalDetalleGrupo(groupIndex, detailIndex);
             break;
         }
@@ -1197,7 +1400,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const grupo = this.gruposHoteles[groupIndex];
       if (detailIndex >= 0 && detailIndex < grupo.detalles.length) {
         const detalle = grupo.detalles[detailIndex];
-        detalle.total = detalle.precioHistorico * detalle.cantidad;
+        detalle.total = (detalle.precioHistorico * detalle.cantidad) + (detalle.comision || 0);
       }
     }
   }
@@ -1236,7 +1439,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         categoria: categoriaObj,
         detalles: [],
         total: 0,
-        isTemporary: true
+        isTemporary: true,
+        seleccionado: false     // ✅ Inicializar como no seleccionado
       };
       this.gruposHoteles.push(nuevoGrupo);
       this.grupoHotelForm.reset();
@@ -1264,6 +1468,300 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   cerrarVistaGestionGrupos(): void {
     this.mostrarGestionGrupos = false;
+  }
+
+  // ===== MÉTODOS DE SELECCIÓN DE GRUPOS =====
+
+  /**
+   * Selecciona UN SOLO grupo de hotel (selección única)
+   * Deselecciona todos los otros grupos automáticamente
+   */
+  seleccionarGrupoUnico(grupoIndex: number): void {
+    if (grupoIndex >= 0 && grupoIndex < this.gruposHoteles.length) {
+      const grupoSeleccionado = this.gruposHoteles[grupoIndex];
+      const categoriaId = grupoSeleccionado.categoria.id;
+
+
+      // Si ya está seleccionado, lo deseleccionamos
+      if (this.grupoSeleccionadoId === categoriaId) {
+        this.grupoSeleccionadoId = null;
+        grupoSeleccionado.seleccionado = false;
+        // ✅ NUEVO: Marcar todos los detalles como NO seleccionados
+        grupoSeleccionado.detalles.forEach(detalle => {
+          detalle.seleccionado = false;
+        });
+
+      } else {
+        // Deseleccionar todos los grupos primero
+        this.gruposHoteles.forEach(grupo => {
+          grupo.seleccionado = false;
+          // ✅ NUEVO: Marcar todos los detalles como NO seleccionados
+          grupo.detalles.forEach(detalle => {
+            detalle.seleccionado = false;
+          });
+        });
+
+        // Seleccionar solo el grupo actual si tiene ID válido
+        if (categoriaId !== undefined) {
+          this.grupoSeleccionadoId = categoriaId;
+          grupoSeleccionado.seleccionado = true;
+          // ✅ NUEVO: Marcar todos los detalles del grupo seleccionado como seleccionados
+          grupoSeleccionado.detalles.forEach(detalle => {
+            detalle.seleccionado = true;
+          });
+
+        }
+      }
+    } else {
+
+    }
+  }
+
+  /**
+   * Verifica si un grupo está seleccionado
+   */
+  isGrupoSeleccionado(grupoIndex: number): boolean {
+    if (grupoIndex >= 0 && grupoIndex < this.gruposHoteles.length) {
+      const grupo = this.gruposHoteles[grupoIndex];
+      const categoriaId = grupo.categoria.id;
+      return categoriaId !== undefined && this.grupoSeleccionadoId === categoriaId;
+    }
+    return false;
+  }
+
+  /**
+   * Obtiene el grupo actualmente seleccionado
+   */
+  getGrupoSeleccionado(): GrupoHotelTemp | null {
+    if (this.grupoSeleccionadoId === null) {
+      return null;
+    }
+
+    return this.gruposHoteles.find(grupo =>
+      grupo.categoria.id === this.grupoSeleccionadoId
+    ) || null;
+  }
+
+  /**
+   * Obtiene todos los detalles del grupo seleccionado
+   */
+  getDetallesGrupoSeleccionado(): DetalleCotizacionTemp[] {
+    const grupoSeleccionado = this.getGrupoSeleccionado();
+    return grupoSeleccionado ? grupoSeleccionado.detalles : [];
+  }
+
+  /**
+   * Obtiene el grupo seleccionado para visualización (detecta automáticamente si hay múltiples grupos)
+   * Si solo hay un grupo con detalles, se considera seleccionado para visualización
+   */
+  getGrupoSeleccionadoEnVisualizacion(): GrupoHotelTemp | null {
+
+    // ✅ NO re-inferir aquí para evitar bucle infinito
+    // La inferencia ya se hizo al cargar los detalles
+
+    // Devolver el grupo que está marcado como seleccionado
+    if (this.grupoSeleccionadoId) {
+      const grupoSeleccionado = this.gruposHoteles.find(g => g.categoria.id === this.grupoSeleccionadoId);
+      if (grupoSeleccionado) {
+
+        return grupoSeleccionado;
+      }
+    }
+
+
+    return null;
+  }
+
+  /**
+   * Verifica si un grupo está seleccionado en modo visualización
+   */
+  isGrupoSeleccionadoEnVisualizacion(grupoIndex: number): boolean {
+    if (grupoIndex >= 0 && grupoIndex < this.gruposHoteles.length) {
+      const grupo = this.gruposHoteles[grupoIndex];
+      const grupoSeleccionado = this.getGrupoSeleccionadoEnVisualizacion();
+
+      if (grupoSeleccionado && grupo.categoria.id) {
+        return grupo.categoria.id === grupoSeleccionado.categoria.id;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Selecciona o deselecciona un detalle individual
+   * Actualiza el estado del grupo padre según los detalles seleccionados
+   */
+  seleccionarDetalleGrupo(grupoIndex: number, detalleIndex: number, seleccionado: boolean): void {
+    if (grupoIndex >= 0 && grupoIndex < this.gruposHoteles.length) {
+      const grupo = this.gruposHoteles[grupoIndex];
+      if (detalleIndex >= 0 && detalleIndex < grupo.detalles.length) {
+        grupo.detalles[detalleIndex].seleccionado = seleccionado;
+
+        // Actualizar el estado del grupo basado en los detalles seleccionados
+        const detallesSeleccionados = grupo.detalles.filter(d => d.seleccionado).length;
+        const totalDetalles = grupo.detalles.length;
+
+        if (detallesSeleccionados === 0) {
+          grupo.seleccionado = false;
+        } else if (detallesSeleccionados === totalDetalles) {
+          grupo.seleccionado = true;
+        } else {
+          grupo.seleccionado = undefined; // Estado intermedio (algunos seleccionados)
+        }
+      }
+    }
+  }
+
+  /**
+   * Obtiene todos los detalles seleccionados de todos los grupos
+   */
+  obtenerDetallesSeleccionados(): DetalleCotizacionTemp[] {
+    const detallesSeleccionados: DetalleCotizacionTemp[] = [];
+
+    this.gruposHoteles.forEach(grupo => {
+      grupo.detalles.forEach(detalle => {
+        if (detalle.seleccionado) {
+          detallesSeleccionados.push(detalle);
+        }
+      });
+    });
+
+    return detallesSeleccionados;
+  }
+
+  /**
+   * Obtiene información de selección para mostrar al usuario (selección única)
+   */
+  obtenerEstadoSeleccion(): { gruposSeleccionados: number, detallesSeleccionados: number, totalGrupos: number, totalDetalles: number, grupoSeleccionado: GrupoHotelTemp | null } {
+    const grupoSeleccionado = this.getGrupoSeleccionado();
+    const gruposSeleccionados = grupoSeleccionado ? 1 : 0;
+    const detallesSeleccionados = grupoSeleccionado ? grupoSeleccionado.detalles.length : 0;
+
+    let totalDetalles = 0;
+    this.gruposHoteles.forEach(grupo => {
+      totalDetalles += grupo.detalles.length;
+    });
+
+    return {
+      gruposSeleccionados,
+      detallesSeleccionados,
+      totalGrupos: this.gruposHoteles.length,
+      totalDetalles,
+      grupoSeleccionado
+    };
+  }
+
+  /**
+   * Deselecciona todos los grupos y detalles
+   */
+  deseleccionarTodos(): void {
+    this.gruposHoteles.forEach(grupo => {
+      grupo.seleccionado = false;
+      grupo.detalles.forEach(detalle => {
+        detalle.seleccionado = false;
+      });
+    });
+  }
+
+  /**
+   * TrackBy function para optimizar *ngFor de grupos
+   */
+  trackByGrupoId(index: number, grupo: GrupoHotelTemp): any {
+    return grupo.categoria.id;
+  }
+
+  /**
+   * Cuenta los detalles seleccionados en un grupo específico
+   */
+  contarDetallesSeleccionados(grupo: GrupoHotelTemp): number {
+    return grupo.detalles.filter(d => d.seleccionado).length;
+  }
+
+  /**
+   * Guarda las selecciones actuales en el servidor
+   * Solo guarda detalles que tienen ID (no temporales)
+   */
+  async guardarSelecciones(): Promise<void> {
+
+    if (!this.editandoCotizacion || !this.cotizacionEditandoId) {
+      this.showError('Debe estar editando una cotización para guardar selecciones');
+      return;
+    }
+
+    try {
+      this.isLoading = true;
+
+      if (!this.grupoSeleccionadoId) {
+        this.showError('Debe seleccionar un grupo de hotel antes de guardar selecciones');
+        return;
+      }
+
+      // Recopilar solo las selecciones del grupo seleccionado
+      const selecciones: {detalleId: number, seleccionado: boolean}[] = [];
+
+      // Buscar el grupo seleccionado
+      const grupoSeleccionado = this.gruposHoteles.find(g => g.categoria.id === this.grupoSeleccionadoId);
+
+      if (!grupoSeleccionado) {
+        this.showError('No se encontró el grupo seleccionado');
+        return;
+      }
+
+      // Agregar solo los detalles del grupo seleccionado
+      grupoSeleccionado.detalles.forEach(detalle => {
+        if (detalle.id) {
+          selecciones.push({
+            detalleId: detalle.id,
+            seleccionado: true // Los detalles del grupo seleccionado deben marcarse como seleccionados
+          });
+        }
+      });
+
+      // También incluir productos fijos (siempre seleccionados)
+      this.detallesFijos.forEach(detalle => {
+        if (detalle.id) {
+          selecciones.push({
+            detalleId: detalle.id,
+            seleccionado: true // Los productos fijos siempre están seleccionados
+          });
+        }
+      });
+
+      // Marcar como NO seleccionados los detalles de otros grupos
+      this.gruposHoteles.forEach(grupo => {
+        if (grupo.categoria.id !== this.grupoSeleccionadoId) {
+          grupo.detalles.forEach(detalle => {
+            if (detalle.id) {
+              selecciones.push({
+                detalleId: detalle.id,
+                seleccionado: false // Los detalles de otros grupos deben marcarse como NO seleccionados
+              });
+            }
+          });
+        }
+      });
+
+      if (selecciones.length === 0) {
+        this.showError('No hay detalles para actualizar selecciones');
+        return;
+      }
+
+
+
+      // Usar método individual para cada detalle (ya que sabemos que funciona)
+      for (const seleccion of selecciones) {
+        await this.detalleCotizacionService.setSeleccionDetalleCotizacion(seleccion.detalleId, seleccion.seleccionado).toPromise();
+      }
+
+      const detallesSeleccionados = selecciones.filter(s => s.seleccionado).length;
+      this.showSuccess(`Selecciones guardadas exitosamente: ${detallesSeleccionados} detalles seleccionados del grupo "${grupoSeleccionado.categoria.nombre}"`);
+
+    } catch (error) {
+
+      this.showError('Error al guardar las selecciones. Por favor, intente nuevamente.');
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   // Obtener total de opciones en todos los grupos
@@ -1325,7 +1823,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // Exportar grupos a JSON
   exportarGrupos(): void {
     const datosExport = {
-      fecha: new Date().toISOString(),
+      fecha: this.getCurrentLimaISOString(),
       totalGrupos: this.gruposHoteles.length,
       totalOpciones: this.getTotalOpcionesGrupos(),
       valorTotal: this.calcularTotalGrupos(),
@@ -1335,7 +1833,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const dataStr = JSON.stringify(datosExport, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
 
-    const exportFileDefaultName = `grupos-hoteles-${new Date().toISOString().split('T')[0]}.json`;
+    const exportFileDefaultName = `grupos-hoteles-${this.getCurrentLimaISOString().split('T')[0]}.json`;
 
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -1513,8 +2011,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       proveedor = {
         id: 0,
         nombre: formValue.nuevoProveedor.trim(),
-        creado: new Date().toISOString(),
-        actualizado: new Date().toISOString()
+        creado: this.getCurrentLimaISOString(),
+        actualizado: this.getCurrentLimaISOString()
       } as ProveedorResponse;
 
     }
@@ -1536,7 +2034,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       cantidad,
       unidad,
       total: precioHistorico + comision,
-      isTemporary: true
+      isTemporary: true,
+      seleccionado: false     // ✅ Inicializar como no seleccionado
     };
 
     grupo.detalles.push(nuevoDetalle);
@@ -1642,7 +2141,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       await this.loadCotizaciones();
       this.cerrarFormulario();
     } catch (error) {
-      console.error('Error en onSubmitCotizacion:', error);
+
       this.showError('Error al guardar la cotización. Por favor, verifique los datos e intente nuevamente.');
     } finally {
       this.isLoading = false;
@@ -1662,6 +2161,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     if (formValue.sucursalId)
       await this.cotizacionService.setSucursal(cotizacionId, formValue.sucursalId).toPromise();
+
+    // ✅ NOTA: El grupo seleccionado se maneja a través de las selecciones de detalles
+    // No hay endpoint específico para guardar grupoSeleccionadoId en la cotización
   }
 
   private async eliminarDetallesEliminados(): Promise<void> {
@@ -1729,7 +2231,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       descripcion: detalle.descripcion || '',            // ✅ Default empty
       categoria: categoria,                              // ✅ Cambio: categoriaId → categoria
       comision: detalle.comision || 0,                   // ✅ Default 0
-      precioHistorico: detalle.precioHistorico || 0      // ✅ Default 0
+      precioHistorico: detalle.precioHistorico || 0,     // ✅ Default 0
+      seleccionado: detalle.seleccionado || false        // ✅ Campo de selección
     };
 
     // Validación final antes de enviar
@@ -1764,7 +2267,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       descripcion: detalle.descripcion || '',
       categoria: categoriaId,
       comision: detalle.comision || 0,
-      precioHistorico: detalle.precioHistorico || 0
+      precioHistorico: detalle.precioHistorico || 0,
+      seleccionado: detalle.seleccionado || false        // ✅ Campo de selección
     };
 
     await this.detalleCotizacionService.updateDetalleCotizacion(detalle.id, request).toPromise();
@@ -1862,7 +2366,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   getPersonaDisplayName(personaId: number): string {
-    // Usar solo datos en cache para evitar llamadas HTTP cíclicas
+    // Usar EXACTAMENTE el mismo código que liquidaciones
     if (!personaId || personaId === 0) {
       return 'Sin cliente';
     }
@@ -1875,6 +2379,77 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Si no está en cache, retornar texto temporal
     // NO hacer llamadas HTTP desde aquí para evitar loops infinitos
     return 'Cliente no encontrado';
+  }
+
+  /**
+   * Obtiene solo el número de documento del cliente por su ID
+   */
+  getPersonaDocumento(personaId: number): string {
+    if (!personaId || personaId === 0) {
+      return 'Sin documento';
+    }
+
+    // Buscar en el cache
+    if (this.personasCache[personaId]) {
+      const cached = this.personasCache[personaId];
+      if (cached.identificador) {
+        return `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador}`;
+      }
+      return 'Sin documento';
+    }
+
+
+    return 'Documento no disponible';
+  }
+
+  /**
+   * Agrega una persona al cache
+   */
+  private addPersonaToCache(persona: any): void {
+    if (!persona.id) return;
+    
+    this.personasCache[persona.id] = {
+      id: persona.id,
+      identificador: persona.ruc || persona.documento || persona.cedula || '',
+      nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
+      tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
+    };
+    
+    const cached = this.personasCache[persona.id];
+    if (cached.identificador) {
+      this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+    } else {
+      this.personasDisplayMap[persona.id] = cached.nombre;
+    }
+  }
+
+  /**
+   * Carga una persona que falta en el cache de forma asíncrona
+   */
+  private loadMissingPersona(personaId: number): void {
+    // Evitar cargas duplicadas
+    if (this.loadingPersonas.has(personaId)) {
+      return;
+    }
+    
+    this.loadingPersonas.add(personaId);
+    
+    // Cargar persona de forma asíncrona
+    this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise()
+      .then(persona => {
+        if (persona) {
+          this.todosLosClientes.push(persona);
+          this.addPersonaToCache(persona);
+          // Forzar actualización de la vista
+          this.filterCotizaciones();
+        }
+      })
+      .catch(error => {
+
+      })
+      .finally(() => {
+        this.loadingPersonas.delete(personaId);
+      });
   }
 
   getEstadoBadgeClass(estado: EstadoCotizacionResponse | null | undefined): string {
@@ -2025,7 +2600,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return clientesFiltrados.slice(0, 20); // Máximo 20 resultados
 
     } catch (error) {
-      console.error('Error en búsqueda de clientes:', error);
       return this.todosLosClientes.slice(0, 20); // Fallback a mostrar todos
     }
   }
