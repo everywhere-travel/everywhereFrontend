@@ -8,7 +8,7 @@ import { environment} from '../../../../environments/environment';
   providedIn: 'root'
 })
 export class DetalleLiquidacionService {
-  private apiUrl = `${environment.baseURL}/liquidaciones`;
+  private apiUrl = `${environment.baseURL}/detalles-liquidacion`; // ✅ Corregir endpoint
   constructor(private http: HttpClient) {}
 
   getAllDetallesLiquidacion(): Observable<DetalleLiquidacionResponse[]> {
@@ -23,8 +23,19 @@ export class DetalleLiquidacionService {
     return this.http.get<DetalleLiquidacionResponse[]>(`${this.apiUrl}/liquidacion/${liquidacionId}`);
   }
 
-  createDetalleLiquidacion(detalleLiquidacionRequest: DetalleLiquidacionRequest): Observable<DetalleLiquidacionResponse> {
-    return this.http.post<DetalleLiquidacionResponse>(this.apiUrl, detalleLiquidacionRequest);
+  createDetalleLiquidacion(liquidacionId: number, detalleLiquidacionRequest: DetalleLiquidacionRequest): Observable<DetalleLiquidacionResponse> {
+    // El backend espera liquidacionId en el body, no en la URL
+    const requestWithLiquidacionId = {
+      ...detalleLiquidacionRequest,
+      liquidacionId: liquidacionId
+    };
+    console.log('=== DEBUG DetalleLiquidacion ===');
+    console.log('URL:', this.apiUrl);
+    console.log('liquidacionId recibido:', liquidacionId);
+    console.log('Request original:', detalleLiquidacionRequest);
+    console.log('Request final enviado:', requestWithLiquidacionId);
+    console.log('================================');
+    return this.http.post<DetalleLiquidacionResponse>(this.apiUrl, requestWithLiquidacionId);
   }
 
   updateDetalleLiquidacion(id: number, detalleLiquidacionRequest: DetalleLiquidacionRequest): Observable<DetalleLiquidacionResponse> {

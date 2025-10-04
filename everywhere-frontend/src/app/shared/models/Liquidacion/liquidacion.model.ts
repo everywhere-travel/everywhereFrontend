@@ -12,6 +12,7 @@ export interface LiquidacionRequest {
   numeroPasajeros?: number 
   productoId?: number
   formaPagoId?: number
+  cotizacionId?: number
 }
 
 export interface LiquidacionResponse {
