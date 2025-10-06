@@ -17,7 +17,7 @@ import { Module, Permission } from '../../models/role.model';
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   isMobileMenuOpen = false;
-  currentUser: { name: string; role: string; displayRole: string } | null = null;
+  currentUser: { name: string } | null = null;
   private subscription = new Subscription();
 
   constructor(
@@ -31,9 +31,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.authService.currentUser$.subscribe(user => {
         if (user) {
           this.currentUser = {
-            name: user.name,
-            role: user.role,
-            displayRole: this.getRoleDisplayName(user.role)
+            name: user.name
           };
         } else {
           this.currentUser = null;
@@ -44,21 +42,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
-  }
-
-  // Map de roles legibles
-  private getRoleDisplayName(role: string): string {
-    const roleMap: { [key: string]: string } = {
-      'GERENTE': 'Gerente',
-      'VENTAS': 'Ventas',
-      'ADMINISTRAR': 'Administrar',
-      'ADMIN': 'Administrador',
-      'SISTEMAS': 'Sistemas',
-      'OPERACIONES': 'Operaciones',
-      'VENTAS_JUNIOR': 'Ventas Junior',
-      'GERENTE_ARGENTINA': 'Gerente Argentina'
-    };
-    return roleMap[role] || role;
   }
 
   toggleMobileMenu() {
