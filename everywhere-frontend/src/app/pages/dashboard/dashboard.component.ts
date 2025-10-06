@@ -26,10 +26,8 @@ import {
 })
 export class DashboardComponent implements OnInit {
 
-  // Estado de carga
   isLoading = false;
 
-  // Datos para componentes
   headerData: DashboardHeaderData = {
     logoSrc: '/logo.png',
     title: {
@@ -50,87 +48,15 @@ export class DashboardComponent implements OnInit {
   };
 
   modules: ModuleCardData[] = [
-    {
-      title: 'Cotizaciones',
-      description: 'Gestiona las cotizaciones de viajes',
-      icon: 'fas fa-file-invoice-dollar',
-      route: '/cotizaciones',
-      iconType: 'cotizaciones',
-      status: { text: '12 Activas', type: 'active' },
-      action: { text: 'Gestionar' }
-    },
-    {
-      title: 'Counters',
-      description: 'Administra los contadores del sistema',
-      icon: 'fas fa-tachometer-alt',
-      route: '/counters',
-      iconType: 'counters',
-      status: { text: '5 Activos', type: 'success' },
-      action: { text: 'Gestionar' }
-    },
-    {
-      title: 'Sucursales',
-      description: 'Gestiona las sucursales de la empresa',
-      icon: 'fas fa-building',
-      route: '/sucursales',
-      iconType: 'sucursales',
-      status: { text: '3 Activas', type: 'success' },
-      action: { text: 'Gestionar' }
-    },
-    {
-      title: 'Liquidaciones',
-      description: 'Administra las liquidaciones',
-      icon: 'fas fa-calculator',
-      route: '/liquidaciones',
-      iconType: 'liquidaciones',
-      status: { text: '8 Pendientes', type: 'warning' },
-      action: { text: 'Procesar' }
-    },
-    {
-      title: 'Productos',
-      description: 'Catálogo de productos y servicios',
-      icon: 'fas fa-cube',
-      route: '/productos',
-      iconType: 'productos',
-      status: { text: '45 Disponibles', type: 'success' },
-      action: { text: 'Administrar' }
-    },
-    {
-      title: 'Clientes',
-      description: 'Gestión de clientes y proveedores',
-      icon: 'fas fa-users',
-      route: '/personas',
-      iconType: 'clientes',
-      status: { text: '234 Registrados', type: 'neutral' },
-      action: { text: 'Ver Clientes' }
-    },
-    {
-      title: 'Reportes',
-      description: 'Reportes y estadísticas',
-      icon: 'fas fa-chart-bar',
-      route: '/reportes',
-      iconType: 'reportes',
-      status: { text: '56 Generados', type: 'success' },
-      action: { text: 'Generar' }
-    },
-    {
-      title: 'Gestor de Archivos',
-      description: 'Explorador de carpetas y documentos',
-      icon: 'fas fa-folder-open',
-      route: '/carpetas',
-      iconType: 'reportes',
-      status: { text: 'Organiza archivos', type: 'neutral' },
-      action: { text: 'Explorar' }
-    },
-    {
-      title: 'Tipos de Documentos',
-      description: 'Gestión de categorías de documentos',
-      icon: 'fas fa-file-alt',
-      route: '/documentos',
-      iconType: 'reportes',
-      status: { text: 'Configurar tipos', type: 'neutral' },
-      action: { text: 'Administrar' }
-    }
+    { title: 'Cotizaciones', description: 'Gestiona las cotizaciones de viajes', icon: 'fas fa-file-invoice-dollar', route: '/cotizaciones', iconType: 'cotizaciones', status: { text: '12 Activas', type: 'active' }, action: { text: 'Gestionar' }, moduleKey: 'COTIZACIONES' },
+    { title: 'Counters', description: 'Administra los contadores del sistema', icon: 'fas fa-tachometer-alt', route: '/counters', iconType: 'counters', status: { text: '5 Activos', type: 'success' }, action: { text: 'Gestionar' }, moduleKey: 'COUNTERS' },
+    { title: 'Sucursales', description: 'Gestiona las sucursales de la empresa', icon: 'fas fa-building', route: '/sucursales', iconType: 'sucursales', status: { text: '3 Activas', type: 'success' }, action: { text: 'Gestionar' }, moduleKey: 'SUCURSALES' },
+    { title: 'Liquidaciones', description: 'Administra las liquidaciones', icon: 'fas fa-calculator', route: '/liquidaciones', iconType: 'liquidaciones', status: { text: '8 Pendientes', type: 'warning' }, action: { text: 'Procesar' }, moduleKey: 'LIQUIDACIONES' },
+    { title: 'Productos', description: 'Catálogo de productos y servicios', icon: 'fas fa-cube', route: '/productos', iconType: 'productos', status: { text: '45 Disponibles', type: 'success' }, action: { text: 'Administrar' }, moduleKey: 'PRODUCTOS' },
+    { title: 'Clientes', description: 'Gestión de clientes y proveedores', icon: 'fas fa-users', route: '/personas', iconType: 'clientes', status: { text: '234 Registrados', type: 'neutral' }, action: { text: 'Ver Clientes' }, moduleKey: 'CLIENTES' },
+    { title: 'Reportes', description: 'Reportes y estadísticas', icon: 'fas fa-chart-bar', route: '/reportes', iconType: 'reportes', status: { text: '56 Generados', type: 'success' }, action: { text: 'Generar' }, moduleKey: 'REPORTES' },
+    { title: 'Gestor de Archivos', description: 'Explorador de carpetas y documentos', icon: 'fas fa-folder-open', route: '/carpetas', iconType: 'reportes', status: { text: 'Organiza archivos', type: 'neutral' }, action: { text: 'Explorar' }, moduleKey: 'CARPETAS' },
+    { title: 'Tipos de Documentos', description: 'Gestión de categorías de documentos', icon: 'fas fa-file-alt', route: '/documentos', iconType: 'reportes', status: { text: 'Configurar tipos', type: 'neutral' }, action: { text: 'Administrar' }, moduleKey: 'DOCUMENTOS' }
   ];
 
   constructor(
@@ -143,43 +69,32 @@ export class DashboardComponent implements OnInit {
   }
 
   private initializeData(): void {
-    const user = this.getCurrentUser();
+    const authData = this.authService.getUser();
+    const userName = authData?.name || 'Administrador';
+    const userRole = this.getRoleDisplayName(authData?.role || 'ADMIN');
+    const userPermissions = authData?.permissions || {};
 
-    // Actualizar datos del header
-    this.headerData.userData = {
-      name: user.name,
-      role: user.role
-    };
+    // Header
+    this.headerData.userData = { name: userName, role: userRole };
 
-    // Actualizar datos del welcome banner
-    this.welcomeData.title = `¡Bienvenido, ${user.name}!`;
+    // Welcome banner
+    this.welcomeData.title = `¡Bienvenido, ${userName}!`;
     this.welcomeData.subtitle = `Hoy es ${this.getCurrentTime()} - Gestiona tu negocio desde aquí`;
+
+    // Filtrar módulos según permisos
+    this.modules = this.modules.filter(m => m.moduleKey && Object.keys(userPermissions).includes(m.moduleKey));
   }
 
-  // Métodos para el header
   getCurrentTime(): string {
-    return new Date().toLocaleDateString('es-PE', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    return new Date().toLocaleDateString('es-PE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   }
 
   getUserInitials(): string {
     const user = this.authService.getUser();
     if (user?.name) {
-      return user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase();
+      return user.name.split(' ').map(n => n[0]).join('').toUpperCase();
     }
     return 'AD';
-  }
-
-  getCurrentUser() {
-    const authData = this.authService.getUser();
-    return {
-      name: authData?.name || 'Administrador',
-      role: this.getRoleDisplayName(authData?.role || 'ADMIN')
-    };
   }
 
   private getRoleDisplayName(role: string): string {
@@ -193,7 +108,6 @@ export class DashboardComponent implements OnInit {
     return roleMap[role] || 'Usuario';
   }
 
-  // Refrescar datos (simula actualización)
   refreshData(): void {
     this.headerData.isLoading = true;
     this.isLoading = true;
@@ -205,12 +119,10 @@ export class DashboardComponent implements OnInit {
     }, 1000);
   }
 
-  // Manejar evento de refresh desde el header
   onHeaderRefresh(): void {
     this.refreshData();
   }
 
-  // Cerrar sesión
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/auth/login']);

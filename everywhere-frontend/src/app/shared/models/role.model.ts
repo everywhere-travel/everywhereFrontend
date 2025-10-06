@@ -1,0 +1,90 @@
+export interface Role {
+  id: number;
+  name: string;
+  permissions: string[];
+  modules: string[];
+}
+
+export enum RoleType {
+  ADMIN = 'ADMIN',
+  VENTAS_ADMIN = 'VENTAS_ADMIN',
+  VENTAS_JUNIOR = 'VENTAS_JUNIOR',
+  ADMINISTRACION_ADMIN = 'ADMINISTRACION_ADMIN',
+  ADMINISTRACION_JUNIOR = 'ADMINISTRACION_JUNIOR',
+  SISTEMAS = 'SISTEMAS',
+  CONTABILIDAD_ADMIN = 'CONTABILIDAD_ADMIN',
+  CONTABILIDAD_JUNIOR = 'CONTABILIDAD_JUNIOR'
+}
+
+export enum Permission {
+  READ = 'READ',
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE'
+}
+
+export enum Module {
+  COTIZACIONES = 'COTIZACIONES',
+  PERSONAS = 'PERSONAS',
+  LIQUIDACIONES = 'LIQUIDACIONES',
+  VIAJEROS = 'VIAJEROS',
+  SISTEMA = 'SISTEMA',
+  CONTABILIDAD = 'CONTABILIDAD',
+  ADMINISTRACION = 'ADMINISTRACION',
+  VENTAS = 'VENTAS',
+  USUARIOS = 'USUARIOS',
+  PRODUCTOS = 'PRODUCTOS',
+  PROVEEDORES = 'PROVEEDORES',
+  SUCURSALES = 'SUCURSALES'
+}
+
+export const ROLES_DEFINITION: { [key in RoleType]: Role } = {
+  [RoleType.ADMIN]: {
+    id: 1,
+    name: 'ADMIN',
+    permissions: ['READ', 'CREATE', 'UPDATE', 'DELETE'],
+    modules: ['COTIZACIONES', 'PERSONAS', 'LIQUIDACIONES', 'VIAJEROS', 'SISTEMA', 'CONTABILIDAD', 'ADMINISTRACION', 'VENTAS', 'USUARIOS', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES']
+  },
+  [RoleType.VENTAS_ADMIN]: {
+    id: 2,
+    name: 'VENTAS_ADMIN',
+    permissions: ['READ', 'CREATE', 'UPDATE', 'DELETE'],
+    modules: ['COTIZACIONES', 'PERSONAS', 'VIAJEROS']
+  },
+  [RoleType.VENTAS_JUNIOR]: {
+    id: 3,
+    name: 'VENTAS_JUNIOR',
+    permissions: ['READ', 'CREATE', 'UPDATE'],
+    modules: ['COTIZACIONES', 'PERSONAS', 'VIAJEROS']
+  },
+  [RoleType.ADMINISTRACION_ADMIN]: {
+    id: 4,
+    name: 'ADMINISTRACION_ADMIN',
+    permissions: ['READ', 'UPDATE'],
+    modules: ['COTIZACIONES', 'PERSONAS', 'VIAJEROS', 'LIQUIDACIONES', 'CONTABILIDAD', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES']
+  },
+  [RoleType.ADMINISTRACION_JUNIOR]: {
+    id: 5,
+    name: 'ADMINISTRACION_JUNIOR',
+    permissions: ['READ', 'UPDATE'],
+    modules: ['COTIZACIONES', 'PERSONAS', 'VIAJEROS', 'CONTABILIDAD', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES']
+  },
+  [RoleType.SISTEMAS]: {
+    id: 6,
+    name: 'SISTEMAS',
+    permissions: ['READ', 'CREATE', 'UPDATE', 'DELETE'],
+    modules: ['COTIZACIONES', 'PERSONAS', 'LIQUIDACIONES', 'VIAJEROS', 'SISTEMA', 'CONTABILIDAD', 'ADMINISTRACION', 'VENTAS', 'USUARIOS', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES']
+  },
+  [RoleType.CONTABILIDAD_ADMIN]: {
+    id: 7,
+    name: 'CONTABILIDAD_ADMIN',
+    permissions: ['READ', 'CREATE', 'UPDATE'],
+    modules: ['COTIZACIONES', 'PERSONAS', 'LIQUIDACIONES', 'VIAJEROS', 'CONTABILIDAD', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES']
+  },
+  [RoleType.CONTABILIDAD_JUNIOR]: {
+    id: 8,
+    name: 'CONTABILIDAD_JUNIOR',
+    permissions: ['READ', 'CREATE', 'UPDATE'],
+    modules: ['COTIZACIONES', 'PERSONAS', 'LIQUIDACIONES', 'VIAJEROS', 'CONTABILIDAD', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES']
+  }
+};

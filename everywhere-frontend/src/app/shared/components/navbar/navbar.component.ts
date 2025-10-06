@@ -1,17 +1,48 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { AuthServiceService } from '../../../core/service/auth/auth.service';
+import { Module, Permission } from '../../models/role.model';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css'],
-  imports: [CommonModule, RouterModule]
+  imports: [
+    CommonModule,
+    RouterModule
+  ]
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit, OnDestroy {
   isMobileMenuOpen = false;
-  currentUser$ = null; // Aquí luego inyectas tu AuthService
+  currentUser: { name: string } | null = null;
+  private subscription = new Subscription();
+
+  constructor(
+    private authService: AuthServiceService,
+    private router: Router
+  ) {}
+
+  ngOnInit() {
+    // Suscribimos al usuario actual
+    this.subscription.add(
+      this.authService.currentUser$.subscribe(user => {
+        if (user) {
+          this.currentUser = {
+            name: user.name
+          };
+        } else {
+          this.currentUser = null;
+        }
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+  }
 
   toggleMobileMenu() {
     this.isMobileMenuOpen = !this.isMobileMenuOpen;
@@ -22,7 +53,7 @@ export class NavbarComponent {
   }
 
   logout() {
-    console.log('Cerrar sesión');
-    // aquí va la lógica real de logout
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 }
