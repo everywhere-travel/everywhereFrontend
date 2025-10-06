@@ -1,9 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { AuthorizationService, MenuItemConfig } from '../../../core/service/authorization.service';
-import { HasModuleAccessDirective, CanAccessDirective, HasPermissionDirective } from '../../directives/authorization.directive';
+import { AuthServiceService } from '../../../core/service/auth/auth.service';
 import { Module, Permission } from '../../models/role.model';
 
 @Component({
@@ -12,38 +11,54 @@ import { Module, Permission } from '../../models/role.model';
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css'],
   imports: [
-    CommonModule, 
-    RouterModule, 
-    HasModuleAccessDirective, 
-    CanAccessDirective, 
-    HasPermissionDirective
+    CommonModule,
+    RouterModule
   ]
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   isMobileMenuOpen = false;
-  menuItems: MenuItemConfig[] = [];
-  currentUser$ = null;
-  
-  // Exponer enums para usar en el template
-  Module = Module;
-  Permission = Permission;
-  
+  currentUser: { name: string; role: string; displayRole: string } | null = null;
   private subscription = new Subscription();
 
   constructor(
-    private authorizationService: AuthorizationService
+    private authService: AuthServiceService,
+    private router: Router
   ) {}
 
   ngOnInit() {
-    this.loadMenuItems();
+    // Suscribimos al usuario actual
+    this.subscription.add(
+      this.authService.currentUser$.subscribe(user => {
+        if (user) {
+          this.currentUser = {
+            name: user.name,
+            role: user.role,
+            displayRole: this.getRoleDisplayName(user.role)
+          };
+        } else {
+          this.currentUser = null;
+        }
+      })
+    );
   }
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
   }
 
-  private loadMenuItems() {
-    this.menuItems = this.authorizationService.getFilteredMenuItems();
+  // Map de roles legibles
+  private getRoleDisplayName(role: string): string {
+    const roleMap: { [key: string]: string } = {
+      'GERENTE': 'Gerente',
+      'VENTAS': 'Ventas',
+      'ADMINISTRAR': 'Administrar',
+      'ADMIN': 'Administrador',
+      'SISTEMAS': 'Sistemas',
+      'OPERACIONES': 'Operaciones',
+      'VENTAS_JUNIOR': 'Ventas Junior',
+      'GERENTE_ARGENTINA': 'Gerente Argentina'
+    };
+    return roleMap[role] || role;
   }
 
   toggleMobileMenu() {
@@ -55,17 +70,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    console.log('Cerrar sesión');
-    this.authorizationService.clearUser();
-    // aquí va la lógica real de logout
-  }
-
-  // Métodos auxiliares para el template
-  hasModuleAccess(module: Module): boolean {
-    return this.authorizationService.hasModuleAccess(module);
-  }
-
-  canAccess(module: Module, permission: Permission = Permission.READ): boolean {
-    return this.authorizationService.canAccess(module, permission);
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
   }
 }

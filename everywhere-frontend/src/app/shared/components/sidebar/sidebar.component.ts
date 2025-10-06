@@ -60,28 +60,30 @@ export class SidebarComponent {
   }
 
   // Métodos para obtener información del usuario
-  getCurrentUser() {
-    const authData = this.authService.getUser();
-    return {
-      name: authData?.name || 'Usuario',
-      role: this.getRoleDisplayName(authData?.role || 'USER')
-    };
-  }
+getCurrentUser() {
+  const authData = this.authService.getUser();
+  return {
+    name: authData?.name || 'Usuario',
+    role: authData?.role || 'USER', // <-- rol tal como viene del backend
+    displayRole: this.getRoleDisplayName(authData?.role || 'USER') // <-- rol legible
+  };
+}
 
-  private getRoleDisplayName(role: string): string {
-    const roleMap: { [key: string]: string } = {
-      'ADMIN': 'Gerencia General',
-      'VENTAS_ADMIN': 'Ventas Principal',
-      'VENTAS_JUNIOR': 'Ventas junior',
-      'ADMINISTRACION_ADMIN': 'Administración principal',
-      'ADMINISTRACION_JUNIOR': 'Administración junior',
-      'CONTABILIDAD_ADMIN': 'Contabilidad principal',
-      'CONTABILIDAD_JUNIOR': 'Contabilidad junior',
-      'SISTEMAS': 'Sistemas',
-      'USER': 'Usuario'
-    };
-    return roleMap[role] || 'Usuario';
-  }
+// Método para mapear los roles a nombres amigables
+private getRoleDisplayName(role: string): string {
+  const roleMap: { [key: string]: string } = {
+    'GERENTE': 'Gerente',
+    'VENTAS': 'Ventas',
+    'ADMINISTRAR': 'Administrar',
+    'ADMIN': 'Administrador',
+    'SISTEMAS': 'Sistemas',
+    'OPERACIONES': 'Operaciones',
+    'VENTAS_JUNIOR': 'Ventas Junior',
+    'GERENTE_ARGENTINA': 'Gerente Argentina'
+  };
+  return roleMap[role] || role; // si no está en el mapa, devuelve tal cual
+}
+
 
   getUserInitials(): string {
     const user = this.getCurrentUser();
