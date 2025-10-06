@@ -16,7 +16,7 @@ export interface ModuleCardData {
     icon?: string; // SVG string para el icono de acción
   };
   featured?: boolean;
-  iconType: 'cotizaciones' | 'clientes' | 'liquidaciones' | 'productos' | 'reportes' | 'estadisticas';
+  iconType: 'cotizaciones' | 'clientes' | 'liquidaciones' | 'productos' | 'reportes' | 'estadisticas' | 'counters' | 'sucursales' | 'documentos';
 }
 
 @Component({

@@ -32,7 +32,7 @@ export interface PersonaTabla {
   styleUrls: ['./personas.component.css'],
   imports: [
     CommonModule,
-    FormsModule, 
+    FormsModule,
     ReactiveFormsModule,
     SidebarComponent
   ]
@@ -78,9 +78,7 @@ export class PersonasComponent implements OnInit {
       id: 'cotizaciones',
       title: 'Cotizaciones',
       icon: 'fas fa-file-invoice',
-      route: '/cotizaciones',
-      badge: '12',
-      badgeColor: 'blue'
+      route: '/cotizaciones'
     },
     {
       id: 'liquidaciones',
@@ -91,7 +89,7 @@ export class PersonasComponent implements OnInit {
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box', 
+      icon: 'fas fa-box',
       children: [
         {
           id: 'productos',
@@ -110,6 +108,38 @@ export class PersonasComponent implements OnInit {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores'
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      children: [
+        {
+          id: 'counters',
+          title: 'Counters',
+          icon: 'fas fa-users-line',
+          route: '/counters'
+        },
+        {
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales'
+        }
+      ]
+    },
+    {
+      id: 'archivos',
+      title: 'Gestión de Archivos',
+      icon: 'fas fa-folder',
+      children: [
+        {
+          id: 'carpetas',
+          title: 'Explorador',
+          icon: 'fas fa-folder-open',
+          route: '/carpetas'
         }
       ]
     },
@@ -308,17 +338,17 @@ export class PersonasComponent implements OnInit {
       this.loading = true;
       this.isSubmitting = true;
       const formData = this.viajeroForm.value;
-      
+
       // Determinar la nacionalidad final
-      const nacionalidadFinal = formData.nacionalidad === 'Otra' 
-        ? formData.otraNacionalidad 
+      const nacionalidadFinal = formData.nacionalidad === 'Otra'
+        ? formData.otraNacionalidad
         : formData.nacionalidad;
-      
-      // Determinar la residencia final  
+
+      // Determinar la residencia final
       const residenciaFinal = formData.residencia === 'Otro'
         ? formData.otraResidencia
         : formData.residencia;
-      
+
       const request: ViajeroRequest = {
         nombres: formData.nombres,
         apellidoPaterno: formData.apellidoPaterno,
@@ -326,10 +356,6 @@ export class PersonasComponent implements OnInit {
         fechaNacimiento: formData.fechaNacimiento,
         nacionalidad: nacionalidadFinal,
         residencia: residenciaFinal,
-        tipoDocumento: formData.tipoDocumento,
-        numeroDocumento: formData.numeroDocumento,
-        fechaEmisionDocumento: formData.fechaEmisionDocumento,
-        fechaVencimientoDocumento: formData.fechaVencimientoDocumento,
         persona: formData.persona
       };
 
@@ -356,7 +382,7 @@ export class PersonasComponent implements OnInit {
   onNacionalidadChange(event: any): void {
     const value = event.target.value;
     this.showOtraNacionalidad = value === 'Otra';
-    
+
     if (!this.showOtraNacionalidad) {
       this.viajeroForm.get('otraNacionalidad')?.setValue('');
     }
@@ -365,14 +391,14 @@ export class PersonasComponent implements OnInit {
   onResidenciaChange(event: any): void {
     const value = event.target.value;
     this.showOtraResidencia = value === 'Otro';
-    
+
     if (!this.showOtraResidencia) {
       this.viajeroForm.get('otraResidencia')?.setValue('');
     }
   }
 
   // Métodos para mejorar UX/UI
-  exportarDatos(): void { 
+  exportarDatos(): void {
   }
 
   sortBy(column: string): void {
@@ -397,7 +423,7 @@ export class PersonasComponent implements OnInit {
     }
   }
 
-  confirmarEliminar(persona: PersonaTabla): void { 
+  confirmarEliminar(persona: PersonaTabla): void {
     this.closeAllMenus(); // Cerrar todos los menús
     // Mostrar modal de confirmación en lugar de alert feo
     this.personaAEliminar = persona;
@@ -406,7 +432,7 @@ export class PersonasComponent implements OnInit {
 
   // Nuevo método para confirmar eliminación desde el modal
   confirmarEliminacionModal(): void {
-    if (this.personaAEliminar) { 
+    if (this.personaAEliminar) {
       this.eliminarPersona(this.personaAEliminar.id);
       this.cerrarModalEliminar();
     }
@@ -483,7 +509,7 @@ export class PersonasComponent implements OnInit {
   updateSelectionState(): void {
     const totalItems = this.personasFiltradas.length;
     const selectedCount = this.selectedItems.length;
-    
+
     this.allSelected = selectedCount === totalItems && totalItems > 0;
     this.someSelected = selectedCount > 0 && selectedCount < totalItems;
   }
@@ -496,7 +522,7 @@ export class PersonasComponent implements OnInit {
 
   editarSeleccionados(): void {
     if (this.selectedItems.length === 0) return;
-    
+
     if (this.selectedItems.length === 1) {
       // Si solo hay uno seleccionado, abrir editor individual
       const persona = this.personas.find(p => p.id === this.selectedItems[0]);
@@ -507,20 +533,20 @@ export class PersonasComponent implements OnInit {
       // Para múltiples elementos, abrir el primer elemento
       const persona = this.personas.find(p => p.id === this.selectedItems[0]);
       if (persona) {
-        this.editarPersona(persona); 
+        this.editarPersona(persona);
       }
     }
   }
 
   eliminarSeleccionados(): void {
     if (this.selectedItems.length === 0) return;
-    
+
     const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cliente${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
     if (confirm(confirmMessage)) {
       this.loading = true;
       let eliminados = 0;
       const total = this.selectedItems.length;
-      
+
       this.selectedItems.forEach(id => {
         const persona = this.personas.find(p => p.id === id);
         if (persona) {
@@ -571,55 +597,55 @@ export class PersonasComponent implements OnInit {
   }
 
   // Métodos para el menú de acciones - separados por vista
-  toggleActionMenu(id: number): void { 
+  toggleActionMenu(id: number): void {
     // Cerrar otros menús
     this.showQuickActions = null;
     this.showActionMenuCards = null;
     this.showActionMenuList = null;
-    
+
     // Alternar el menú de tabla
-    if (this.showActionMenu === id) { 
+    if (this.showActionMenu === id) {
       this.showActionMenu = null;
-    } else { 
+    } else {
       this.showActionMenu = id;
-    } 
+    }
   }
 
-  toggleActionMenuCards(id: number): void { 
+  toggleActionMenuCards(id: number): void {
     // Cerrar otros menús
     this.showQuickActions = null;
     this.showActionMenu = null;
     this.showActionMenuList = null;
-    
+
     // Alternar el menú de cards
-    if (this.showActionMenuCards === id) { 
+    if (this.showActionMenuCards === id) {
       this.showActionMenuCards = null;
-    } else { 
+    } else {
       this.showActionMenuCards = id;
-    } 
+    }
   }
 
-  toggleActionMenuList(id: number): void { 
+  toggleActionMenuList(id: number): void {
     // Cerrar otros menús
     this.showQuickActions = null;
     this.showActionMenu = null;
     this.showActionMenuCards = null;
-    
+
     // Alternar el menú de list
-    if (this.showActionMenuList === id) { 
+    if (this.showActionMenuList === id) {
       this.showActionMenuList = null;
-    } else { 
+    } else {
       this.showActionMenuList = id;
     }
   }
 
-  toggleQuickActions(id: number): void {  
+  toggleQuickActions(id: number): void {
     // Cerrar otros menús
     this.showActionMenu = null;
     this.showActionMenuCards = null;
     this.showActionMenuList = null;
-    
-    this.showQuickActions = this.showQuickActions === id ? null : id; 
+
+    this.showQuickActions = this.showQuickActions === id ? null : id;
   }
 
   // Método auxiliar para cerrar todos los menús
@@ -732,7 +758,7 @@ export class PersonasComponent implements OnInit {
   }
 
   // Métodos de acciones de tabla
-  editarPersona(persona: PersonaTabla): void { 
+  editarPersona(persona: PersonaTabla): void {
     this.closeAllMenus(); // Cerrar todos los menús
     this.editandoPersona = true;
     if (persona.tipo === 'natural') {
@@ -746,7 +772,7 @@ export class PersonasComponent implements OnInit {
     }
   }
 
-  verPersona(persona: PersonaTabla): void { 
+  verPersona(persona: PersonaTabla): void {
     this.closeAllMenus(); // Cerrar todos los menús
     this.personaDetalles = persona;
     this.mostrarModalDetalles = true;
@@ -786,7 +812,7 @@ export class PersonasComponent implements OnInit {
   }
 
   getSectionType(): string {
-    return this.filtroTipo === 'natural' ? 'Persona Natural' : 
+    return this.filtroTipo === 'natural' ? 'Persona Natural' :
            this.filtroTipo === 'juridica' ? 'Persona Jurídica' : 'Persona';
   }
 
@@ -896,7 +922,7 @@ export class PersonasComponent implements OnInit {
     } else {
       form = this.viajeroForm;
     }
-    
+
     const personaGroup = form.get('persona') as FormGroup;
     const field = personaGroup?.get(fieldName);
     return !!(field && field.invalid && (field.dirty || field.touched));
@@ -911,7 +937,7 @@ export class PersonasComponent implements OnInit {
     } else {
       form = this.viajeroForm;
     }
-    
+
     const personaGroup = form.get('persona') as FormGroup;
     const field = personaGroup?.get(fieldName);
     if (field && field.errors && (field.dirty || field.touched)) {
@@ -988,7 +1014,7 @@ export class PersonasComponent implements OnInit {
     try {
       this.loading = true;
       this.isLoading = true;
-      
+
       const [naturales, juridicas] = await Promise.all([
         this.personaNaturalService.findAll().toPromise(),
         this.personaJuridicaService.findAll().toPromise()
@@ -1032,7 +1058,7 @@ export class PersonasComponent implements OnInit {
 
       this.personas = personasTabla;
       this.applyFilters();
-      
+
     } catch (error) {
       console.error('Error al cargar personas:', error);
     } finally {
@@ -1063,16 +1089,16 @@ export class PersonasComponent implements OnInit {
     this.filteredPersonas = filtered;
     this.personasFiltradas = filtered;
     this.totalItems = filtered.length;
-    
+
     // Aplicar ordenamiento
     this.applySorting();
-    
+
     this.calcularEstadisticas();
   }
 
   private applySorting(): void {
     if (!this.personasFiltradas.length) return;
-    
+
     this.personasFiltradas.sort((a, b) => {
       let valueA: any;
       let valueB: any;
@@ -1143,10 +1169,10 @@ export class PersonasComponent implements OnInit {
 
   openEditPersonaNaturalModal(persona: PersonaTabla): void {
     if (persona.tipo !== 'natural') return;
-    
+
     this.isEditMode = true;
     this.currentPersonaId = persona.id;
-    
+
     // Cargar datos completos para edición
     this.personaNaturalService.findById(persona.id).subscribe({
       next: (personaCompleta) => {
@@ -1184,10 +1210,10 @@ export class PersonasComponent implements OnInit {
 
   openEditPersonaJuridicaModal(persona: PersonaTabla): void {
     if (persona.tipo !== 'juridica') return;
-    
+
     this.isEditMode = true;
     this.currentPersonaId = persona.id;
-    
+
     // Cargar datos completos para edición
     this.personaJuridicaService.findById(persona.id).subscribe({
       next: (personaCompleta) => {
@@ -1318,7 +1344,7 @@ export class PersonasComponent implements OnInit {
 
     try {
       this.loading = true;
-      
+
       if (persona.tipo === 'natural') {
         this.personaNaturalService.deleteById(persona.id).subscribe({
           next: () => {
@@ -1380,7 +1406,7 @@ export class PersonasComponent implements OnInit {
   }
 
   // Métodos del Sidebar
-  onSidebarItemClick(item: SidebarMenuItem): void { 
+  onSidebarItemClick(item: SidebarMenuItem): void {
     if (item.route) {
       this.router.navigate([item.route]);
     }

@@ -60,6 +60,24 @@ export class DashboardComponent implements OnInit {
       action: { text: 'Gestionar' }
     },
     {
+      title: 'Counters',
+      description: 'Administra los contadores del sistema',
+      icon: 'fas fa-tachometer-alt',
+      route: '/counters',
+      iconType: 'counters',
+      status: { text: '5 Activos', type: 'success' },
+      action: { text: 'Gestionar' }
+    },
+    {
+      title: 'Sucursales',
+      description: 'Gestiona las sucursales de la empresa',
+      icon: 'fas fa-building',
+      route: '/sucursales',
+      iconType: 'sucursales',
+      status: { text: '3 Activas', type: 'success' },
+      action: { text: 'Gestionar' }
+    },
+    {
       title: 'Liquidaciones',
       description: 'Administra las liquidaciones',
       icon: 'fas fa-calculator',
@@ -94,6 +112,24 @@ export class DashboardComponent implements OnInit {
       iconType: 'reportes',
       status: { text: '56 Generados', type: 'success' },
       action: { text: 'Generar' }
+    },
+    {
+      title: 'Gestor de Archivos',
+      description: 'Explorador de carpetas y documentos',
+      icon: 'fas fa-folder-open',
+      route: '/carpetas',
+      iconType: 'reportes',
+      status: { text: 'Organiza archivos', type: 'neutral' },
+      action: { text: 'Explorar' }
+    },
+    {
+      title: 'Tipos de Documentos',
+      description: 'Gestión de categorías de documentos',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      iconType: 'reportes',
+      status: { text: 'Configurar tipos', type: 'neutral' },
+      action: { text: 'Administrar' }
     }
   ];
 

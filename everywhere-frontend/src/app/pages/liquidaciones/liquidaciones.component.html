@@ -1,348 +1,857 @@
-<app-navbar></app-navbar>
-<div class="container">
-  <div class="page-header">
-    <h1>Gestión de Liquidaciones</h1>
-    <p>Procesa liquidaciones y facturación de paquetes turísticos</p>
-  </div>
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+  <!-- Sidebar Component -->
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()">
+  </app-sidebar>
 
-   Search Section
-  <div class="search-section">
-    <form [formGroup]="searchForm" class="search-container">
-      <select formControlName="searchType" class="form-input search-select">
-        <option value="numero">Por Número</option>
-        <option value="viajero">Por Viajero</option>
-        <option value="cotizacion">Por Cotización</option>
-      </select>
-      <input
-        type="text"
-        formControlName="searchValue"
-        (keyup.enter)="searchLiquidaciones()"
-        placeholder="Buscar liquidación..."
-        class="form-input search-input"
-      />
-      <button type="button" (click)="searchLiquidaciones()" class="btn btn-primary">
-        Buscar
-      </button>
-      <button type="button" (click)="toggleForm()" class="btn btn-secondary">
-        {{ showForm ? 'Cancelar' : 'Nueva Liquidación' }}
-      </button>
-    </form>
-  </div>
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+    <!-- Messages Section -->
+    <div class="fixed top-4 right-4 z-50 space-y-2">
+      <!-- Success Message -->
+      <div *ngIf="showSuccessMessage"
+        class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
+        <i class="fas fa-check-circle text-xl"></i>
+        <span>{{ successMessage }}</span>
+        <button (click)="hideMessages()" class="ml-4 hover:text-green-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
 
-   Form Section
-  <div *ngIf="showForm" class="form-section">
-    <div class="card">
-      <h3>{{ editingId ? 'Editar' : 'Nueva' }} Liquidación</h3>
+      <!-- Error Message -->
+      <div *ngIf="showErrorMessage"
+        class="bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
+        <i class="fas fa-exclamation-triangle text-xl"></i>
+        <span>{{ errorMessage }}</span>
+        <button (click)="hideMessages()" class="ml-4 hover:text-red-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
 
-      <form [formGroup]="liquidacionForm" (ngSubmit)="onSubmit()">
-         Basic Information
-        <div class="form-section-title">Información Básica</div>
+    <!-- Header Section -->
+    <header
+      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
+      </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Número de Liquidación *</label>
-            <input type="text" formControlName="numero" class="form-input" readonly />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Fecha de Liquidación *</label>
-            <input type="date" formControlName="fechaLiquidacion" class="form-input" />
-          </div>
-        </div>
+      <div class="max-w-full mx-auto px-6 py-6 relative z-10">
+        <!-- Mobile Menu Button -->
+        <button (click)="onToggleSidebar()"
+          class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Cotización Base *</label>
-            <select formControlName="cotizacionId" (change)="onCotizacionChange()" class="form-input">
-              <option value="">Seleccionar cotización...</option>
-              <option *ngFor="let cotizacion of cotizaciones" [value]="cotizacion.id">
-                {{ cotizacion.numero }} - {{ cotizacion.total | currency:'PEN':'symbol':'1.2-2' }}
-              </option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Estado *</label>
-            <select formControlName="estado" class="form-input">
-              <option *ngFor="let estado of estados" [value]="estado.value">
-                {{ estado.label }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-         Quotation Summary
-        <div *ngIf="selectedCotizacion" class="quotation-summary">
-          <h4>Resumen de Cotización</h4>
-          <div class="summary-grid">
-            <div class="summary-item">
-              <span class="label">Número:</span>
-              <span class="value">{{ selectedCotizacion.numero }}</span>
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+          <!-- Header Info -->
+          <div class="flex-1">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-credit-card text-2xl"></i>
+              </div>
+              <div>
+                <h1 class="text-4xl font-bold">Gestión de Liquidaciones</h1>
+                <p class="text-xl opacity-90 mt-2">
+                  Administra y procesa todas tus liquidaciones de manera eficiente
+                </p>
+              </div>
             </div>
-            <div class="summary-item">
-              <span class="label">Fecha Viaje:</span>
-              <span class="value">{{ selectedCotizacion.fechaViaje | date:'dd/MM/yyyy' }}</span>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!isLoading">
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
+                  <i class="fas fa-credit-card text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ getTotalLiquidaciones() }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Liquidación{{ getTotalLiquidaciones() === 1 ? '' : 'es' }} Total{{
+                    getTotalLiquidaciones() === 1 ? '' : 'es'
+                    }}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-check-circle text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ getLiquidacionesProcesadas() }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Procesada{{ getLiquidacionesProcesadas() === 1 ? '' : 's' }}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-yellow-500 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-clock text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ getLiquidacionesPendientes() }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Pendientes
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="summary-item">
-              <span class="label">Pasajeros:</span>
-              <span class="value">{{ selectedCotizacion.numeroAdultos + selectedCotizacion.numeroNinos }} pax</span>
+          </div>
+
+          <!-- Header Action -->
+          <div class="z-10">
+            <button (click)="mostrarFormularioCrear()" [disabled]="isLoading"
+              class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+              </div>
+              <i class="fas fa-plus text-lg"></i>
+              <span>Nueva Liquidación</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-full mx-auto px-6 py-6 space-y-6">
+      <!-- Search & Filters Panel -->
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <!-- Panel Header -->
+        <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-everywhere-primary rounded-xl flex items-center justify-center">
+                <i class="fas fa-search text-white"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-900">Buscar y Filtrar</h2>
+                <p class="text-sm text-gray-600">Encuentra liquidaciones específicas</p>
+              </div>
             </div>
-            <div class="summary-item">
-              <span class="label">Total:</span>
-              <span class="value">{{ selectedCotizacion.total | currency:'PEN':'symbol':'1.2-2' }}</span>
+
+            <!-- View Controls -->
+            <div class="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" [class]="
+                  currentView === 'table'
+                    ? 'bg-white text-everywhere-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                " (click)="changeView('table')" title="Vista de Tabla">
+                <i class="fas fa-table mr-2"></i>Tabla
+              </button>
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" [class]="
+                  currentView === 'cards'
+                    ? 'bg-white text-everywhere-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                " (click)="changeView('cards')" title="Vista de Tarjetas">
+                <i class="fas fa-th mr-2"></i>Tarjetas
+              </button>
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200" [class]="
+                  currentView === 'list'
+                    ? 'bg-white text-everywhere-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                " (click)="changeView('list')" title="Vista de Lista">
+                <i class="fas fa-list mr-2"></i>Lista
+              </button>
             </div>
           </div>
         </div>
 
-         Traveler and Service Information
-        <div class="form-section-title">Información del Viajero y Servicios</div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Viajero Principal *</label>
-            <select formControlName="viajeroId" class="form-input">
-              <option value="">Seleccionar viajero...</option>
-              <option *ngFor="let viajero of viajeros" [value]="viajero.id">
-                {{ viajero.nombre }} {{ viajero.apellido }}
-              </option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Número de Ticket</label>
-            <input type="text" formControlName="numeroTicket" class="form-input" placeholder="TKT001" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Operador</label>
-            <select formControlName="operadorId" class="form-input">
-              <option value="">Seleccionar operador...</option>
-              <option *ngFor="let operador of operadores" [value]="operador.id">
-                {{ operador.nombre }}
-              </option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Proveedor</label>
-            <select formControlName="proveedorId" class="form-input">
-              <option value="">Seleccionar proveedor...</option>
-              <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
-                {{ proveedor.nombre }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-         Financial Information
-        <div class="form-section-title">Información Financiera</div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Costo del Servicio *</label>
-            <input type="number" formControlName="costoServicio" step="0.01" min="0" class="form-input" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Cargo del Servicio</label>
-            <input type="number" formControlName="cargoServicio" step="0.01" min="0" class="form-input" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Valor de Venta *</label>
-            <input type="number" formControlName="valorVenta" step="0.01" min="0" class="form-input" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Cargo Adicional</label>
-            <input type="number" formControlName="cargoAdicional" step="0.01" min="0" class="form-input" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Descuento</label>
-            <input type="number" formControlName="descuento" step="0.01" min="0" class="form-input" />
-          </div>
-        </div>
-
-         Invoice Information
-        <div class="form-section-title">Información de Facturación</div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Número de Factura</label>
-            <input type="text" formControlName="numeroFactura" class="form-input" placeholder="F001-00001" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Número de Recibo</label>
-            <input type="text" formControlName="numeroRecibo" class="form-input" placeholder="R001-00001" />
-          </div>
-        </div>
-
-         Payment Information
-        <div class="form-section-title">Información de Pagos</div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Pago en Soles (PEN)</label>
-            <input type="number" formControlName="pagoSoles" step="0.01" min="0" class="form-input" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Pago en Dólares (USD)</label>
-            <input type="number" formControlName="pagoDolares" step="0.01" min="0" class="form-input" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Pago en Euros (EUR)</label>
-            <input type="number" formControlName="pagoEuros" step="0.01" min="0" class="form-input" />
-          </div>
-        </div>
-
-         Payment Summary
-        <div class="payment-summary">
-          <div class="summary-card">
-            <h4>Resumen de Pagos</h4>
-            <div class="summary-row">
-              <span>Total a Pagar:</span>
-              <span class="amount">{{ calculateTotal() | currency:'PEN':'symbol':'1.2-2' }}</span>
+        <!-- Search Controls -->
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8" [formGroup]="searchForm">
+          <!-- Search Input -->
+          <div class="lg:col-span-2">
+            <div class="relative">
+              <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input type="text" placeholder="Buscar por número, destino o producto..." formControlName="searchTerm"
+                class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white" />
+              <button *ngIf="searchForm.get('searchTerm')?.value"
+                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                (click)="clearSearch()">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
-            <div class="summary-row">
-              <span>Total Pagado:</span>
-              <span class="amount">{{ calculateTotalPayments() | currency:'PEN':'symbol':'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="flex flex-col items-center justify-center py-16 px-6">
+          <div
+            class="w-16 h-16 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary rounded-2xl flex items-center justify-center mb-4">
+            <i class="fas fa-spinner fa-spin text-white text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Cargando Liquidaciones</h3>
+          <p class="text-gray-600">Por favor espera mientras obtenemos los datos...</p>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && filteredLiquidaciones.length === 0"
+        class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-credit-card text-4xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay liquidaciones</h3>
+        <p class="text-gray-600 mb-6">
+          No se encontraron liquidaciones con los criterios de búsqueda.
+        </p>
+        <button (click)="mostrarFormularioCrear()"
+          class="inline-flex items-center px-6 py-3 bg-everywhere-primary text-white rounded-xl font-semibold hover:bg-everywhere-secondary transition-all duration-200">
+          <i class="fas fa-plus mr-2"></i>
+          Crear Primera Liquidación
+        </button>
+      </div>
+
+      <!-- Data Content -->
+      <div *ngIf="!isLoading && filteredLiquidaciones.length > 0" class="space-y-2">
+        <!-- Data Header -->
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-4">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-database text-red-600"></i>
+                  <h2 class="text-xl font-bold text-gray-900">Lista de Liquidaciones</h2>
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <button
+                  class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5">
+                  <i class="fas fa-sync-alt"></i>
+                  <span>Actualizar</span>
+                </button>
+                <button (click)="mostrarFormularioCrear()"
+                  class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 shadow-lg">
+                  <i class="fas fa-plus"></i>
+                  <span>Nueva Liquidación</span>
+                </button>
+              </div>
             </div>
-            <div class="summary-row balance-row">
-              <span>Saldo:</span>
-              <span [class]="'amount ' + (getPaymentBalance() > 0 ? 'pending' : 'paid')">
-                {{ getPaymentBalance() | currency:'PEN':'symbol':'1.2-2' }}
+          </div>
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div
+          class="bg-blue-600 text-white px-8 py-4 flex justify-between items-center animate-in slide-in-from-top duration-300"
+          *ngIf="selectedItems.length > 0">
+          <div class="flex items-center gap-3 font-semibold">
+            <i class="fas fa-check-circle"></i>
+            <span>{{ selectedItems.length }} liquidación{{
+              selectedItems.length === 1 ? '' : 'es'
+              }}
+              seleccionada{{ selectedItems.length === 1 ? '' : 's' }}</span>
+          </div>
+          <div class="flex gap-3">
+            <button
+              class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-edit"></i>
+              Editar
+            </button>
+            <button
+              class="bg-white/20 border border-white/30 hover:bg-red-600 hover:border-red-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-trash"></i>
+              Eliminar seleccionados
+            </button>
+            <button
+              class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-times"></i>
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div *ngIf="currentView === 'table'"
+          class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <!-- Table Header -->
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="w-12 p-5 text-center">
+                    <label class="relative inline-block cursor-pointer">
+                      <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
+                        (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0" />
+                      <span
+                        class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
+                        [class.bg-red-600]="allSelected || someSelected"
+                        [class.border-red-600]="allSelected || someSelected">
+                        <i class="fas fa-check text-white text-xs" [class.hidden]="!allSelected && !someSelected"></i>
+                        <i class="fas fa-minus text-white text-xs" [class.hidden]="!someSelected || allSelected"></i>
+                      </span>
+                    </label>
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Número
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cotización
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Destino
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha Compra
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Pasajeros
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Producto
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Forma Pago
+                  </th>
+                  <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+
+              <!-- Table Body -->
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let liquidacion of filteredLiquidaciones; trackBy: trackByLiquidacion"
+                  class="hover:bg-gray-50 transition-colors duration-200">
+                  <!-- Checkbox -->
+                  <td class="p-5 text-center">
+                    <label class="relative inline-block cursor-pointer">
+                      <input type="checkbox" [checked]="isSelected(liquidacion.id)"
+                        (change)="toggleSelection(liquidacion.id)" class="absolute opacity-0 w-0 h-0" />
+                      <span
+                        class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
+                        [class.bg-red-600]="isSelected(liquidacion.id)"
+                        [class.border-red-600]="isSelected(liquidacion.id)">
+                        <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(liquidacion.id)"></i>
+                      </span>
+                    </label>
+                  </td>
+                  <!-- Número -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="w-10 h-10 bg-everywhere-primary/10 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-credit-card text-everywhere-primary"></i>
+                      </div>
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">
+                          {{ liquidacion.numero || 'Sin número' }}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                          {{ formatDate(liquidacion.fechaCompra) }}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <!-- Cotización -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">
+                      {{ liquidacion.cotizacion?.codigoCotizacion || 'No vinculada' }}
+                    </div>
+                    <div class="text-sm text-gray-500" *ngIf="liquidacion.cotizacion?.personas">
+                      {{ getPersonaDisplayName(liquidacion.cotizacion?.personas?.id || 0) }}
+                    </div>
+                  </td>
+                  <!-- Destino -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">
+                      {{ liquidacion.destino || 'No especificado' }}
+                    </div>
+                  </td>
+                  <!-- Fecha Compra -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">
+                      {{ formatDate(liquidacion.fechaCompra) }}
+                    </div>
+                  </td>
+                  <!-- Pasajeros -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">
+                      <span class="inline-flex items-center">
+                        <i class="fas fa-users mr-1"></i>
+                        {{ liquidacion.numeroPasajeros || 0 }}
+                      </span>
+                    </div>
+                  </td>
+                  <!-- Producto -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">
+                      {{ liquidacion.producto?.descripcion || 'Sin producto' }}
+                    </div>
+                  </td>
+                  <!-- Forma Pago -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">
+                      {{ liquidacion.formaPago?.descripcion || 'No especificada' }}
+                    </div>
+                  </td>
+                  <!-- Acciones -->
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end space-x-2">
+                      <button (click)="mostrarModalVerLiquidacion(liquidacion)"
+                        class="inline-flex items-center p-2 text-green-600 hover:text-green-900 hover:bg-green-50 rounded-lg transition-all duration-200"
+                        title="Ver detalles">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button (click)="mostrarFormularioEditar(liquidacion)"
+                        class="inline-flex items-center p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                        title="Editar">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <!-- Botón de eliminar con presión mantenida -->
+                      <button  (mouseup)="cancelarEliminacion()"
+                        (mouseleave)="cancelarEliminacion()"
+                        (touchend)="cancelarEliminacion()" [class]="
+                          'relative inline-flex items-center p-2 rounded-lg transition-all duration-200 ' +
+                          (presionandoEliminar && liquidacionAEliminar?.id === liquidacion.id
+                            ? 'text-white bg-red-600'
+                            : 'text-red-600 hover:text-red-900 hover:bg-red-50')
+                        " [title]="
+                          presionandoEliminar && liquidacionAEliminar?.id === liquidacion.id
+                            ? 'Mantenga presionado 3 segundos para eliminar...'
+                            : 'Mantener presionado 3 segundos para eliminar'
+                        " type="button">
+                        <!-- Icono de basura -->
+                        <i class="fas fa-trash relative z-10"></i>
+
+                        <!-- Barra de progreso -->
+                        <div *ngIf="presionandoEliminar && liquidacionAEliminar?.id === liquidacion.id"
+                          class="absolute inset-0 bg-red-700 rounded-lg transition-all duration-100 ease-linear"
+                          [style.width.%]="getPorcentajeProgreso()"></div>
+
+                        <!-- Contador visual -->
+                        <span *ngIf="presionandoEliminar && liquidacionAEliminar?.id === liquidacion.id"
+                          class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-red-600 text-white text-xs px-2 py-1 rounded shadow-lg z-20">
+                          {{ 3 - getMath().floor(tiempoPresionado / 1000) }}s
+                        </span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cards View -->
+        <div *ngIf="currentView === 'cards'"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div *ngFor="let liquidacion of filteredLiquidaciones; trackBy: trackByLiquidacion"
+            class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group relative"
+            [class.border-red-500]="isSelected(liquidacion.id)" [class.shadow-red-200]="isSelected(liquidacion.id)">
+            <!-- Checkbox de selección -->
+            <div class="absolute top-4 left-4 z-10">
+              <label class="relative inline-block cursor-pointer">
+                <input type="checkbox" [checked]="isSelected(liquidacion.id)" (change)="toggleSelection(liquidacion.id)"
+                  class="absolute opacity-0 w-0 h-0" />
+                <span
+                  class="w-6 h-6 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center transition-all duration-200 hover:border-red-500 shadow-sm"
+                  [class.bg-red-600]="isSelected(liquidacion.id)" [class.border-red-600]="isSelected(liquidacion.id)">
+                  <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(liquidacion.id)"></i>
+                </span>
+              </label>
+            </div>
+
+            <!-- Badge de producto en la esquina superior derecha -->
+            <div class="absolute top-4 right-4">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {{ liquidacion.producto?.descripcion || 'Sin producto' }}
               </span>
             </div>
+
+            <div class="p-6 pt-16">
+              <div class="mb-4">
+                <!-- Número y fecha -->
+                <div class="flex items-center gap-3 mb-2">
+                  <div class="w-8 h-8 bg-everywhere-primary/10 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-credit-card text-everywhere-primary text-sm"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-bold text-gray-900">
+                      {{ liquidacion.numero || 'Sin número' }}
+                    </h3>
+                    <div class="text-sm text-gray-500">
+                      {{ formatDate(liquidacion.fechaCompra) }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Cotización asociada -->
+                <div class="text-sm text-gray-600 mb-2" *ngIf="liquidacion.cotizacion">
+                  <i class="fas fa-file-invoice mr-2 text-blue-500"></i>
+                  {{ liquidacion.cotizacion.codigoCotizacion }}
+                  <div class="text-xs text-gray-500 ml-6" *ngIf="liquidacion.cotizacion?.personas">
+                    {{ getPersonaDisplayName(liquidacion.cotizacion.personas?.id || 0) }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Información de la liquidación -->
+              <div class="space-y-3 mb-6">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600 flex items-center">
+                    <i class="fas fa-map-marker-alt mr-2 text-green-500"></i>
+                    Destino:
+                  </span>
+                  <span class="text-sm text-gray-900 font-medium text-right">{{
+                    liquidacion.destino ||
+                    'No especificado'
+                    }}</span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600 flex items-center">
+                    <i class="fas fa-calendar-alt mr-2 text-purple-500"></i>
+                    Fecha Compra:
+                  </span>
+                  <div class="text-sm text-gray-900 font-medium text-right">
+                    {{ formatDate(liquidacion.fechaCompra) }}
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600 flex items-center">
+                    <i class="fas fa-users mr-2 text-orange-500"></i>
+                    Pasajeros:
+                  </span>
+                  <div class="text-sm text-gray-900 font-medium">
+                    <span class="inline-flex items-center">
+                      <i class="fas fa-users mr-1"></i>
+                      {{ liquidacion.numeroPasajeros || 0 }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-gray-600 flex items-center">
+                    <i class="fas fa-credit-card mr-2 text-green-600"></i>
+                    Forma Pago:
+                  </span>
+                  <span class="text-sm text-gray-900 font-medium">{{
+                    liquidacion.formaPago?.descripcion || 'No especificada'
+                    }}</span>
+                </div>
+              </div>
+
+              <div class="flex gap-2 pt-4 border-t border-gray-100">
+                <button (click)="mostrarModalVerLiquidacion(liquidacion)"
+                  class="flex-1 bg-green-50 hover:bg-green-100 text-green-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105">
+                  <i class="fas fa-eye"></i>Ver
+                </button>
+                <button (click)="mostrarFormularioEditar(liquidacion)"
+                  class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105">
+                  <i class="fas fa-edit"></i>Editar
+                </button>
+                <button
+                  (touchend)="cancelarEliminacion()"
+                  class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105"
+                  [class.bg-red-600]="
+                    presionandoEliminar && liquidacionAEliminar?.id === liquidacion.id
+                  " [class.text-white]="
+                    presionandoEliminar && liquidacionAEliminar?.id === liquidacion.id
+                  ">
+                  <i class="fas fa-trash"></i>Eliminar
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-         Service Details
-        <div class="details-section">
-          <h4>Detalles de Servicios</h4>
+        <!-- List View -->
+        <div *ngIf="currentView === 'list'" class="space-y-2">
+          <div *ngFor="let liquidacion of filteredLiquidaciones; trackBy: trackByLiquidacion"
+            class="bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200 p-4"
+            [class.border-red-500]="isSelected(liquidacion.id)" [class.bg-red-50]="isSelected(liquidacion.id)">
+            <div class="flex items-center justify-between">
+              <!-- Información principal en una sola línea -->
+              <div class="flex items-center gap-4 flex-1">
+                <!-- Checkbox -->
+                <label class="relative inline-block cursor-pointer">
+                  <input type="checkbox" [checked]="isSelected(liquidacion.id)" (change)="toggleSelection(liquidacion.id)"
+                    class="absolute opacity-0 w-0 h-0" />
+                  <span
+                    class="w-5 h-5 bg-white border-2 border-gray-300 rounded flex items-center justify-center transition-all duration-200 hover:border-red-500"
+                    [class.bg-red-600]="isSelected(liquidacion.id)" [class.border-red-600]="isSelected(liquidacion.id)">
+                    <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(liquidacion.id)"></i>
+                  </span>
+                </label>
 
-          <div *ngIf="detallesLiquidacion.length === 0" class="empty-message">
-            No hay detalles de servicios
+                <!-- Número -->
+                <span class="font-semibold text-gray-900 min-w-0 flex-shrink-0">{{
+                  liquidacion.numero || 'Sin número'
+                  }}</span>
+
+                <!-- Cotización -->
+                <span class="text-gray-700 min-w-0 truncate">
+                  {{ liquidacion.cotizacion?.codigoCotizacion || 'No vinculada' }}
+                  <span class="text-gray-500 text-sm block" *ngIf="liquidacion.cotizacion?.personas">
+                    {{ getPersonaDisplayName(liquidacion.cotizacion?.personas?.id || 0) }}
+                  </span>
+                </span>
+
+                <!-- Destino -->
+                <span class="text-gray-600 min-w-0 flex-shrink-0">{{
+                  liquidacion.destino || 'Sin destino'
+                  }}</span>
+
+                <!-- Fecha Compra -->
+                <span class="text-gray-600 text-sm min-w-0 flex-shrink-0">
+                  {{ formatDate(liquidacion.fechaCompra) }}
+                </span>
+
+                <!-- Pasajeros -->
+                <span class="text-gray-600 text-sm min-w-0 flex-shrink-0">
+                  {{ liquidacion.numeroPasajeros || 0 }} PAX
+                </span>
+
+                <!-- Producto -->
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium min-w-0 flex-shrink-0 bg-blue-100 text-blue-800">
+                  {{ liquidacion.producto?.descripcion || 'Sin producto' }}
+                </span>
+
+                <!-- Forma Pago -->
+                <span class="text-gray-600 text-sm min-w-0 flex-shrink-0">
+                  {{ liquidacion.formaPago?.descripcion || 'No especificada' }}
+                </span>
+              </div>
+
+              <!-- Acciones -->
+              <div class="flex items-center gap-2 ml-4">
+                <button (click)="mostrarModalVerLiquidacion(liquidacion)"
+                  class="p-2 text-green-600 hover:bg-green-100 rounded transition-colors duration-200" title="Ver detalles">
+                  <i class="fas fa-eye text-sm"></i>
+                </button>
+                <button (click)="mostrarFormularioEditar(liquidacion)"
+                  class="p-2 text-blue-600 hover:bg-blue-100 rounded transition-colors duration-200" title="Editar">
+                  <i class="fas fa-edit text-sm"></i>
+                </button>
+                <button
+                  (touchend)="cancelarEliminacion()"
+                  class="p-2 text-red-600 hover:bg-red-100 rounded transition-colors duration-200" [class.bg-red-600]="
+                    presionandoEliminar && liquidacionAEliminar?.id === liquidacion.id
+                  " [class.text-white]="
+                    presionandoEliminar && liquidacionAEliminar?.id === liquidacion.id
+                  " title="Mantener presionado para eliminar">
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+              </div>
+            </div>
           </div>
-
-          <table *ngIf="detallesLiquidacion.length > 0" class="table details-table">
-            <thead>
-              <tr>
-                <th>Descripción</th>
-                <th>Cantidad</th>
-                <th>Precio Unit.</th>
-                <th>Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let detalle of detallesLiquidacion; let i = index">
-                <td>
-                  <input
-                    type="text"
-                    [(ngModel)]="detalle.descripcion"
-                    [ngModelOptions]="{standalone: true}"
-                    class="form-input"
-                    placeholder="Descripción del servicio"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    [(ngModel)]="detalle.cantidad"
-                    [ngModelOptions]="{standalone: true}"
-                    (ngModelChange)="updateDetailSubtotal(i)"
-                    min="1"
-                    class="form-input quantity-input"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    [(ngModel)]="detalle.precioUnitario"
-                    [ngModelOptions]="{standalone: true}"
-                    (ngModelChange)="updateDetailSubtotal(i)"
-                    step="0.01"
-                    min="0"
-                    class="form-input price-input"
-                  />
-                </td>
-                <td class="subtotal-cell">
-                  {{ detalle.subtotal | currency:'PEN':'symbol':'1.2-2' }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
 
-         Observations
-        <div class="form-group">
-          <label class="form-label">Observaciones</label>
-          <textarea formControlName="observaciones" class="form-input" rows="4" placeholder="Observaciones adicionales sobre la liquidación..."></textarea>
+        <!-- Pagination -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+          <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <!-- Items per page selector -->
+            <div class="flex items-center gap-2 text-sm text-gray-700 font-medium">
+              <span>Mostrar:</span>
+              <select [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()"
+                class="border border-gray-300 rounded-lg px-3 py-2 bg-white font-medium">
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+              <span>por página</span>
+            </div>
+
+            <!-- Results info -->
+            <div class="text-sm font-semibold text-gray-700">
+              Mostrando {{ Math.min((currentPage - 1) * itemsPerPage + 1, totalItems) }} -
+              {{ Math.min(currentPage * itemsPerPage, totalItems) }} de {{ totalItems }} liquidacion{{ totalItems === 1 ?
+              '' : 'es' }}
+            </div>
+
+            <!-- Navigation buttons -->
+            <nav class="flex items-center gap-2" *ngIf="totalPages > 1">
+              <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              <div class="flex items-center gap-1">
+                <button *ngFor="let page of getVisiblePages()" (click)="goToPage(page)"
+                  class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-200"
+                  [class]="page === currentPage ? 'bg-everywhere-primary text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'">
+                  {{ page }}
+                </button>
+              </div>
+
+              <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Modal para Crear/Editar Liquidación -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+  *ngIf="mostrarFormulario" (click)="cerrarFormulario()">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-y-auto"
+    (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white px-8 py-4 rounded-t-3xl">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold">
+            {{ editandoLiquidacion ? 'Editar Liquidación' : 'Nueva Liquidación' }}
+          </h2>
+          <p class="text-white/90 mt-1">
+            {{
+            editandoLiquidacion
+            ? 'Modifica los datos de la liquidación'
+            : 'Completa la información para crear la liquidación'
+            }}
+          </p>
+        </div>
+        <button (click)="cerrarFormulario()" class="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <form [formGroup]="liquidacionForm" (ngSubmit)="onSubmitLiquidacion()">
+        <!-- Información Básica -->
+        <div class="mb-6">
+          <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+              <div
+                class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+                <i class="fas fa-info-circle text-white text-sm"></i>
+              </div>
+              Información Básica
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <!-- Número de Liquidación -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Número de Liquidación
+                </label>
+                <input type="text" formControlName="numero"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                  placeholder="Se generará automáticamente" />
+              </div>
+
+              <!-- Fecha de Compra -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Fecha de Compra
+                  <span class="text-red-500">*</span>
+                </label>
+                <input type="date" formControlName="fechaCompra"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  [class.border-red-300]="isFieldInvalid(liquidacionForm, 'fechaCompra')" />
+                <div *ngIf="isFieldInvalid(liquidacionForm, 'fechaCompra')"
+                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                  <p class="text-sm text-red-600 flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    La fecha de compra es requerida
+                  </p>
+                </div>
+              </div>
+
+              <!-- Destino -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Destino
+                </label>
+                <input type="text" formControlName="destino"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Ingrese destino" />
+              </div>
+
+              <!-- Número de Pasajeros -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Número de Pasajeros
+                  <span class="text-red-500">*</span>
+                </label>
+                <input type="number" formControlName="numeroPasajeros" min="1"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  [class.border-red-300]="isFieldInvalid(liquidacionForm, 'numeroPasajeros')" />
+                <div *ngIf="isFieldInvalid(liquidacionForm, 'numeroPasajeros')"
+                  class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                  <p class="text-sm text-red-600 flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    El número de pasajeros es requerido
+                  </p>
+                </div>
+              </div>
+
+              <!-- Producto -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Producto
+                </label>
+                <select formControlName="productoId"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option value="">Seleccione un producto</option>
+                  <option *ngFor="let producto of productos" [value]="producto.id">
+                    {{ producto.descripcion }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Forma de Pago -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Forma de Pago
+                </label>
+                <select formControlName="formaPagoId"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option value="">Seleccione forma de pago</option>
+                  <option *ngFor="let formaPago of formasPago" [value]="formaPago.id">
+                    {{ formaPago.descripcion }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="form-actions">
-          <button type="submit" [disabled]="!liquidacionForm.valid" class="btn btn-primary">
-            {{ editingId ? 'Actualizar' : 'Guardar' }} Liquidación
-          </button>
-          <button type="button" (click)="toggleForm()" class="btn btn-outline">
+        <!-- Observaciones -->
+        <div class="mb-6">
+          <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-6 border border-yellow-200">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <div
+                class="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center mr-3">
+                <i class="fas fa-comment text-white text-sm"></i>
+              </div>
+              Observaciones
+            </h3>
+            <textarea formControlName="observaciones"
+              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows="3" placeholder="Observaciones adicionales (opcional)"></textarea>
+          </div>
+        </div>
+
+        <!-- Botones del Modal -->
+        <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+          <button type="button" (click)="cerrarFormulario()"
+            class="px-8 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-all duration-200">
             Cancelar
+          </button>
+          <button type="submit" [disabled]="liquidacionForm.invalid || isLoading"
+            class="px-8 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white rounded-xl hover:shadow-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <i class="fas fa-save" *ngIf="!isLoading"></i>
+            <i class="fas fa-spinner fa-spin" *ngIf="isLoading"></i>
+            {{ editandoLiquidacion ? 'Actualizar' : 'Crear' }} Liquidación
           </button>
         </div>
       </form>
-    </div>
-  </div>
-
-   Liquidations List
-  <div class="table-section">
-    <div class="card">
-      <h3>Lista de Liquidaciones</h3>
-
-      <div *ngIf="loading" class="loading-message">
-        Cargando liquidaciones...
-      </div>
-
-      <div *ngIf="!loading && liquidaciones.length === 0" class="empty-message">
-        No hay liquidaciones para mostrar
-      </div>
-
-      <table *ngIf="!loading && liquidaciones.length > 0" class="table">
-        <thead>
-          <tr>
-            <th>Número</th>
-            <th>Cotización</th>
-            <th>Viajero</th>
-            <th>Fecha</th>
-            <th>Total</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let liquidacion of liquidaciones">
-            <td>{{ liquidacion.numero }}</td>
-            <td>{{ getCotizacionNumber(liquidacion.cotizacionId) }}</td>
-            <td>{{ getViajeroName(liquidacion.viajeroId) }}</td>
-            <td>{{ liquidacion.fechaLiquidacion | date:'dd/MM/yyyy' }}</td>
-            <td>{{ liquidacion.total | currency:'PEN':'symbol':'1.2-2' }}</td>
-            <td>
-              <span [class]="'badge ' + getEstadoBadgeClass(liquidacion.estado)">
-                {{ liquidacion.estado | titlecase }}
-              </span>
-            </td>
-            <td>
-              <button (click)="editLiquidacion(liquidacion)" class="btn btn-sm btn-outline">
-                Editar
-              </button>
-              <button (click)="deleteLiquidacion(liquidacion.id!)" class="btn btn-sm btn-error">
-                Eliminar
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 </div>

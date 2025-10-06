@@ -8,4 +8,6 @@ export interface CounterResponse {
   nombre?: string
   estado?: boolean
   codigo?: string
+  fechaCreacion?: string
+  fechaActualizacion?: string
 }

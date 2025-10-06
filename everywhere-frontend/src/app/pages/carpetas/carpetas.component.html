@@ -1,0 +1,460 @@
+<!-- File Explorer Layout -->
+<div class="min-h-screen bg-gray-50">
+  <!-- Sidebar Component -->
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems"
+    (itemClick)="onSidebarItemClick($event)" (toggleSidebar)="onToggleSidebar()">
+  </app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+
+    <!-- Header with View Mode Selector -->
+    <header class="bg-white border-b border-gray-200 shadow-sm">
+      <div class="px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <!-- Mobile Menu Button -->
+            <button (click)="onToggleSidebar()" class="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
+              <i class="fas fa-bars text-gray-600"></i>
+            </button>
+
+            <!-- Title -->
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-folder-open text-blue-600"></i>
+              </div>
+              <div>
+                <h1 class="text-xl font-semibold text-gray-900">Explorador de Carpetas</h1>
+                <p class="text-sm text-gray-500">Navega y gestiona tus documentos</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- View Mode Selector -->
+          <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+            <button
+              (click)="cambiarModoVista('breadcrumb')"
+              class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
+              [class.bg-white]="currentViewMode === 'breadcrumb'"
+              [class.text-blue-600]="currentViewMode === 'breadcrumb'"
+              [class.shadow-sm]="currentViewMode === 'breadcrumb'"
+              [class.text-gray-600]="currentViewMode !== 'breadcrumb'"
+              title="Navegar entre carpetas como Drive">
+              <i class="fas fa-folder-open mr-2"></i>Navegación
+            </button>
+
+            <button
+              (click)="cambiarModoVista('tree')"
+              class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
+              [class.bg-white]="currentViewMode === 'tree'"
+              [class.text-blue-600]="currentViewMode === 'tree'"
+              [class.shadow-sm]="currentViewMode === 'tree'"
+              [class.text-gray-600]="currentViewMode !== 'tree'"
+              title="Mostrar todas las carpetas como árbol">
+              <i class="fas fa-sitemap mr-2"></i>Vista Árbol
+            </button>
+          </div>
+
+          <!-- Action Button -->
+          <button (click)="abrirModalCrear()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors">
+            <i class="fas fa-plus"></i>
+            Nueva Carpeta
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Explorer Content -->
+    <main class="h-[calc(100vh-80px)]">
+
+      <!-- Single Panel Views (Breadcrumb or Tree only) -->
+      <div *ngIf="currentViewMode === 'breadcrumb' || currentViewMode === 'tree'" class="h-full">
+
+        <!-- Breadcrumb Navigation View -->
+        <div *ngIf="currentViewMode === 'breadcrumb'" class="h-full flex flex-col">
+
+          <!-- Breadcrumb Bar -->
+          <div class="bg-white border-b border-gray-200 px-6 py-3">
+            <div class="flex items-center gap-2 text-sm">
+              <i class="fas fa-map-marker-alt text-gray-400"></i>
+
+              <!-- Navigation Controls -->
+              <div class="flex items-center gap-2 mr-4">
+                <button (click)="navegarAtrasDual()" [disabled]="breadcrumbPath.length <= 1"
+                  class="p-1 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Atrás">
+                  <i class="fas fa-arrow-left text-gray-600"></i>
+                </button>
+                <button (click)="actualizarVistaNavegacion()" [disabled]="breadcrumbLoading"
+                  class="p-1 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Actualizar">
+                  <i class="fas fa-sync-alt text-gray-600" [class.animate-spin]="breadcrumbLoading"></i>
+                </button>
+              </div>
+
+              <!-- Breadcrumb Trail -->
+              <div class="flex items-center gap-1">
+                <ng-container *ngFor="let item of breadcrumbPath; let i = index; let last = last">
+                  <button *ngIf="!last" (click)="navegarPorBreadcrumb(item, i)"
+                    class="text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2 py-1 rounded transition-colors">
+                    {{ item.label }}
+                  </button>
+                  <span *ngIf="last" class="text-gray-900 font-medium px-2 py-1">
+                    {{ item.label }}
+                  </span>
+                  <i *ngIf="!last" class="fas fa-chevron-right text-gray-400 text-xs mx-1"></i>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Area -->
+          <div class="flex-1 p-6 overflow-auto">
+
+            <!-- Loading State -->
+            <div *ngIf="breadcrumbLoading" class="flex items-center justify-center h-64">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p class="text-gray-600">Cargando carpetas...</p>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="!breadcrumbLoading && carpetasEnNivelActual.length === 0" class="flex items-center justify-center h-64">
+              <div class="text-center">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i class="fas fa-folder-open text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Carpeta vacía</h3>
+                <p class="text-gray-600 mb-4">Esta ubicación no contiene carpetas.</p>
+                <button (click)="abrirModalCrear()"
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
+                  Crear primera carpeta
+                </button>
+              </div>
+            </div>
+
+            <!-- Folders Grid -->
+            <div *ngIf="!breadcrumbLoading && carpetasEnNivelActual.length > 0"
+              class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+
+              <div *ngFor="let carpeta of carpetasEnNivelActual"
+                class="group cursor-pointer" (dblclick)="navegarACarpetaDual(carpeta)">
+
+                <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 group-hover:border-blue-300">
+                  <!-- Folder Icon -->
+                  <div class="flex justify-center mb-3">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                      <i class="fas fa-folder text-yellow-600 text-xl"></i>
+                    </div>
+                  </div>
+
+                  <!-- Folder Info -->
+                  <div class="text-center">
+                    <h3 class="text-sm font-medium text-gray-900 truncate" [title]="carpeta.nombre">
+                      {{ carpeta.nombre || 'Sin nombre' }}
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">
+                      {{ formatDate(carpeta.creado) }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Context Menu -->
+                <div class="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="flex justify-center gap-1">
+                    <button (click)="navegarACarpetaDual(carpeta); $event.stopPropagation()"
+                      class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600"
+                      title="Abrir">
+                      <i class="fas fa-folder-open text-xs"></i>
+                    </button>
+                    <button (click)="editarCarpeta(carpeta); $event.stopPropagation()"
+                      class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600"
+                      title="Editar">
+                      <i class="fas fa-edit text-xs"></i>
+                    </button>
+                    <button (click)="confirmarEliminar(carpeta); $event.stopPropagation()"
+                      class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-red-600"
+                      title="Eliminar">
+                      <i class="fas fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tree View -->
+        <div *ngIf="currentViewMode === 'tree'" class="h-full flex flex-col">
+
+          <!-- Tree Header -->
+          <div class="bg-white border-b border-gray-200 px-6 py-3">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-medium text-gray-900">Estructura de carpetas</h2>
+              <button (click)="cargarArbolRaices()" [disabled]="treeLoading"
+                class="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50">
+                <i class="fas fa-sync-alt mr-1" [class.animate-spin]="treeLoading"></i>
+                Actualizar
+              </button>
+            </div>
+          </div>
+
+          <!-- Tree Content -->
+          <div class="flex-1 overflow-auto">
+
+            <!-- Loading State -->
+            <div *ngIf="treeLoading" class="flex items-center justify-center h-64">
+              <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p class="text-gray-600">Cargando estructura...</p>
+              </div>
+            </div>
+
+            <!-- Tree Nodes -->
+            <div *ngIf="!treeLoading" class="p-4">
+              <ng-container *ngFor="let node of treeNodes">
+                <div class="tree-node" [style.padding-left.rem]="node.level * 1.5">
+
+                  <!-- Node Content -->
+                  <div class="flex items-center py-2 px-3 hover:bg-gray-50 rounded-lg cursor-pointer group"
+                    (click)="seleccionarNodoArbol(node)"
+                    [class.bg-blue-50]="selectedTreeNode && selectedTreeNode.carpeta.id === node.carpeta.id"
+                    [class.border-blue-200]="selectedTreeNode && selectedTreeNode.carpeta.id === node.carpeta.id">
+
+                    <!-- Expand/Collapse Button -->
+                    <button *ngIf="node.hasChildren"
+                      (click)="toggleNodeExpansion(node); $event.stopPropagation()"
+                      class="mr-2 p-1 hover:bg-gray-200 rounded">
+                      <i class="fas fa-chevron-right text-gray-400 text-xs transition-transform"
+                        [class.rotate-90]="node.expanded"></i>
+                    </button>
+
+                    <div *ngIf="!node.hasChildren" class="w-6 mr-2"></div>
+
+                    <!-- Loading Spinner -->
+                    <div *ngIf="node.loading" class="mr-2">
+                      <i class="fas fa-spinner fa-spin text-blue-600 text-xs"></i>
+                    </div>
+
+                    <!-- Folder Icon -->
+                    <div class="w-6 h-6 bg-yellow-100 rounded flex items-center justify-center mr-3">
+                      <i class="fas fa-folder text-yellow-600 text-sm"></i>
+                    </div>
+
+                    <!-- Folder Name -->
+                    <span class="text-sm font-medium text-gray-900 flex-1">
+                      {{ node.carpeta.nombre || 'Sin nombre' }}
+                    </span>
+
+                    <!-- Actions -->
+                    <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                      <button (click)="editarCarpeta(node.carpeta); $event.stopPropagation()"
+                        class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-green-600">
+                        <i class="fas fa-edit text-xs"></i>
+                      </button>
+                      <button (click)="confirmarEliminar(node.carpeta); $event.stopPropagation()"
+                        class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-red-600">
+                        <i class="fas fa-trash text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Children Nodes (Recursive) -->
+                  <ng-container *ngIf="node.expanded && node.children.length > 0">
+                    <ng-container *ngFor="let childNode of node.children">
+                      <ng-container *ngTemplateOutlet="treeNodeTemplate; context: { node: childNode }"></ng-container>
+                    </ng-container>
+                  </ng-container>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Recursive Tree Node Templates -->
+<ng-template #treeNodeTemplate let-node="node">
+  <div class="tree-node" [style.padding-left.rem]="node.level * 1.5">
+
+    <div class="flex items-center py-2 px-3 hover:bg-gray-50 rounded-lg cursor-pointer group"
+      (click)="seleccionarNodoArbol(node)"
+      [class.bg-blue-50]="selectedTreeNode && selectedTreeNode.carpeta.id === node.carpeta.id">
+
+      <button *ngIf="node.hasChildren"
+        (click)="toggleNodeExpansion(node); $event.stopPropagation()"
+        class="mr-2 p-1 hover:bg-gray-200 rounded">
+        <i class="fas fa-chevron-right text-gray-400 text-xs transition-transform"
+          [class.rotate-90]="node.expanded"></i>
+      </button>
+
+      <div *ngIf="!node.hasChildren" class="w-6 mr-2"></div>
+
+      <div class="w-6 h-6 bg-yellow-100 rounded flex items-center justify-center mr-3">
+        <i class="fas fa-folder text-yellow-600 text-sm"></i>
+      </div>
+
+      <span class="text-sm font-medium text-gray-900 flex-1">
+        {{ node.carpeta.nombre || 'Sin nombre' }}
+      </span>
+
+      <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+        <button (click)="editarCarpeta(node.carpeta); $event.stopPropagation()"
+          class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-green-600">
+          <i class="fas fa-edit text-xs"></i>
+        </button>
+        <button (click)="confirmarEliminar(node.carpeta); $event.stopPropagation()"
+          class="p-1 hover:bg-gray-200 rounded text-gray-600 hover:text-red-600">
+          <i class="fas fa-trash text-xs"></i>
+        </button>
+      </div>
+    </div>
+
+    <ng-container *ngIf="node.expanded && node.children.length > 0">
+      <ng-container *ngFor="let childNode of node.children">
+        <ng-container *ngTemplateOutlet="treeNodeTemplate; context: { node: childNode }"></ng-container>
+      </ng-container>
+    </ng-container>
+  </div>
+</ng-template>
+
+<!-- Modales -->
+
+<!-- Modal para crear/editar carpeta -->
+<div *ngIf="mostrarModalCrear" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">
+        {{ editandoCarpeta ? 'Editar' : 'Nueva' }} Carpeta
+      </h3>
+      <button (click)="cerrarModal()" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <form [formGroup]="carpetaForm" (ngSubmit)="guardarCarpeta()" class="p-6 space-y-4">
+
+      <!-- Nombre -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Nombre *
+        </label>
+        <input
+          type="text"
+          formControlName="nombre"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Ingrese el nombre de la carpeta">
+
+        <div *ngIf="carpetaForm.get('nombre')?.invalid && carpetaForm.get('nombre')?.touched"
+          class="mt-1 text-sm text-red-600">
+          <span *ngIf="carpetaForm.get('nombre')?.errors?.['required']">
+            El nombre es obligatorio
+          </span>
+          <span *ngIf="carpetaForm.get('nombre')?.errors?.['minlength']">
+            El nombre debe tener al menos 2 caracteres
+          </span>
+        </div>
+      </div>
+
+      <!-- Descripción -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Descripción
+        </label>
+        <textarea
+          formControlName="descripcion"
+          rows="3"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 resize-none"
+          placeholder="Descripción opcional"></textarea>
+      </div>
+
+      <!-- Ubicación actual -->
+      <div class="bg-gray-50 rounded-md p-3">
+        <h4 class="text-sm font-medium text-gray-700 mb-1">Ubicación</h4>
+        <p class="text-sm text-gray-600">
+          <span *ngIf="!carpetaActual">Carpeta Raíz</span>
+          <span *ngIf="carpetaActual">{{ carpetaActual.nombre }}</span>
+        </p>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end gap-3 pt-4">
+        <button
+          type="button"
+          (click)="cerrarModal()"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          [disabled]="carpetaForm.invalid || loading"
+          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          <i *ngIf="loading" class="fas fa-spinner fa-spin mr-2"></i>
+          {{ editandoCarpeta ? 'Actualizar' : 'Crear' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div *ngIf="mostrarModalEliminar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-md w-full" (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">
+        Confirmar Eliminación
+      </h3>
+      <button (click)="cerrarModalEliminar()" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <div class="flex items-center mb-4">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+          <i class="fas fa-exclamation-triangle text-red-600"></i>
+        </div>
+        <div>
+          <h4 class="text-lg font-medium text-gray-900">¿Estás seguro?</h4>
+          <p class="text-sm text-gray-600">Esta acción no se puede deshacer.</p>
+        </div>
+      </div>
+
+      <div *ngIf="carpetaAEliminar" class="bg-gray-50 rounded-md p-3 mb-6">
+        <p class="text-sm font-medium text-gray-700">{{ carpetaAEliminar.nombre }}</p>
+        <p *ngIf="carpetaAEliminar.descripcion" class="text-sm text-gray-600">
+          {{ carpetaAEliminar.descripcion }}
+        </p>
+      </div>
+
+      <!-- Botones -->
+      <div class="flex justify-end gap-3">
+        <button
+          type="button"
+          (click)="cerrarModalEliminar()"
+          [disabled]="loading"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="eliminarCarpetaDefinitivo()"
+          [disabled]="loading"
+          class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          <i *ngIf="loading" class="fas fa-spinner fa-spin mr-2"></i>
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

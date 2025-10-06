@@ -23,7 +23,7 @@ export interface ProveedorTabla {
   styleUrls: ['./proveedor.component.css'],
   imports: [
     CommonModule,
-    FormsModule, 
+    FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
     ErrorModalComponent
@@ -43,7 +43,7 @@ export class ProveedorComponent implements OnInit {
     {
       id: 'clientes',
       title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
+      icon: 'fas fa-users', 
       children: [
         {
           id: 'personas',
@@ -74,13 +74,13 @@ export class ProveedorComponent implements OnInit {
     {
       id: 'liquidaciones',
       title: 'Liquidaciones',
-      icon: 'fas fa-calculator',
+      icon: 'fas fa-credit-card',
       route: '/liquidaciones'
     },
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box',
+      icon: 'fas fa-box', 
       active: true,
       children: [
         {
@@ -100,6 +100,38 @@ export class ProveedorComponent implements OnInit {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores'
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      children: [
+        {
+          id: 'counters',
+          title: 'Counters',
+          icon: 'fas fa-users-line',
+          route: '/counters'
+        },
+        {
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales'
+        }
+      ]
+    },
+    {
+      id: 'archivos',
+      title: 'Gestión de Archivos',
+      icon: 'fas fa-folder', 
+      children: [
+        {
+          id: 'carpetas',
+          title: 'Explorador',
+          icon: 'fas fa-folder-open',
+          route: '/carpetas'
         }
       ]
     },
@@ -159,11 +191,11 @@ export class ProveedorComponent implements OnInit {
   editandoProveedor = false;
   proveedorSeleccionado: ProveedorResponse | null = null;
   proveedorAEliminar: ProveedorResponse | null = null;
-  
+
   // Error modal data
   errorModalData: ErrorModalData | null = null;
   backendErrorData: BackendErrorResponse | null = null;
-  
+
   searchTerm = '';
   currentView: 'table' | 'cards' | 'list' = 'table';
 
@@ -177,13 +209,18 @@ export class ProveedorComponent implements OnInit {
   sortColumn: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
 
+  // Variables para selección múltiple
+  selectedItems: number[] = [];
+  allSelected: boolean = false;
+  someSelected: boolean = false;
+
   // Menu states
   showActionMenu: number | null = null;
   showQuickActions: number | null = null;
-  
+
   // Estadísticas
   totalProveedores = 0;
-  
+
   // Math object for template use
   Math = Math;
 
@@ -249,9 +286,9 @@ export class ProveedorComponent implements OnInit {
     if (this.proveedorForm.valid) {
       this.loading = true;
       const proveedorRequest: ProveedorRequest = this.proveedorForm.value;
-      
+
       this.proveedorService.createProveedor(proveedorRequest).subscribe({
-        next: (response) => { 
+        next: (response) => {
           this.loadProveedores();
           this.cerrarModal();
           this.loading = false;
@@ -268,7 +305,7 @@ export class ProveedorComponent implements OnInit {
     if (this.proveedorForm.valid && this.proveedorSeleccionado) {
       this.loading = true;
       const proveedorRequest: ProveedorRequest = this.proveedorForm.value;
-      
+
       this.proveedorService.updateProveedor(this.proveedorSeleccionado.id, proveedorRequest).subscribe({
         next: (response) => {
           this.loadProveedores();
@@ -286,12 +323,12 @@ export class ProveedorComponent implements OnInit {
   editarProveedor(proveedor: ProveedorTabla): void {
     this.editandoProveedor = true;
     this.proveedorSeleccionado = this.proveedores.find(p => p.id === proveedor.id) || null;
-    
+
     if (this.proveedorSeleccionado) {
       this.proveedorForm.patchValue({
         nombre: this.proveedorSeleccionado.nombre || ''
       });
-      
+
       this.mostrarModalCrear = true;
     }
   }
@@ -317,7 +354,7 @@ export class ProveedorComponent implements OnInit {
 
   // Nuevo método para confirmar eliminación desde el modal
   confirmarEliminacionModal(): void {
-    if (this.proveedorAEliminar) { 
+    if (this.proveedorAEliminar) {
       this.eliminarProveedorDefinitivo(this.proveedorAEliminar.id);
     }
   }
@@ -332,14 +369,14 @@ export class ProveedorComponent implements OnInit {
       error: (error) => {
         this.loading = false;
         this.cerrarModalEliminar();
-        
+
         // Usar el servicio de manejo de errores
         const { modalData, backendError } = this.errorHandler.handleHttpError(error, 'eliminar proveedor');
-        
+
         this.errorModalData = modalData;
         this.backendErrorData = backendError || null;
         this.mostrarModalError = true;
-        
+
         console.error('Error al eliminar proveedor:', error);
       }
     });
@@ -366,6 +403,77 @@ export class ProveedorComponent implements OnInit {
     this.proveedorForm.reset();
   }
 
+  updateSelectionState(): void {
+    const totalItems = this.filteredProveedores.length;
+    const selectedCount = this.selectedItems.length;
+
+    this.allSelected = selectedCount === totalItems && totalItems > 0;
+    this.someSelected = selectedCount > 0 && selectedCount < totalItems;
+  }
+
+  refreshData(): void {
+    this.loadProveedores();
+  }
+
+  // Métodos para acciones masivas
+  clearSelection(): void {
+    this.selectedItems = [];
+    this.updateSelectionState();
+  }
+
+  editarSeleccionados(): void {
+    if (this.selectedItems.length === 0) return;
+
+    if (this.selectedItems.length === 1) {
+      const proveedor = this.proveedores.find(p => p.id === this.selectedItems[0]);
+      if (proveedor) {
+        this.editarProveedor(proveedor);
+      }
+    } else {
+      const proveedor = this.proveedores.find(p => p.id === this.selectedItems[0]);
+      if (proveedor) {
+        this.editarProveedor(proveedor);
+      }
+    }
+  }
+
+  eliminarSeleccionados(): void {
+    if (this.selectedItems.length === 0) return;
+
+    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cliente${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
+    if (confirm(confirmMessage)) {
+      this.loading = true;
+      let eliminados = 0;
+      const total = this.selectedItems.length;
+
+      this.selectedItems.forEach(id => {
+        const proveedor = this.proveedores.find(p => p.id === id);
+        if (proveedor) {
+          this.proveedorService.deleteByIdProveedor(id).subscribe({
+            next: () => {
+              eliminados++;
+              if (eliminados === total) {
+                this.loadProveedores();
+                this.clearSelection();
+                this.loading = false;
+              }
+            },
+            error: (error) => {
+              console.error('Error al eliminar persona natural:', error);
+              eliminados++;
+              if (eliminados === total) {
+                this.loadProveedores();
+                this.clearSelection();
+                this.loading = false;
+              }
+            }
+          });
+
+        }
+      });
+    }
+  }
+
   // Search and filter
   applyFilters(): void {
     let filtered = [...this.proveedoresTabla];
@@ -381,7 +489,7 @@ export class ProveedorComponent implements OnInit {
 
     this.filteredProveedores = filtered;
     this.totalItems = filtered.length;
-    
+
     // Aplicar ordenamiento
     this.applySorting();
   }
@@ -399,11 +507,11 @@ export class ProveedorComponent implements OnInit {
 
   applySorting(): void {
     if (!this.filteredProveedores.length) return;
-    
+
     this.filteredProveedores.sort((a, b) => {
       let aValue: any = '';
       let bValue: any = '';
-      
+
       switch (this.sortColumn) {
         case 'nombre':
           aValue = a.nombre || '';
@@ -420,7 +528,7 @@ export class ProveedorComponent implements OnInit {
         default:
           return 0;
       }
-      
+
       if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1;
       if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1;
       return 0;
@@ -429,8 +537,8 @@ export class ProveedorComponent implements OnInit {
 
   getSortIcon(column: string): string {
     if (this.sortColumn !== column) return 'fas fa-sort text-gray-400';
-    return this.sortDirection === 'asc' 
-      ? 'fas fa-sort-up text-blue-500' 
+    return this.sortDirection === 'asc'
+      ? 'fas fa-sort-up text-blue-500'
       : 'fas fa-sort-down text-blue-500';
   }
 
@@ -460,14 +568,14 @@ export class ProveedorComponent implements OnInit {
     const totalPages = this.totalPages;
     const currentPage = this.currentPage;
     const visiblePages: number[] = [];
-    
+
     const startPage = Math.max(1, currentPage - 2);
     const endPage = Math.min(totalPages, currentPage + 2);
-    
+
     for (let i = startPage; i <= endPage; i++) {
       visiblePages.push(i);
     }
-    
+
     return visiblePages;
   }
 
@@ -476,13 +584,37 @@ export class ProveedorComponent implements OnInit {
     this.currentView = view;
   }
 
+  // Métodos para selección múltiple
+  toggleAllSelection(): void {
+    if (this.allSelected) {
+      this.selectedItems = [];
+    } else {
+      this.selectedItems = this.filteredProveedores.map(p => p.id!);
+    }
+    this.updateSelectionState();
+  }
+
+  toggleSelection(id: number): void {
+    const index = this.selectedItems.indexOf(id);
+    if (index > -1) {
+      this.selectedItems.splice(index, 1);
+    } else {
+      this.selectedItems.push(id);
+    }
+    this.updateSelectionState();
+  }
+
+  isSelected(id: number): boolean {
+    return this.selectedItems.includes(id);
+  }
+
   clearSearch(): void {
     this.searchTerm = '';
     this.applyFilters();
   }
 
   // Sidebar methods
-  onSidebarItemClick(item: SidebarMenuItem): void { 
+  onSidebarItemClick(item: SidebarMenuItem): void {
     if (item.route) {
       this.router.navigate([item.route]);
     }

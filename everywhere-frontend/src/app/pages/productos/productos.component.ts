@@ -60,9 +60,9 @@ export class ProductosComponent implements OnInit {
           route: '/viajero'
         },
         {
-          id: 'viajero-frecuente',
-          title: 'Viajero Frecuente',
-          icon: 'fas fa-star',
+          id: 'viajeros-frecuentes',
+          title: 'Viajeros Frecuentes',
+          icon: 'fas fa-crown',
           route: '/viajero-frecuente'
         }
       ]
@@ -70,13 +70,13 @@ export class ProductosComponent implements OnInit {
     {
       id: 'cotizaciones',
       title: 'Cotizaciones',
-      icon: 'fas fa-file-invoice-dollar',
+      icon: 'fas fa-file-invoice',
       route: '/cotizaciones'
     },
     {
       id: 'liquidaciones',
       title: 'Liquidaciones',
-      icon: 'fas fa-calculator',
+      icon: 'fas fa-credit-card',
       route: '/liquidaciones'
     },
     {
@@ -102,6 +102,44 @@ export class ProductosComponent implements OnInit {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores'
+        },
+        {
+          id: 'documentos',
+          title: 'Documentos',
+          icon: 'fas fa-file-alt',
+          route: '/documentos'
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      children: [
+        {
+          id: 'counters',
+          title: 'Counters',
+          icon: 'fas fa-users-line',
+          route: '/counters'
+        },
+        {
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales'
+        }
+      ]
+    },
+    {
+      id: 'archivos',
+      title: 'Gestión de Archivos',
+      icon: 'fas fa-folder',
+      children: [
+        {
+          id: 'carpetas',
+          title: 'Explorador',
+          icon: 'fas fa-folder-open',
+          route: '/carpetas'
         }
       ]
     },

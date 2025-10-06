@@ -35,7 +35,7 @@ export class OperadoresComponent implements OnInit {
     {
       id: 'clientes',
       title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
+      icon: 'fas fa-users', 
       children: [
         {
           id: 'personas',
@@ -61,9 +61,7 @@ export class OperadoresComponent implements OnInit {
       id: 'cotizaciones',
       title: 'Cotizaciones',
       icon: 'fas fa-file-invoice',
-      route: '/cotizaciones',
-      badge: '12',
-      badgeColor: 'blue'
+      route: '/cotizaciones'
     },
     {
       id: 'liquidaciones',
@@ -74,7 +72,7 @@ export class OperadoresComponent implements OnInit {
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box',
+      icon: 'fas fa-box', 
       active: true,
       children: [
         {
@@ -94,6 +92,38 @@ export class OperadoresComponent implements OnInit {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores'
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      children: [
+        {
+          id: 'counters',
+          title: 'Counters',
+          icon: 'fas fa-users-line',
+          route: '/counters'
+        },
+        {
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales'
+        }
+      ]
+    },
+    {
+      id: 'archivos',
+      title: 'Gestión de Archivos',
+      icon: 'fas fa-folder', 
+      children: [
+        {
+          id: 'carpetas',
+          title: 'Explorador',
+          icon: 'fas fa-folder-open',
+          route: '/carpetas'
         }
       ]
     },
@@ -171,15 +201,20 @@ export class OperadoresComponent implements OnInit {
   allSelected: boolean = false;
   someSelected: boolean = false;
 
-  // Variables para paginación
-  pageSize: number = 10;
-  currentPage: number = 1;
-  totalPages: number = 1;
+  // Estadísticas 
+  totalOperadores = 0;
+
+  // Math object for template use
+  Math = Math;
+
+  // Variables para paginación 
+  currentPage = 1;
+  itemsPerPage = 10;
+  totalItems = 0;
 
   // Datos
   operadores: OperadorResponse[] = [];
   operadoresFiltrados: OperadorResponse[] = [];
-  paginatedOperadores: OperadorResponse[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -235,9 +270,9 @@ export class OperadoresComponent implements OnInit {
     }
 
     this.operadoresFiltrados = filtered;
-    this.applySorting();
-    this.calculatePagination();
-    this.updatePaginatedData();
+    this.totalItems = filtered.length;
+    this.applySorting(); 
+    this.updatePagination();
     this.updateSelectionState();
   }
 
@@ -296,8 +331,7 @@ export class OperadoresComponent implements OnInit {
       this.sortColumn = column;
       this.sortDirection = 'asc';
     }
-    this.applySorting();
-    this.updatePaginatedData();
+    this.applySorting(); 
   }
 
   // Gestión de modales
@@ -518,72 +552,7 @@ export class OperadoresComponent implements OnInit {
 
   isActiveView(view: 'table' | 'cards' | 'list'): boolean {
     return this.currentView === view;
-  }
-
-  // Métodos de paginación
-  calculatePagination(): void {
-    this.totalPages = Math.ceil(this.operadoresFiltrados.length / this.pageSize);
-    if (this.currentPage > this.totalPages) {
-      this.currentPage = 1;
-    }
-  }
-
-  updatePaginatedData(): void {
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    this.paginatedOperadores = this.operadoresFiltrados.slice(startIndex, endIndex);
-  }
-
-  onPageSizeChange(): void {
-    this.currentPage = 1;
-    this.calculatePagination();
-    this.updatePaginatedData();
-    this.clearSelection();
-  }
-
-  goToPage(page: number): void {
-    this.currentPage = page;
-    this.updatePaginatedData();
-    this.clearSelection();
-  }
-
-  previousPage(): void {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      this.updatePaginatedData();
-      this.clearSelection();
-    }
-  }
-
-  nextPage(): void {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      this.updatePaginatedData();
-      this.clearSelection();
-    }
-  }
-
-  getPageInfo(): string {
-    const start = (this.currentPage - 1) * this.pageSize + 1;
-    const end = Math.min(this.currentPage * this.pageSize, this.operadoresFiltrados.length);
-    return `${start}-${end} de ${this.operadoresFiltrados.length}`;
-  }
-
-  getVisiblePages(): number[] {
-    const pages: number[] = [];
-    const maxVisible = 5;
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(this.totalPages, startPage + maxVisible - 1);
-
-    if (endPage - startPage + 1 < maxVisible) {
-      startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    return pages;
-  }
+  }   
 
   // Métodos de utilidad
   refreshData(): void {
@@ -632,6 +601,38 @@ export class OperadoresComponent implements OnInit {
     this.searchQuery = '';
     this.searchTerm = '';
     this.applyFilters();
+  }
+
+   // Estadísticas
+  calcularEstadisticas(): void {
+    this.totalOperadores = this.operadores.length;
+  }
+
+  // Pagination
+  get paginatedOperadores(): OperadorResponse[] {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * itemsPerPageNum;
+    const endIndex = startIndex + itemsPerPageNum;
+    return this.operadoresFiltrados.slice(startIndex, endIndex);
+  }
+
+  updatePagination(): void {
+    // Force update of paginated data
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    if (this.currentPage > this.totalPages && this.totalPages > 0) {
+      this.currentPage = this.totalPages;
+    }
+  }
+
+  get totalPages(): number {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    return Math.ceil(this.totalItems / itemsPerPageNum);
+  }
+
+  onItemsPerPageChange(): void {
+    this.itemsPerPage = Number(this.itemsPerPage);
+    this.currentPage = 1;
+    this.calcularEstadisticas();
   }
 
   // Métodos de validación
@@ -700,5 +701,35 @@ export class OperadoresComponent implements OnInit {
   // Método para trackBy en ngFor
   trackByOperadorId(index: number, operador: OperadorResponse): number {
     return operador.id;
+  }
+
+  // Métodos para paginación (remover el getter duplicado)
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  getVisiblePages(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage;
+    const delta = 2;
+
+    let start = Math.max(1, current - delta);
+    let end = Math.min(total, current + delta);
+
+    if (end - start < 2 * delta) {
+      if (start === 1) {
+        end = Math.min(total, start + 2 * delta);
+      } else if (end === total) {
+        start = Math.max(1, end - 2 * delta);
+      }
+    }
+
+    const pages: number[] = [];
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 }

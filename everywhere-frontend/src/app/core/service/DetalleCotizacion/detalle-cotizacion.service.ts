@@ -48,5 +48,8 @@ export class DetalleCotizacionService {
     return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${detalleId}/proveedor/${proveedorId}`, {});
   }
 
+  setSeleccionDetalleCotizacion(detalleId: number, seleccionado: boolean): Observable<DetalleCotizacionResponse> {
+    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${detalleId}/seleccionado?seleccionado=${seleccionado}`, {});
+  }
 
 }
