@@ -491,7 +491,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.personas.forEach(persona => {
         // Intentar usar ID de tabla padre PRIMERO, si no existe usar tabla hija
         const personaId = persona.persona?.id || persona.id;
-        
+
         if (personaId) {
           this.personasCache[personaId] = {
             id: personaId,
@@ -552,19 +552,19 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
       // Agregar clientes válidos al cache y listas
       const clientesValidos = clientesFaltantes.filter(c => c !== null) as any[];
-      
+
       clientesValidos.forEach(cliente => {
         if (cliente.id) {
           // Agregar al cache - mejorar datos para clientes "genéricos"
           const esGenerico = cliente.tipo === 'GENERICA' || !cliente.identificador;
-          
+
           this.personasCache[cliente.id] = {
             id: cliente.id,
             identificador: cliente.identificador || '',
             nombre: cliente.nombre || `Cliente ID: ${cliente.id}`,
             tipo: esGenerico ? 'UNKNOWN' : cliente.tipo
           };
-          
+
           const cached = this.personasCache[cliente.id];
           if (cached.identificador) {
             this.personasDisplayMap[cliente.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : cached.tipo === 'NATURAL' ? 'DNI' : 'DOC'}: ${cached.identificador} - ${cached.nombre}`;
@@ -671,13 +671,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   async mostrarFormularioCrear(): Promise<void> {
     try {
       this.isLoading = true;
-      
+
       // Cargar cotizaciones para selección
       await this.loadCotizaciones();
-      
+
       // Mostrar modal de selección de cotizaciones
       this.mostrarModalCotizaciones = true;
-      
+
     } catch (error) {
       this.showError('Error al cargar las cotizaciones');
     } finally {
@@ -713,6 +713,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   cerrarModalVer(): void {
     this.mostrarModalVer = false;
+    this.liquidacionCompleta = null;
+    this.liquidacionSeleccionada = null;
     this.isLoading = false;
   }
 
@@ -1063,12 +1065,31 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     return liquidacion.id;
   }
 
-  mostrarModalVerLiquidacion(liquidacion: LiquidacionResponse): void {
-    this.liquidacionSeleccionada = liquidacion;
-    this.mostrarModalVer = true;
+  trackByDetalle(index: number, detalle: DetalleLiquidacionResponse): number {
+    return detalle.id;
   }
 
-  private async eliminarLiquidacionDirectamente(id: number): Promise<void> {
+  mostrarModalVerLiquidacion(liquidacion: LiquidacionResponse): void {
+    // Navegar al componente de detalle optimizado
+    this.router.navigate(['/liquidaciones/detalle', liquidacion.id]);
+  }
+
+  async mostrarModalVerLiquidacionOld(liquidacion: LiquidacionResponse): Promise<void> {
+    this.liquidacionSeleccionada = liquidacion;
+    this.isLoading = true;
+
+    try {
+      // Cargar liquidación con detalles
+      const liquidacionConDetalles = await this.liquidacionService.getLiquidacionById(liquidacion.id).toPromise();
+      this.liquidacionCompleta = liquidacionConDetalles || null;
+      this.mostrarModalVer = true;
+    } catch (error) {
+      console.error('Error al cargar detalles de liquidación:', error);
+      this.showError('Error al cargar los detalles de la liquidación');
+    } finally {
+      this.isLoading = false;
+    }
+  }  private async eliminarLiquidacionDirectamente(id: number): Promise<void> {
     this.isLoading = true;
 
     try {
@@ -1218,7 +1239,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   // ===== COTIZACIONES METHODS =====
-  
+
   /**
    * Carga todas las cotizaciones disponibles
    */
@@ -1238,13 +1259,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
    */
   filtrarCotizaciones(): void {
     const term = this.searchCotizacion.toLowerCase().trim();
-    
+
     if (!term) {
       this.cotizacionesFiltradas = [...this.cotizaciones];
       return;
     }
-    
-    this.cotizacionesFiltradas = this.cotizaciones.filter(cotizacion => 
+
+    this.cotizacionesFiltradas = this.cotizaciones.filter(cotizacion =>
       cotizacion.codigoCotizacion?.toLowerCase().includes(term) ||
       cotizacion.origenDestino?.toLowerCase().includes(term)
     );
@@ -1257,10 +1278,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     try {
       this.isLoading = true;
       this.cotizacionSeleccionada = cotizacion;
-      
+
       // Crear liquidación basada en la cotización seleccionada
       await this.crearLiquidacionDesdeCotizacion(cotizacion);
-      
+
     } catch (error) {
       this.showError('Error al procesar la cotización seleccionada: ' + (error as any)?.message || 'Error desconocido');
     } finally {
@@ -1275,7 +1296,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     try {
       // Obtener detalles completos de la cotización
       const cotizacionCompleta = await this.cotizacionService.getCotizacionConDetalles(cotizacion.id).toPromise();
-      
+
       if (!cotizacionCompleta) {
         throw new Error('No se pudieron cargar los detalles de la cotización');
       }
@@ -1290,7 +1311,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
       // Crear la liquidación
       const nuevaLiquidacion = await this.liquidacionService.createLiquidacionConCotizacion(cotizacion.id, liquidacionRequest).toPromise();
-      
+
       if (!nuevaLiquidacion) {
         throw new Error('Error al crear la liquidación');
       }
@@ -1301,15 +1322,15 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       // Cerrar modal de cotizaciones y abrir formulario de edición
       this.mostrarModalCotizaciones = false;
       this.cotizacionSeleccionada = null;
-      
+
       // Recargar lista de liquidaciones
       await this.loadLiquidaciones();
-      
+
       // Abrir formulario de edición de la liquidación recién creada
       await this.mostrarFormularioEditar(nuevaLiquidacion);
-      
+
       this.showSuccess('Liquidación creada exitosamente desde la cotización');
-      
+
     } catch (error) {
       this.showError('Error al crear la liquidación desde la cotización: ' + (error as any)?.message || 'Error desconocido');
       throw error;
@@ -1326,7 +1347,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
     // Filtrar solo los detalles que están seleccionados (seleccionado = true)
     const detallesSeleccionados = cotizacionCompleta.detalles.filter((detalle: any) => detalle.seleccionado === true);
-    
+
     if (detallesSeleccionados.length === 0) {
       this.showError('No hay detalles seleccionados en la cotización');
       return;
@@ -1335,17 +1356,17 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     // Procesar cada detalle seleccionado
     for (const detalleCot of detallesSeleccionados) {
       const cantidad = detalleCot.cantidad || 1;
-      
+
       // Si cantidad > 1, crear un detalle de liquidación por cada unidad
       for (let i = 0; i < cantidad; i++) {
         // Construir request con campos disponibles (ahora son opcionales en backend)
         const detalleRequest: DetalleLiquidacionRequest = {
           costoTicket: detalleCot.precioHistorico || 0,
-          
+
           // Campos opcionales - solo agregar si están disponibles
           ...(detalleCot.producto?.id && { productoId: detalleCot.producto.id }),
           ...(detalleCot.proveedor?.id && { proveedorId: detalleCot.proveedor.id }),
-          
+
           // Campos básicos con valores por defecto
           ticket: '',
           cargoServicio: 0,

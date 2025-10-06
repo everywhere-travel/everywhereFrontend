@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { Exchange } from '../../shared/models/Exchange/exchange.model';
+import { ExchangeService } from '../../core/service/exchange/exchange.service';
 import {
   DashboardHeaderComponent,
   WelcomeBannerComponent,
@@ -28,6 +30,8 @@ export class DashboardComponent implements OnInit {
 
   // Estado de carga
   isLoading = false;
+
+  exchangeData: Exchange | null = null;
 
   // Datos para componentes
   headerData: DashboardHeaderData = {
@@ -135,11 +139,13 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private authService: AuthServiceService,
-    private router: Router
+    private router: Router,
+    private exchangeService: ExchangeService
   ) { }
 
   ngOnInit(): void {
     this.initializeData();
+    this.updateExchangeRate();
   }
 
   private initializeData(): void {
@@ -154,6 +160,38 @@ export class DashboardComponent implements OnInit {
     // Actualizar datos del welcome banner
     this.welcomeData.title = `¡Bienvenido, ${user.name}!`;
     this.welcomeData.subtitle = `Hoy es ${this.getCurrentTime()} - Gestiona tu negocio desde aquí`;
+  }
+
+  private updateExchangeRate(): void {
+    this.isLoading = true; // Activamos el estado de carga general
+    this.exchangeService.getExchangeRates().subscribe({
+      next: (data) => {
+        this.exchangeData = data; // Guardamos los datos recibidos
+        this.updateWelcomeSubtitle(); // Actualizamos el texto de bienvenida con los datos
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error al obtener el tipo de cambio', err);
+        this.exchangeData = null; // En caso de error, limpiamos los datos
+        this.updateWelcomeSubtitle(); // Actualizamos el texto para mostrar un error
+        this.isLoading = false;
+      }
+    });
+  }
+
+  private updateWelcomeSubtitle(): void {
+    const today = this.getCurrentTime();
+    let exchangeInfo = 'Cargando tipo de cambio...'; // Mensaje por defecto
+
+    if (this.exchangeData) {
+      // Si tenemos datos, mostramos los precios
+      exchangeInfo = `Dólar: Compra S/ ${this.exchangeData.buy} | Venta S/ ${this.exchangeData.sell}`;
+    } else if (!this.isLoading) {
+      // Si no está cargando y no hay datos, es un error
+      exchangeInfo = 'No se pudo cargar el tipo de cambio.';
+    }
+
+    this.welcomeData.subtitle = `${today}  •  ${exchangeInfo}`;
   }
 
   // Métodos para el header
