@@ -321,7 +321,7 @@ export class DocumentosComponent implements OnInit {
 
       // Verificar si el usuario tiene permisos para este módulo
       const hasPermission = Object.keys(userPermissions).includes(item.moduleKey);
-      
+
       if (hasPermission) {
         // Si tiene children, filtrar los children también
         if (item.children) {

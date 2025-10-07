@@ -18,6 +18,7 @@ import { EstadoCotizacionService } from '../../core/service/EstadoCotizacion/est
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { ProductoService } from '../../core/service/Producto/producto.service';
 import { ProveedorService } from '../../core/service/Proveedor/proveedor.service';
+import { AuthServiceService } from '../../core/service/auth/auth.service';
 import { CategoriaService } from '../../core/service/Categoria/categoria.service';
 
 import { personaDisplay } from '../../shared/models/Persona/persona.model';
@@ -36,6 +37,12 @@ import { CategoriaRequest } from '../../shared/models/Categoria/categoria.model'
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+
+// Extender la interfaz para agregar moduleKey
+interface ExtendedSidebarMenuItem extends SidebarMenuItem {
+  moduleKey?: string;
+  children?: ExtendedSidebarMenuItem[];
+}
 
 interface DetalleCotizacionTemp {
   id?: number;
@@ -501,9 +508,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const personasNaturales = await this.personaNaturalService.findAll().toPromise() || [];
       // Cargar personas jurídicas
       const personasJuridicas = await this.personaJuridicaService.findAll().toPromise() || [];
-      
 
-      
+
+
       // Combinar ambas listas
       this.personas = [...personasNaturales, ...personasJuridicas];
       // Almacenar todos los clientes para el filtrado inicial
@@ -514,7 +521,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.personas.forEach(persona => {
         // Intentar usar ID de tabla padre PRIMERO, si no existe usar tabla hija
         const personaId = persona.persona?.id || persona.id;
-        
+
         if (personaId) {
           this.personasCache[personaId] = {
             id: personaId,
@@ -523,7 +530,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
           const cached = this.personasCache[personaId];
-          
+
           // Mejorar el formato del display para asegurar que se muestre el documento
           if (cached.identificador) {
             this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
@@ -577,19 +584,19 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       // Agregar clientes válidos al cache y listas
       const clientesValidos = clientesFaltantes.filter(c => c !== null) as any[];
-      
+
       clientesValidos.forEach(cliente => {
         if (cliente.id) {
           // Agregar al cache - mejorar datos para clientes "genéricos"
           const esGenerico = cliente.tipo === 'GENERICA' || !cliente.identificador;
-          
+
           this.personasCache[cliente.id] = {
             id: cliente.id,
             identificador: cliente.identificador || '',
             nombre: cliente.nombre || `Cliente ID: ${cliente.id}`,
             tipo: esGenerico ? 'UNKNOWN' : cliente.tipo
           };
-          
+
           const cached = this.personasCache[cliente.id];
           if (cached.identificador) {
             this.personasDisplayMap[cliente.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : cached.tipo === 'NATURAL' ? 'DNI' : 'DOC'}: ${cached.identificador} - ${cached.nombre}`;
@@ -863,10 +870,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private setupDatesForNew(): void {
     // Crear fecha actual en zona horaria de Lima (UTC-5)
     const now = new Date();
-    
+
     // Obtener la fecha actual en zona horaria de Lima
     const limaTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Lima"}));
-    
+
     // Crear fecha de vencimiento el mismo día a las 11pm en hora de Lima
     const vencimiento = new Date(limaTime);
     vencimiento.setHours(23, 0, 0, 0); // 11:00 PM, 0 minutos, 0 segundos, 0 milisegundos
@@ -1108,11 +1115,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const persona = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
       if (persona) {
         this.clienteSeleccionado = persona;
-        
+
         // ✅ Actualizar el personasDisplayMap para la tabla
         const displayName = this.getClienteDisplayName(persona);
         this.personasDisplayMap[personaId] = displayName;
-        
+
         return;
       }
     } catch (error) {
@@ -1155,24 +1162,24 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // ✅ IMPORTANTE: No tocar los productos fijos, solo procesar grupos de hoteles
     for (const grupo of this.gruposHoteles) {
       const tieneDetallesSeleccionados = grupo.detalles.some(detalle => detalle.seleccionado);
-      
+
       if (tieneDetallesSeleccionados && grupo.categoria.id !== undefined) {
         // Si encontramos un grupo con detalles seleccionados, ese es el grupo activo
         this.grupoSeleccionadoId = grupo.categoria.id;
         grupo.seleccionado = true;
-        
+
         // Asegurar que TODOS los detalles del grupo estén seleccionados (consistencia)
         grupo.detalles.forEach(detalle => {
           detalle.seleccionado = true;
         });
-        
+
 
         return; // Solo puede haber un grupo seleccionado
       }
     }
-    
 
-    
+
+
     // ✅ Verificar que todos los productos fijos mantengan seleccionado=true
     this.detallesFijos.forEach(detalle => {
       detalle.seleccionado = true;
@@ -1182,7 +1189,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private convertDetalleToTemp(detalle: DetalleCotizacionResponse): DetalleCotizacionTemp {
     const categoriaId = detalle.categoria?.id ?? detalle.categoria ?? 1;
-    
+
     return {
       id: detalle.id,
       proveedor: detalle.proveedor,
@@ -1194,7 +1201,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       cantidad: detalle.cantidad || 1,
       unidad: detalle.unidad || 1,
       total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
-      isTemporary: false, 
+      isTemporary: false,
       seleccionado: categoriaId === 1 ? true : (detalle.seleccionado || false)
     };
   }
@@ -2407,14 +2414,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    */
   private addPersonaToCache(persona: any): void {
     if (!persona.id) return;
-    
+
     this.personasCache[persona.id] = {
       id: persona.id,
       identificador: persona.ruc || persona.documento || persona.cedula || '',
       nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
       tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
     };
-    
+
     const cached = this.personasCache[persona.id];
     if (cached.identificador) {
       this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
@@ -2431,9 +2438,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     if (this.loadingPersonas.has(personaId)) {
       return;
     }
-    
+
     this.loadingPersonas.add(personaId);
-    
+
     // Cargar persona de forma asíncrona
     this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise()
       .then(persona => {
