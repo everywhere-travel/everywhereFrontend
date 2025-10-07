@@ -99,6 +99,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   // Detalles fijos como en cotizaciones
   detallesFijos: DetalleLiquidacionRequest[] = [];
 
+  // Array para rastrear IDs de detalles eliminados que deben ser eliminados de la BD
+  detallesEliminados: number[] = [];
+
   // Sidebar Configuration
   sidebarMenuItems: SidebarMenuItem[] = [
     {
@@ -298,6 +301,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       detalleForm: this.detalleForm.value,
       detallesFijos: this.detallesFijos,
       detallesOriginales: this.liquidacion?.detalles || [], // AGREGAR: Guardar detalles originales
+      detallesEliminados: this.detallesEliminados, // AGREGAR: Guardar detalles eliminados
       viajeroSearchTerms: this.viajeroSearchTerms,
       timestamp: new Date().getTime()
     };
@@ -377,6 +381,11 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         });
       }
       
+      // NUEVO: Restaurar detalles eliminados
+      if (estado.detallesEliminados) {
+        this.detallesEliminados = estado.detallesEliminados;
+      }
+      
       if (estado.viajeroSearchTerms) {
         this.viajeroSearchTerms = estado.viajeroSearchTerms;
       }
@@ -398,6 +407,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private limpiarEstadoTemporal(): void {
     try {
       sessionStorage.removeItem(this.getEstadoTemporalKey());
+      // También limpiar el array de detalles eliminados
+      this.detallesEliminados = [];
     } catch (error) {
       console.warn('Error al limpiar estado temporal:', error);
     }
@@ -677,6 +688,23 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     const saveSubscription = this.liquidacionService.updateLiquidacion(this.liquidacionId, liquidacionRequest)
       .pipe(
         tap(liquidacionResponse => {
+          // 0. ELIMINAR detalles marcados para eliminación
+          if (this.detallesEliminados.length > 0) {
+            this.detallesEliminados.forEach(detalleId => {
+              this.detalleLiquidacionService.deleteDetalleLiquidacion(detalleId)
+                .subscribe({
+                  next: () => {
+                    console.log(`Detalle ${detalleId} eliminado exitosamente`);
+                  },
+                  error: (error) => {
+                    console.error(`Error al eliminar detalle ${detalleId}:`, error);
+                  }
+                });
+            });
+            // Limpiar la lista de detalles eliminados
+            this.detallesEliminados = [];
+          }
+
           // 1. ACTUALIZAR detalles originales existentes
           if (this.liquidacion?.detalles) {
             this.liquidacion.detalles.forEach(detalle => {
@@ -828,7 +856,16 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   eliminarDetalleOriginal(index: number): void {
     if (this.liquidacion?.detalles) {
+      const detalleAEliminar = this.liquidacion.detalles[index];
+      
+      // Si el detalle tiene ID, agregarlo a la lista de eliminados
+      if (detalleAEliminar?.id) {
+        this.detallesEliminados.push(detalleAEliminar.id);
+      }
+      
+      // Eliminar del array local
       this.liquidacion.detalles.splice(index, 1);
+      
       // Autoguardar estado temporal
       this.guardarEstadoTemporal();
     }
