@@ -686,6 +686,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   async mostrarFormularioEditar(liquidacion: LiquidacionResponse): Promise<void> {
+    // Navegar al componente de detalle en modo edición
+    this.router.navigate(['/liquidaciones/detalle', liquidacion.id], {
+      queryParams: { modo: 'editar' }
+    });
+  }
+
+  async mostrarFormularioEditarOld(liquidacion: LiquidacionResponse): Promise<void> {
     try {
       this.isLoading = true; // Inicia la carga
 

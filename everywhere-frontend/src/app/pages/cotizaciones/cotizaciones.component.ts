@@ -100,7 +100,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
   currentView: 'table' | 'cards' | 'list' = 'table';
 
-  // ✅ Selección única de grupo de hoteles
+  // Selección única de grupo de hoteles
   grupoSeleccionadoId: number | null = null;
 
   // Estadísticas
@@ -501,9 +501,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const personasNaturales = await this.personaNaturalService.findAll().toPromise() || [];
       // Cargar personas jurídicas
       const personasJuridicas = await this.personaJuridicaService.findAll().toPromise() || [];
-      
 
-      
+
+
       // Combinar ambas listas
       this.personas = [...personasNaturales, ...personasJuridicas];
       // Almacenar todos los clientes para el filtrado inicial
@@ -514,7 +514,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.personas.forEach(persona => {
         // Intentar usar ID de tabla padre PRIMERO, si no existe usar tabla hija
         const personaId = persona.persona?.id || persona.id;
-        
+
         if (personaId) {
           this.personasCache[personaId] = {
             id: personaId,
@@ -523,7 +523,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
           const cached = this.personasCache[personaId];
-          
+
           // Mejorar el formato del display para asegurar que se muestre el documento
           if (cached.identificador) {
             this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
@@ -577,19 +577,19 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       // Agregar clientes válidos al cache y listas
       const clientesValidos = clientesFaltantes.filter(c => c !== null) as any[];
-      
+
       clientesValidos.forEach(cliente => {
         if (cliente.id) {
           // Agregar al cache - mejorar datos para clientes "genéricos"
           const esGenerico = cliente.tipo === 'GENERICA' || !cliente.identificador;
-          
+
           this.personasCache[cliente.id] = {
             id: cliente.id,
             identificador: cliente.identificador || '',
             nombre: cliente.nombre || `Cliente ID: ${cliente.id}`,
             tipo: esGenerico ? 'UNKNOWN' : cliente.tipo
           };
-          
+
           const cached = this.personasCache[cliente.id];
           if (cached.identificador) {
             this.personasDisplayMap[cliente.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : cached.tipo === 'NATURAL' ? 'DNI' : 'DOC'}: ${cached.identificador} - ${cached.nombre}`;
@@ -846,7 +846,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.gruposHoteles = [];
     this.deletedDetalleIds = [];
 
-    // ✅ Reset de selección única de grupo
+    // Reset de selección única de grupo
     this.grupoSeleccionadoId = null;
 
     // Reseteo de la selección de cliente
@@ -863,10 +863,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private setupDatesForNew(): void {
     // Crear fecha actual en zona horaria de Lima (UTC-5)
     const now = new Date();
-    
+
     // Obtener la fecha actual en zona horaria de Lima
     const limaTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Lima"}));
-    
+
     // Crear fecha de vencimiento el mismo día a las 11pm en hora de Lima
     const vencimiento = new Date(limaTime);
     vencimiento.setHours(23, 0, 0, 0); // 11:00 PM, 0 minutos, 0 segundos, 0 milisegundos
@@ -1000,7 +1000,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         unidad: detalle.unidad || 1,
         total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
         isTemporary: false,
-        seleccionado: detalle.seleccionado || false // ✅ Incluir el estado de selección real de BD
+        seleccionado: detalle.seleccionado || false // Incluir el estado de selección real de BD
       };
 
 
@@ -1018,12 +1018,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
 
 
-    // ✅ NUEVA LÓGICA: Inferir qué grupo está seleccionado basándose en los detalles
+    // NUEVA LÓGICA: Inferir qué grupo está seleccionado basándose en los detalles
     this.inferirGrupoSeleccionado();
   }
 
   /**
-   * ✅ NUEVA LÓGICA: Infiere qué grupo está seleccionado basándose en si alguno de sus detalles tiene seleccionado=true
+   * NUEVA LÓGICA: Infiere qué grupo está seleccionado basándose en si alguno de sus detalles tiene seleccionado=true
    */
   private inferirGrupoSeleccionado(): void {
 
@@ -1059,7 +1059,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         detalles: [],
         total: 0,
         isTemporary: false,
-        seleccionado: false     // ✅ Inicializar como no seleccionado
+        seleccionado: false     // Inicializar como no seleccionado
       };
       this.gruposHoteles.push(grupo);
     }
@@ -1108,11 +1108,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const persona = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
       if (persona) {
         this.clienteSeleccionado = persona;
-        
-        // ✅ Actualizar el personasDisplayMap para la tabla
+
+        // Actualizar el personasDisplayMap para la tabla
         const displayName = this.getClienteDisplayName(persona);
         this.personasDisplayMap[personaId] = displayName;
-        
+
         return;
       }
     } catch (error) {
@@ -1134,7 +1134,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Reset arrays
     this.detallesFijos = [];
     this.gruposHoteles = [];
-    this.grupoSeleccionadoId = null; // ✅ NUEVO: Reset grupo seleccionado
+    this.grupoSeleccionadoId = null; // NUEVO: Reset grupo seleccionado
 
     // Separate detalles by category
     detalles.forEach(detalle => {
@@ -1146,34 +1146,34 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       }
     });
 
-    // ✅ NUEVO: Determinar qué grupo está seleccionado basado en detalles seleccionados
+    // NUEVO: Determinar qué grupo está seleccionado basado en detalles seleccionados
     this.determinarGrupoSeleccionado();
   }
 
-  // ✅ NUEVO: Método para determinar qué grupo está seleccionado al cargar datos
+  // NUEVO: Método para determinar qué grupo está seleccionado al cargar datos
   private determinarGrupoSeleccionado(): void {
-    // ✅ IMPORTANTE: No tocar los productos fijos, solo procesar grupos de hoteles
+    // IMPORTANTE: No tocar los productos fijos, solo procesar grupos de hoteles
     for (const grupo of this.gruposHoteles) {
       const tieneDetallesSeleccionados = grupo.detalles.some(detalle => detalle.seleccionado);
-      
+
       if (tieneDetallesSeleccionados && grupo.categoria.id !== undefined) {
         // Si encontramos un grupo con detalles seleccionados, ese es el grupo activo
         this.grupoSeleccionadoId = grupo.categoria.id;
         grupo.seleccionado = true;
-        
+
         // Asegurar que TODOS los detalles del grupo estén seleccionados (consistencia)
         grupo.detalles.forEach(detalle => {
           detalle.seleccionado = true;
         });
-        
+
 
         return; // Solo puede haber un grupo seleccionado
       }
     }
-    
 
-    
-    // ✅ Verificar que todos los productos fijos mantengan seleccionado=true
+
+
+    // Verificar que todos los productos fijos mantengan seleccionado=true
     this.detallesFijos.forEach(detalle => {
       detalle.seleccionado = true;
     });
@@ -1182,7 +1182,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private convertDetalleToTemp(detalle: DetalleCotizacionResponse): DetalleCotizacionTemp {
     const categoriaId = detalle.categoria?.id ?? detalle.categoria ?? 1;
-    
+
     return {
       id: detalle.id,
       proveedor: detalle.proveedor,
@@ -1194,7 +1194,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       cantidad: detalle.cantidad || 1,
       unidad: detalle.unidad || 1,
       total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
-      isTemporary: false, 
+      isTemporary: false,
       seleccionado: categoriaId === 1 ? true : (detalle.seleccionado || false)
     };
   }
@@ -1291,7 +1291,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       unidad,
       total: (precioHistorico * cantidad) + comision,
       isTemporary: true,
-      seleccionado: true     // ✅ PRODUCTOS FIJOS siempre seleccionados
+      seleccionado: true     // PRODUCTOS FIJOS siempre seleccionados
     };
 
     this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista
@@ -1440,7 +1440,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         detalles: [],
         total: 0,
         isTemporary: true,
-        seleccionado: false     // ✅ Inicializar como no seleccionado
+        seleccionado: false     // Inicializar como no seleccionado
       };
       this.gruposHoteles.push(nuevoGrupo);
       this.grupoHotelForm.reset();
@@ -1486,7 +1486,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       if (this.grupoSeleccionadoId === categoriaId) {
         this.grupoSeleccionadoId = null;
         grupoSeleccionado.seleccionado = false;
-        // ✅ NUEVO: Marcar todos los detalles como NO seleccionados
+        // NUEVO: Marcar todos los detalles como NO seleccionados
         grupoSeleccionado.detalles.forEach(detalle => {
           detalle.seleccionado = false;
         });
@@ -1495,7 +1495,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         // Deseleccionar todos los grupos primero
         this.gruposHoteles.forEach(grupo => {
           grupo.seleccionado = false;
-          // ✅ NUEVO: Marcar todos los detalles como NO seleccionados
+          // NUEVO: Marcar todos los detalles como NO seleccionados
           grupo.detalles.forEach(detalle => {
             detalle.seleccionado = false;
           });
@@ -1505,7 +1505,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         if (categoriaId !== undefined) {
           this.grupoSeleccionadoId = categoriaId;
           grupoSeleccionado.seleccionado = true;
-          // ✅ NUEVO: Marcar todos los detalles del grupo seleccionado como seleccionados
+          // NUEVO: Marcar todos los detalles del grupo seleccionado como seleccionados
           grupoSeleccionado.detalles.forEach(detalle => {
             detalle.seleccionado = true;
           });
@@ -1556,7 +1556,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    */
   getGrupoSeleccionadoEnVisualizacion(): GrupoHotelTemp | null {
 
-    // ✅ NO re-inferir aquí para evitar bucle infinito
+    // NO re-inferir aquí para evitar bucle infinito
     // La inferencia ya se hizo al cargar los detalles
 
     // Devolver el grupo que está marcado como seleccionado
@@ -2035,7 +2035,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       unidad,
       total: precioHistorico + comision,
       isTemporary: true,
-      seleccionado: false     // ✅ Inicializar como no seleccionado
+      seleccionado: false     // Inicializar como no seleccionado
     };
 
     grupo.detalles.push(nuevoDetalle);
@@ -2162,7 +2162,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     if (formValue.sucursalId)
       await this.cotizacionService.setSucursal(cotizacionId, formValue.sucursalId).toPromise();
 
-    // ✅ NOTA: El grupo seleccionado se maneja a través de las selecciones de detalles
+    // NOTA: El grupo seleccionado se maneja a través de las selecciones de detalles
     // No hay endpoint específico para guardar grupoSeleccionadoId en la cotización
   }
 
@@ -2226,13 +2226,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     const request: DetalleCotizacionRequest = {
-      cantidad: detalle.cantidad || 1,                   // ✅ Default 1
-      unidad: detalle.unidad || 1,                       // ✅ Default 1
-      descripcion: detalle.descripcion || '',            // ✅ Default empty
-      categoria: categoria,                              // ✅ Cambio: categoriaId → categoria
-      comision: detalle.comision || 0,                   // ✅ Default 0
-      precioHistorico: detalle.precioHistorico || 0,     // ✅ Default 0
-      seleccionado: detalle.seleccionado || false        // ✅ Campo de selección
+      cantidad: detalle.cantidad || 1,                   // Default 1
+      unidad: detalle.unidad || 1,                       // Default 1
+      descripcion: detalle.descripcion || '',            // Default empty
+      categoria: categoria,                              // Cambio: categoriaId → categoria
+      comision: detalle.comision || 0,                   // Default 0
+      precioHistorico: detalle.precioHistorico || 0,     // Default 0
+      seleccionado: detalle.seleccionado || false        // Campo de selección
     };
 
     // Validación final antes de enviar
@@ -2268,7 +2268,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       categoria: categoriaId,
       comision: detalle.comision || 0,
       precioHistorico: detalle.precioHistorico || 0,
-      seleccionado: detalle.seleccionado || false        // ✅ Campo de selección
+      seleccionado: detalle.seleccionado || false        // Campo de selección
     };
 
     await this.detalleCotizacionService.updateDetalleCotizacion(detalle.id, request).toPromise();
@@ -2407,14 +2407,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    */
   private addPersonaToCache(persona: any): void {
     if (!persona.id) return;
-    
+
     this.personasCache[persona.id] = {
       id: persona.id,
       identificador: persona.ruc || persona.documento || persona.cedula || '',
       nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
       tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
     };
-    
+
     const cached = this.personasCache[persona.id];
     if (cached.identificador) {
       this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
@@ -2431,9 +2431,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     if (this.loadingPersonas.has(personaId)) {
       return;
     }
-    
+
     this.loadingPersonas.add(personaId);
-    
+
     // Cargar persona de forma asíncrona
     this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise()
       .then(persona => {

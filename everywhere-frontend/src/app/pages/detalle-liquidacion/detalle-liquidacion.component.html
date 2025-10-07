@@ -19,7 +19,7 @@
     <div *ngIf="error && !isLoading" class="max-w-full mx-auto px-6 py-12">
       <div class="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
         <i class="fas fa-exclamation-triangle text-red-400 text-6xl mb-4"></i>
-        <h2 class="text-2xl font-bold text-red-800 mb-2">Error al cargar</h2>
+        <h2 class="text-2xl font-bold text-red-800 mb-3">Error al cargar</h2>
         <p class="text-red-600 mb-6">{{ error }}</p>
         <div class="flex gap-3 justify-center">
           <button (click)="recargarDatos()"
@@ -72,7 +72,7 @@
           <!-- Header Info -->
           <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
             <div class="flex-1">
-              <div class="flex items-center gap-4 mb-4">
+              <div class="flex items-center gap-4">
                 <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
                   <i class="fas fa-file-invoice text-2xl"></i>
                 </div>
@@ -81,8 +81,14 @@
                     Liquidación #{{ liquidacion.numero || liquidacion.id }}
                   </h1>
                   <p class="text-white/80 text-lg">
-                    Detalle completo de la liquidación
+                    {{ modoEdicion ? 'Editando liquidación' : 'Detalle completo de la liquidación' }}
                   </p>
+                  <div *ngIf="modoEdicion" class="mt-2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <i class="fas fa-edit mr-1"></i>
+                      Modo Edición
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -94,11 +100,29 @@
                 <i class="fas fa-sync-alt"></i>
                 <span class="hidden sm:inline">Actualizar</span>
               </button>
-              <button (click)="irAEditarLiquidacion()"
-                      class="px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2">
-                <i class="fas fa-edit"></i>
-                <span class="hidden sm:inline">Editar</span>
-              </button>
+
+              <!-- Botones según el modo -->
+              <div *ngIf="!modoEdicion">
+                <button (click)="irAEditarLiquidacion()"
+                        class="px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2">
+                  <i class="fas fa-edit"></i>
+                  <span class="hidden sm:inline">Editar</span>
+                </button>
+              </div>
+
+              <div *ngIf="modoEdicion" class="flex gap-3">
+                <button (click)="salirModoEdicion()"
+                        class="px-6 py-3 bg-orange-500 hover:bg-orange-600 rounded-xl transition-all flex items-center gap-2 text-white">
+                  <i class="fas fa-times"></i>
+                  <span class="hidden sm:inline">Cancelar</span>
+                </button>
+                <button (click)="guardarLiquidacion()"
+                        class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-xl transition-all flex items-center gap-2 text-white">
+                  <i class="fas fa-save"></i>
+                  <span class="hidden sm:inline">Guardar</span>
+                </button>
+              </div>
+
               <button (click)="volverALiquidaciones()"
                       class="px-6 py-3 bg-white text-everywhere-primary rounded-xl hover:bg-gray-100 transition-colors flex items-center gap-2 font-medium">
                 <i class="fas fa-arrow-left"></i>
@@ -110,57 +134,178 @@
       </header>
 
       <!-- Main Content -->
-      <div class="px-6 py-8">
+      <div class="px-4 py-8 max-w-full overflow-x-hidden">
 
         <!-- Información General de la Liquidación -->
-        <div class="bg-white rounded-xl shadow-lg mb-8 overflow-hidden">
-          <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b">
-            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <i class="fas fa-info-circle text-everywhere-primary"></i>
-              Información General
-            </h2>
-          </div>
+        <form [formGroup]="liquidacionForm" (ngSubmit)="guardarLiquidacion()">
+          <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 mb-6 overflow-hidden">
 
-          <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-                <div class="text-sm text-blue-600 mb-1 font-medium">Número</div>
-                <div class="text-2xl font-bold text-blue-800">{{ liquidacion.numero || 'N/A' }}</div>
-              </div>
-
-              <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
-                <div class="text-sm text-green-600 mb-1 font-medium">Fecha de Compra</div>
-                <div class="text-lg font-semibold text-green-800">
-                  {{ liquidacion.fechaCompra ? (liquidacion.fechaCompra | date:'dd/MM/yyyy') : 'N/A' }}
+            <!-- Data Cards Grid -->
+            <div class="p-6">
+              <!-- Encabezado con indicador visual -->
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clipboard-list text-white text-sm"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-semibold text-gray-900">Información General</h3>
+                    <p class="text-xs text-gray-500">Datos principales de la liquidación</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span class="text-xs text-gray-500">{{ modoEdicion ? 'Editando' : 'Vista' }}</span>
                 </div>
               </div>
 
-              <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
-                <div class="text-sm text-purple-600 mb-1 font-medium">Destino</div>
-                <div class="text-lg font-semibold text-purple-800">{{ liquidacion.destino || 'N/A' }}</div>
-              </div>
+              <!-- Datos organizados en categorías -->
+              <div class="space-y-6">
 
-              <div class="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
-                <div class="text-sm text-orange-600 mb-1 font-medium">Número de Pasajeros</div>
-                <div class="text-2xl font-bold text-orange-800">{{ liquidacion.numeroPasajeros || 'N/A' }}</div>
-              </div>
-            </div>
+                <!-- Información Principal -->
+                <div class="space-y-4">
+                  <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider">Información Principal</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-            <!-- Información adicional si está disponible -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6" *ngIf="liquidacion.producto || liquidacion.formaPago">
-              <div class="bg-gray-50 rounded-lg p-4" *ngIf="liquidacion.producto">
-                <div class="text-sm text-gray-600 mb-1">Producto</div>
-                <div class="text-lg font-semibold text-gray-800">{{ liquidacion.producto.descripcion }}</div>
-                <div class="text-sm text-gray-500">{{ liquidacion.producto.tipo }}</div>
-              </div>
+                    <!-- Número de Liquidación -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Número de Liquidación</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                        <div class="w-6 h-6 bg-blue-100 rounded-md flex items-center justify-center">
+                          <i class="fas fa-hashtag text-blue-600 text-xs"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">{{ liquidacion.numero || 'Sin número' }}</span>
+                      </div>
+                      <div *ngIf="modoEdicion" class="relative">
+                        <input type="text" formControlName="numero"
+                               class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                      </div>
+                    </div>
 
-              <div class="bg-gray-50 rounded-lg p-4" *ngIf="liquidacion.formaPago">
-                <div class="text-sm text-gray-600 mb-1">Forma de Pago</div>
-                <div class="text-lg font-semibold text-gray-800">{{ liquidacion.formaPago.descripcion }}</div>
+                    <!-- Fecha de Compra -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Fecha de Compra</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                        <div class="w-6 h-6 bg-green-100 rounded-md flex items-center justify-center">
+                          <i class="fas fa-calendar text-green-600 text-xs"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">
+                          {{ liquidacion.fechaCompra ? (liquidacion.fechaCompra | date:'dd/MM/yyyy') : 'Sin fecha' }}
+                        </span>
+                      </div>
+                      <div *ngIf="modoEdicion" class="relative">
+                        <input type="date" formControlName="fechaCompra"
+                               class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                      </div>
+                    </div>
+
+                    <!-- Destino -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Destino</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                        <div class="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center">
+                          <i class="fas fa-map-marker-alt text-purple-600 text-xs"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">{{ liquidacion.destino || 'Sin destino' }}</span>
+                      </div>
+                      <div *ngIf="modoEdicion" class="relative">
+                        <input type="text" formControlName="destino"
+                               class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Detalles Operativos -->
+                <div class="space-y-4">
+                  <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider">Detalles Operativos</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                    <!-- Cliente -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Cliente Asociado</label>
+                      <div class="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200/50">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                          <i class="fas fa-user text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-blue-900">{{ getClienteInfo() }}</div>
+                          <div class="text-xs text-blue-600">Cliente principal</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Producto -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Tipo de Producto</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200/50">
+                        <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                          <i class="fas fa-box text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-orange-900">{{ liquidacion.producto?.tipo || 'Sin producto' }}</div>
+                          <div class="text-xs text-orange-600">Servicio contratado</div>
+                        </div>
+                      </div>
+                      <div *ngIf="modoEdicion">
+                        <select formControlName="productoId"
+                                class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                          <option value="">Seleccionar producto</option>
+                          <option *ngFor="let producto of productos" [value]="producto.id">
+                            {{ producto.tipo }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Forma de Pago -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Forma de Pago</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-3 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200/50">
+                        <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+                          <i class="fas fa-credit-card text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-emerald-900">{{ liquidacion.formaPago?.descripcion || 'Sin forma de pago' }}</div>
+                          <div class="text-xs text-emerald-600">Método de pago</div>
+                        </div>
+                      </div>
+                      <div *ngIf="modoEdicion">
+                        <select formControlName="formaPagoId"
+                                class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                          <option value="">Seleccionar forma de pago</option>
+                          <option *ngFor="let formaPago of formasPago" [value]="formaPago.id">
+                            {{ formaPago.descripcion }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Número de Pasajeros -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">N° de Pasajeros</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-3 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg border border-slate-200/50">
+                        <div class="w-8 h-8 bg-slate-500 rounded-full flex items-center justify-center">
+                          <i class="fas fa-users text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-slate-900">{{ liquidacion.numeroPasajeros || 0 }}</div>
+                          <div class="text-xs text-slate-600">Total de pasajeros</div>
+                        </div>
+                      </div>
+                      <div *ngIf="modoEdicion">
+                        <input type="number" formControlName="numeroPasajeros" min="0"
+                               class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
-        </div>
+        </form>
 
         <!-- Resumen de Totales -->
         <div class="bg-white rounded-xl shadow-lg mb-8 overflow-hidden">
@@ -220,174 +365,521 @@
 
         <!-- Tabla de Detalles -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b">
-            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <i class="fas fa-table text-everywhere-primary"></i>
-              Detalles de Liquidación
-              <span class="ml-auto text-sm bg-everywhere-primary text-white px-3 py-1 rounded-full">
-                {{ liquidacion.detalles?.length || 0 }} registro(s)
-              </span>
-            </h2>
-          </div>
+          <div class="w-full overflow-x-auto">
+            <div class="p-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mr-3">
+                  <i class="fas fa-list-alt text-white text-sm"></i>
+                </div>
+                Detalles de Liquidación
+              </h3>
 
-          <!-- Tabla Responsiva -->
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white">
-                <tr>
-                  <th class="px-4 py-4 text-left text-sm font-semibold min-w-[140px] sticky left-0 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary z-10">
-                    Cliente (Viajero)
-                  </th>
-                  <th class="px-4 py-4 text-left text-sm font-semibold min-w-[120px]">Producto</th>
-                  <th class="px-4 py-4 text-left text-sm font-semibold min-w-[120px]">Proveedor</th>
-                  <th class="px-4 py-4 text-left text-sm font-semibold min-w-[140px]">Nro de Ticket o File</th>
-                  <th class="px-4 py-4 text-left text-sm font-semibold min-w-[100px]">Operador</th>
-                  <th class="px-4 py-4 text-right text-sm font-semibold min-w-[120px]">Costo de Ticket</th>
-                  <th class="px-4 py-4 text-right text-sm font-semibold min-w-[130px]">Cargo por Servicio</th>
-                  <th class="px-4 py-4 text-right text-sm font-semibold min-w-[110px]">Valor Venta</th>
-                  <th class="px-4 py-4 text-left text-sm font-semibold min-w-[160px]">Fact X Com A Provee</th>
-                  <th class="px-4 py-4 text-left text-sm font-semibold min-w-[160px]">Boleta/Fact/REC/ A Pasajero</th>
-                  <th class="px-4 py-4 text-right text-sm font-semibold min-w-[130px]">Monto Descontado</th>
-                  <th class="px-4 py-4 text-right text-sm font-semibold min-w-[130px]">Pago de Pax en USD</th>
-                  <th class="px-4 py-4 text-right text-sm font-semibold min-w-[130px]">Pago Pax PEN</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let detalle of liquidacion.detalles; let i = index; trackBy: trackByDetalle; let odd = odd"
-                    [class.bg-gray-50]="odd"
-                    class="border-b border-gray-200 hover:bg-blue-50 transition-colors">
+              <!-- Formulario para agregar/editar detalles -->
+              <div class="bg-gray-50 rounded-xl p-6">
+              <div>
+                <div class="grid gap-4 items-end"
+                     style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ticket</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Operador</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Costo Ticket</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cargo Servicio</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Valor Venta</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Factura</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Boleta</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descuento</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pago USD</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pago PEN</label>
+                  </div>
+                  <div class="text-center">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Acciones</label>
+                  </div>
+                </div>
+              </div>
 
-                  <!-- Cliente (Viajero) - Sticky column -->
-                  <td class="px-4 py-4 text-sm sticky left-0 z-10" [class.bg-gray-50]="odd" [class.bg-white]="!odd">
-                    <div class="flex flex-col min-w-[120px]">
-                      <span class="font-medium text-gray-800">{{ detalle.viajero?.nombres || 'N/A' }}</span>
-                      <span class="text-xs text-gray-500">
-                        {{ detalle.viajero?.apellidoPaterno || '' }} {{ detalle.viajero?.apellidoMaterno || '' }}
-                      </span>
+              <!-- Detalles Originales -->
+              <div *ngFor="let detalle of liquidacion.detalles; let i = index" class="mb-3">
+                <div class="grid gap-4 items-end"
+                     style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
+                  <!-- Cliente (Viajero) - Búsqueda Filtrable -->
+                  <div class="relative">
+                    <input type="text"
+                           [value]="getViajeroSearchTerm('detalle-original-' + i)"
+                           (input)="onViajeroSearch('detalle-original-' + i, $any($event.target).value)"
+                           (focus)="openViajeroDropdown('detalle-original-' + i)"
+                           (click)="$any($event.target).select()"
+                           (blur)="closeViajeroDropdown('detalle-original-' + i)"
+                           placeholder="Buscar cliente..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+
+                    <!-- Dropdown de resultados -->
+                    <div *ngIf="isViajeroDropdownOpen('detalle-original-' + i)"
+                         class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div *ngFor="let viajero of getViajerosFiltrados('detalle-original-' + i)"
+                           (mousedown)="onViajeroSelect('detalle-original-' + i, viajero)"
+                           class="px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0">
+                        <div class="font-medium text-gray-900">{{ viajero.nombres }} {{ viajero.apellidoPaterno }}</div>
+                        <div *ngIf="viajero.apellidoMaterno" class="text-xs text-gray-500">{{ viajero.apellidoMaterno }}</div>
+                      </div>
+                      <div *ngIf="getViajerosFiltrados('detalle-original-' + i).length === 0"
+                           class="px-3 py-2 text-sm text-gray-500 text-center">
+                        No se encontraron resultados
+                      </div>
                     </div>
-                  </td>
+                  </div>
 
                   <!-- Producto -->
-                  <td class="px-4 py-4 text-sm">
-                    <div class="flex flex-col">
-                      <span class="text-gray-800 font-medium">{{ detalle.producto?.descripcion || 'N/A' }}</span>
-                      <span class="text-xs text-gray-500">{{ detalle.producto?.tipo || '' }}</span>
-                    </div>
-                  </td>
+                  <div>
+                    <select [ngModel]="detalle.producto?.id"
+                            (ngModelChange)="onDetalleOriginalChange(i, 'productoId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let producto of productos" [value]="producto.id">
+                        {{ producto.tipo }}
+                      </option>
+                    </select>
+                  </div>
 
                   <!-- Proveedor -->
-                  <td class="px-4 py-4 text-sm">
-                    <span class="text-gray-800">{{ detalle.proveedor?.nombre || 'N/A' }}</span>
-                  </td>
+                  <div>
+                    <select [ngModel]="detalle.proveedor?.id"
+                            (ngModelChange)="onDetalleOriginalChange(i, 'proveedorId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
+                        {{ proveedor.nombre }}
+                      </option>
+                    </select>
+                  </div>
 
-                  <!-- Nro de Ticket o File -->
-                  <td class="px-4 py-4 text-sm">
-                    <span class="font-mono text-gray-800 bg-gray-100 px-2 py-1 rounded">
-                      {{ detalle.ticket || 'N/A' }}
-                    </span>
-                  </td>
+                  <!-- Nro de Ticket -->
+                  <div>
+                    <input type="text" [value]="detalle.ticket"
+                           (input)="onDetalleOriginalChange(i, 'ticket', $any($event.target).value)"
+                           placeholder="Ticket"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
 
                   <!-- Operador -->
-                  <td class="px-4 py-4 text-sm">
-                    <span class="text-gray-800">{{ detalle.operador?.nombre || 'N/A' }}</span>
-                  </td>
+                  <div>
+                    <select [ngModel]="detalle.operador?.id"
+                            (ngModelChange)="onDetalleOriginalChange(i, 'operadorId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let operador of operadores" [value]="operador.id">
+                        {{ operador.nombre }}
+                      </option>
+                    </select>
+                  </div>
 
                   <!-- Costo de Ticket -->
-                  <td class="px-4 py-4 text-sm text-right">
-                    <span class="font-semibold text-blue-600">
-                      {{ detalle.costoTicket ? (detalle.costoTicket | currency:'USD':'symbol':'1.2-2') : 'N/A' }}
-                    </span>
-                  </td>
+                  <div>
+                    <input type="number" [value]="detalle.costoTicket"
+                           (input)="onDetalleOriginalChange(i, 'costoTicket', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
 
                   <!-- Cargo por Servicio -->
-                  <td class="px-4 py-4 text-sm text-right">
-                    <span class="font-semibold text-indigo-600">
-                      {{ detalle.cargoServicio ? (detalle.cargoServicio | currency:'USD':'symbol':'1.2-2') : 'N/A' }}
-                    </span>
-                  </td>
+                  <div>
+                    <input type="number" [value]="detalle.cargoServicio"
+                           (input)="onDetalleOriginalChange(i, 'cargoServicio', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
 
                   <!-- Valor Venta -->
-                  <td class="px-4 py-4 text-sm text-right">
-                    <span class="font-semibold text-green-600">
-                      {{ detalle.valorVenta ? (detalle.valorVenta | currency:'USD':'symbol':'1.2-2') : 'N/A' }}
-                    </span>
-                  </td>
+                  <div>
+                    <input type="number" [value]="detalle.valorVenta"
+                           (input)="onDetalleOriginalChange(i, 'valorVenta', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
 
                   <!-- Factura Compra -->
-                  <td class="px-4 py-4 text-sm">
-                    <span class="text-gray-800">{{ detalle.facturaCompra || 'N/A' }}</span>
-                  </td>
+                  <div>
+                    <input type="text" [value]="detalle.facturaCompra"
+                           (input)="onDetalleOriginalChange(i, 'facturaCompra', $any($event.target).value)"
+                           placeholder="Factura"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
 
                   <!-- Boleta Pasajero -->
-                  <td class="px-4 py-4 text-sm">
-                    <span class="text-gray-800">{{ detalle.boletaPasajero || 'N/A' }}</span>
-                  </td>
+                  <div>
+                    <input type="text" [value]="detalle.boletaPasajero"
+                           (input)="onDetalleOriginalChange(i, 'boletaPasajero', $any($event.target).value)"
+                           placeholder="Boleta"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
 
                   <!-- Monto Descontado -->
-                  <td class="px-4 py-4 text-sm text-right">
-                    <span class="font-semibold text-red-600">
-                      {{ detalle.montoDescuento ? (detalle.montoDescuento | currency:'USD':'symbol':'1.2-2') : 'N/A' }}
-                    </span>
-                  </td>
+                  <div>
+                    <input type="number" [value]="detalle.montoDescuento"
+                           (input)="onDetalleOriginalChange(i, 'montoDescuento', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
 
                   <!-- Pago Pax USD -->
-                  <td class="px-4 py-4 text-sm text-right">
-                    <span class="font-semibold text-cyan-600">
-                      {{ detalle.pagoPaxUSD ? (detalle.pagoPaxUSD | currency:'USD':'symbol':'1.2-2') : 'N/A' }}
-                    </span>
-                  </td>
+                  <div>
+                    <input type="number" [value]="detalle.pagoPaxUSD"
+                           (input)="onDetalleOriginalChange(i, 'pagoPaxUSD', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
 
                   <!-- Pago Pax PEN -->
-                  <td class="px-4 py-4 text-sm text-right">
-                    <span class="font-semibold text-teal-600">
-                      {{ detalle.pagoPaxPEN ? (detalle.pagoPaxPEN | currency:'PEN':'symbol':'1.2-2') : 'N/A' }}
-                    </span>
-                  </td>
-                </tr>
+                  <div>
+                    <input type="number" [value]="detalle.pagoPaxPEN"
+                           (input)="onDetalleOriginalChange(i, 'pagoPaxPEN', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
 
-                <!-- Empty State -->
-                <tr *ngIf="!liquidacion.detalles || liquidacion.detalles.length === 0">
-                  <td colspan="13" class="px-4 py-12 text-center text-gray-500">
-                    <div class="flex flex-col items-center gap-4">
-                      <i class="fas fa-inbox text-6xl text-gray-300"></i>
-                      <div>
-                        <h3 class="text-xl font-medium text-gray-600 mb-2">No hay detalles registrados</h3>
-                        <p class="text-gray-500">Esta liquidación no tiene detalles asociados.</p>
+                  <!-- Acciones -->
+                  <div class="text-center">
+                    <button type="button" (click)="eliminarDetalleOriginal(i)"
+                            class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors duration-200">
+                      <i class="fas fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="my-2"></div>
+              </div>
+
+              <!-- Detalles Fijos -->
+              <div *ngFor="let detalle of detallesFijos; let i = index" class="mb-3">
+                <div class="grid gap-4 items-end"
+                     style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
+                  <!-- Cliente (Viajero) - Búsqueda Filtrable -->
+                  <div class="relative">
+                    <input type="text"
+                           [value]="getViajeroSearchTerm('detalle-fijo-' + i)"
+                           (input)="onViajeroSearch('detalle-fijo-' + i, $any($event.target).value)"
+                           (focus)="openViajeroDropdown('detalle-fijo-' + i)"
+                           (click)="$any($event.target).select()"
+                           (blur)="closeViajeroDropdown('detalle-fijo-' + i)"
+                           placeholder="Buscar cliente..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+
+                    <!-- Dropdown de resultados -->
+                    <div *ngIf="isViajeroDropdownOpen('detalle-fijo-' + i)"
+                         class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div *ngFor="let viajero of getViajerosFiltrados('detalle-fijo-' + i)"
+                           (mousedown)="onViajeroSelect('detalle-fijo-' + i, viajero)"
+                           class="px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0">
+                        <div class="font-medium text-gray-900">{{ viajero.nombres }} {{ viajero.apellidoPaterno }}</div>
+                        <div *ngIf="viajero.apellidoMaterno" class="text-xs text-gray-500">{{ viajero.apellidoMaterno }}</div>
                       </div>
-                      <button (click)="irAEditarLiquidacion()"
-                              class="px-6 py-2 bg-everywhere-primary text-white rounded-lg hover:bg-everywhere-secondary transition-colors">
-                        <i class="fas fa-plus mr-2"></i>
-                        Agregar Detalles
-                      </button>
+                      <div *ngIf="getViajerosFiltrados('detalle-fijo-' + i).length === 0"
+                           class="px-3 py-2 text-sm text-gray-500 text-center">
+                        No se encontraron resultados
+                      </div>
                     </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </div>
+
+                  <!-- Producto -->
+                  <div>
+                    <select [ngModel]="detalle.productoId"
+                            (ngModelChange)="onProductoChange(i, 'productoId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let producto of productos" [value]="producto.id">
+                        {{ producto.tipo }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Proveedor -->
+                  <div>
+                    <select [ngModel]="detalle.proveedorId"
+                            (ngModelChange)="onProductoChange(i, 'proveedorId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
+                        {{ proveedor.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Nro de Ticket -->
+                  <div>
+                    <input type="text" [value]="detalle.ticket"
+                           (input)="onProductoChange(i, 'ticket', $any($event.target).value)"
+                           placeholder="Ticket"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Operador -->
+                  <div>
+                    <select [ngModel]="detalle.operadorId"
+                            (ngModelChange)="onProductoChange(i, 'operadorId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let operador of operadores" [value]="operador.id">
+                        {{ operador.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Costo de Ticket -->
+                  <div>
+                    <input type="number" [value]="detalle.costoTicket"
+                           (input)="onProductoChange(i, 'costoTicket', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Cargo por Servicio -->
+                  <div>
+                    <input type="number" [value]="detalle.cargoServicio"
+                           (input)="onProductoChange(i, 'cargoServicio', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Valor Venta -->
+                  <div>
+                    <input type="number" [value]="detalle.valorVenta"
+                           (input)="onProductoChange(i, 'valorVenta', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Factura Compra -->
+                  <div>
+                    <input type="text" [value]="detalle.facturaCompra"
+                           (input)="onProductoChange(i, 'facturaCompra', $any($event.target).value)"
+                           placeholder="Factura"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Boleta Pasajero -->
+                  <div>
+                    <input type="text" [value]="detalle.boletaPasajero"
+                           (input)="onProductoChange(i, 'boletaPasajero', $any($event.target).value)"
+                           placeholder="Boleta"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Monto Descontado -->
+                  <div>
+                    <input type="number" [value]="detalle.montoDescuento"
+                           (input)="onProductoChange(i, 'montoDescuento', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Pago Pax USD -->
+                  <div>
+                    <input type="number" [value]="detalle.pagoPaxUSD"
+                           (input)="onProductoChange(i, 'pagoPaxUSD', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Pago Pax PEN -->
+                  <div>
+                    <input type="number" [value]="detalle.pagoPaxPEN"
+                           (input)="onProductoChange(i, 'pagoPaxPEN', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Acciones -->
+                  <div class="text-center">
+                    <button type="button" (click)="eliminarDetalleFijo(i)"
+                            class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors duration-200">
+                      <i class="fas fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="my-2"></div>
+              </div>
+
+              <!-- Formulario para agregar nuevo detalle -->
+              <div [formGroup]="detalleForm">
+                <div class="grid gap-4 items-end"
+                     style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
+                  <!-- Cliente (Viajero) - Búsqueda Filtrable -->
+                  <div class="relative">
+                    <input type="text"
+                           [value]="getViajeroSearchTerm('nuevo')"
+                           (input)="onViajeroSearch('nuevo', $any($event.target).value)"
+                           (focus)="openViajeroDropdown('nuevo')"
+                           (click)="$any($event.target).select()"
+                           (blur)="closeViajeroDropdown('nuevo')"
+                           placeholder="Buscar cliente..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+
+                    <!-- Dropdown de resultados -->
+                    <div *ngIf="isViajeroDropdownOpen('nuevo')"
+                         class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div *ngFor="let viajero of getViajerosFiltrados('nuevo')"
+                           (mousedown)="onViajeroSelect('nuevo', viajero)"
+                           class="px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0">
+                        <div class="font-medium text-gray-900">{{ viajero.nombres }} {{ viajero.apellidoPaterno }}</div>
+                        <div *ngIf="viajero.apellidoMaterno" class="text-xs text-gray-500">{{ viajero.apellidoMaterno }}</div>
+                      </div>
+                      <div *ngIf="getViajerosFiltrados('nuevo').length === 0"
+                           class="px-3 py-2 text-sm text-gray-500 text-center">
+                        No se encontraron resultados
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Producto -->
+                  <div>
+                    <select formControlName="productoId"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let producto of productos" [value]="producto.id">
+                        {{ producto.tipo }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Proveedor -->
+                  <div>
+                    <select formControlName="proveedorId"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
+                        {{ proveedor.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Nro de Ticket -->
+                  <div>
+                    <input type="text" formControlName="ticket" placeholder="Ticket"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Operador -->
+                  <div>
+                    <select formControlName="operadorId"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let operador of operadores" [value]="operador.id">
+                        {{ operador.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Costo de Ticket -->
+                  <div>
+                    <input type="number" formControlName="costoTicket" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Cargo por Servicio -->
+                  <div>
+                    <input type="number" formControlName="cargoServicio" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Valor Venta -->
+                  <div>
+                    <input type="number" formControlName="valorVenta" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Factura Compra -->
+                  <div>
+                    <input type="text" formControlName="facturaCompra" placeholder="Factura"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Boleta Pasajero -->
+                  <div>
+                    <input type="text" formControlName="boletaPasajero" placeholder="Boleta"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Monto Descontado -->
+                  <div>
+                    <input type="number" formControlName="montoDescuento" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Pago Pax USD -->
+                  <div>
+                    <input type="number" formControlName="pagoPaxUSD" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Pago Pax PEN -->
+                  <div>
+                    <input type="number" formControlName="pagoPaxPEN" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Botón Agregar -->
+                  <div class="text-center">
+                    <button type="button" (click)="agregarDetalleFijo()"
+                            class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-lg hover:from-purple-600 hover:to-violet-700 transition-all duration-200 text-sm font-medium">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <!-- Footer with actions -->
-        <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-between items-center">
-          <div class="text-sm text-gray-600">
-            Liquidación creada el {{ liquidacion.creado | date:'dd/MM/yyyy HH:mm' }}
-            <span *ngIf="liquidacion.actualizado && liquidacion.actualizado !== liquidacion.creado">
-              • Última actualización: {{ liquidacion.actualizado | date:'dd/MM/yyyy HH:mm' }}
-            </span>
-          </div>
+      <!-- Footer con botones de acción -->
+      <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-between items-center">
+        <div class="flex flex-col sm:flex-row gap-4">
+          <button type="button"
+                  class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"
+                  (click)="agregarProducto()">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Agregar Producto
+          </button>
+        </div>
 
-          <div class="flex gap-3">
-            <button (click)="recargarDatos()"
-                    class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm">
-              <i class="fas fa-sync-alt mr-2"></i>
-              Actualizar
-            </button>
-            <button (click)="volverALiquidaciones()"
-                    class="px-6 py-2 bg-everywhere-primary text-white rounded-lg hover:bg-everywhere-secondary transition-colors">
-              <i class="fas fa-arrow-left mr-2"></i>
-              Volver a Liquidaciones
-            </button>
-          </div>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <button type="button"
+                  class="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                  (click)="cancelar()">
+            Cancelar
+          </button>
+          <button type="button"
+                  class="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"
+                  (click)="guardar()">
+            Guardar
+          </button>
         </div>
       </div>
     </div>
