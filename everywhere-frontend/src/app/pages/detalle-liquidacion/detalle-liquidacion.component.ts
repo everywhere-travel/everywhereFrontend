@@ -273,6 +273,15 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       pagoPaxUSD: [0],
       pagoPaxPEN: [0]
     });
+
+    // Suscribirse a cambios en costoTicket y valorVenta para calcular automáticamente cargoServicio
+    this.detalleForm.get('costoTicket')?.valueChanges.subscribe(value => {
+      this.calcularCargoServicioFormulario();
+    });
+    
+    this.detalleForm.get('valorVenta')?.valueChanges.subscribe(value => {
+      this.calcularCargoServicioFormulario();
+    });
   }
 
   ngOnInit(): void {
@@ -346,7 +355,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         this.detallesFijos = estado.detallesFijos;
       }
       
-      // NUEVO: Restaurar detalles originales
+      // Restaurar detalles originales
       if (estado.detallesOriginales && this.liquidacion?.detalles) {
         // Restaurar solo los campos editables, manteniendo la estructura original
         estado.detallesOriginales.forEach((detalleEstado: any, index: number) => {
@@ -381,7 +390,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         });
       }
       
-      // NUEVO: Restaurar detalles eliminados
+      // Restaurar detalles eliminados
       if (estado.detallesEliminados) {
         this.detallesEliminados = estado.detallesEliminados;
       }
@@ -393,7 +402,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       // Reinicializar los valores de búsqueda después de restaurar el estado
       setTimeout(() => {
         this.reinicializarValoresBusqueda();
-        // CRÍTICO: También llamar initializeAllViajeroSearchValues para asegurar consistencia
+        // También llamar initializeAllViajeroSearchValues para asegurar consistencia
         this.initializeAllViajeroSearchValues();
       }, 100);
 
@@ -483,8 +492,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
                   this.loadClienteInfo(liquidacionBasica.cotizacion.personas.id);
                 }
               },
-              error: (error) => {
-                console.error('Error al cargar liquidación básica:', error);
+              error: () => {
               }
             });
           }
@@ -532,8 +540,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Cargar formas de pago
     const formasPagoSubscription = this.formaPagoService.getAllFormasPago()
       .pipe(
-        catchError(error => {
-          console.error('Error al cargar formas de pago:', error);
+        catchError(() => {
           return of([]);
         })
       )
@@ -544,8 +551,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Cargar proveedores
     const proveedoresSubscription = this.proveedorService.findAllProveedor()
       .pipe(
-        catchError(error => {
-          console.error('Error al cargar proveedores:', error);
+        catchError(() => {
           return of([]);
         })
       )
@@ -556,8 +562,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Cargar operadores
     const operadoresSubscription = this.operadorService.findAllOperador()
       .pipe(
-        catchError(error => {
-          console.error('Error al cargar operadores:', error);
+        catchError(() => {
           return of([]);
         })
       )
@@ -568,8 +573,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Cargar viajeros
     const viajerosSubscription = this.viajeroService.findAll()
       .pipe(
-        catchError(error => {
-          console.error('Error al cargar viajeros:', error);
+        catchError(() => {
           return of([]);
         })
       )
@@ -690,17 +694,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         tap(liquidacionResponse => {
           // 0. ELIMINAR detalles marcados para eliminación
           if (this.detallesEliminados.length > 0) {
-            this.detallesEliminados.forEach(detalleId => {
-              this.detalleLiquidacionService.deleteDetalleLiquidacion(detalleId)
-                .subscribe({
-                  next: () => {
-                    console.log(`Detalle ${detalleId} eliminado exitosamente`);
-                  },
-                  error: (error) => {
-                    console.error(`Error al eliminar detalle ${detalleId}:`, error);
-                  }
-                });
-            });
             // Limpiar la lista de detalles eliminados
             this.detallesEliminados = [];
           }
@@ -924,12 +917,16 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           break;
         case 'costoTicket':
           detalle.costoTicket = value ? Number(value) : 0;
+          // Calcular automáticamente el cargo por servicio
+          this.calcularCargoServicio(detalle);
           break;
         case 'cargoServicio':
           detalle.cargoServicio = value ? Number(value) : 0;
           break;
         case 'valorVenta':
           detalle.valorVenta = value ? Number(value) : 0;
+          // Calcular automáticamente el cargo por servicio
+          this.calcularCargoServicio(detalle);
           break;
         case 'facturaCompra':
           detalle.facturaCompra = value || '';
@@ -1004,12 +1001,16 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           break;
         case 'costoTicket':
           detalle.costoTicket = value ? Number(value) : 0;
+          // Calcular automáticamente el cargo por servicio
+          this.calcularCargoServicio(detalle);
           break;
         case 'cargoServicio':
           detalle.cargoServicio = value ? Number(value) : 0;
           break;
         case 'valorVenta':
           detalle.valorVenta = value ? Number(value) : 0;
+          // Calcular automáticamente el cargo por servicio
+          this.calcularCargoServicio(detalle);
           break;
         case 'facturaCompra':
           detalle.facturaCompra = value || '';
@@ -1071,6 +1072,38 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (!this.liquidacion?.detalles) return 0;
     return this.liquidacion.detalles.reduce((sum, detalle) =>
       sum + (detalle.pagoPaxPEN || 0), 0);
+  }
+
+  get totalBoletaPasajero(): number {
+    if (!this.liquidacion?.detalles) return 0;
+    return this.liquidacion.detalles.reduce((sum, detalle) => {
+      // Convertir el valor de boleta a número, asumiendo que es un valor monetario
+      const boletaValue = detalle.boletaPasajero ? parseFloat(detalle.boletaPasajero.toString()) : 0;
+      return sum + (isNaN(boletaValue) ? 0 : boletaValue);
+    }, 0);
+  }
+
+  // Método para calcular automáticamente el cargo por servicio
+  calcularCargoServicio(detalle: any): void {
+    const valorVenta = detalle.valorVenta || 0;
+    const costoTicket = detalle.costoTicket || 0;
+    
+    // Solo calcular automáticamente si ambos valores están presentes
+    if (valorVenta > 0 && costoTicket >= 0) {
+      detalle.cargoServicio = valorVenta - costoTicket;
+    }
+  }
+
+  // Método para calcular automáticamente el cargo por servicio en el formulario
+  calcularCargoServicioFormulario(): void {
+    const valorVenta = this.detalleForm.get('valorVenta')?.value || 0;
+    const costoTicket = this.detalleForm.get('costoTicket')?.value || 0;
+    
+    // Solo calcular automáticamente si ambos valores están presentes
+    if (valorVenta > 0 && costoTicket >= 0) {
+      const cargoServicio = valorVenta - costoTicket;
+      this.detalleForm.get('cargoServicio')?.setValue(cargoServicio, { emitEvent: false });
+    }
   }
 
   // Persona display methods
