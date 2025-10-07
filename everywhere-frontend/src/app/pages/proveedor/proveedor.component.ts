@@ -7,6 +7,13 @@ import { ProveedorRequest, ProveedorResponse } from '../../shared/models/Proveed
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
+import { AuthServiceService } from '../../core/service/auth/auth.service';
+
+// Extender la interfaz para agregar moduleKey
+interface ExtendedSidebarMenuItem extends SidebarMenuItem {
+  moduleKey?: string;
+  children?: ExtendedSidebarMenuItem[];
+}
 
 // Interface para la tabla
 export interface ProveedorTabla {
@@ -33,7 +40,7 @@ export class ProveedorComponent implements OnInit {
 
   // Sidebar Configuration
   sidebarCollapsed = false;
-  sidebarMenuItems: SidebarMenuItem[] = [
+  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
@@ -43,25 +50,29 @@ export class ProveedorComponent implements OnInit {
     {
       id: 'clientes',
       title: 'Gestión de Clientes',
-      icon: 'fas fa-users', 
+      icon: 'fas fa-users',
+      moduleKey: 'CLIENTES',
       children: [
         {
           id: 'personas',
           title: 'Clientes',
           icon: 'fas fa-address-card',
-          route: '/personas'
+          route: '/personas',
+          moduleKey: 'CLIENTES'
         },
         {
           id: 'viajeros',
           title: 'Viajeros',
           icon: 'fas fa-passport',
-          route: '/viajero'
+          route: '/viajero',
+          moduleKey: 'VIAJEROS'
         },
         {
           id: 'viajeros-frecuentes',
           title: 'Viajeros Frecuentes',
           icon: 'fas fa-crown',
-          route: '/viajero-frecuente'
+          route: '/viajero-frecuente',
+          moduleKey: 'VIAJEROS'
         }
       ]
     },
@@ -69,37 +80,50 @@ export class ProveedorComponent implements OnInit {
       id: 'cotizaciones',
       title: 'Cotizaciones',
       icon: 'fas fa-file-invoice',
-      route: '/cotizaciones'
+      route: '/cotizaciones',
+      moduleKey: 'COTIZACIONES'
     },
     {
       id: 'liquidaciones',
       title: 'Liquidaciones',
       icon: 'fas fa-credit-card',
-      route: '/liquidaciones'
+      route: '/liquidaciones',
+      moduleKey: 'LIQUIDACIONES'
     },
     {
       id: 'recursos',
       title: 'Recursos',
-      icon: 'fas fa-box', 
+      icon: 'fas fa-box',
       active: true,
       children: [
         {
           id: 'productos',
           title: 'Productos',
           icon: 'fas fa-cube',
-          route: '/productos'
+          route: '/productos',
+          moduleKey: 'PRODUCTOS'
         },
         {
           id: 'proveedores',
           title: 'Proveedores',
           icon: 'fas fa-truck',
-          route: '/proveedores'
+          route: '/proveedores',
+          moduleKey: 'PROVEEDORES',
+          active: true
         },
         {
           id: 'operadores',
           title: 'Operadores',
           icon: 'fas fa-headset',
-          route: '/operadores'
+          route: '/operadores',
+          moduleKey: 'OPERADOR'
+        },
+        {
+          id: 'documentos',
+          title: 'Documentos',
+          icon: 'fas fa-file-alt',
+          route: '/documentos',
+          moduleKey: 'DOCUMENTOS'
         }
       ]
     },
@@ -112,26 +136,29 @@ export class ProveedorComponent implements OnInit {
           id: 'counters',
           title: 'Counters',
           icon: 'fas fa-users-line',
-          route: '/counters'
+          route: '/counters',
+          moduleKey: 'COUNTERS'
         },
         {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
-          route: '/sucursales'
+          route: '/sucursales',
+          moduleKey: 'SUCURSALES'
         }
       ]
     },
     {
       id: 'archivos',
       title: 'Gestión de Archivos',
-      icon: 'fas fa-folder', 
+      icon: 'fas fa-folder',
       children: [
         {
           id: 'carpetas',
           title: 'Explorador',
           icon: 'fas fa-folder-open',
-          route: '/carpetas'
+          route: '/carpetas',
+          moduleKey: 'CARPETAS'
         }
       ]
     },
@@ -174,6 +201,8 @@ export class ProveedorComponent implements OnInit {
       ]
     }
   ];
+
+  sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // Forms
   proveedorForm!: FormGroup;
@@ -229,14 +258,101 @@ export class ProveedorComponent implements OnInit {
     private proveedorService: ProveedorService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private errorHandler: ErrorHandlerService
+    private errorHandler: ErrorHandlerService,
+    private authService: AuthServiceService
   ) {
     this.initializeForms();
   }
 
   ngOnInit(): void {
+    this.initializeSidebar();
     this.loadProveedores();
     this.calcularEstadisticas();
+  }
+
+  // =================================================================
+  // SIDEBAR FILTERING
+  // =================================================================
+
+  private initializeSidebar(): void {
+    const authData = this.authService.getUser();
+    const userPermissions = authData?.permissions || {};
+
+    // Si tiene ALL_MODULES, mostrar todos los items, sino filtrar por permisos específicos
+    if (userPermissions['ALL_MODULES']) {
+      this.sidebarMenuItems = this.allSidebarMenuItems;
+    } else {
+      this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems, userPermissions);
+    }
+  }
+
+  private filterSidebarItems(items: ExtendedSidebarMenuItem[], userPermissions: any): ExtendedSidebarMenuItem[] {
+    return items.filter(item => {
+      // Dashboard siempre visible
+      if (item.id === 'dashboard') {
+        return true;
+      }
+
+      // Items sin moduleKey (como configuración, reportes) siempre visibles
+      if (!item.moduleKey) {
+        // Si tiene children, filtrar los children
+        if (item.children) {
+          const filteredChildren = this.filterSidebarItems(item.children, userPermissions);
+          // Solo mostrar el padre si tiene al menos un hijo visible
+          if (filteredChildren.length > 0) {
+            return {
+              ...item,
+              children: filteredChildren
+            };
+          }
+          return false;
+        }
+        return true;
+      }
+
+      // Verificar si el usuario tiene permisos para este módulo
+      const hasPermission = Object.keys(userPermissions).includes(item.moduleKey);
+
+      if (hasPermission) {
+        // Si tiene children, filtrar los children también
+        if (item.children) {
+          const filteredChildren = this.filterSidebarItems(item.children, userPermissions);
+          return {
+            ...item,
+            children: filteredChildren
+          };
+        }
+        return true;
+      }
+
+      return false;
+    }).map(item => {
+      // Asegurar que los children filtrados se apliquen correctamente
+      if (item.children) {
+        return {
+          ...item,
+          children: this.filterSidebarItems(item.children, userPermissions)
+        };
+      }
+      return item;
+    }).filter(item => {
+      // Filtrar items padre que no tengan children después del filtrado
+      if (item.children) {
+        return item.children.length > 0;
+      }
+      return true;
+    });
+  }
+
+  // Sidebar methods
+  onToggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
+  onSidebarItemClick(item: ExtendedSidebarMenuItem): void {
+    if (item.route) {
+      this.router.navigate([item.route]);
+    }
   }
 
   private initializeForms(): void {
@@ -611,21 +727,6 @@ export class ProveedorComponent implements OnInit {
   clearSearch(): void {
     this.searchTerm = '';
     this.applyFilters();
-  }
-
-  // Sidebar methods
-  onSidebarItemClick(item: SidebarMenuItem): void {
-    if (item.route) {
-      this.router.navigate([item.route]);
-    }
-  }
-
-  onToggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
-  }
-
-  toggleSidebar(): void {
-    this.sidebarCollapsed = !this.sidebarCollapsed;
   }
 
   // Menu handling
