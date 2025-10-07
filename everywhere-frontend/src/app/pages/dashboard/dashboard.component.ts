@@ -82,7 +82,14 @@ export class DashboardComponent implements OnInit {
     this.welcomeData.subtitle = `Hoy es ${this.getCurrentTime()} - Gestiona tu negocio desde aquí`;
 
     // Filtrar módulos según permisos
-    this.modules = this.modules.filter(m => m.moduleKey && Object.keys(userPermissions).includes(m.moduleKey));
+    // Si tiene ALL_MODULES, mostrar todos los módulos, sino filtrar por permisos específicos
+    if (userPermissions['ALL_MODULES']) {
+      // El usuario tiene acceso a todos los módulos, no filtrar
+      this.modules = this.modules;
+    } else {
+      // Filtrar solo los módulos para los que tiene permisos específicos
+      this.modules = this.modules.filter(m => m.moduleKey && Object.keys(userPermissions).includes(m.moduleKey));
+    }
   }
 
   getCurrentTime(): string {
