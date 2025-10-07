@@ -27,6 +27,7 @@ export interface DetalleLiquidacionResponse {
 }
 
 export interface DetalleLiquidacionRequest {
+  liquidacionId?: number    // Requerido para creación (se agrega automáticamente en servicio)
   ticket?: string
   costoTicket?: number
   cargoServicio?: number
@@ -37,11 +38,11 @@ export interface DetalleLiquidacionRequest {
   pagoPaxUSD?: number
   pagoPaxPEN?: number
 
-  liquidacionId: number
-  viajeroId: number
-  productoId: number
-  proveedorId: number
-  operadorId: number
+  // Campos opcionales - se pueden asignar después en edición
+  viajeroId?: number    // Opcional
+  productoId?: number   // Opcional
+  proveedorId?: number  // Opcional
+  operadorId?: number   // Opcional
 }
 
 export interface DetalleLiquidacionSimple{

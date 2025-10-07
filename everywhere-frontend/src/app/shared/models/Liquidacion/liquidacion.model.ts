@@ -7,22 +7,23 @@ import { ObservacionLiquidacionSimple } from './observacionLiquidacion.model'
 
 export interface LiquidacionRequest {
   numero?: string
-  fechaCompra?: string 
+  fechaCompra?: string
   destino?: string
-  numeroPasajeros?: number 
+  numeroPasajeros?: number
   productoId?: number
   formaPagoId?: number
+  cotizacionId?: number
 }
 
 export interface LiquidacionResponse {
   id: number
   numero?: string
-  fechaCompra?: string 
+  fechaCompra?: string
   destino?: string
-  numeroPasajeros?: number 
+  numeroPasajeros?: number
   creado?: string
   actualizado?: string
-  
+
   cotizacion?: CotizacionResponse
   producto?: ProductoResponse
   formaPago?: FormaPagoResponse
@@ -32,15 +33,17 @@ export interface LiquidacionResponse {
 export interface LiquidacionConDetallesResponse {
   id: number
   numero?: string
-  fechaCompra?: string 
+  fechaCompra?: string
   destino?: string
-  numeroPasajeros?: number 
+  numeroPasajeros?: number
   creado?: string
   actualizado?: string
 
+  cotizacion?: CotizacionResponse
   producto?: ProductoResponse
   formaPago?: FormaPagoResponse
-  
+  carpeta?: CarpetaResponse
+
   detalles?: DetalleLiquidacionSimple[]
   observaciones?: ObservacionLiquidacionSimple[]
 }
