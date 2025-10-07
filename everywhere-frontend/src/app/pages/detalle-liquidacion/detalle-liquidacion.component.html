@@ -378,7 +378,7 @@
               <div class="bg-gray-50 rounded-xl p-6">
               <div>
                 <div class="grid gap-4 items-end"
-                     style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
+                     [style.grid-template-columns]="modoEdicion ? '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px' : '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px'">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
                   </div>
@@ -418,7 +418,7 @@
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Pago PEN</label>
                   </div>
-                  <div class="text-center">
+                  <div *ngIf="modoEdicion" class="text-center">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Acciones</label>
                   </div>
                 </div>
@@ -427,10 +427,11 @@
               <!-- Detalles Originales -->
               <div *ngFor="let detalle of liquidacion.detalles; let i = index" class="mb-3">
                 <div class="grid gap-4 items-end"
-                     style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
+                     [style.grid-template-columns]="modoEdicion ? '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px' : '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px'">
                   <!-- Cliente (Viajero) - Búsqueda Filtrable -->
                   <div class="relative">
-                    <input type="text"
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="text"
                            [value]="getViajeroSearchTerm('detalle-original-' + i)"
                            (input)="onViajeroSearch('detalle-original-' + i, $any($event.target).value)"
                            (focus)="openViajeroDropdown('detalle-original-' + i)"
@@ -438,9 +439,14 @@
                            (blur)="closeViajeroDropdown('detalle-original-' + i)"
                            placeholder="Buscar cliente..."
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900 block truncate">{{ getViajeroDisplayName(detalle.viajero?.id) }}</span>
+                    </div>
 
-                    <!-- Dropdown de resultados -->
-                    <div *ngIf="isViajeroDropdownOpen('detalle-original-' + i)"
+                    <!-- Dropdown de resultados (solo en modo edición) -->
+                    <div *ngIf="modoEdicion && isViajeroDropdownOpen('detalle-original-' + i)"
                          class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                       <div *ngFor="let viajero of getViajerosFiltrados('detalle-original-' + i)"
                            (mousedown)="onViajeroSelect('detalle-original-' + i, viajero)"
@@ -457,7 +463,8 @@
 
                   <!-- Producto -->
                   <div>
-                    <select [ngModel]="detalle.producto?.id"
+                    <!-- En modo edición: select editable -->
+                    <select *ngIf="modoEdicion" [ngModel]="detalle.producto?.id"
                             (ngModelChange)="onDetalleOriginalChange(i, 'productoId', $event)"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
                       <option value="">Seleccionar</option>
@@ -465,11 +472,17 @@
                         {{ producto.tipo }}
                       </option>
                     </select>
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900 block truncate">{{ getProductoDisplayName(detalle.producto?.id) }}</span>
+                    </div>
                   </div>
 
                   <!-- Proveedor -->
                   <div>
-                    <select [ngModel]="detalle.proveedor?.id"
+                    <!-- En modo edición: select editable -->
+                    <select *ngIf="modoEdicion" [ngModel]="detalle.proveedor?.id"
                             (ngModelChange)="onDetalleOriginalChange(i, 'proveedorId', $event)"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
                       <option value="">Seleccionar</option>
@@ -477,19 +490,31 @@
                         {{ proveedor.nombre }}
                       </option>
                     </select>
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900 block truncate">{{ getProveedorDisplayName(detalle.proveedor?.id) }}</span>
+                    </div>
                   </div>
 
                   <!-- Nro de Ticket -->
                   <div>
-                    <input type="text" [value]="detalle.ticket"
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="text" [value]="detalle.ticket"
                            (input)="onDetalleOriginalChange(i, 'ticket', $any($event.target).value)"
                            placeholder="Ticket"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.ticket || 'Sin ticket' }}</span>
+                    </div>
                   </div>
 
                   <!-- Operador -->
                   <div>
-                    <select [ngModel]="detalle.operador?.id"
+                    <!-- En modo edición: select editable -->
+                    <select *ngIf="modoEdicion" [ngModel]="detalle.operador?.id"
                             (ngModelChange)="onDetalleOriginalChange(i, 'operadorId', $event)"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
                       <option value="">Seleccionar</option>
@@ -497,74 +522,127 @@
                         {{ operador.nombre }}
                       </option>
                     </select>
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900 block truncate">{{ getOperadorDisplayName(detalle.operador?.id) }}</span>
+                    </div>
                   </div>
 
                   <!-- Costo de Ticket -->
                   <div>
-                    <input type="number" [value]="detalle.costoTicket"
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.costoTicket"
                            (input)="onDetalleOriginalChange(i, 'costoTicket', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.costoTicket || '0.00' }}</span>
+                    </div>
                   </div>
 
                   <!-- Cargo por Servicio -->
                   <div>
-                    <input type="number" [value]="detalle.cargoServicio"
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.cargoServicio"
                            (input)="onDetalleOriginalChange(i, 'cargoServicio', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.cargoServicio || '0.00' }}</span>
+                    </div>
                   </div>
 
                   <!-- Valor Venta -->
                   <div>
-                    <input type="number" [value]="detalle.valorVenta"
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.valorVenta"
                            (input)="onDetalleOriginalChange(i, 'valorVenta', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.valorVenta || '0.00' }}</span>
+                    </div>
                   </div>
 
                   <!-- Factura Compra -->
                   <div>
-                    <input type="text" [value]="detalle.facturaCompra"
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="text" [value]="detalle.facturaCompra"
                            (input)="onDetalleOriginalChange(i, 'facturaCompra', $any($event.target).value)"
                            placeholder="Factura"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.facturaCompra || 'Sin factura' }}</span>
+                    </div>
                   </div>
 
                   <!-- Boleta Pasajero -->
                   <div>
-                    <input type="text" [value]="detalle.boletaPasajero"
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="text" [value]="detalle.boletaPasajero"
                            (input)="onDetalleOriginalChange(i, 'boletaPasajero', $any($event.target).value)"
                            placeholder="Boleta"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.boletaPasajero || 'Sin boleta' }}</span>
+                    </div>
                   </div>
 
                   <!-- Monto Descontado -->
                   <div>
-                    <input type="number" [value]="detalle.montoDescuento"
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.montoDescuento"
                            (input)="onDetalleOriginalChange(i, 'montoDescuento', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.montoDescuento || '0.00' }}</span>
+                    </div>
                   </div>
 
                   <!-- Pago Pax USD -->
                   <div>
-                    <input type="number" [value]="detalle.pagoPaxUSD"
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.pagoPaxUSD"
                            (input)="onDetalleOriginalChange(i, 'pagoPaxUSD', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.pagoPaxUSD || '0.00' }}</span>
+                    </div>
                   </div>
 
                   <!-- Pago Pax PEN -->
                   <div>
-                    <input type="number" [value]="detalle.pagoPaxPEN"
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.pagoPaxPEN"
                            (input)="onDetalleOriginalChange(i, 'pagoPaxPEN', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.pagoPaxPEN || '0.00' }}</span>
+                    </div>
                   </div>
 
-                  <!-- Acciones -->
-                  <div class="text-center">
+                  <!-- Acciones (solo en modo edición) -->
+                  <div *ngIf="modoEdicion" class="text-center">
                     <button type="button" (click)="eliminarDetalleOriginal(i)"
                             class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors duration-200">
                       <i class="fas fa-trash text-xs"></i>
@@ -574,8 +652,9 @@
                 <div class="my-2"></div>
               </div>
 
-              <!-- Detalles Fijos -->
-              <div *ngFor="let detalle of detallesFijos; let i = index" class="mb-3">
+              <!-- Detalles Fijos (solo en modo edición) -->
+              <ng-container *ngIf="modoEdicion">
+                <div *ngFor="let detalle of detallesFijos; let i = index" class="mb-3">
                 <div class="grid gap-4 items-end"
                      style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
                   <!-- Cliente (Viajero) - Búsqueda Filtrable -->
@@ -723,9 +802,10 @@
                 </div>
                 <div class="my-2"></div>
               </div>
+              </ng-container>
 
-              <!-- Formulario para agregar nuevo detalle -->
-              <div [formGroup]="detalleForm">
+              <!-- Formulario para agregar nuevo detalle (solo en modo edición) -->
+              <div *ngIf="modoEdicion" [formGroup]="detalleForm">
                 <div class="grid gap-4 items-end"
                      style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
                   <!-- Cliente (Viajero) - Búsqueda Filtrable -->
@@ -856,8 +936,8 @@
         </div>
       </div>
 
-      <!-- Footer con botones de acción -->
-      <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-between items-center">
+      <!-- Footer con botones de acción (solo en modo edición) -->
+      <div *ngIf="modoEdicion" class="mt-8 flex flex-col sm:flex-row gap-4 justify-between items-center">
         <div class="flex flex-col sm:flex-row gap-4">
           <button type="button"
                   class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"

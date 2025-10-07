@@ -42,6 +42,16 @@ import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sideb
 })
 export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
+  // ===== PERSISTENCE KEYS =====
+  private readonly STORAGE_KEYS = {
+    LIQUIDACION_DETALLE: 'liquidacion_detalle_data',
+    FORM_STATE: 'liquidacion_detalle_form_state',
+    DETALLES_STATE: 'liquidacion_detalles_state'
+  };
+
+  // Flag para evitar sobrescribir datos restaurados
+  private estadoTemporalRestaurado = false;
+
   // Services
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -268,7 +278,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Guardar estado temporal antes de destruir el componente
     this.guardarEstadoTemporal();
     this.subscriptions.unsubscribe();
   }
@@ -288,12 +297,14 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       liquidacionForm: this.liquidacionForm.value,
       detalleForm: this.detalleForm.value,
       detallesFijos: this.detallesFijos,
+      detallesOriginales: this.liquidacion?.detalles || [], // AGREGAR: Guardar detalles originales
       viajeroSearchTerms: this.viajeroSearchTerms,
       timestamp: new Date().getTime()
     };
 
     try {
-      sessionStorage.setItem(this.getEstadoTemporalKey(), JSON.stringify(estadoTemporal));
+      const key = this.getEstadoTemporalKey();
+      sessionStorage.setItem(key, JSON.stringify(estadoTemporal));
     } catch (error) {
       console.warn('No se pudo guardar el estado temporal:', error);
     }
@@ -305,7 +316,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     }
 
     try {
-      const estadoGuardado = sessionStorage.getItem(this.getEstadoTemporalKey());
+      const key = this.getEstadoTemporalKey();
+      const estadoGuardado = sessionStorage.getItem(key);
+      
       if (!estadoGuardado) {
         return false;
       }
@@ -313,22 +326,57 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       const estado = JSON.parse(estadoGuardado);
       const tiempoTranscurrido = new Date().getTime() - estado.timestamp;
 
-      // Solo cargar si han pasado menos de 30 minutos (1800000 ms)
       if (tiempoTranscurrido > 1800000) {
         this.limpiarEstadoTemporal();
         return false;
       }
 
       // Restaurar formularios
-      if (estado.liquidacionForm) {
+      if (estado.liquidacionForm && this.liquidacionForm) {
         this.liquidacionForm.patchValue(estado.liquidacionForm);
       }
-      if (estado.detalleForm) {
+      if (estado.detalleForm && this.detalleForm) {
         this.detalleForm.patchValue(estado.detalleForm);
       }
       if (estado.detallesFijos) {
         this.detallesFijos = estado.detallesFijos;
       }
+      
+      // NUEVO: Restaurar detalles originales
+      if (estado.detallesOriginales && this.liquidacion?.detalles) {
+        // Restaurar solo los campos editables, manteniendo la estructura original
+        estado.detallesOriginales.forEach((detalleEstado: any, index: number) => {
+          if (this.liquidacion!.detalles![index]) {
+            const detalleOriginal = this.liquidacion!.detalles![index];
+            
+            // Restaurar campos editables
+            detalleOriginal.ticket = detalleEstado.ticket || '';
+            detalleOriginal.costoTicket = detalleEstado.costoTicket || 0;
+            detalleOriginal.cargoServicio = detalleEstado.cargoServicio || 0;
+            detalleOriginal.valorVenta = detalleEstado.valorVenta || 0;
+            detalleOriginal.facturaCompra = detalleEstado.facturaCompra || '';
+            detalleOriginal.boletaPasajero = detalleEstado.boletaPasajero || '';
+            detalleOriginal.montoDescuento = detalleEstado.montoDescuento || 0;
+            detalleOriginal.pagoPaxUSD = detalleEstado.pagoPaxUSD || 0;
+            detalleOriginal.pagoPaxPEN = detalleEstado.pagoPaxPEN || 0;
+            
+            // Restaurar relaciones si están presentes
+            if (detalleEstado.viajero) {
+              detalleOriginal.viajero = detalleEstado.viajero;
+            }
+            if (detalleEstado.producto) {
+              detalleOriginal.producto = detalleEstado.producto;
+            }
+            if (detalleEstado.proveedor) {
+              detalleOriginal.proveedor = detalleEstado.proveedor;
+            }
+            if (detalleEstado.operador) {
+              detalleOriginal.operador = detalleEstado.operador;
+            }
+          }
+        });
+      }
+      
       if (estado.viajeroSearchTerms) {
         this.viajeroSearchTerms = estado.viajeroSearchTerms;
       }
@@ -336,6 +384,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       // Reinicializar los valores de búsqueda después de restaurar el estado
       setTimeout(() => {
         this.reinicializarValoresBusqueda();
+        // CRÍTICO: También llamar initializeAllViajeroSearchValues para asegurar consistencia
+        this.initializeAllViajeroSearchValues();
       }, 100);
 
       return true;
@@ -442,7 +492,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         if (liquidacion) {
           this.liquidacion = liquidacion;
 
-          // Inicializar el formulario con los datos cargados
+          // Inicializar el formulario (ya incluye carga de estado temporal)
           this.initializeForm();
 
           // Cargar información del cliente si existe cotización
@@ -560,11 +610,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Form methods
   private initializeForm(): void {
-    // Intentar cargar estado temporal primero
-    const estadoTemporalCargado = this.cargarEstadoTemporal();
-
-    if (!estadoTemporalCargado && this.liquidacion) {
-      // Si no hay estado temporal, cargar datos normales
+    // Cargar datos del servidor primero
+    if (this.liquidacion) {
       this.liquidacionForm.patchValue({
         numero: this.liquidacion.numero || '',
         fechaCompra: this.liquidacion.fechaCompra || '',
@@ -577,6 +624,34 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     // Configurar autoguardado si estamos en modo edición
     this.configurarAutoguardado();
+    
+    // DESPUÉS de inicializar, esperar a que todos los datos async estén cargados
+    // y LUEGO intentar cargar estado temporal
+    this.esperarDatosAsyncYCargarEstado();
+  }
+
+  private esperarDatosAsyncYCargarEstado(): void {
+    // Verificar si todos los datos necesarios están cargados
+    const verificarDatos = () => {
+      const datosListos = this.viajeros.length > 0 && 
+                         this.productos.length > 0 && 
+                         this.proveedores.length > 0 && 
+                         this.operadores.length > 0 &&
+                         this.formasPago.length > 0;
+      
+      if (datosListos) {
+        // Todos los datos están listos, intentar cargar estado temporal
+        setTimeout(() => {
+          this.cargarEstadoTemporal();
+        }, 200);
+      } else {
+        // Reintentar en 100ms
+        setTimeout(verificarDatos, 100);
+      }
+    };
+
+    // Iniciar la verificación
+    setTimeout(verificarDatos, 100);
   }
 
   guardarLiquidacion(): void {
@@ -602,27 +677,76 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     const saveSubscription = this.liquidacionService.updateLiquidacion(this.liquidacionId, liquidacionRequest)
       .pipe(
         tap(liquidacionResponse => {
+          // 1. ACTUALIZAR detalles originales existentes
+          if (this.liquidacion?.detalles) {
+            this.liquidacion.detalles.forEach(detalle => {
+              if (detalle.id) {
+                // Crear request para detalle existente
+                const detalleRequest: DetalleLiquidacionRequest = {
+                  viajeroId: detalle.viajero?.id,
+                  productoId: detalle.producto?.id,
+                  proveedorId: detalle.proveedor?.id,
+                  operadorId: detalle.operador?.id,
+                  ticket: detalle.ticket || '',
+                  costoTicket: detalle.costoTicket || 0,
+                  cargoServicio: detalle.cargoServicio || 0,
+                  valorVenta: detalle.valorVenta || 0,
+                  facturaCompra: detalle.facturaCompra || '',
+                  boletaPasajero: detalle.boletaPasajero || '',
+                  montoDescuento: detalle.montoDescuento || 0,
+                  pagoPaxUSD: detalle.pagoPaxUSD || 0,
+                  pagoPaxPEN: detalle.pagoPaxPEN || 0,
+                  liquidacionId: this.liquidacionId!
+                };
 
-          // Guardar detalles fijos de forma simple
+                // Actualizar detalle existente
+                this.detalleLiquidacionService.updateDetalleLiquidacion(detalle.id, detalleRequest)
+                  .subscribe({
+                    next: (response) => {
+                      // Detalle actualizado exitosamente
+                    },
+                    error: (error) => {
+                      console.error(`Error al actualizar detalle ${detalle.id}:`, error);
+                    }
+                  });
+              }
+            });
+          }
+
+          // 2. CREAR detalles fijos nuevos
           this.detallesFijos.forEach(detalle => {
             if (detalle.viajeroId || detalle.productoId) {
-              this.detalleLiquidacionService.createDetalleLiquidacion(this.liquidacionId!, detalle)
+              // Agregar liquidacionId al detalle
+              const detalleConLiquidacion = {
+                ...detalle,
+                liquidacionId: this.liquidacionId!
+              };
+              
+              this.detalleLiquidacionService.createDetalleLiquidacion(this.liquidacionId!, detalleConLiquidacion)
                 .subscribe({
-                  next: (detalleResponse) => { },
-                  error: (error) => { }
+                  next: (detalleResponse) => {
+                    // Detalle fijo creado exitosamente
+                  },
+                  error: (error) => {
+                    console.error('Error al crear detalle fijo:', error);
+                  }
                 });
             }
           });
 
           // Limpiar estado temporal después de guardar exitosamente
           this.limpiarEstadoTemporal();
-          // Recargar los datos actualizados
-          this.loadLiquidacion(this.liquidacionId!);
-          // Salir del modo edición
-          this.salirModoEdicion();
+          
+          // Recargar los datos actualizados después de un breve delay
+          setTimeout(() => {
+            this.loadLiquidacion(this.liquidacionId!);
+            // Salir del modo edición
+            this.salirModoEdicion();
+          }, 1000);
         }),
         catchError(error => {
-          this.error = 'Error al guardar los cambios';
+          console.error('Error al guardar la liquidación:', error);
+          this.error = 'Error al guardar los cambios. Por favor, intente nuevamente.';
           return of(null);
         }),
         finalize(() => {
@@ -1162,6 +1286,12 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Reinicializar valores de búsqueda después de restaurar estado temporal
   reinicializarValoresBusqueda(): void {
+    // Asegurar que tenemos los datos necesarios
+    if (this.viajeros.length === 0) {
+      setTimeout(() => this.reinicializarValoresBusqueda(), 100);
+      return;
+    }
+
     // Inicializar para detalles originales
     if (this.liquidacion?.detalles) {
       this.liquidacion.detalles.forEach((detalle, index) => {
