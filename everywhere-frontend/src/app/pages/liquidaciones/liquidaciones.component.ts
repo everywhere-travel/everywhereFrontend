@@ -40,6 +40,14 @@ import { ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 
+// Services
+import { AuthServiceService } from '../../core/service/auth/auth.service';
+
+interface ExtendedSidebarMenuItem extends SidebarMenuItem {
+  moduleKey?: string;
+  children?: ExtendedSidebarMenuItem[];
+}
+
 interface DetalleLiquidacionTemp {
   id?: number;
   proveedor?: ProveedorResponse | null;
@@ -134,7 +142,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   // ===== TEMPLATE UTILITIES =====
   Math = Math;
   // ===== SIDEBAR CONFIGURATION =====
-  sidebarMenuItems: SidebarMenuItem[] = [
+  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
@@ -145,24 +153,28 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       id: 'clientes',
       title: 'Gestión de Clientes',
       icon: 'fas fa-users',
+      moduleKey: 'CLIENTES',
       children: [
         {
           id: 'personas',
           title: 'Clientes',
           icon: 'fas fa-address-card',
-          route: '/personas'
+          route: '/personas',
+          moduleKey: 'PERSONAS'
         },
         {
           id: 'viajeros',
           title: 'Viajeros',
           icon: 'fas fa-passport',
-          route: '/viajero'
+          route: '/viajero',
+          moduleKey: 'VIAJEROS'
         },
         {
           id: 'viajeros-frecuentes',
           title: 'Viajeros Frecuentes',
           icon: 'fas fa-crown',
-          route: '/viajero-frecuente'
+          route: '/viajero-frecuente',
+          moduleKey: 'VIAJEROS'
         }
       ]
     },
@@ -170,14 +182,16 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       id: 'cotizaciones',
       title: 'Cotizaciones',
       icon: 'fas fa-file-invoice',
-      route: '/cotizaciones'
+      route: '/cotizaciones',
+      moduleKey: 'COTIZACIONES'
     },
     {
       id: 'liquidaciones',
       title: 'Liquidaciones',
       icon: 'fas fa-credit-card',
       route: '/liquidaciones',
-      active: true
+      active: true,
+      moduleKey: 'LIQUIDACIONES'
     },
     {
       id: 'recursos',
@@ -188,19 +202,22 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
           id: 'productos',
           title: 'Productos',
           icon: 'fas fa-cube',
-          route: '/productos'
+          route: '/productos',
+          moduleKey: 'PRODUCTOS'
         },
         {
           id: 'proveedores',
           title: 'Proveedores',
           icon: 'fas fa-truck',
-          route: '/proveedores'
+          route: '/proveedores',
+          moduleKey: 'PROVEEDORES'
         },
         {
           id: 'operadores',
           title: 'Operadores',
           icon: 'fas fa-headset',
-          route: '/operadores'
+          route: '/operadores',
+          moduleKey: 'OPERADOR'
         }
       ]
     },
@@ -213,13 +230,15 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
           id: 'counters',
           title: 'Counters',
           icon: 'fas fa-users-line',
-          route: '/counters'
+          route: '/counters',
+          moduleKey: 'COUNTERS'
         },
         {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
-          route: '/sucursales'
+          route: '/sucursales',
+          moduleKey: 'SUCURSALES'
         }
       ]
     },
@@ -232,7 +251,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
           id: 'carpetas',
           title: 'Explorador',
           icon: 'fas fa-folder-open',
-          route: '/carpetas'
+          route: '/carpetas',
+          moduleKey: 'CARPETAS'
         }
       ]
     },
@@ -265,16 +285,12 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
           title: 'Usuarios',
           icon: 'fas fa-user-shield',
           route: '/usuarios'
-        },
-        {
-          id: 'sistema',
-          title: 'Sistema',
-          icon: 'fas fa-server',
-          route: '/configuracion'
         }
       ]
     }
   ];
+
+  sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // ===== FORMS =====
   searchForm!: FormGroup;
@@ -316,9 +332,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   tiempoPresionado = 0;
   intervaloPulsacion: any = null;
 
-  constructor() { }
+  constructor(private authService: AuthServiceService) { }
 
   ngOnInit(): void {
+    this.initializeSidebar();
     this.initializeForms();
     this.loadInitialData();
     this.setupClienteSearch();
@@ -1410,5 +1427,44 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     this.cotizacionSeleccionada = null;
     this.searchCotizacion = '';
     this.cotizacionesFiltradas = [];
+  }
+  
+  // ===== SIDEBAR FILTERING =====
+  private initializeSidebar(): void {
+    this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems);
+  }
+
+  private filterSidebarItems(items: ExtendedSidebarMenuItem[]): ExtendedSidebarMenuItem[] {
+    const currentUser = this.authService.getUser();
+    
+    if (!currentUser || !currentUser.permissions) {
+      return [];
+    }
+
+    // Si el usuario tiene permisos de ALL_MODULES, mostrar todo
+    if (currentUser.permissions['ALL_MODULES']) {
+      return items;
+    }
+
+    return items.filter(item => {
+      // Si tiene moduleKey, verificar permisos directos
+      if (item.moduleKey) {
+        return currentUser.permissions[item.moduleKey] && currentUser.permissions[item.moduleKey].length > 0;
+      }
+      
+      // Si no tiene moduleKey pero tiene children, verificar si algún hijo tiene permisos
+      if (item.children && item.children.length > 0) {
+        const filteredChildren = this.filterSidebarItems(item.children);
+        if (filteredChildren.length > 0) {
+          // Actualizar el item con solo los children filtrados
+          item.children = filteredChildren;
+          return true;
+        }
+        return false;
+      }
+      
+      // Si no tiene moduleKey ni children, mostrar por defecto (como Dashboard)
+      return true;
+    });
   }
 }
