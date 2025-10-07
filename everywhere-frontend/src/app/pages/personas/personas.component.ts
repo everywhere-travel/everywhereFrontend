@@ -167,7 +167,7 @@ export class PersonasComponent implements OnInit {
           title: 'Explorador',
           icon: 'fas fa-folder-open',
           route: '/carpetas',
-          moduleKey: 'CARPETA'
+          moduleKey: 'CARPETAS'
         }
       ]
     },
@@ -363,7 +363,7 @@ export class PersonasComponent implements OnInit {
 
       // Verificar si el usuario tiene permisos para este módulo
       const hasPermission = Object.keys(userPermissions).includes(item.moduleKey);
-      
+
       if (hasPermission) {
         // Si tiene children, filtrar los children también
         if (item.children) {

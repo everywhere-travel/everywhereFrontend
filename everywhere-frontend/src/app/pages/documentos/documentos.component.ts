@@ -162,7 +162,7 @@ export class DocumentosComponent implements OnInit {
           title: 'Explorador',
           icon: 'fas fa-folder-open',
           route: '/carpetas',
-          moduleKey: 'CARPETA'
+          moduleKey: 'CARPETAS'
         }
       ]
     },
