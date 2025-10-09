@@ -446,7 +446,7 @@
                            (blur)="closeViajeroDropdown('detalle-original-' + i)"
                            placeholder="Buscar cliente..."
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50">
                       <span class="text-xs font-medium text-gray-900 block truncate">{{ getViajeroDisplayName(detalle.viajero?.id) }}</span>
@@ -479,7 +479,7 @@
                         {{ producto.tipo }}
                       </option>
                     </select>
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50">
                       <span class="text-xs font-medium text-gray-900 block truncate">{{ getProductoDisplayName(detalle.producto?.id) }}</span>
@@ -497,7 +497,7 @@
                         {{ proveedor.nombre }}
                       </option>
                     </select>
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
                       <span class="text-xs font-medium text-gray-900 block truncate">{{ getProveedorDisplayName(detalle.proveedor?.id) }}</span>
@@ -511,7 +511,7 @@
                            (input)="onDetalleOriginalChange(i, 'ticket', $any($event.target).value)"
                            placeholder="Ticket"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50">
                       <span class="text-xs font-medium text-gray-900">{{ detalle.ticket || 'Sin ticket' }}</span>
@@ -529,7 +529,7 @@
                         {{ operador.nombre }}
                       </option>
                     </select>
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
                       <span class="text-xs font-medium text-gray-900 block truncate">{{ getOperadorDisplayName(detalle.operador?.id) }}</span>
@@ -543,7 +543,7 @@
                            (input)="onDetalleOriginalChange(i, 'costoTicket', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
                       <span class="text-xs font-medium text-gray-900">{{ detalle.costoTicket || '0.00' }}</span>
@@ -557,7 +557,7 @@
                            (input)="onDetalleOriginalChange(i, 'cargoServicio', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
                       <span class="text-xs font-medium text-gray-900">{{ detalle.cargoServicio || '0.00' }}</span>
@@ -571,7 +571,7 @@
                            (input)="onDetalleOriginalChange(i, 'valorVenta', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
                       <span class="text-xs font-medium text-gray-900">{{ detalle.valorVenta || '0.00' }}</span>
@@ -585,7 +585,7 @@
                            (input)="onDetalleOriginalChange(i, 'facturaCompra', $any($event.target).value)"
                            placeholder="Factura"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
                       <span class="text-xs font-medium text-gray-900">{{ detalle.facturaCompra || 'Sin factura' }}</span>
@@ -599,7 +599,7 @@
                            (input)="onDetalleOriginalChange(i, 'boletaPasajero', $any($event.target).value)"
                            placeholder="Boleta"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
                       <span class="text-xs font-medium text-gray-900">{{ detalle.boletaPasajero || 'Sin boleta' }}</span>
@@ -613,7 +613,7 @@
                            (input)="onDetalleOriginalChange(i, 'montoDescuento', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
                       <span class="text-xs font-medium text-gray-900">{{ detalle.montoDescuento || '0.00' }}</span>
@@ -627,7 +627,7 @@
                            (input)="onDetalleOriginalChange(i, 'pagoPaxUSD', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
                       <span class="text-xs font-medium text-gray-900">{{ detalle.pagoPaxUSD || '0.00' }}</span>
@@ -641,7 +641,7 @@
                            (input)="onDetalleOriginalChange(i, 'pagoPaxPEN', $any($event.target).value)"
                            step="0.01" min="0" placeholder="0.00"
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                    
+
                     <!-- En modo vista: texto readonly -->
                     <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
                       <span class="text-xs font-medium text-gray-900">{{ detalle.pagoPaxPEN || '0.00' }}</span>
@@ -967,6 +967,78 @@
                   (click)="guardar()">
             Guardar
           </button>
+        </div>
+      </div>
+
+      <!-- Sección de Observaciones al Final -->
+      <div class="bg-white rounded-xl shadow-lg mt-8 overflow-hidden">
+        <div class="bg-gradient-to-r from-amber-50 to-yellow-50 px-6 py-4 border-b border-yellow-200">
+          <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-comment-dots text-amber-600"></i>
+            Observaciones
+          </h2>
+        </div>
+
+        <div class="p-6">
+          <!-- Lista de observaciones existentes -->
+          <div *ngIf="observaciones.length > 0" class="space-y-3 mb-6">
+            <div *ngFor="let observacion of observaciones; let i = index"
+                 class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200 hover:shadow-sm transition-shadow">
+
+              <!-- Icono de observación -->
+              <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <i class="fas fa-comment text-amber-600 text-sm"></i>
+              </div>
+
+              <!-- Contenido de la observación -->
+              <div class="flex-1 min-w-0">
+                <p class="text-gray-800 text-sm leading-relaxed break-words">{{ observacion.descripcion }}</p>
+                <div *ngIf="observacion.creado" class="text-xs text-gray-500 mt-1">
+                  <i class="fas fa-clock mr-1"></i>
+                  {{ observacion.creado | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+              </div>
+
+              <!-- Botón de eliminar directo -->
+              <button *ngIf="modoEdicion"
+                      (click)="eliminarObservacion(observacion)"
+                      class="inline-flex items-center justify-center w-8 h-8 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 flex-shrink-0"
+                      title="Eliminar observación"
+                      type="button">
+                <i class="fas fa-trash text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mensaje cuando no hay observaciones -->
+          <div *ngIf="observaciones.length === 0" class="text-center py-8">
+            <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <i class="fas fa-comment-slash text-2xl text-amber-400"></i>
+            </div>
+            <p class="text-gray-600 font-medium">No hay observaciones registradas</p>
+            <p class="text-gray-500 text-sm">Las observaciones aparecerán aquí cuando se agreguen</p>
+          </div>
+
+          <!-- Formulario para agregar nueva observación (solo en modo edición) -->
+          <div *ngIf="modoEdicion" class="border-t border-gray-200 pt-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Agregar nueva observación</h3>
+            <div class="flex gap-3">
+              <div class="flex-1">
+                <textarea [(ngModel)]="nuevaObservacion"
+                          [ngModelOptions]="{standalone: true}"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none bg-white"
+                          rows="2"
+                          placeholder="Escriba su observación aquí..."></textarea>
+              </div>
+              <button type="button"
+                      (click)="agregarObservacion()"
+                      [disabled]="!nuevaObservacion || !nuevaObservacion.trim()"
+                      class="px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span class="hidden sm:inline">Agregar</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

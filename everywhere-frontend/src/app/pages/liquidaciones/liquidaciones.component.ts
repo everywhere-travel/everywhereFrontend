@@ -1269,7 +1269,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
    */
   async loadCotizaciones(): Promise<void> {
     try {
-      this.cotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
+      this.cotizaciones = await this.cotizacionService.getCotizacionSinLiquidacion().toPromise() || [];
       this.cotizacionesFiltradas = [...this.cotizaciones];
     } catch (error) {
       this.showError('Error al cargar las cotizaciones');
@@ -1428,7 +1428,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     this.searchCotizacion = '';
     this.cotizacionesFiltradas = [];
   }
-  
+
   // ===== SIDEBAR FILTERING =====
   private initializeSidebar(): void {
     this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems);
@@ -1436,7 +1436,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   private filterSidebarItems(items: ExtendedSidebarMenuItem[]): ExtendedSidebarMenuItem[] {
     const currentUser = this.authService.getUser();
-    
+
     if (!currentUser || !currentUser.permissions) {
       return [];
     }
@@ -1451,7 +1451,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       if (item.moduleKey) {
         return currentUser.permissions[item.moduleKey] && currentUser.permissions[item.moduleKey].length > 0;
       }
-      
+
       // Si no tiene moduleKey pero tiene children, verificar si algún hijo tiene permisos
       if (item.children && item.children.length > 0) {
         const filteredChildren = this.filterSidebarItems(item.children);
@@ -1462,7 +1462,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         }
         return false;
       }
-      
+
       // Si no tiene moduleKey ni children, mostrar por defecto (como Dashboard)
       return true;
     });
