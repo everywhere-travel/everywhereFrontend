@@ -74,4 +74,8 @@ export class CotizacionService {
     return this.http.put<CotizacionResponse>(`${this.apiUrl}/${cotizacionId}/detalles/selecciones`, payload);
   }
 
+  getCotizacionSinLiquidacion(): Observable<CotizacionResponse[]> {
+    return this.http.get<CotizacionResponse[]>(`${this.apiUrl}/sin-liquidacion`);
+  }
+
 }
