@@ -99,9 +99,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
   modoEdicion = false; // Nueva propiedad para controlar modo edición
 
-  // Observación temporal
-  observacionTemporal: string = '';
-  observacionExistente: ObservacionLiquidacionResponse | null = null;
+  // Observaciones múltiples
+  observaciones: ObservacionLiquidacionResponse[] = [];
+  nuevaObservacion: string = '';
 
   // Detalles fijos como en cotizaciones
   detallesFijos: DetalleLiquidacionRequest[] = [];
@@ -285,7 +285,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     this.detalleForm.get('costoTicket')?.valueChanges.subscribe(value => {
       this.calcularCargoServicioFormulario();
     });
-    
+
     this.detalleForm.get('valorVenta')?.valueChanges.subscribe(value => {
       this.calcularCargoServicioFormulario();
     });
@@ -338,7 +338,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     try {
       const key = this.getEstadoTemporalKey();
       const estadoGuardado = sessionStorage.getItem(key);
-      
+
       if (!estadoGuardado) {
         return false;
       }
@@ -361,14 +361,14 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       if (estado.detallesFijos) {
         this.detallesFijos = estado.detallesFijos;
       }
-      
+
       // Restaurar detalles originales
       if (estado.detallesOriginales && this.liquidacion?.detalles) {
         // Restaurar solo los campos editables, manteniendo la estructura original
         estado.detallesOriginales.forEach((detalleEstado: any, index: number) => {
           if (this.liquidacion!.detalles![index]) {
             const detalleOriginal = this.liquidacion!.detalles![index];
-            
+
             // Restaurar campos editables
             detalleOriginal.ticket = detalleEstado.ticket || '';
             detalleOriginal.costoTicket = detalleEstado.costoTicket || 0;
@@ -379,7 +379,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
             detalleOriginal.montoDescuento = detalleEstado.montoDescuento || 0;
             detalleOriginal.pagoPaxUSD = detalleEstado.pagoPaxUSD || 0;
             detalleOriginal.pagoPaxPEN = detalleEstado.pagoPaxPEN || 0;
-            
+
             // Restaurar relaciones si están presentes
             if (detalleEstado.viajero) {
               detalleOriginal.viajero = detalleEstado.viajero;
@@ -396,12 +396,12 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           }
         });
       }
-      
+
       // Restaurar detalles eliminados
       if (estado.detallesEliminados) {
         this.detallesEliminados = estado.detallesEliminados;
       }
-      
+
       if (estado.viajeroSearchTerms) {
         this.viajeroSearchTerms = estado.viajeroSearchTerms;
       }
@@ -426,8 +426,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       // También limpiar el array de detalles eliminados
       this.detallesEliminados = [];
       // Limpiar observación temporal
-      this.observacionTemporal = '';
-      this.observacionExistente = null;
+      this.nuevaObservacion = '';
+      this.observaciones = [];
     } catch (error) {
       console.warn('Error al limpiar estado temporal:', error);
     }
@@ -493,7 +493,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
             // Hacer una segunda llamada para obtener la información básica con cotización
             this.liquidacionService.getLiquidacionById(id).subscribe({
               next: (liquidacionBasica) => {
-                if (liquidacionBasica.cotizacion?.personas?.id) { 
+                if (liquidacionBasica.cotizacion?.personas?.id) {
                   // Combinar los datos: usar detalles de ConDetalles pero cotización de getId
                   this.liquidacion = {
                     ...liquidacionConDetalles,
@@ -646,62 +646,55 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe(observaciones => {
-        // Tomar solo la primera observación si existe (para mantenerlo simple)
-        if (observaciones && observaciones.length > 0) {
-          this.observacionTemporal = observaciones[0].descripcion || '';
-          // Guardar la observación existente para poder actualizarla
-          this.observacionExistente = observaciones[0];
-        } else {
-          this.observacionTemporal = '';
-          this.observacionExistente = null;
+        // Cargar todas las observaciones
+        this.observaciones = observaciones || [];
+      });
+
+    this.subscriptions.add(subscription);
+  }
+
+  // Métodos para manejar observaciones múltiples
+  agregarObservacion(): void {
+    if (!this.nuevaObservacion?.trim() || !this.liquidacionId) {
+      return;
+    }
+
+    const observacionRequest: ObservacionLiquidacionRequest = {
+      descripcion: this.nuevaObservacion.trim(),
+      liquidacionId: this.liquidacionId
+    };
+
+    const subscription = this.observacionLiquidacionService.create(observacionRequest)
+      .pipe(
+        catchError(error => {
+          console.error('Error al crear observación:', error);
+          return of(null);
+        })
+      )
+      .subscribe(response => {
+        if (response) {
+          this.observaciones.push(response);
+          this.nuevaObservacion = '';
         }
       });
 
     this.subscriptions.add(subscription);
   }
 
-  // Método para procesar observación temporal
-  private procesarObservacionTemporal(liquidacionId: number): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.observacionTemporal || !this.observacionTemporal.trim()) {
-        resolve();
-        return;
-      }
+  // Método para eliminar observación directamente
+  eliminarObservacion(observacion: ObservacionLiquidacionResponse): void {
+    const subscription = this.observacionLiquidacionService.delete(observacion.id)
+      .pipe(
+        catchError(error => {
+          console.error('Error al eliminar observación:', error);
+          return of(null);
+        })
+      )
+      .subscribe(response => {
+        this.observaciones = this.observaciones.filter(obs => obs.id !== observacion.id);
+      });
 
-      const observacionRequest: ObservacionLiquidacionRequest = {
-        descripcion: this.observacionTemporal.trim(),
-        liquidacionId: liquidacionId
-      };
-
-      let operacion: Observable<any>;
-
-      if (this.observacionExistente) {
-        // Actualizar observación existente
-        operacion = this.observacionLiquidacionService.update(this.observacionExistente.id, observacionRequest);
-      } else {
-        // Crear nueva observación
-        operacion = this.observacionLiquidacionService.create(observacionRequest);
-      }
-
-      const subscription = operacion
-        .pipe(
-          catchError(error => {
-            console.error('Error al procesar observación:', error);
-            reject(error);
-            return of(null);
-          })
-        )
-        .subscribe(response => {
-          if (response) {
-            this.observacionExistente = response;
-            resolve();
-          } else {
-            reject(new Error('No se pudo procesar la observación'));
-          }
-        });
-
-      this.subscriptions.add(subscription);
-    });
+    this.subscriptions.add(subscription);
   }
 
   // Form methods
@@ -720,7 +713,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     // Configurar autoguardado si estamos en modo edición
     this.configurarAutoguardado();
-    
+
     // DESPUÉS de inicializar, esperar a que todos los datos async estén cargados
     // y LUEGO intentar cargar estado temporal
     this.esperarDatosAsyncYCargarEstado();
@@ -729,12 +722,12 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private esperarDatosAsyncYCargarEstado(): void {
     // Verificar si todos los datos necesarios están cargados
     const verificarDatos = () => {
-      const datosListos = this.viajeros.length > 0 && 
-                         this.productos.length > 0 && 
-                         this.proveedores.length > 0 && 
+      const datosListos = this.viajeros.length > 0 &&
+                         this.productos.length > 0 &&
+                         this.proveedores.length > 0 &&
                          this.operadores.length > 0 &&
                          this.formasPago.length > 0;
-      
+
       if (datosListos) {
         // Todos los datos están listos, intentar cargar estado temporal
         setTimeout(() => {
@@ -823,7 +816,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
                 ...detalle,
                 liquidacionId: this.liquidacionId!
               };
-              
+
               this.detalleLiquidacionService.createDetalleLiquidacion(this.liquidacionId!, detalleConLiquidacion)
                 .subscribe({
                   next: (detalleResponse) => {
@@ -836,25 +829,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
             }
           });
 
-          // 3. PROCESAR observación si existe
-          if (this.observacionTemporal && this.observacionTemporal.trim()) {
-            this.procesarObservacionTemporal(this.liquidacionId!)
-              .then(() => {
-                // Limpiar estado temporal después de procesar observaciones
-                this.limpiarEstadoTemporal();
-                this.recargarDatos();
-              })
-              .catch(error => {
-                console.error('Error al procesar observación:', error);
-                // Limpiar estado temporal incluso si hay error
-                this.limpiarEstadoTemporal();
-                this.recargarDatos();
-              });
-          } else {
-            // Si no hay observación, proceder normalmente
-            this.limpiarEstadoTemporal();
-            this.recargarDatos();
-          }
+          // 3. Finalizar guardado (las observaciones se manejan por separado)
+          this.limpiarEstadoTemporal();
+          this.recargarDatos();
         }),
         catchError(error => {
           console.error('Error al guardar la liquidación:', error);
@@ -950,15 +927,15 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   eliminarDetalleOriginal(index: number): void {
     if (this.liquidacion?.detalles) {
       const detalleAEliminar = this.liquidacion.detalles[index];
-      
+
       // Si el detalle tiene ID, agregarlo a la lista de eliminados
       if (detalleAEliminar?.id) {
         this.detallesEliminados.push(detalleAEliminar.id);
       }
-      
+
       // Eliminar del array local
       this.liquidacion.detalles.splice(index, 1);
-      
+
       // Autoguardar estado temporal
       this.guardarEstadoTemporal();
     }
@@ -1181,7 +1158,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   calcularCargoServicio(detalle: any): void {
     const valorVenta = detalle.valorVenta || 0;
     const costoTicket = detalle.costoTicket || 0;
-    
+
     // Solo calcular automáticamente si ambos valores están presentes
     if (valorVenta > 0 && costoTicket >= 0) {
       detalle.cargoServicio = valorVenta - costoTicket;
@@ -1192,7 +1169,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   calcularCargoServicioFormulario(): void {
     const valorVenta = this.detalleForm.get('valorVenta')?.value || 0;
     const costoTicket = this.detalleForm.get('costoTicket')?.value || 0;
-    
+
     // Solo calcular automáticamente si ambos valores están presentes
     if (valorVenta > 0 && costoTicket >= 0) {
       const cargoServicio = valorVenta - costoTicket;
