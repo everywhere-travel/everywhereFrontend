@@ -14,6 +14,7 @@ import { PersonaJuridicaService } from '../../core/service/juridica/persona-juri
 import { ProductoService } from '../../core/service/Producto/producto.service';
 import { FormaPagoService } from '../../core/service/FormaPago/forma-pago.service';
 import { DetalleLiquidacionService } from '../../core/service/DetalleLiquidacion/detalle-liquidacion.service';
+import { ObservacionLiquidacionService } from '../../core/service/ObservacionLiquidacion/observacion-liquidacion';
 import { ProveedorService } from '../../core/service/Proveedor/proveedor.service';
 import { OperadorService } from '../../core/service/Operador/operador.service';
 import { ViajeroService } from '../../core/service/viajero/viajero.service';
@@ -21,6 +22,7 @@ import { ViajeroService } from '../../core/service/viajero/viajero.service';
 // Models
 import { LiquidacionConDetallesResponse, LiquidacionRequest } from '../../shared/models/Liquidacion/liquidacion.model';
 import { DetalleLiquidacionResponse, DetalleLiquidacionRequest } from '../../shared/models/Liquidacion/detalleLiquidacion.model';
+import { ObservacionLiquidacionRequest, ObservacionLiquidacionResponse } from '../../shared/models/Liquidacion/observacionLiquidacion.model';
 import { personaDisplay } from '../../shared/models/Persona/persona.model';
 import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
@@ -63,6 +65,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private productoService = inject(ProductoService);
   private formaPagoService = inject(FormaPagoService);
   private detalleLiquidacionService = inject(DetalleLiquidacionService);
+  private observacionLiquidacionService = inject(ObservacionLiquidacionService);
   private proveedorService = inject(ProveedorService);
   private operadorService = inject(OperadorService);
   private viajeroService = inject(ViajeroService);
@@ -95,6 +98,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   error: string | null = null;
   sidebarCollapsed = false;
   modoEdicion = false; // Nueva propiedad para controlar modo edición
+
+  // Observación temporal
+  observacionTemporal: string = '';
+  observacionExistente: ObservacionLiquidacionResponse | null = null;
 
   // Detalles fijos como en cotizaciones
   detallesFijos: DetalleLiquidacionRequest[] = [];
@@ -418,6 +425,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       sessionStorage.removeItem(this.getEstadoTemporalKey());
       // También limpiar el array de detalles eliminados
       this.detallesEliminados = [];
+      // Limpiar observación temporal
+      this.observacionTemporal = '';
+      this.observacionExistente = null;
     } catch (error) {
       console.warn('Error al limpiar estado temporal:', error);
     }
@@ -513,6 +523,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
           // Inicializar el formulario (ya incluye carga de estado temporal)
           this.initializeForm();
+
+          // Cargar observaciones de la liquidación
+          this.cargarObservacionesLiquidacion(liquidacion.id);
 
           // Cargar información del cliente si existe cotización
           if (liquidacion?.cotizacion?.personas?.id) {
@@ -620,6 +633,74 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       relativeTo: this.route,
       queryParams: { modo: null },
       queryParamsHandling: 'merge'
+    });
+  }
+
+  // Método para cargar observaciones
+  private cargarObservacionesLiquidacion(liquidacionId: number): void {
+    const subscription = this.observacionLiquidacionService.findByLiquidacionId(liquidacionId)
+      .pipe(
+        catchError(error => {
+          console.error('Error al cargar observaciones:', error);
+          return of([]);
+        })
+      )
+      .subscribe(observaciones => {
+        // Tomar solo la primera observación si existe (para mantenerlo simple)
+        if (observaciones && observaciones.length > 0) {
+          this.observacionTemporal = observaciones[0].descripcion || '';
+          // Guardar la observación existente para poder actualizarla
+          this.observacionExistente = observaciones[0];
+        } else {
+          this.observacionTemporal = '';
+          this.observacionExistente = null;
+        }
+      });
+
+    this.subscriptions.add(subscription);
+  }
+
+  // Método para procesar observación temporal
+  private procesarObservacionTemporal(liquidacionId: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.observacionTemporal || !this.observacionTemporal.trim()) {
+        resolve();
+        return;
+      }
+
+      const observacionRequest: ObservacionLiquidacionRequest = {
+        descripcion: this.observacionTemporal.trim(),
+        liquidacionId: liquidacionId
+      };
+
+      let operacion: Observable<any>;
+
+      if (this.observacionExistente) {
+        // Actualizar observación existente
+        operacion = this.observacionLiquidacionService.update(this.observacionExistente.id, observacionRequest);
+      } else {
+        // Crear nueva observación
+        operacion = this.observacionLiquidacionService.create(observacionRequest);
+      }
+
+      const subscription = operacion
+        .pipe(
+          catchError(error => {
+            console.error('Error al procesar observación:', error);
+            reject(error);
+            return of(null);
+          })
+        )
+        .subscribe(response => {
+          if (response) {
+            this.observacionExistente = response;
+            resolve();
+          } else {
+            reject(new Error('No se pudo procesar la observación'));
+          }
+        });
+
+      this.subscriptions.add(subscription);
     });
   }
 
@@ -755,15 +836,25 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
             }
           });
 
-          // Limpiar estado temporal después de guardar exitosamente
-          this.limpiarEstadoTemporal();
-          
-          // Recargar los datos actualizados después de un breve delay
-          setTimeout(() => {
-            this.loadLiquidacion(this.liquidacionId!);
-            // Salir del modo edición
-            this.salirModoEdicion();
-          }, 1000);
+          // 3. PROCESAR observación si existe
+          if (this.observacionTemporal && this.observacionTemporal.trim()) {
+            this.procesarObservacionTemporal(this.liquidacionId!)
+              .then(() => {
+                // Limpiar estado temporal después de procesar observaciones
+                this.limpiarEstadoTemporal();
+                this.recargarDatos();
+              })
+              .catch(error => {
+                console.error('Error al procesar observación:', error);
+                // Limpiar estado temporal incluso si hay error
+                this.limpiarEstadoTemporal();
+                this.recargarDatos();
+              });
+          } else {
+            // Si no hay observación, proceder normalmente
+            this.limpiarEstadoTemporal();
+            this.recargarDatos();
+          }
         }),
         catchError(error => {
           console.error('Error al guardar la liquidación:', error);
@@ -778,6 +869,15 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       .subscribe();
 
     this.subscriptions.add(saveSubscription);
+  }
+
+  recargarDatos(): void {
+    // Recargar los datos actualizados después de un breve delay
+    setTimeout(() => {
+      this.loadLiquidacion(this.liquidacionId!);
+      // Salir del modo edición
+      this.salirModoEdicion();
+    }, 1000);
   }
 
   // Métodos para detalles fijos
@@ -861,12 +961,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       
       // Autoguardar estado temporal
       this.guardarEstadoTemporal();
-    }
-  }
-
-  recargarDatos(): void {
-    if (this.liquidacionId) {
-      this.loadLiquidacion(this.liquidacionId);
     }
   }
 
