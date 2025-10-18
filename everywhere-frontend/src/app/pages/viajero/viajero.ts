@@ -173,44 +173,6 @@ export class Viajero implements OnInit {
           moduleKey: 'CARPETAS'
         }
       ]
-    },
-    {
-      id: 'reportes',
-      title: 'Reportes y Analytics',
-      icon: 'fas fa-chart-bar',
-      children: [
-        {
-          id: 'estadisticas',
-          title: 'Estadísticas',
-          icon: 'fas fa-chart-line',
-          route: '/estadistica'
-        },
-        {
-          id: 'reportes-general',
-          title: 'Reportes Generales',
-          icon: 'fas fa-file-pdf',
-          route: '/reportes'
-        }
-      ]
-    },
-    {
-      id: 'configuracion',
-      title: 'Configuración',
-      icon: 'fas fa-cog',
-      children: [
-        {
-          id: 'usuarios',
-          title: 'Usuarios',
-          icon: 'fas fa-user-shield',
-          route: '/usuarios'
-        },
-        {
-          id: 'sistema',
-          title: 'Sistema',
-          icon: 'fas fa-server',
-          route: '/configuracion'
-        }
-      ]
     }
   ];
 
