@@ -108,7 +108,7 @@ export class DocumentosComponent implements OnInit {
       id: 'documentos-cobranza',
       title: 'Documentos de Cobranza',
       icon: 'fas fa-file-contract',
-      route: '/documento-cobranza',
+      route: '/documentos-cobranza',
       moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {

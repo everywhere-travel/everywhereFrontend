@@ -123,7 +123,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   showSuccessMessage: boolean = false;
 
   // ===== SELECTION STATE =====
-  liquidacionSeleccionada: LiquidacionResponse | null = null;
+  liquidacionSeleccionada: LiquidacionConDetallesResponse | null = null;
   liquidacionCompleta: LiquidacionConDetallesResponse | null = null;
   liquidacionEditandoId: number | null = null;
 
@@ -204,7 +204,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       id: 'documentos-cobranza',
       title: 'Documentos de Cobranza',
       icon: 'fas fa-file-contract',
-      route: '/documento-cobranza',
+      route: '/documentos-cobranza',
       moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {
@@ -678,6 +678,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.mostrarModalCotizaciones = true;
 
     } catch (error) {
+      console.error('Error en mostrarFormularioCrear:', error);
       this.showError('Error al cargar las cotizaciones');
     } finally {
       this.isLoading = false;
@@ -1076,11 +1077,9 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   mostrarModalVerLiquidacion(liquidacion: LiquidacionResponse): void {
-    // Navegar al componente de detalle optimizado
+    // Navegar al componente de detalle para ver la liquidación
     this.router.navigate(['/liquidaciones/detalle', liquidacion.id]);
-  }
-
-  async mostrarModalVerLiquidacionOld(liquidacion: LiquidacionResponse): Promise<void> {
+  }  async mostrarModalVerLiquidacionOld(liquidacion: LiquidacionResponse): Promise<void> {
     this.liquidacionSeleccionada = liquidacion;
     this.isLoading = true;
 
@@ -1254,6 +1253,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.cotizaciones = await this.cotizacionService.getCotizacionSinLiquidacion().toPromise() || [];
       this.cotizacionesFiltradas = [...this.cotizaciones];
     } catch (error) {
+      console.error('Error en loadCotizaciones:', error);
       this.showError('Error al cargar las cotizaciones');
       this.cotizaciones = [];
       this.cotizacionesFiltradas = [];

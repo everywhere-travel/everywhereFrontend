@@ -992,21 +992,58 @@
 
               <!-- Contenido de la observación -->
               <div class="flex-1 min-w-0">
-                <p class="text-gray-800 text-sm leading-relaxed break-words">{{ observacion.descripcion }}</p>
-                <div *ngIf="observacion.creado" class="text-xs text-gray-500 mt-1">
-                  <i class="fas fa-clock mr-1"></i>
-                  {{ observacion.creado | date:'dd/MM/yyyy HH:mm' }}
+                <!-- Modo vista: solo lectura -->
+                <div *ngIf="!modoEdicion || !observacion.editando">
+                  <p class="text-gray-800 text-sm leading-relaxed break-words">{{ observacion.descripcion }}</p>
+                  <div *ngIf="observacion.creado" class="text-xs text-gray-500 mt-1">
+                    <i class="fas fa-clock mr-1"></i>
+                    {{ observacion.creado | date:'dd/MM/yyyy HH:mm' }}
+                  </div>
+                </div>
+
+                <!-- Modo edición: campo editable -->
+                <div *ngIf="modoEdicion && observacion.editando" class="space-y-2">
+                  <textarea [(ngModel)]="observacion.descripcionTemp"
+                            [ngModelOptions]="{standalone: true}"
+                            class="w-full px-3 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none bg-white text-sm"
+                            rows="2"
+                            placeholder="Editar observación..."></textarea>
+
+                  <!-- Botones de guardar/cancelar edición -->
+                  <div class="flex gap-2">
+                    <button (click)="guardarEdicionObservacion(observacion)"
+                            class="inline-flex items-center px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors">
+                      <i class="fas fa-check mr-1"></i>
+                      Guardar
+                    </button>
+                    <button (click)="cancelarEdicionObservacion(observacion)"
+                            class="inline-flex items-center px-3 py-1 bg-gray-500 text-white rounded text-xs hover:bg-gray-600 transition-colors">
+                      <i class="fas fa-times mr-1"></i>
+                      Cancelar
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <!-- Botón de eliminar directo -->
-              <button *ngIf="modoEdicion"
-                      (click)="eliminarObservacion(observacion)"
-                      class="inline-flex items-center justify-center w-8 h-8 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 flex-shrink-0"
-                      title="Eliminar observación"
-                      type="button">
-                <i class="fas fa-trash text-xs"></i>
-              </button>
+              <!-- Botones de acción (solo en modo edición) -->
+              <div *ngIf="modoEdicion" class="flex flex-col gap-1 flex-shrink-0">
+                <!-- Botón editar (solo si no está editando) -->
+                <button *ngIf="!observacion.editando"
+                        (click)="editarObservacion(observacion)"
+                        class="inline-flex items-center justify-center w-8 h-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                        title="Editar observación"
+                        type="button">
+                  <i class="fas fa-edit text-xs"></i>
+                </button>
+
+                <!-- Botón eliminar -->
+                <button (click)="eliminarObservacion(observacion)"
+                        class="inline-flex items-center justify-center w-8 h-8 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                        title="Eliminar observación"
+                        type="button">
+                  <i class="fas fa-trash text-xs"></i>
+                </button>
+              </div>
             </div>
           </div>
 
