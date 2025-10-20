@@ -87,7 +87,7 @@
                 <i class="fas fa-chevron-right mx-2"></i>
               </li>
               <li class="text-white font-medium">
-                Detalle de Documento #{{ documento.nroSerie || documento.id }}
+                Detalle de Documento #{{ documento.numero || documento.id }}
               </li>
             </ol>
           </nav>
@@ -101,7 +101,7 @@
                 </div>
                 <div>
                   <h1 class="text-3xl font-bold">
-                    Documento #{{ documento.nroSerie || documento.id }}
+                    Documento #{{ documento.numero || documento.id }}
                   </h1>
                   <p class="text-white/80 text-lg">
                     {{ modoEdicion ? 'Editando detalles del documento' : 'Gestión de detalles del documento de cobranza' }}

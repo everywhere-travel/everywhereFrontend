@@ -13,7 +13,7 @@ import { ProductoService } from '../../core/service/Producto/producto.service';
 import { LoadingService } from '../../core/service/loading.service';
 
 // Models
-import { DocumentoCobranzaDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
+import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import {
   DetalleDocumentoCobranzaRequestDTO,
   DetalleDocumentoCobranzaResponseDTO
@@ -42,7 +42,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
 
   // Data
-  documento: DocumentoCobranzaDTO | null = null;
+  documento: DocumentoCobranzaResponseDTO | null = null;
   documentoId: number | null = null;
   detalles: DetalleDocumentoCobranzaResponseDTO[] = [];
   productos: ProductoResponse[] = [];
