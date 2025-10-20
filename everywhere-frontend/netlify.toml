@@ -1,21 +1,15 @@
 [build]
-  # Directorio base: donde Netlify encontrará el package.json para instalar dependencias.
-  # El directorio donde se encuentra tu archivo angular.json.
+  # 1. Base directory: Donde está el package.json de Angular.
   base    = "everywhere-frontend"
 
-  # Comando de compilación: usa el script 'build' definido en tu package.json.
+  # 2. Build command: El comando que genera la aplicación de producción.
   command = "npm run build"
 
-  # Directorio de publicación: el 'outputPath' de tu configuración de producción en angular.json.
-  # Nota: 'dist/everywhere-frontend' se asume que es relativo a la raíz del repositorio, que es la salida de Angular.
+  # 3. Publish directory: La carpeta que Angular genera (outputPath).
   publish = "dist/everywhere-frontend"
 
-# Configuración de Redireccionamiento (Soluciona el error 404 en rutas de Angular)
-# Esto es vital para que las rutas internas de Angular (SPA) funcionen correctamente.
+# 4. Regla de redireccionamiento (Corrige el 404 de Angular)
 [[redirects]]
-  # Para cualquier ruta que no coincida con un archivo existente...
   from = "/*"
-  # ...redirige al archivo principal de la aplicación (index.html)...
   to = "/index.html"
-  # ...y devuelve un código de estado 200 (OK), manteniendo la URL del usuario.
   status = 200
