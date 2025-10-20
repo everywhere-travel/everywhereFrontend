@@ -97,6 +97,21 @@ export class DocumentosComponent implements OnInit {
       moduleKey: 'LIQUIDACIONES'
     },
     {
+      id: 'documentos',
+      title: 'Documentos de clientes',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      active: true,
+      moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documentos-cobranza',
+      moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',

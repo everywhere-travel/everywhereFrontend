@@ -8,6 +8,7 @@ import { catchError, finalize, tap } from 'rxjs/operators';
 // Services
 import { LiquidacionService } from '../../core/service/Liquidacion/liquidacion.service';
 import { LoadingService } from '../../core/service/loading.service';
+import { AuthorizationService } from '../../core/service/authorization.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
@@ -28,12 +29,24 @@ import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatur
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model';
+
+// Interfaz extendida para observaciones con propiedades de edición
+interface ObservacionConEdicion extends ObservacionLiquidacionResponse {
+  editando?: boolean;
+  descripcionTemp?: string;
+}
 import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { OperadorResponse } from '../../shared/models/Operador/operador.model';
 import { ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+
+// Interfaces
+interface ExtendedSidebarMenuItem extends SidebarMenuItem {
+  moduleKey?: string;
+  children?: ExtendedSidebarMenuItem[];
+}
 
 @Component({
   selector: 'app-detalle-liquidacion',
@@ -59,6 +72,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private liquidacionService = inject(LiquidacionService);
   private loadingService = inject(LoadingService);
+  private authService = inject(AuthorizationService);
   private personaService = inject(PersonaService);
   private personaNaturalService = inject(PersonaNaturalService);
   private personaJuridicaService = inject(PersonaJuridicaService);
@@ -99,8 +113,11 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   sidebarCollapsed = false;
   modoEdicion = false; // Nueva propiedad para controlar modo edición
 
+  // Sidebar State
+  sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
+
   // Observaciones múltiples
-  observaciones: ObservacionLiquidacionResponse[] = [];
+  observaciones: ObservacionConEdicion[] = [];
   nuevaObservacion: string = '';
 
   // Detalles fijos como en cotizaciones
@@ -110,7 +127,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   detallesEliminados: number[] = [];
 
   // Sidebar Configuration
-  sidebarMenuItems: SidebarMenuItem[] = [
+  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
@@ -121,24 +138,28 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       id: 'clientes',
       title: 'Gestión de Clientes',
       icon: 'fas fa-users',
+      moduleKey: 'CLIENTES',
       children: [
         {
           id: 'personas',
           title: 'Clientes',
           icon: 'fas fa-address-card',
-          route: '/personas'
+          route: '/personas',
+          moduleKey: 'PERSONAS'
         },
         {
           id: 'viajeros',
           title: 'Viajeros',
           icon: 'fas fa-passport',
-          route: '/viajero'
+          route: '/viajero',
+          moduleKey: 'VIAJEROS'
         },
         {
           id: 'viajeros-frecuentes',
           title: 'Viajeros Frecuentes',
           icon: 'fas fa-crown',
-          route: '/viajero-frecuente'
+          route: '/viajero-frecuente',
+          moduleKey: 'VIAJEROS'
         }
       ]
     },
@@ -146,14 +167,30 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       id: 'cotizaciones',
       title: 'Cotizaciones',
       icon: 'fas fa-file-invoice',
-      route: '/cotizaciones'
+      route: '/cotizaciones',
+      moduleKey: 'COTIZACIONES'
     },
     {
       id: 'liquidaciones',
       title: 'Liquidaciones',
       icon: 'fas fa-credit-card',
+      route: '/liquidaciones',
       active: true,
-      route: '/liquidaciones'
+      moduleKey: 'LIQUIDACIONES'
+    },
+    {
+      id: 'documentos',
+      title: 'Documentos de clientes',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documentos-cobranza',
+      moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {
       id: 'recursos',
@@ -164,19 +201,22 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           id: 'productos',
           title: 'Productos',
           icon: 'fas fa-cube',
-          route: '/productos'
+          route: '/productos',
+          moduleKey: 'PRODUCTOS'
         },
         {
           id: 'proveedores',
           title: 'Proveedores',
           icon: 'fas fa-truck',
-          route: '/proveedores'
+          route: '/proveedores',
+          moduleKey: 'PROVEEDORES'
         },
         {
           id: 'operadores',
           title: 'Operadores',
           icon: 'fas fa-headset',
-          route: '/operadores'
+          route: '/operadores',
+          moduleKey: 'OPERADORES'
         }
       ]
     },
@@ -189,13 +229,15 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           id: 'counters',
           title: 'Counters',
           icon: 'fas fa-users-line',
-          route: '/counters'
+          route: '/counters',
+          moduleKey: 'COUNTERS'
         },
         {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
-          route: '/sucursales'
+          route: '/sucursales',
+          moduleKey: 'SUCURSALES'
         }
       ]
     },
@@ -208,7 +250,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           id: 'carpetas',
           title: 'Explorador',
           icon: 'fas fa-folder-open',
-          route: '/carpetas'
+          route: '/carpetas',
+          moduleKey: 'CARPETAS'
         }
       ]
     }
@@ -254,6 +297,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.initializeSidebar();
     this.loadLiquidacionFromRoute();
     this.loadSelectOptions();
   }
@@ -644,7 +688,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   // Método para eliminar observación directamente
-  eliminarObservacion(observacion: ObservacionLiquidacionResponse): void {
+  eliminarObservacion(observacion: ObservacionConEdicion): void {
     const subscription = this.observacionLiquidacionService.delete(observacion.id)
       .pipe(
         catchError(error => {
@@ -657,6 +701,57 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       });
 
     this.subscriptions.add(subscription);
+  }
+
+  // Método para iniciar la edición de una observación
+  editarObservacion(observacion: ObservacionConEdicion): void {
+    // Cancelar cualquier otra edición activa
+    this.observaciones.forEach(obs => {
+      if (obs !== observacion) {
+        obs.editando = false;
+        delete obs.descripcionTemp;
+      }
+    });
+
+    // Activar modo edición para esta observación
+    observacion.editando = true;
+    observacion.descripcionTemp = observacion.descripcion;
+  }
+
+  // Método para guardar la edición de una observación
+  guardarEdicionObservacion(observacion: ObservacionConEdicion): void {
+    if (!observacion.descripcionTemp?.trim()) {
+      return;
+    }
+
+    const observacionRequest: ObservacionLiquidacionRequest = {
+      descripcion: observacion.descripcionTemp.trim(),
+      liquidacionId: this.liquidacionId!
+    };
+
+    const subscription = this.observacionLiquidacionService.update(observacion.id, observacionRequest)
+      .pipe(
+        catchError(error => {
+          console.error('Error al actualizar observación:', error);
+          return of(null);
+        })
+      )
+      .subscribe(response => {
+        if (response && observacion.descripcionTemp) {
+          // Actualizar la observación en la lista
+          observacion.descripcion = observacion.descripcionTemp.trim();
+          observacion.editando = false;
+          delete observacion.descripcionTemp;
+        }
+      });
+
+    this.subscriptions.add(subscription);
+  }
+
+  // Método para cancelar la edición de una observación
+  cancelarEdicionObservacion(observacion: ObservacionConEdicion): void {
+    observacion.editando = false;
+    delete observacion.descripcionTemp;
   }
 
   // Form methods
@@ -912,11 +1007,52 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   // Sidebar methods
+  private initializeSidebar(): void {
+    this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems);
+  }
+
+  private filterSidebarItems(items: ExtendedSidebarMenuItem[]): ExtendedSidebarMenuItem[] {
+    const currentUser = this.authService.getCurrentUser();
+
+    if (!currentUser) {
+      return [];
+    }
+
+    // Obtener el rol del usuario
+    const currentRole = this.authService.getCurrentRole();
+
+    // Si el usuario es admin o no tiene rol, mostrar todo
+    if (this.authService.isAdmin() || !currentRole) {
+      return items;
+    }
+
+    return items.filter(item => {
+      // Si tiene moduleKey, verificar si el usuario tiene acceso a ese módulo
+      if (item.moduleKey) {
+        return currentRole.modules.includes(item.moduleKey);
+      }
+
+      // Si no tiene moduleKey pero tiene children, verificar si algún hijo tiene permisos
+      if (item.children && item.children.length > 0) {
+        const filteredChildren = this.filterSidebarItems(item.children);
+        if (filteredChildren.length > 0) {
+          // Actualizar el item con solo los children filtrados
+          item.children = filteredChildren;
+          return true;
+        }
+        return false;
+      }
+
+      // Si no tiene moduleKey ni children, mostrar por defecto (como Dashboard)
+      return true;
+    });
+  }
+
   onToggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
 
-  onSidebarItemClick(item: any): void {
+  onSidebarItemClick(item: SidebarMenuItem): void {
     if (item.route) {
       this.router.navigate([item.route]);
     }
