@@ -157,7 +157,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas',
-          moduleKey: 'CLIENTES'
+          moduleKey: 'PERSONAS'
         },
         {
           id: 'viajeros',
@@ -180,8 +180,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       title: 'Cotizaciones',
       icon: 'fas fa-file-invoice',
       route: '/cotizaciones',
-      moduleKey: 'COTIZACIONES',
-      active: true
+      active: true,
+      moduleKey: 'COTIZACIONES'
     },
     {
       id: 'liquidaciones',
@@ -189,6 +189,20 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       icon: 'fas fa-credit-card',
       route: '/liquidaciones',
       moduleKey: 'LIQUIDACIONES'
+    },
+    {
+      id: 'documentos',
+      title: 'Documentos de clientes',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documentos-cobranza',
+      moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {
       id: 'recursos',
@@ -215,13 +229,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           icon: 'fas fa-headset',
           route: '/operadores',
           moduleKey: 'OPERADOR'
-        },
-        {
-          id: 'documentos',
-          title: 'Documentos',
-          icon: 'fas fa-file-alt',
-          route: '/documentos',
-          moduleKey: 'DOCUMENTOS'
         }
       ]
     },

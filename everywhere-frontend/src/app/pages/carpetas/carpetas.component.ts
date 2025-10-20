@@ -77,7 +77,7 @@ export class CarpetasComponent implements OnInit {
           title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas',
-          moduleKey: 'CLIENTES'
+          moduleKey: 'PERSONAS'
         },
         {
           id: 'viajeros',
@@ -110,6 +110,20 @@ export class CarpetasComponent implements OnInit {
       moduleKey: 'LIQUIDACIONES'
     },
     {
+      id: 'documentos',
+      title: 'Documentos de clientes',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documentos-cobranza',
+      moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
@@ -134,13 +148,6 @@ export class CarpetasComponent implements OnInit {
           icon: 'fas fa-headset',
           route: '/operadores',
           moduleKey: 'OPERADOR'
-        },
-        {
-          id: 'documentos',
-          title: 'Documentos',
-          icon: 'fas fa-file-alt',
-          route: '/documentos',
-          moduleKey: 'DOCUMENTOS'
         }
       ]
     },
@@ -176,8 +183,7 @@ export class CarpetasComponent implements OnInit {
           title: 'Explorador',
           icon: 'fas fa-folder-open',
           route: '/carpetas',
-          moduleKey: 'CARPETA',
-          active: true
+          moduleKey: 'CARPETAS'
         }
       ]
     }

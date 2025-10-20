@@ -59,7 +59,7 @@ export class SucursalesComponent implements OnInit {
           title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas',
-          moduleKey: 'CLIENTES'
+          moduleKey: 'PERSONAS'
         },
         {
           id: 'viajeros',
@@ -92,6 +92,20 @@ export class SucursalesComponent implements OnInit {
       moduleKey: 'LIQUIDACIONES'
     },
     {
+      id: 'documentos',
+      title: 'Documentos de clientes',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documento-cobranza',
+      moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
@@ -116,36 +130,28 @@ export class SucursalesComponent implements OnInit {
           icon: 'fas fa-headset',
           route: '/operadores',
           moduleKey: 'OPERADOR'
-        },
-        {
-          id: 'documentos',
-          title: 'Documentos',
-          icon: 'fas fa-file-alt',
-          route: '/documentos',
-          moduleKey: 'DOCUMENTOS'
         }
       ]
     },
     {
       id: 'organización',
       title: 'Organización',
-      icon: 'fas fa-sitemap',
       active: true,
+      icon: 'fas fa-sitemap',
       children: [
         {
           id: 'counters',
           title: 'Counters',
           icon: 'fas fa-users-line',
           route: '/counters',
-          moduleKey: 'COUNTERS',
+          moduleKey: 'COUNTERS'
         },
         {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
           route: '/sucursales',
-          moduleKey: 'SUCURSALES',
-          active: true
+          moduleKey: 'SUCURSALES'
         }
       ]
     },
