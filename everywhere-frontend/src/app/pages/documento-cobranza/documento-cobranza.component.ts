@@ -11,7 +11,7 @@ import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.serv
 import { AuthServiceService } from '../../core/service/auth/auth.service';
 
 // Models
-import { DocumentoCobranzaDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
+import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import { CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
 
 // Components
@@ -39,6 +39,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   private cotizacionService = inject(CotizacionService);
 
   // ===== UI STATE =====
+  loading: boolean = false;
   isLoading = false;
   sidebarCollapsed = false;
   currentView: 'table' | 'cards' | 'list' = 'table';
@@ -49,13 +50,13 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   editandoDocumento = false;
 
   // ===== DATA ARRAYS =====
-  documentos: DocumentoCobranzaDTO[] = [];
-  filteredDocumentos: DocumentoCobranzaDTO[] = [];
+  documentos: DocumentoCobranzaResponseDTO[] = [];
+  filteredDocumentos: DocumentoCobranzaResponseDTO[] = [];
   cotizaciones: CotizacionResponse[] = [];
   cotizacionesFiltradas: CotizacionResponse[] = [];
 
   // ===== SELECTION STATE =====
-  documentoSeleccionado: DocumentoCobranzaDTO | null = null;
+  documentoSeleccionado: DocumentoCobranzaResponseDTO | null = null;
   cotizacionSeleccionada: CotizacionResponse | null = null;
   selectedItems: number[] = [];
   allSelected: boolean = false;
@@ -107,6 +108,13 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
           icon: 'fas fa-passport',
           route: '/viajero',
           moduleKey: 'VIAJEROS'
+        },
+        {
+          id: 'viajeros-frecuentes',
+          title: 'Viajeros Frecuentes',
+          icon: 'fas fa-crown',
+          route: '/viajero-frecuente',
+          moduleKey: 'VIAJEROS'
         }
       ]
     },
@@ -118,6 +126,14 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       moduleKey: 'COTIZACIONES'
     },
     {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documento-cobranza',
+      active: true,
+      moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
       id: 'liquidaciones',
       title: 'Liquidaciones',
       icon: 'fas fa-credit-card',
@@ -125,12 +141,74 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       moduleKey: 'LIQUIDACIONES'
     },
     {
-      id: 'documentos-cobranza',
-      title: 'Documentos de Cobranza',
-      icon: 'fas fa-file-contract',
-      route: '/documentos-cobranza',
-      active: true,
-      moduleKey: 'DOCUMENTOS_COBRANZA'
+      id: 'documentos',
+      title: 'Documentos',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'recursos',
+      title: 'Recursos',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos',
+          moduleKey: 'PRODUCTOS'
+        },
+        {
+          id: 'proveedores',
+          title: 'Proveedores',
+          icon: 'fas fa-truck',
+          route: '/proveedores',
+          moduleKey: 'PROVEEDORES'
+        },
+        {
+          id: 'operadores',
+          title: 'Operadores',
+          icon: 'fas fa-headset',
+          route: '/operadores',
+          moduleKey: 'OPERADOR'
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      children: [
+        {
+          id: 'counters',
+          title: 'Counters',
+          icon: 'fas fa-users-line',
+          route: '/counters',
+          moduleKey: 'COUNTERS'
+        },
+        {
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales',
+          moduleKey: 'SUCURSALES'
+        }
+      ]
+    },
+    {
+      id: 'archivos',
+      title: 'Gestión de Archivos',
+      icon: 'fas fa-folder',
+      children: [
+        {
+          id: 'carpetas',
+          title: 'Explorador',
+          icon: 'fas fa-folder-open',
+          route: '/carpetas',
+          moduleKey: 'CARPETAS'
+        }
+      ]
     }
   ];
 
@@ -144,6 +222,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForms();
     this.loadInitialData();
+    this.initializeSidebar();
   }
 
   ngOnDestroy(): void {
@@ -192,7 +271,46 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     });
   }
 
+  private initializeSidebar(): void {
+    this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems);
+  }
+
+  private filterSidebarItems(items: ExtendedSidebarMenuItem[]): ExtendedSidebarMenuItem[] {
+    const currentUser = this.authService.getUser();
+
+    if (!currentUser || !currentUser.permissions) {
+      return [];
+    }
+
+    // Si el usuario tiene permisos de ALL_MODULES, mostrar todo
+    if (currentUser.permissions['ALL_MODULES']) {
+      return items;
+    }
+
+    return items.filter(item => {
+      // Si tiene moduleKey, verificar permisos directos
+      if (item.moduleKey) {
+        return currentUser.permissions[item.moduleKey] && currentUser.permissions[item.moduleKey].length > 0;
+      }
+
+      // Si no tiene moduleKey pero tiene children, verificar si algún hijo tiene permisos
+      if (item.children && item.children.length > 0) {
+        const filteredChildren = this.filterSidebarItems(item.children);
+        if (filteredChildren.length > 0) {
+          // Actualizar el item con solo los children filtrados
+          item.children = filteredChildren;
+          return true;
+        }
+        return false;
+      }
+
+      // Si no tiene moduleKey ni children, mostrar por defecto (como Dashboard)
+      return true;
+    });
+  }
+
   private async loadInitialData(): Promise<void> {
+    this.loading = true;
     this.isLoading = true;
     try {
       await this.loadDocumentos();
@@ -200,43 +318,67 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     } catch (error) {
       this.showError('Error al cargar los datos iniciales');
     } finally {
+      this.loading = false;
       this.isLoading = false;
     }
   }
 
   // ===== DATA LOADING =====
-  private async loadDocumentos(): Promise<void> {
+  private async loadDocumentos(setLoading: boolean = false): Promise<void> {
     try {
-      this.documentoCobranzaService.getAllDocumentos().subscribe({
-        next: (documentos) => {
-          this.documentos = documentos;
-          this.filteredDocumentos = [...documentos];
-          this.totalItems = documentos.length;
-        },
-        error: (error) => {
-          console.error('Error al cargar documentos:', error);
-          this.showError('Error al cargar los documentos de cobranza');
-        }
-      });
+      if (setLoading) {
+        this.loading = true;
+        this.isLoading = true;
+      }
+
+      this.documentos = await this.documentoCobranzaService.getAllDocumentos().toPromise() || [];
+      console.log('Documentos recibidos del backend:', this.documentos);
+      console.log('Primer documento estructura:', this.documentos[0]);
+      if (this.documentos[0]) {
+        console.log('Valor del total del primer documento:', this.documentos[0].total);
+        console.log('Tipo del total:', typeof this.documentos[0].total);
+      }
+      this.filteredDocumentos = [...this.documentos];
+      this.totalItems = this.documentos.length;
     } catch (error) {
-      console.error('Error en loadDocumentos:', error);
+      console.error('Error al cargar documentos:', error);
+      this.showError('Error al cargar los documentos de cobranza');
+      this.documentos = [];
+    } finally {
+      if (setLoading) {
+        this.loading = false;
+        this.isLoading = false;
+      }
     }
   }
 
   private async loadCotizaciones(): Promise<void> {
     try {
-      this.cotizacionService.getAllCotizaciones().subscribe({
-        next: (cotizaciones) => {
-          this.cotizaciones = cotizaciones;
-          this.cotizacionesFiltradas = [...cotizaciones];
-        },
-        error: (error) => {
-          console.error('Error al cargar cotizaciones:', error);
-        }
-      });
+      this.cotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
+      this.cotizacionesFiltradas = [...this.cotizaciones];
     } catch (error) {
-      console.error('Error en loadCotizaciones:', error);
+      console.error('Error al cargar cotizaciones:', error);
+      this.cotizaciones = [];
     }
+  }
+
+  // ===== REFRESH METHODS =====
+  async actualizarDatos(): Promise<void> {
+    this.loading = true;
+    this.isLoading = true;
+    try {
+      await this.loadDocumentos();
+      await this.loadCotizaciones();
+    } catch (error) {
+      this.showError('Error al actualizar los datos');
+    } finally {
+      this.loading = false;
+      this.isLoading = false;
+    }
+  }
+
+  async recargarDocumentos(): Promise<void> {
+    await this.loadDocumentos();
   }
 
   // ===== MESSAGE HANDLING =====
@@ -270,10 +412,10 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     } else {
       const term = this.searchTerm.toLowerCase();
       this.filteredDocumentos = this.documentos.filter(doc =>
-        doc.nroSerie?.toLowerCase().includes(term) ||
+        doc.numero?.toLowerCase().includes(term) ||
         doc.fileVenta?.toLowerCase().includes(term) ||
         doc.clienteNombre?.toLowerCase().includes(term) ||
-        doc.clienteDocumento?.toLowerCase().includes(term)
+        doc.codigoCotizacion?.toLowerCase().includes(term)
       );
     }
     this.totalItems = this.filteredDocumentos.length;
@@ -286,14 +428,14 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== NAVIGATION METHODS =====
-  verDetalleDocumento(documento: DocumentoCobranzaDTO): void {
+  verDetalleDocumento(documento: DocumentoCobranzaResponseDTO): void {
     if (documento.id) {
       this.router.navigate(['/documentos-cobranza/detalle', documento.id]);
     }
   }
 
   // ===== MODAL METHODS =====
-  mostrarModalVerDocumento(documento: DocumentoCobranzaDTO): void {
+  mostrarModalVerDocumento(documento: DocumentoCobranzaResponseDTO): void {
     this.documentoSeleccionado = documento;
     this.mostrarModalVer = true;
   }
@@ -310,7 +452,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.mostrarModalCotizaciones = true;
   }
 
-  async mostrarFormularioEditar(documento: DocumentoCobranzaDTO): Promise<void> {
+  async mostrarFormularioEditar(documento: DocumentoCobranzaResponseDTO): Promise<void> {
     this.editandoDocumento = true;
     this.documentoSeleccionado = documento;
     this.populateForm(documento);
@@ -344,20 +486,20 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     });
   }
 
-  private populateForm(documento: DocumentoCobranzaDTO): void {
+  private populateForm(documento: DocumentoCobranzaResponseDTO): void {
     this.documentoForm.patchValue({
-      nroSerie: documento.nroSerie,
+      nroSerie: documento.numero,
       fileVenta: documento.fileVenta,
       costoEnvio: documento.costoEnvio,
       fechaEmision: documento.fechaEmision ? documento.fechaEmision.split('T')[0] : '',
-      clienteEmail: documento.clienteEmail,
-      clienteTelefono: documento.clienteTelefono,
+      clienteEmail: '', // No disponible en ResponseDTO
+      clienteTelefono: '', // No disponible en ResponseDTO
       clienteNombre: documento.clienteNombre,
-      clienteDocumento: documento.clienteDocumento,
+      clienteDocumento: '', // No disponible en ResponseDTO
       sucursalDescripcion: documento.sucursalDescripcion,
-      puntoCompra: documento.puntoCompra,
+      puntoCompra: '', // No disponible en ResponseDTO
       moneda: documento.moneda,
-      formaPago: documento.formaPago,
+      formaPago: documento.formaPagoDescripcion,
       observaciones: documento.observaciones
     });
   }
@@ -400,9 +542,9 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
         fileVenta,
         costoEnvio
       ).subscribe({
-        next: (documento) => {
+        next: async (documento) => {
           this.showSuccess('Documento de cobranza creado exitosamente');
-          this.loadDocumentos();
+          await this.recargarDocumentos();
           this.cerrarFormulario();
         },
         error: (error) => {
@@ -420,24 +562,23 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== PDF METHODS =====
-  descargarPDF(documento: DocumentoCobranzaDTO): void {
-    if (!documento.nroSerie) {
+  descargarPDF(documento: DocumentoCobranzaResponseDTO): void {
+    if (!documento.numero) {
       this.showError('No se puede generar PDF: documento sin número de serie');
       return;
     }
 
-    // Assuming the documento has an ID field
-    const documentoId = (documento as any).id;
+    const documentoId = documento.id;
     if (!documentoId) {
       this.showError('No se puede generar PDF: documento sin ID');
       return;
     }
 
-    this.pdfService.downloadDocumentoCobranzaPdf(documentoId, documento.nroSerie);
+    this.pdfService.downloadDocumentoCobranzaPdf(documentoId, documento.numero);
   }
 
-  verPDF(documento: DocumentoCobranzaDTO): void {
-    const documentoId = (documento as any).id;
+  verPDF(documento: DocumentoCobranzaResponseDTO): void {
+    const documentoId = documento.id;
     if (!documentoId) {
       this.showError('No se puede visualizar PDF: documento sin ID');
       return;
@@ -489,7 +630,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     return Math.ceil(this.totalItems / this.itemsPerPage);
   }
 
-  get paginatedDocumentos(): DocumentoCobranzaDTO[] {
+  get paginatedDocumentos(): DocumentoCobranzaResponseDTO[] {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
     return this.filteredDocumentos.slice(startIndex, endIndex);
@@ -567,7 +708,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     }).format(amount);
   }
 
-  trackByDocumento(index: number, documento: DocumentoCobranzaDTO): string {
-    return documento.nroSerie || index.toString();
+  trackByDocumento(index: number, documento: DocumentoCobranzaResponseDTO): string {
+    return documento.numero || index.toString();
   }
 }

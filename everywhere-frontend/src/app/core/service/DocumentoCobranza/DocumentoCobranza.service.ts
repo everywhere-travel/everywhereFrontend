@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { DocumentoCobranzaDTO, DocumentoCobranzaUpdateDTO } from '../../../shared/models/DocumetnoCobranza/documentoCobranza.model';
+import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -23,23 +23,23 @@ export class DocumentoCobranzaService {
   }
 
   // Obtener todos los documentos de cobranza
-  getAllDocumentos(): Observable<DocumentoCobranzaDTO[]> {
-    return this.http.get<DocumentoCobranzaDTO[]>(this.apiUrl);
+  getAllDocumentos(): Observable<DocumentoCobranzaResponseDTO[]> {
+    return this.http.get<DocumentoCobranzaResponseDTO[]>(this.apiUrl);
   }
 
   // Obtener documento por ID
-  getDocumentoById(id: number): Observable<DocumentoCobranzaDTO> {
-    return this.http.get<DocumentoCobranzaDTO>(`${this.apiUrl}/${id}`);
+  getDocumentoById(id: number): Observable<DocumentoCobranzaResponseDTO> {
+    return this.http.get<DocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`);
   }
 
   // Obtener documento por número
-  getDocumentoByNumero(numero: string): Observable<DocumentoCobranzaDTO> {
-    return this.http.get<DocumentoCobranzaDTO>(`${this.apiUrl}/numero/${numero}`);
+  getDocumentoByNumero(numero: string): Observable<DocumentoCobranzaResponseDTO> {
+    return this.http.get<DocumentoCobranzaResponseDTO>(`${this.apiUrl}/numero/${numero}`);
   }
 
   // Obtener documento por cotización ID
-  getDocumentoByCotizacion(cotizacionId: number): Observable<DocumentoCobranzaDTO> {
-    return this.http.get<DocumentoCobranzaDTO>(`${this.apiUrl}/cotizacion/${cotizacionId}`);
+  getDocumentoByCotizacion(cotizacionId: number): Observable<DocumentoCobranzaResponseDTO> {
+    return this.http.get<DocumentoCobranzaResponseDTO>(`${this.apiUrl}/cotizacion/${cotizacionId}`);
   }
 
   // Actualizar documento de cobranza

@@ -10,20 +10,17 @@ export interface DetalleDocumentoCobranza {
 
 // Modelo principal para el documento de cobranza (DTO)
 export interface DocumentoCobranzaDTO {
-  // Unique identifier
-  id?: number;
-
   // Campos manuales
-  nroSerie?: string;
   fileVenta?: string;
   costoEnvio?: number;
 
   // Campos de cotización
+  codigoCotizacion?: string;   // Número de cotización
   fechaEmision?: string; // ISO string format for LocalDateTime
-  clienteEmail?: string;
-  clienteTelefono?: string;
   clienteNombre?: string;      // Nombre completo del cliente
+  clienteTelefono?: string;
   clienteDocumento?: string;   // DNI o RUC del cliente
+  clienteDireccion?: string;   // Dirección del cliente
   sucursalDescripcion?: string;
   puntoCompra?: string;
   moneda?: string;
@@ -32,23 +29,35 @@ export interface DocumentoCobranzaDTO {
 
   // Totales
   subtotal?: number;
-  igv?: number;
   total?: number;
   importeEnLetras?: string;
 
-  // Campos de la cotización asociada
-  codigoCotizacion?: string;
-  cantAdultos?: number;
-  cantNinos?: number;
-  origenDestino?: string;
-  fechaSalida?: string;
-  fechaRegreso?: string;
-  fechaVencimiento?: string;
-  actualizado?: string;
-  grupoSeleccionadoId?: number;
-
   // Detalles
   detalles?: DetalleDocumentoCobranza[];
+}
+
+// Modelo para la respuesta de listado de documentos (ResponseDTO)
+export interface DocumentoCobranzaResponseDTO {
+  id?: number;
+  numero?: string;
+  fechaEmision?: string; // ISO string format for LocalDateTime
+  observaciones?: string;
+  fileVenta?: string;
+  costoEnvio?: number;
+  moneda?: string;
+  total?: number;  // Total del documento
+
+  // Información de relaciones
+  cotizacionId?: number;
+  codigoCotizacion?: string;  // Número de cotización
+  personaId?: number;
+  sucursalId?: number;
+  formaPagoId?: number;
+
+  // Información básica para mostrar
+  clienteNombre?: string;     // Nombre de la persona
+  sucursalDescripcion?: string;
+  formaPagoDescripcion?: string;
 }
 
 // DTO para actualización de documento de cobranza (equivalente a DocumentoCobranzaUpdateDTO)

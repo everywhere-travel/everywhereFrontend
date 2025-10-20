@@ -1,16 +1,26 @@
 <div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
   <!-- Sidebar Component -->
-  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
-    (toggleSidebar)="onToggleSidebar()">
+  <app-sidebar
+    [isCollapsed]="sidebarCollapsed"
+    [menuItems]="sidebarMenuItems"
+    (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()"
+  >
   </app-sidebar>
 
   <!-- Main Content Area -->
-  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+  <div
+    class="transition-all duration-300"
+    [class.ml-72]="!sidebarCollapsed"
+    [class.ml-20]="sidebarCollapsed"
+  >
     <!-- Messages Section -->
     <div class="fixed top-4 right-4 z-50 space-y-2">
       <!-- Success Message -->
-      <div *ngIf="showSuccessMessage"
-        class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
+      <div
+        *ngIf="showSuccessMessage"
+        class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in"
+      >
         <i class="fas fa-check-circle text-xl"></i>
         <span>{{ successMessage }}</span>
         <button (click)="hideMessages()" class="ml-4 hover:text-green-200">
@@ -19,8 +29,10 @@
       </div>
 
       <!-- Error Message -->
-      <div *ngIf="showErrorMessage"
-        class="bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
+      <div
+        *ngIf="showErrorMessage"
+        class="bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in"
+      >
         <i class="fas fa-exclamation-triangle text-xl"></i>
         <span>{{ errorMessage }}</span>
         <button (click)="hideMessages()" class="ml-4 hover:text-red-200">
@@ -31,14 +43,18 @@
 
     <!-- Header Section -->
     <header
-      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
-      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
-      </div>
+      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden"
+    >
+      <div
+        class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12"
+      ></div>
 
       <div class="max-w-full mx-auto px-6 py-6 relative z-10">
         <!-- Mobile Menu Button -->
-        <button (click)="onToggleSidebar()"
-          class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+        <button
+          (click)="onToggleSidebar()"
+          class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all"
+        >
           <i class="fas fa-bars text-xl"></i>
         </button>
 
@@ -52,7 +68,7 @@
               <div>
                 <h1 class="text-4xl font-bold">Gestión de Documentos de Cobranza</h1>
                 <p class="text-xl opacity-90 mt-2">
-                  Administra y genera documentos de cobranza desde cotizaciones
+                  Administra y genera documentos de cobranza de manera eficiente
                 </p>
               </div>
             </div>
@@ -60,33 +76,26 @@
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!isLoading">
               <div
-                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
-                <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
+              >
+                <div
+                  class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center"
+                >
                   <i class="fas fa-file-contract text-white text-xl"></i>
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ getTotalDocumentos() }}</div>
                   <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
-                    Documento{{ getTotalDocumentos() === 1 ? '' : 's' }} Total{{ getTotalDocumentos() === 1 ? '' : 'es' }}
+                    Documentos de Cobranza{{ getTotalDocumentos() === 1 ? '' : 's' }} Total{{
+                      getTotalDocumentos() === 1 ? '' : 'es'
+                    }}
                   </div>
                 </div>
               </div>
 
               <div
-                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
-                <div class="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
-                  <i class="fas fa-file-pdf text-white text-xl"></i>
-                </div>
-                <div>
-                  <div class="text-2xl font-bold">{{ getDocumentosConPdf() }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
-                    PDF Disponible{{ getDocumentosConPdf() === 1 ? '' : 's' }}
-                  </div>
-                </div>
-              </div>
-
-              <div
-                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1"
+              >
                 <div class="w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center">
                   <i class="fas fa-plus text-white text-xl"></i>
                 </div>
@@ -102,13 +111,16 @@
 
           <!-- Header Action -->
           <div class="z-10">
-            <button (click)="mostrarFormularioCrear()" [disabled]="isLoading"
-              class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+            <button
+              (click)="mostrarFormularioCrear()"
+              [disabled]="isLoading"
+              class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               <div
-                class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
-              </div>
-              <i class="fas fa-plus text-lg"></i>
-              <span>Nuevo Documento</span>
+                class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"
+              ></div>
+              <i class="fas fa-plus text-lg" [class.fa-spin]="isLoading"></i>
+              <span>{{ isLoading ? 'Cargando...' : 'Nuevo Documento' }}</span>
             </button>
           </div>
         </div>
@@ -116,697 +128,509 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-full mx-auto px-6 py-8">
-      <!-- Controls Section -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
-        <!-- Search and View Controls -->
-        <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between mb-6">
-          <!-- Search -->
-          <div class="flex-1 max-w-md">
-            <form [formGroup]="searchForm" class="relative">
+    <main class="max-w-full mx-auto px-6 py-6 space-y-6">
+      <!-- Search & Filters Panel -->
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <!-- Panel Header -->
+        <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 bg-everywhere-primary rounded-xl flex items-center justify-center"
+              >
+                <i class="fas fa-search text-white"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-900">Buscar y Filtrar</h2>
+                <p class="text-sm text-gray-600">Encuentra documentos de cobranza específicos</p>
+              </div>
+            </div>
+
+            <!-- View Controls -->
+            <div class="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+              <button
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                [class]="
+                  currentView === 'table'
+                    ? 'bg-white text-everywhere-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                "
+                (click)="changeView('table')"
+                title="Vista de Tabla"
+              >
+                <i class="fas fa-table mr-2"></i>Tabla
+              </button>
+              <button
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                [class]="
+                  currentView === 'cards'
+                    ? 'bg-white text-everywhere-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                "
+                (click)="changeView('cards')"
+                title="Vista de Tarjetas"
+              >
+                <i class="fas fa-th mr-2"></i>Tarjetas
+              </button>
+              <button
+                class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                [class]="
+                  currentView === 'list'
+                    ? 'bg-white text-everywhere-primary shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                "
+                (click)="changeView('list')"
+                title="Vista de Lista"
+              >
+                <i class="fas fa-list mr-2"></i>Lista
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Controls -->
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8" [formGroup]="searchForm">
+          <!-- Search Input -->
+          <div class="lg:col-span-2">
+            <div class="relative">
+              <i
+                class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+              ></i>
               <input
                 type="text"
+                placeholder="Buscar por número, destino o producto..."
                 formControlName="searchTerm"
-                placeholder="Buscar por número de serie, file venta, cliente..."
-                class="w-full pl-12 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-              >
-              <i class="fas fa-search absolute left-4 top-4 text-gray-400"></i>
+                class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+              />
               <button
-                type="button"
+                *ngIf="searchForm.get('searchTerm')?.value"
+                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                 (click)="clearSearch()"
-                *ngIf="searchTerm"
-                class="absolute right-3 top-3 text-gray-400 hover:text-gray-600 p-1"
               >
                 <i class="fas fa-times"></i>
               </button>
-            </form>
+            </div>
           </div>
-
-          <!-- View Toggles -->
-          <div class="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
-            <button
-              (click)="changeView('table')"
-              [class]="currentView === 'table' ? 'bg-white shadow-sm text-everywhere-primary' : 'text-gray-600 hover:text-gray-800'"
-              class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-            >
-              <i class="fas fa-table mr-2"></i>Tabla
-            </button>
-            <button
-              (click)="changeView('cards')"
-              [class]="currentView === 'cards' ? 'bg-white shadow-sm text-everywhere-primary' : 'text-gray-600 hover:text-gray-800'"
-              class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-            >
-              <i class="fas fa-th-large mr-2"></i>Tarjetas
-            </button>
-            <button
-              (click)="changeView('list')"
-              [class]="currentView === 'list' ? 'bg-white shadow-sm text-everywhere-primary' : 'text-gray-600 hover:text-gray-800'"
-              class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-            >
-              <i class="fas fa-list mr-2"></i>Lista
-            </button>
-          </div>
-        </div>
-
-        <!-- Results Summary and Bulk Actions -->
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div class="text-sm text-gray-600">
-            <span class="font-medium">{{filteredDocumentos.length}}</span>
-            documento{{filteredDocumentos.length === 1 ? '' : 's'}}
-            <span *ngIf="searchTerm"> encontrado{{filteredDocumentos.length === 1 ? '' : 's'}} para "<span class="font-medium">{{searchTerm}}</span>"</span>
-          </div>
-
-          <!-- Bulk Actions -->
-          <div class="flex items-center gap-4" *ngIf="selectedItems.length > 0">
-            <span class="text-sm text-gray-600">
-              <span class="font-medium">{{selectedItems.length}}</span> seleccionado{{selectedItems.length === 1 ? '' : 's'}}
-            </span>
-            <button
-              (click)="clearSelection()"
-              class="text-sm text-everywhere-primary hover:text-everywhere-secondary font-medium transition-colors"
-            >
-              Limpiar selección
-            </button>
-          </div>
-        </div>
-
-        <!-- Items per page -->
-        <div class="mt-4 flex items-center gap-2" *ngIf="filteredDocumentos.length > 10">
-          <label class="text-sm text-gray-600">Mostrar:</label>
-          <select
-            [(ngModel)]="itemsPerPage"
-            (change)="onItemsPerPageChange()"
-            class="border border-gray-200 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-          >
-            <option [value]="10">10</option>
-            <option [value]="25">25</option>
-            <option [value]="50">50</option>
-            <option [value]="100">100</option>
-          </select>
-          <span class="text-sm text-gray-600">por página</span>
         </div>
       </div>
 
-      <!-- LOADING STATE -->
-      <div *ngIf="isLoading" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-        <div class="flex flex-col items-center">
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="flex flex-col items-center justify-center py-16 px-6">
           <div class="w-16 h-16 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary rounded-2xl flex items-center justify-center mb-4">
             <i class="fas fa-spinner fa-spin text-white text-2xl"></i>
           </div>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">Cargando documentos...</h3>
-          <p class="text-gray-500">Obteniendo la información más reciente</p>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Cargando Documentos de Cobranza</h3>
+          <p class="text-gray-600">Por favor espera mientras obtenemos los datos...</p>
         </div>
       </div>
 
-      <!-- CONTENT VIEWS -->
-    <div *ngIf="!isLoading">
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && filteredDocumentos.length === 0"
+        class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden p-12 text-center">
+        <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-credit-card text-4xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay documentos de cobranza</h3>
+        <p class="text-gray-600 mb-6">
+          No se encontraron documentos de cobranza con los criterios de búsqueda.
+        </p>
+        <button (click)="mostrarFormularioCrear()"
+          class="inline-flex items-center px-6 py-3 bg-everywhere-primary text-white rounded-xl font-semibold hover:bg-everywhere-secondary transition-all duration-200">
+          <i class="fas fa-plus mr-2"></i>
+          Crear Primer Documento de Cobranza
+        </button>
+      </div>
 
-      <!-- TABLE VIEW -->
-      <div *ngIf="currentView === 'table'" class="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <input
-                    type="checkbox"
-                    [checked]="allSelected"
-                    [indeterminate]="someSelected"
-                    (change)="toggleAllSelection()"
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  >
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Documento
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cliente
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fecha Emisión
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Moneda
-                </th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr
-                *ngFor="let documento of paginatedDocumentos; trackBy: trackByDocumento"
-                class="hover:bg-gray-50 transition-colors"
-              >
-                <td class="px-6 py-4 whitespace-nowrap">
+       <!-- Data Content -->
+      <div *ngIf="!isLoading && filteredDocumentos.length > 0" class="space-y-2">
+        <!-- Data Header -->
+         <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-4">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-database text-red-600"></i>
+                  <h2 class="text-xl font-bold text-gray-900">Lista de Documentos de Cobranza</h2>
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <button
+                  (click)="actualizarDatos()"
+                  [disabled]="isLoading"
+                  class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+                  <span>{{ isLoading ? 'Actualizando...' : 'Actualizar' }}</span>
+                </button>
+                <button (click)="mostrarFormularioCrear()"
+                  [disabled]="isLoading"
+                  class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                  <i class="fas fa-plus" [class.fa-spin]="isLoading"></i>
+                  <span>{{ isLoading ? 'Cargando...' : 'Nuevo Documento' }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div
+          class="bg-blue-600 text-white px-8 py-4 flex justify-between items-center animate-in slide-in-from-top duration-300"
+          *ngIf="selectedItems.length > 0">
+          <div class="flex items-center gap-3 font-semibold">
+            <i class="fas fa-check-circle"></i>
+            <span>{{ selectedItems.length }} documento{{
+              selectedItems.length === 1 ? '' : 'es'
+              }}
+              seleccionada{{ selectedItems.length === 1 ? '' : 's' }}</span>
+          </div>
+          <div class="flex gap-3">
+            <button
+              class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-edit"></i>
+              Editar
+            </button>
+            <button
+              class="bg-white/20 border border-white/30 hover:bg-red-600 hover:border-red-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-trash"></i>
+              Eliminar seleccionados
+            </button>
+            <button
+              class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-times"></i>
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div *ngIf="currentView === 'table'"
+          class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <!-- Table Header -->
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="w-12 p-5 text-center">
+                    <label class="relative inline-block cursor-pointer">
+                      <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
+                        (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0" />
+                      <span
+                        class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
+                        [class.bg-red-600]="allSelected || someSelected"
+                        [class.border-red-600]="allSelected || someSelected">
+                        <i class="fas fa-check text-white text-xs" [class.hidden]="!allSelected && !someSelected"></i>
+                        <i class="fas fa-minus text-white text-xs" [class.hidden]="!someSelected || allSelected"></i>
+                      </span>
+                    </label>
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Número
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cotizacion
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cliente
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha Emisión
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Moneda
+                  </th>
+                  <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+
+              <!-- Table Body -->
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let documento of paginatedDocumentos; trackBy: trackByDocumento"
+                  class="hover:bg-gray-50 transition-colors">
+                  <!-- Checkbox -->
+                  <td class="p5 text-center">
+                    <label class="relative inline-block cursor-pointer">
+                      <input type="checkbox" [checked]="isSelected(documento.id)"
+                        (change)="toggleSelection(documento.id)" class="absolute opacity-0 w-0 h-0" />
+                      <span
+                        class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
+                        [class.bg-red-600]="isSelected(documento.id)"
+                        [class.border-red-600]="isSelected(documento.id)">
+                        <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(documento.id)"></i>
+                      </span>
+                    </label>
+                  </td>
+
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm">
+                      <div class="font-medium text-gray-900">{{ documento.numero || 'Sin número' }}</div>
+                      <div class="text-gray-500">{{ documento.fileVenta || 'Sin file venta' }}</div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm">
+                      <div class="font-medium text-gray-900">{{ documento.codigoCotizacion || 'Sin cotización' }}</div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm">
+                      <div class="font-medium text-gray-900">{{ documento.clienteNombre || 'Sin nombre' }}</div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ formatDate(documento.fechaEmision) }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ documento.moneda }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end gap-2">
+                      <button
+                        (click)="verDetalleDocumento(documento)"
+                        class="text-blue-600 hover:text-blue-900 p-1"
+                        title="Ver detalles"
+                      >
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button
+                        (click)="verPDF(documento)"
+                        class="text-green-600 hover:text-green-900 p-1"
+                        title="Ver PDF"
+                      >
+                        <i class="fas fa-file-pdf"></i>
+                      </button>
+                      <button
+                        (click)="descargarPDF(documento)"
+                        class="text-purple-600 hover:text-purple-900 p-1"
+                        title="Descargar PDF"
+                      >
+                        <i class="fas fa-download"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cards View -->
+        <div
+          *ngIf="currentView === 'cards'"
+          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          <div
+            *ngFor="let documento of paginatedDocumentos; trackBy: trackByDocumento"
+            class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+          >
+            <div class="p-6">
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3">
                   <input
                     type="checkbox"
                     [checked]="isSelected(documento.id)"
                     (change)="toggleSelection(documento.id)"
                     class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <h3 class="font-semibold text-gray-900">{{ documento.numero }}</h3>
+                    <p class="text-sm text-gray-500">{{ documento.fileVenta }}</p>
+                  </div>
+                </div>
+                <div class="flex gap-1">
+                  <button
+                    (click)="verDetalleDocumento(documento)"
+                    class="text-blue-600 hover:text-blue-900 p-1"
+                    title="Ver detalles"
                   >
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm">
-                    <div class="font-medium text-gray-900">{{documento.nroSerie}}</div>
-                    <div class="text-gray-500">{{documento.fileVenta}}</div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm">
-                    <div class="font-medium text-gray-900">{{documento.clienteNombre}}</div>
-                    <div class="text-gray-500">{{documento.clienteDocumento}}</div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{formatDate(documento.fechaEmision)}}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {{formatCurrency(documento.total)}}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{documento.moneda}}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div class="flex justify-end gap-2">
-                    <button
-                      (click)="verDetalleDocumento(documento)"
-                      class="text-blue-600 hover:text-blue-900 p-1"
-                      title="Ver detalles"
-                    >
-                      <i class="fas fa-eye"></i>
-                    </button>
-                    <button
-                      (click)="verPDF(documento)"
-                      class="text-green-600 hover:text-green-900 p-1"
-                      title="Ver PDF"
-                    >
-                      <i class="fas fa-file-pdf"></i>
-                    </button>
-                    <button
-                      (click)="descargarPDF(documento)"
-                      class="text-purple-600 hover:text-purple-900 p-1"
-                      title="Descargar PDF"
-                    >
-                      <i class="fas fa-download"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button
+                    (click)="verPDF(documento)"
+                    class="text-green-600 hover:text-green-900 p-1"
+                    title="Ver PDF"
+                  >
+                    <i class="fas fa-file-pdf"></i>
+                  </button>
+                  <button
+                    (click)="descargarPDF(documento)"
+                    class="text-purple-600 hover:text-purple-900 p-1"
+                    title="Descargar PDF"
+                  >
+                    <i class="fas fa-download"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">Cliente:</span>
+                  <span class="font-medium">{{ documento.clienteNombre }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">Cotización:</span>
+                  <span class="font-medium text-gray-900">{{ documento.codigoCotizacion || 'Sin cotización' }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">Fecha:</span>
+                  <span class="font-medium">{{ formatDate(documento.fechaEmision) }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">Moneda:</span>
+                  <span class="font-medium">{{ documento.moneda }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARDS EMPTY STATE -->
+          <div *ngIf="paginatedDocumentos.length === 0" class="col-span-full text-center py-12">
+            <i class="fas fa-file-contract text-4xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No hay documentos</h3>
+            <p class="text-gray-500 mb-4">
+              Crea tu primer documento de cobranza desde una cotización
+            </p>
+            <button
+              (click)="mostrarFormularioCrear()"
+              class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Crear Documento
+            </button>
+          </div>
         </div>
 
-        <!-- TABLE EMPTY STATE -->
-        <div *ngIf="paginatedDocumentos.length === 0" class="text-center py-12">
-          <i class="fas fa-file-contract text-4xl text-gray-300 mb-4"></i>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No hay documentos</h3>
-          <p class="text-gray-500 mb-4">Crea tu primer documento de cobranza desde una cotización</p>
-          <button
-            (click)="mostrarFormularioCrear()"
-            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Crear Documento
-          </button>
-        </div>
-      </div>
-
-      <!-- CARDS VIEW -->
-      <div *ngIf="currentView === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- List View -->
         <div
-          *ngFor="let documento of paginatedDocumentos; trackBy: trackByDocumento"
-          class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow"
+          *ngIf="currentView === 'list'"
+          class="bg-white rounded-lg shadow-sm divide-y divide-gray-200"
         >
-          <div class="p-6">
-            <div class="flex items-start justify-between mb-4">
-              <div class="flex items-center gap-3">
+          <div
+            *ngFor="let documento of paginatedDocumentos; trackBy: trackByDocumento"
+            class="p-6 hover:bg-gray-50 transition-colors"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-4">
                 <input
                   type="checkbox"
                   [checked]="isSelected(documento.id)"
                   (change)="toggleSelection(documento.id)"
                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                >
-                <div>
-                  <h3 class="font-semibold text-gray-900">{{documento.nroSerie}}</h3>
-                  <p class="text-sm text-gray-500">{{documento.fileVenta}}</p>
+                />
+                <div class="flex-1">
+                  <div class="flex items-center gap-4">
+                    <div>
+                      <h3 class="font-semibold text-gray-900">{{ documento.numero }}</h3>
+                    </div>
+                    <div>
+                      <h3 class="font-semibold text-gray-900">{{ documento.fileVenta }}</h3>
+                    </div>
+                    <div>
+                      <h3 class="font-semibold text-gray-900">{{ documento.codigoCotizacion }}</h3>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                      <span class="font-medium">{{ documento.clienteNombre }}</span>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                      <span class="block font-medium">{{
+                        formatDate(documento.fechaEmision)
+                      }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="flex gap-1">
+
+              <div class="flex gap-2">
                 <button
                   (click)="verDetalleDocumento(documento)"
-                  class="text-blue-600 hover:text-blue-900 p-1"
+                  class="text-blue-600 hover:text-blue-900 p-2"
                   title="Ver detalles"
                 >
                   <i class="fas fa-eye"></i>
                 </button>
                 <button
                   (click)="verPDF(documento)"
-                  class="text-green-600 hover:text-green-900 p-1"
+                  class="text-green-600 hover:text-green-900 p-2"
                   title="Ver PDF"
                 >
                   <i class="fas fa-file-pdf"></i>
                 </button>
                 <button
                   (click)="descargarPDF(documento)"
-                  class="text-purple-600 hover:text-purple-900 p-1"
+                  class="text-purple-600 hover:text-purple-900 p-2"
                   title="Descargar PDF"
                 >
                   <i class="fas fa-download"></i>
                 </button>
               </div>
             </div>
+          </div>
 
-            <div class="space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Cliente:</span>
-                <span class="font-medium">{{documento.clienteNombre}}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Documento:</span>
-                <span class="font-medium">{{documento.clienteDocumento}}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Fecha:</span>
-                <span class="font-medium">{{formatDate(documento.fechaEmision)}}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Total:</span>
-                <span class="font-bold text-green-600">{{formatCurrency(documento.total)}}</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Moneda:</span>
-                <span class="font-medium">{{documento.moneda}}</span>
-              </div>
-            </div>
+          <!-- LIST EMPTY STATE -->
+          <div *ngIf="paginatedDocumentos.length === 0" class="text-center py-12">
+            <i class="fas fa-file-contract text-4xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No hay documentos</h3>
+            <p class="text-gray-500 mb-4">
+              Crea tu primer documento de cobranza desde una cotización
+            </p>
+            <button
+              (click)="mostrarFormularioCrear()"
+              class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Crear Documento
+            </button>
           </div>
         </div>
 
-        <!-- CARDS EMPTY STATE -->
-        <div *ngIf="paginatedDocumentos.length === 0" class="col-span-full text-center py-12">
-          <i class="fas fa-file-contract text-4xl text-gray-300 mb-4"></i>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No hay documentos</h3>
-          <p class="text-gray-500 mb-4">Crea tu primer documento de cobranza desde una cotización</p>
-          <button
-            (click)="mostrarFormularioCrear()"
-            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Crear Documento
-          </button>
-        </div>
-      </div>
+        <!-- Pagination -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+          <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <!-- Items per page selector -->
+            <div class="flex items-center gap-2 text-sm text-gray-700 font-medium">
+              <span>Mostrar:</span>
+              <select [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()"
+                class="border border-gray-300 rounded-lg px-3 py-2 bg-white font-medium">
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+              <span>por página</span>
+            </div>
 
-      <!-- LIST VIEW -->
-      <div *ngIf="currentView === 'list'" class="bg-white rounded-lg shadow-sm divide-y divide-gray-200">
-        <div
-          *ngFor="let documento of paginatedDocumentos; trackBy: trackByDocumento"
-          class="p-6 hover:bg-gray-50 transition-colors"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-4">
-              <input
-                type="checkbox"
-                [checked]="isSelected(documento.id)"
-                (change)="toggleSelection(documento.id)"
-                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              >
-              <div class="flex-1">
-                <div class="flex items-center gap-4">
-                  <div>
-                    <h3 class="font-semibold text-gray-900">{{documento.nroSerie}}</h3>
-                    <p class="text-sm text-gray-500">{{documento.fileVenta}}</p>
-                  </div>
-                  <div class="text-sm text-gray-600">
-                    <span class="font-medium">{{documento.clienteNombre}}</span>
-                    <span class="block">{{documento.clienteDocumento}}</span>
-                  </div>
-                  <div class="text-sm text-gray-600">
-                    <span class="block font-medium">{{formatDate(documento.fechaEmision)}}</span>
-                    <span class="block text-green-600 font-bold">{{formatCurrency(documento.total)}}</span>
-                  </div>
-                </div>
+            <!-- Results info -->
+            <div class="text-sm font-semibold text-gray-700">
+              Mostrando {{ Math.min((currentPage - 1) * itemsPerPage + 1, totalItems) }} -
+              {{ Math.min(currentPage * itemsPerPage, totalItems) }} de {{ totalItems }} documento{{ totalItems === 1 ?
+              '' : 's' }} de cobranza
+            </div>
+
+            <!-- Navigation buttons -->
+            <nav class="flex items-center gap-2" *ngIf="totalPages > 1">
+              <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              <div class="flex items-center gap-1">
+                <button *ngFor="let page of getVisiblePages()" (click)="goToPage(page)"
+                  class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-200"
+                  [class]="page === currentPage ? 'bg-everywhere-primary text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'">
+                  {{ page }}
+                </button>
               </div>
-            </div>
 
-            <div class="flex gap-2">
-              <button
-                (click)="verDetalleDocumento(documento)"
-                class="text-blue-600 hover:text-blue-900 p-2"
-                title="Ver detalles"
-              >
-                <i class="fas fa-eye"></i>
+              <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-right"></i>
               </button>
-              <button
-                (click)="verPDF(documento)"
-                class="text-green-600 hover:text-green-900 p-2"
-                title="Ver PDF"
-              >
-                <i class="fas fa-file-pdf"></i>
-              </button>
-              <button
-                (click)="descargarPDF(documento)"
-                class="text-purple-600 hover:text-purple-900 p-2"
-                title="Descargar PDF"
-              >
-                <i class="fas fa-download"></i>
-              </button>
-            </div>
+            </nav>
           </div>
         </div>
-
-        <!-- LIST EMPTY STATE -->
-        <div *ngIf="paginatedDocumentos.length === 0" class="text-center py-12">
-          <i class="fas fa-file-contract text-4xl text-gray-300 mb-4"></i>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No hay documentos</h3>
-          <p class="text-gray-500 mb-4">Crea tu primer documento de cobranza desde una cotización</p>
-          <button
-            (click)="mostrarFormularioCrear()"
-            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Crear Documento
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PAGINATION -->
-    <div class="mt-6 flex items-center justify-between" *ngIf="totalItems > 0">
-      <div class="text-sm text-gray-700">
-        Mostrando {{(currentPage - 1) * itemsPerPage + 1}} a {{Math.min(currentPage * itemsPerPage, totalItems)}}
-        de {{totalItems}} resultados
       </div>
 
-      <div class="flex items-center gap-2">
-        <button
-          (click)="goToPage(currentPage - 1)"
-          [disabled]="currentPage === 1"
-          class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Anterior
-        </button>
-
-        <div class="flex gap-1">
-          <button
-            *ngFor="let page of getVisiblePages()"
-            (click)="page !== -1 && goToPage(page)"
-            [class]="page === currentPage ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'"
-            class="px-3 py-2 text-sm font-medium border border-gray-300 rounded-md"
-            [disabled]="page === -1"
-          >
-            {{page === -1 ? '...' : page}}
-          </button>
-        </div>
-
-        <button
-          (click)="goToPage(currentPage + 1)"
-          [disabled]="currentPage >= totalPages"
-          class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Siguiente
-        </button>
-      </div>
-    </div>
     </main>
-  </div>
-</div>
-
-<!-- MODAL PARA VER DOCUMENTO -->
-<div *ngIf="mostrarModalVer" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-  <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
-    <div class="p-6">
-      <!-- Header -->
-      <div class="flex items-center justify-between border-b pb-4 mb-6">
-        <h2 class="text-xl font-bold text-gray-900">Detalles del Documento</h2>
-        <button (click)="cerrarModalVer()" class="text-gray-400 hover:text-gray-600">
-          <i class="fas fa-times text-xl"></i>
-        </button>
-      </div>
-
-      <!-- Content -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6" *ngIf="documentoSeleccionado">
-
-        <!-- Información del Documento -->
-        <div class="space-y-4">
-          <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Información del Documento</h3>
-
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="text-gray-500">Número de Serie:</span>
-              <p class="font-medium">{{documentoSeleccionado.nroSerie}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">File Venta:</span>
-              <p class="font-medium">{{documentoSeleccionado.fileVenta}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Fecha Emisión:</span>
-              <p class="font-medium">{{formatDate(documentoSeleccionado.fechaEmision)}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Costo Envío:</span>
-              <p class="font-medium">{{formatCurrency(documentoSeleccionado.costoEnvio)}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Subtotal:</span>
-              <p class="font-medium">{{formatCurrency(documentoSeleccionado.subtotal)}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">IGV:</span>
-              <p class="font-medium">{{formatCurrency(documentoSeleccionado.igv)}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Total:</span>
-              <p class="font-bold text-green-600">{{formatCurrency(documentoSeleccionado.total)}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Moneda:</span>
-              <p class="font-medium">{{documentoSeleccionado.moneda}}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Información del Cliente -->
-        <div class="space-y-4">
-          <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Información del Cliente</h3>
-
-          <div class="space-y-3 text-sm">
-            <div>
-              <span class="text-gray-500">Nombre:</span>
-              <p class="font-medium">{{documentoSeleccionado.clienteNombre}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Documento:</span>
-              <p class="font-medium">{{documentoSeleccionado.clienteDocumento}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Email:</span>
-              <p class="font-medium">{{documentoSeleccionado.clienteEmail}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Teléfono:</span>
-              <p class="font-medium">{{documentoSeleccionado.clienteTelefono}}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Información de Sucursal y Forma de Pago -->
-        <div class="space-y-4">
-          <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Información Adicional</h3>
-
-          <div class="space-y-3 text-sm">
-            <div>
-              <span class="text-gray-500">Sucursal:</span>
-              <p class="font-medium">{{documentoSeleccionado.sucursalDescripcion}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Punto de Compra:</span>
-              <p class="font-medium">{{documentoSeleccionado.puntoCompra}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Forma de Pago:</span>
-              <p class="font-medium">{{documentoSeleccionado.formaPago}}</p>
-            </div>
-            <div *ngIf="documentoSeleccionado.observaciones">
-              <span class="text-gray-500">Observaciones:</span>
-              <p class="font-medium">{{documentoSeleccionado.observaciones}}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Información de la Cotización -->
-        <div class="space-y-4">
-          <h3 class="text-lg font-semibold text-gray-900 border-b pb-2">Información de Cotización</h3>
-
-          <div class="space-y-3 text-sm">
-            <div>
-              <span class="text-gray-500">Código Cotización:</span>
-              <p class="font-medium">{{documentoSeleccionado.codigoCotizacion}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Cantidad Adultos:</span>
-              <p class="font-medium">{{documentoSeleccionado.cantAdultos}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Cantidad Niños:</span>
-              <p class="font-medium">{{documentoSeleccionado.cantNinos}}</p>
-            </div>
-            <div>
-              <span class="text-gray-500">Origen-Destino:</span>
-              <p class="font-medium">{{documentoSeleccionado.origenDestino}}</p>
-            </div>
-            <div *ngIf="documentoSeleccionado.fechaSalida">
-              <span class="text-gray-500">Fecha Salida:</span>
-              <p class="font-medium">{{formatDate(documentoSeleccionado.fechaSalida)}}</p>
-            </div>
-            <div *ngIf="documentoSeleccionado.fechaRegreso">
-              <span class="text-gray-500">Fecha Regreso:</span>
-              <p class="font-medium">{{formatDate(documentoSeleccionado.fechaRegreso)}}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Detalles del Documento -->
-      <div class="mt-6" *ngIf="documentoSeleccionado && documentoSeleccionado.detalles && documentoSeleccionado.detalles.length > 0">
-        <h3 class="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">Detalles del Documento</h3>
-
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 text-sm">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cantidad</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Precio Unit.</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr *ngFor="let detalle of documentoSeleccionado.detalles">
-                <td class="px-4 py-2 text-gray-900">{{detalle.nombreProducto}}</td>
-                <td class="px-4 py-2 text-gray-900">{{detalle.cantidad}}</td>
-                <td class="px-4 py-2 text-gray-900">{{formatCurrency(detalle.precioUnitario)}}</td>
-                <td class="px-4 py-2 text-gray-900 font-medium">{{formatCurrency(detalle.total)}}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex justify-between items-center border-t pt-6 mt-6">
-        <button
-          (click)="cerrarModalVer()"
-          class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-        >
-          Cerrar
-        </button>
-
-        <div class="flex gap-3">
-          <button
-            (click)="verPDF(documentoSeleccionado!)"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
-          >
-            <i class="fas fa-file-pdf"></i>
-            Ver PDF
-          </button>
-          <button
-            (click)="descargarPDF(documentoSeleccionado!)"
-            class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
-          >
-            <i class="fas fa-download"></i>
-            Descargar PDF
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL PARA SELECCIONAR COTIZACIÓN -->
-<div *ngIf="mostrarModalCotizaciones" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-  <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
-    <div class="p-6">
-      <!-- Header -->
-      <div class="flex items-center justify-between border-b pb-4 mb-6">
-        <h2 class="text-xl font-bold text-gray-900">Seleccionar Cotización</h2>
-        <button (click)="cancelarSeleccionCotizacion()" class="text-gray-400 hover:text-gray-600">
-          <i class="fas fa-times text-xl"></i>
-        </button>
-      </div>
-
-      <!-- Search -->
-      <div class="mb-6">
-        <div class="relative">
-          <input
-            type="text"
-            [(ngModel)]="searchCotizacion"
-            (input)="filtrarCotizaciones()"
-            placeholder="Buscar por código de cotización o destino..."
-            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-          <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-        </div>
-      </div>
-
-      <!-- Cotizaciones List -->
-      <div class="max-h-96 overflow-y-auto">
-        <div class="grid gap-4">
-          <div
-            *ngFor="let cotizacion of cotizacionesFiltradas"
-            (click)="seleccionarCotizacion(cotizacion)"
-            class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
-          >
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <h3 class="font-semibold text-gray-900">{{cotizacion.codigoCotizacion}}</h3>
-                <p class="text-sm text-gray-600 mt-1">{{cotizacion.origenDestino}}</p>
-
-                <div class="grid grid-cols-2 gap-4 mt-3 text-sm">
-                  <div>
-                    <span class="text-gray-500">Fecha Emisión:</span>
-                    <span class="ml-2 font-medium">{{formatDate(cotizacion.fechaEmision)}}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-500">Pasajeros:</span>
-                    <span class="ml-2 font-medium">{{(cotizacion.cantAdultos || 0) + (cotizacion.cantNinos || 0)}}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-500">Fecha Salida:</span>
-                    <span class="ml-2 font-medium">{{formatDate(cotizacion.fechaSalida)}}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-500">Moneda:</span>
-                    <span class="ml-2 font-medium">{{cotizacion.moneda}}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="text-right">
-                <i class="fas fa-chevron-right text-gray-400"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Empty State -->
-        <div *ngIf="cotizacionesFiltradas.length === 0" class="text-center py-8">
-          <i class="fas fa-search text-3xl text-gray-300 mb-4"></i>
-          <h3 class="text-lg font-medium text-gray-900 mb-2">No se encontraron cotizaciones</h3>
-          <p class="text-gray-500">No hay cotizaciones disponibles para generar documentos de cobranza</p>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="border-t pt-4 mt-6">
-        <button
-          (click)="cancelarSeleccionCotizacion()"
-          class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-        >
-          Cancelar
-        </button>
-      </div>
-    </div>
   </div>
 </div>
