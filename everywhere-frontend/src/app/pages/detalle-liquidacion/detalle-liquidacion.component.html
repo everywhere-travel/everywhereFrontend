@@ -1,0 +1,1046 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+  <!-- Sidebar Component -->
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()">
+  </app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+
+    <!-- Loading Spinner Global -->
+    <div *ngIf="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-8 flex flex-col items-center gap-4">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-everywhere-primary"></div>
+        <span class="text-lg font-medium text-gray-700">Cargando liquidación...</span>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !isLoading" class="max-w-full mx-auto px-6 py-12">
+      <div class="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+        <i class="fas fa-exclamation-triangle text-red-400 text-6xl mb-4"></i>
+        <h2 class="text-2xl font-bold text-red-800 mb-3">Error al cargar</h2>
+        <p class="text-red-600 mb-6">{{ error }}</p>
+        <div class="flex gap-3 justify-center">
+          <button (click)="recargarDatos()"
+                  class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+            <i class="fas fa-redo mr-2"></i>
+            Reintentar
+          </button>
+          <button (click)="volverALiquidaciones()"
+                  class="px-6 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Volver a Liquidaciones
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content when data is loaded -->
+    <div *ngIf="liquidacion && !isLoading" class="max-w-full mx-auto">
+
+      <!-- Header Section -->
+      <header class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12"></div>
+
+        <div class="max-w-full mx-auto px-6 py-8 relative z-10">
+          <!-- Mobile Menu Button -->
+          <button (click)="onToggleSidebar()"
+            class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+
+          <!-- Breadcrumb -->
+          <nav class="mb-6">
+            <ol class="flex items-center space-x-2 text-sm">
+              <li>
+                <button (click)="volverALiquidaciones()"
+                        class="text-white/80 hover:text-white transition-colors flex items-center gap-1">
+                  <i class="fas fa-credit-card"></i>
+                  Liquidaciones
+                </button>
+              </li>
+              <li class="text-white/60">
+                <i class="fas fa-chevron-right mx-2"></i>
+              </li>
+              <li class="text-white font-medium">
+                Detalle de Liquidación #{{ liquidacion.numero || liquidacion.id }}
+              </li>
+            </ol>
+          </nav>
+
+          <!-- Header Info -->
+          <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+            <div class="flex-1">
+              <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                  <i class="fas fa-file-invoice text-2xl"></i>
+                </div>
+                <div>
+                  <h1 class="text-3xl font-bold">
+                    Liquidación #{{ liquidacion.numero || liquidacion.id }}
+                  </h1>
+                  <p class="text-white/80 text-lg">
+                    {{ modoEdicion ? 'Editando liquidación' : 'Detalle completo de la liquidación' }}
+                  </p>
+                  <div *ngIf="modoEdicion" class="mt-2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <i class="fas fa-edit mr-1"></i>
+                      Modo Edición
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-3">
+              <button (click)="recargarDatos()"
+                      class="px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2">
+                <i class="fas fa-sync-alt"></i>
+                <span class="hidden sm:inline">Actualizar</span>
+              </button>
+
+              <!-- Botones según el modo -->
+              <div *ngIf="!modoEdicion">
+                <button (click)="irAEditarLiquidacion()"
+                        class="px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2">
+                  <i class="fas fa-edit"></i>
+                  <span class="hidden sm:inline">Editar</span>
+                </button>
+              </div>
+
+              <div *ngIf="modoEdicion" class="flex gap-3">
+                <button (click)="salirModoEdicion()"
+                        class="px-6 py-3 bg-orange-500 hover:bg-orange-600 rounded-xl transition-all flex items-center gap-2 text-white">
+                  <i class="fas fa-times"></i>
+                  <span class="hidden sm:inline">Cancelar</span>
+                </button>
+                <button (click)="guardarLiquidacion()"
+                        class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-xl transition-all flex items-center gap-2 text-white">
+                  <i class="fas fa-save"></i>
+                  <span class="hidden sm:inline">Guardar</span>
+                </button>
+              </div>
+
+              <button (click)="volverALiquidaciones()"
+                      class="px-6 py-3 bg-white text-everywhere-primary rounded-xl hover:bg-gray-100 transition-colors flex items-center gap-2 font-medium">
+                <i class="fas fa-arrow-left"></i>
+                <span class="hidden sm:inline">Volver</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <div class="px-4 py-8 max-w-full overflow-x-hidden">
+
+        <!-- Información General de la Liquidación -->
+        <form [formGroup]="liquidacionForm" (ngSubmit)="guardarLiquidacion()">
+          <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 mb-6 overflow-hidden">
+
+            <!-- Data Cards Grid -->
+            <div class="p-6">
+              <!-- Encabezado con indicador visual -->
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clipboard-list text-white text-sm"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-semibold text-gray-900">Información General</h3>
+                    <p class="text-xs text-gray-500">Datos principales de la liquidación</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span class="text-xs text-gray-500">{{ modoEdicion ? 'Editando' : 'Vista' }}</span>
+                </div>
+              </div>
+
+              <!-- Datos organizados en categorías -->
+              <div class="space-y-6">
+
+                <!-- Información Principal -->
+                <div class="space-y-4">
+                  <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider">Información Principal</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                    <!-- Número de Liquidación -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Número de Liquidación</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                        <div class="w-6 h-6 bg-blue-100 rounded-md flex items-center justify-center">
+                          <i class="fas fa-hashtag text-blue-600 text-xs"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">{{ liquidacion.numero || 'Sin número' }}</span>
+                      </div>
+                      <div *ngIf="modoEdicion" class="relative">
+                        <input type="text" formControlName="numero"
+                               class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                      </div>
+                    </div>
+
+                    <!-- Fecha de Compra -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Fecha de Compra</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                        <div class="w-6 h-6 bg-green-100 rounded-md flex items-center justify-center">
+                          <i class="fas fa-calendar text-green-600 text-xs"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">
+                          {{ liquidacion.fechaCompra ? (liquidacion.fechaCompra | date:'dd/MM/yyyy') : 'Sin fecha' }}
+                        </span>
+                      </div>
+                      <div *ngIf="modoEdicion" class="relative">
+                        <input type="date" formControlName="fechaCompra"
+                               class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                      </div>
+                    </div>
+
+                    <!-- Destino -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Destino</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                        <div class="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center">
+                          <i class="fas fa-map-marker-alt text-purple-600 text-xs"></i>
+                        </div>
+                        <span class="text-sm font-medium text-gray-900">{{ liquidacion.destino || 'Sin destino' }}</span>
+                      </div>
+                      <div *ngIf="modoEdicion" class="relative">
+                        <input type="text" formControlName="destino"
+                               class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Detalles Operativos -->
+                <div class="space-y-4">
+                  <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider">Detalles Operativos</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                    <!-- Cliente -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Cliente Asociado</label>
+                      <div class="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200/50">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                          <i class="fas fa-user text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-blue-900">{{ getClienteInfo() }}</div>
+                          <div class="text-xs text-blue-600">Cliente principal</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Producto -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Tipo de Producto</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200/50">
+                        <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+                          <i class="fas fa-box text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-orange-900">{{ liquidacion.producto?.tipo || 'Sin producto' }}</div>
+                          <div class="text-xs text-orange-600">Servicio contratado</div>
+                        </div>
+                      </div>
+                      <div *ngIf="modoEdicion">
+                        <select formControlName="productoId"
+                                class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                          <option value="">Seleccionar producto</option>
+                          <option *ngFor="let producto of productos" [value]="producto.id">
+                            {{ producto.tipo }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Forma de Pago -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">Forma de Pago</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-3 p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200/50">
+                        <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+                          <i class="fas fa-credit-card text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-emerald-900">{{ liquidacion.formaPago?.descripcion || 'Sin forma de pago' }}</div>
+                          <div class="text-xs text-emerald-600">Método de pago</div>
+                        </div>
+                      </div>
+                      <div *ngIf="modoEdicion">
+                        <select formControlName="formaPagoId"
+                                class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                          <option value="">Seleccionar forma de pago</option>
+                          <option *ngFor="let formaPago of formasPago" [value]="formaPago.id">
+                            {{ formaPago.descripcion }}
+                          </option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Número de Pasajeros -->
+                    <div class="group">
+                      <label class="block text-xs font-medium text-gray-600 mb-3">N° de Pasajeros</label>
+                      <div *ngIf="!modoEdicion" class="flex items-center gap-3 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-lg border border-slate-200/50">
+                        <div class="w-8 h-8 bg-slate-500 rounded-full flex items-center justify-center">
+                          <i class="fas fa-users text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                          <div class="text-sm font-medium text-slate-900">{{ liquidacion.numeroPasajeros || 0 }}</div>
+                          <div class="text-xs text-slate-600">Total de pasajeros</div>
+                        </div>
+                      </div>
+                      <div *ngIf="modoEdicion">
+                        <input type="number" formControlName="numeroPasajeros" min="0"
+                               class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Resumen de Totales -->
+        <div class="bg-white rounded-xl shadow-lg mb-8 overflow-hidden">
+          <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-calculator text-everywhere-primary"></i>
+              Resumen de Totales
+            </h2>
+          </div>
+
+          <div class="p-6">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+              <div class="bg-blue-50 rounded-lg p-4 text-center border border-blue-200">
+                <div class="text-sm text-blue-600 mb-1">Costo Tickets</div>
+                <div class="text-xl font-bold text-blue-800">
+                  {{ totalCostoTickets | currency:'USD':'symbol':'1.2-2' }}
+                </div>
+              </div>
+
+              <div class="bg-indigo-50 rounded-lg p-4 text-center border border-indigo-200">
+                <div class="text-sm text-indigo-600 mb-1">Cargo Servicio</div>
+                <div class="text-xl font-bold text-indigo-800">
+                  {{ totalCargoServicio | currency:'USD':'symbol':'1.2-2' }}
+                </div>
+              </div>
+
+              <div class="bg-green-50 rounded-lg p-4 text-center border border-green-200">
+                <div class="text-sm text-green-600 mb-1">Valor Venta</div>
+                <div class="text-xl font-bold text-green-800">
+                  {{ totalValorVenta | currency:'USD':'symbol':'1.2-2' }}
+                </div>
+              </div>
+
+              <div class="bg-purple-50 rounded-lg p-4 text-center border border-purple-200">
+                <div class="text-sm text-purple-600 mb-1">Total Boletas</div>
+                <div class="text-xl font-bold text-purple-800">
+                  {{ totalBoletaPasajero | currency:'USD':'symbol':'1.2-2' }}
+                </div>
+              </div>
+
+              <div class="bg-red-50 rounded-lg p-4 text-center border border-red-200">
+                <div class="text-sm text-red-600 mb-1">Descuentos</div>
+                <div class="text-xl font-bold text-red-800">
+                  {{ totalMontoDescuento | currency:'USD':'symbol':'1.2-2' }}
+                </div>
+              </div>
+
+              <div class="bg-cyan-50 rounded-lg p-4 text-center border border-cyan-200">
+                <div class="text-sm text-cyan-600 mb-1">Pago USD</div>
+                <div class="text-xl font-bold text-cyan-800">
+                  {{ totalPagoPaxUSD | currency:'USD':'symbol':'1.2-2' }}
+                </div>
+              </div>
+
+              <div class="bg-teal-50 rounded-lg p-4 text-center border border-teal-200">
+                <div class="text-sm text-teal-600 mb-1">Pago PEN</div>
+                <div class="text-xl font-bold text-teal-800">
+                  {{ totalPagoPaxPEN | currency:'PEN':'symbol':'1.2-2' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Detalles -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="w-full overflow-x-auto">
+            <div class="p-6 min-w-max">
+              <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mr-3">
+                  <i class="fas fa-list-alt text-white text-sm"></i>
+                </div>
+                Detalles de Liquidación
+              </h3>
+
+              <!-- Formulario para agregar/editar detalles -->
+              <div class="bg-gray-50 rounded-xl p-6 min-w-max">
+              <div>
+                <div class="grid gap-4 items-end min-w-[1400px]"
+                     [style.grid-template-columns]="modoEdicion ? '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px' : '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px'">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ticket</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Operador</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Costo Ticket</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Cargo Servicio</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Valor Venta</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Factura</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Boleta</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Descuento</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pago PAX USD</label>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Pago PAX PEN</label>
+                  </div>
+                  <div *ngIf="modoEdicion" class="text-center">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Acciones</label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Detalles Originales -->
+              <div *ngFor="let detalle of liquidacion.detalles; let i = index" class="mb-3">
+                <div class="grid gap-4 items-end min-w-[1400px]"
+                     [style.grid-template-columns]="modoEdicion ? '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px' : '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px'">
+                  <!-- Cliente (Viajero) - Búsqueda Filtrable -->
+                  <div class="relative">
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="text"
+                           [value]="getViajeroSearchTerm('detalle-original-' + i)"
+                           (input)="onViajeroSearch('detalle-original-' + i, $any($event.target).value)"
+                           (focus)="openViajeroDropdown('detalle-original-' + i)"
+                           (click)="$any($event.target).select()"
+                           (blur)="closeViajeroDropdown('detalle-original-' + i)"
+                           placeholder="Buscar cliente..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900 block truncate">{{ getViajeroDisplayName(detalle.viajero?.id) }}</span>
+                    </div>
+
+                    <!-- Dropdown de resultados (solo en modo edición) -->
+                    <div *ngIf="modoEdicion && isViajeroDropdownOpen('detalle-original-' + i)"
+                         class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div *ngFor="let viajero of getViajerosFiltrados('detalle-original-' + i)"
+                           (mousedown)="onViajeroSelect('detalle-original-' + i, viajero)"
+                           class="px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0">
+                        <div class="font-medium text-gray-900">{{ viajero.nombres }} {{ viajero.apellidoPaterno }}</div>
+                        <div *ngIf="viajero.apellidoMaterno" class="text-xs text-gray-500">{{ viajero.apellidoMaterno }}</div>
+                      </div>
+                      <div *ngIf="getViajerosFiltrados('detalle-original-' + i).length === 0"
+                           class="px-3 py-2 text-sm text-gray-500 text-center">
+                        No se encontraron resultados
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Producto -->
+                  <div>
+                    <!-- En modo edición: select editable -->
+                    <select *ngIf="modoEdicion" [ngModel]="detalle.producto?.id"
+                            (ngModelChange)="onDetalleOriginalChange(i, 'productoId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let producto of productos" [value]="producto.id">
+                        {{ producto.tipo }}
+                      </option>
+                    </select>
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900 block truncate">{{ getProductoDisplayName(detalle.producto?.id) }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Proveedor -->
+                  <div>
+                    <!-- En modo edición: select editable -->
+                    <select *ngIf="modoEdicion" [ngModel]="detalle.proveedor?.id"
+                            (ngModelChange)="onDetalleOriginalChange(i, 'proveedorId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
+                        {{ proveedor.nombre }}
+                      </option>
+                    </select>
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900 block truncate">{{ getProveedorDisplayName(detalle.proveedor?.id) }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Nro de Ticket -->
+                  <div>
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="text" [value]="detalle.ticket"
+                           (input)="onDetalleOriginalChange(i, 'ticket', $any($event.target).value)"
+                           placeholder="Ticket"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.ticket || 'Sin ticket' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Operador -->
+                  <div>
+                    <!-- En modo edición: select editable -->
+                    <select *ngIf="modoEdicion" [ngModel]="detalle.operador?.id"
+                            (ngModelChange)="onDetalleOriginalChange(i, 'operadorId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let operador of operadores" [value]="operador.id">
+                        {{ operador.nombre }}
+                      </option>
+                    </select>
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900 block truncate">{{ getOperadorDisplayName(detalle.operador?.id) }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Costo de Ticket -->
+                  <div>
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.costoTicket"
+                           (input)="onDetalleOriginalChange(i, 'costoTicket', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.costoTicket || '0.00' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Cargo por Servicio -->
+                  <div>
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.cargoServicio"
+                           (input)="onDetalleOriginalChange(i, 'cargoServicio', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.cargoServicio || '0.00' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Valor Venta -->
+                  <div>
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.valorVenta"
+                           (input)="onDetalleOriginalChange(i, 'valorVenta', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.valorVenta || '0.00' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Factura Compra -->
+                  <div>
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="text" [value]="detalle.facturaCompra"
+                           (input)="onDetalleOriginalChange(i, 'facturaCompra', $any($event.target).value)"
+                           placeholder="Factura"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.facturaCompra || 'Sin factura' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Boleta Pasajero -->
+                  <div>
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="text" [value]="detalle.boletaPasajero"
+                           (input)="onDetalleOriginalChange(i, 'boletaPasajero', $any($event.target).value)"
+                           placeholder="Boleta"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.boletaPasajero || 'Sin boleta' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Monto Descontado -->
+                  <div>
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.montoDescuento"
+                           (input)="onDetalleOriginalChange(i, 'montoDescuento', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.montoDescuento || '0.00' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Pago Pax USD -->
+                  <div>
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.pagoPaxUSD"
+                           (input)="onDetalleOriginalChange(i, 'pagoPaxUSD', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.pagoPaxUSD || '0.00' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Pago Pax PEN -->
+                  <div>
+                    <!-- En modo edición: input editable -->
+                    <input *ngIf="modoEdicion" type="number" [value]="detalle.pagoPaxPEN"
+                           (input)="onDetalleOriginalChange(i, 'pagoPaxPEN', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+
+                    <!-- En modo vista: texto readonly -->
+                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-900">{{ detalle.pagoPaxPEN || '0.00' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Acciones (solo en modo edición) -->
+                  <div *ngIf="modoEdicion" class="text-center">
+                    <button type="button" (click)="eliminarDetalleOriginal(i)"
+                            class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors duration-200">
+                      <i class="fas fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="my-2"></div>
+              </div>
+
+              <!-- Detalles Fijos (solo en modo edición) -->
+              <ng-container *ngIf="modoEdicion">
+                <div *ngFor="let detalle of detallesFijos; let i = index" class="mb-3">
+                <div class="grid gap-4 items-end min-w-[1400px]"
+                     style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
+                  <!-- Cliente (Viajero) - Búsqueda Filtrable -->
+                  <div class="relative">
+                    <input type="text"
+                           [value]="getViajeroSearchTerm('detalle-fijo-' + i)"
+                           (input)="onViajeroSearch('detalle-fijo-' + i, $any($event.target).value)"
+                           (focus)="openViajeroDropdown('detalle-fijo-' + i)"
+                           (click)="$any($event.target).select()"
+                           (blur)="closeViajeroDropdown('detalle-fijo-' + i)"
+                           placeholder="Buscar cliente..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+
+                    <!-- Dropdown de resultados -->
+                    <div *ngIf="isViajeroDropdownOpen('detalle-fijo-' + i)"
+                         class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div *ngFor="let viajero of getViajerosFiltrados('detalle-fijo-' + i)"
+                           (mousedown)="onViajeroSelect('detalle-fijo-' + i, viajero)"
+                           class="px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0">
+                        <div class="font-medium text-gray-900">{{ viajero.nombres }} {{ viajero.apellidoPaterno }}</div>
+                        <div *ngIf="viajero.apellidoMaterno" class="text-xs text-gray-500">{{ viajero.apellidoMaterno }}</div>
+                      </div>
+                      <div *ngIf="getViajerosFiltrados('detalle-fijo-' + i).length === 0"
+                           class="px-3 py-2 text-sm text-gray-500 text-center">
+                        No se encontraron resultados
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Producto -->
+                  <div>
+                    <select [ngModel]="detalle.productoId"
+                            (ngModelChange)="onProductoChange(i, 'productoId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let producto of productos" [value]="producto.id">
+                        {{ producto.tipo }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Proveedor -->
+                  <div>
+                    <select [ngModel]="detalle.proveedorId"
+                            (ngModelChange)="onProductoChange(i, 'proveedorId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
+                        {{ proveedor.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Nro de Ticket -->
+                  <div>
+                    <input type="text" [value]="detalle.ticket"
+                           (input)="onProductoChange(i, 'ticket', $any($event.target).value)"
+                           placeholder="Ticket"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Operador -->
+                  <div>
+                    <select [ngModel]="detalle.operadorId"
+                            (ngModelChange)="onProductoChange(i, 'operadorId', $event)"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let operador of operadores" [value]="operador.id">
+                        {{ operador.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Costo de Ticket -->
+                  <div>
+                    <input type="number" [value]="detalle.costoTicket"
+                           (input)="onProductoChange(i, 'costoTicket', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Cargo por Servicio -->
+                  <div>
+                    <input type="number" [value]="detalle.cargoServicio"
+                           (input)="onProductoChange(i, 'cargoServicio', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Valor Venta -->
+                  <div>
+                    <input type="number" [value]="detalle.valorVenta"
+                           (input)="onProductoChange(i, 'valorVenta', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Factura Compra -->
+                  <div>
+                    <input type="text" [value]="detalle.facturaCompra"
+                           (input)="onProductoChange(i, 'facturaCompra', $any($event.target).value)"
+                           placeholder="Factura"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Boleta Pasajero -->
+                  <div>
+                    <input type="text" [value]="detalle.boletaPasajero"
+                           (input)="onProductoChange(i, 'boletaPasajero', $any($event.target).value)"
+                           placeholder="Boleta"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Monto Descontado -->
+                  <div>
+                    <input type="number" [value]="detalle.montoDescuento"
+                           (input)="onProductoChange(i, 'montoDescuento', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Pago Pax USD -->
+                  <div>
+                    <input type="number" [value]="detalle.pagoPaxUSD"
+                           (input)="onProductoChange(i, 'pagoPaxUSD', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Pago Pax PEN -->
+                  <div>
+                    <input type="number" [value]="detalle.pagoPaxPEN"
+                           (input)="onProductoChange(i, 'pagoPaxPEN', $any($event.target).value)"
+                           step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Acciones -->
+                  <div class="text-center">
+                    <button type="button" (click)="eliminarDetalleFijo(i)"
+                            class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors duration-200">
+                      <i class="fas fa-trash text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="my-2"></div>
+              </div>
+              </ng-container>
+
+              <!-- Formulario para agregar nuevo detalle (solo en modo edición) -->
+              <div *ngIf="modoEdicion" [formGroup]="detalleForm">
+                <div class="grid gap-4 items-end min-w-[1400px]"
+                     style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
+                  <!-- Cliente (Viajero) - Búsqueda Filtrable -->
+                  <div class="relative">
+                    <input type="text"
+                           [value]="getViajeroSearchTerm('nuevo')"
+                           (input)="onViajeroSearch('nuevo', $any($event.target).value)"
+                           (focus)="openViajeroDropdown('nuevo')"
+                           (click)="$any($event.target).select()"
+                           (blur)="closeViajeroDropdown('nuevo')"
+                           placeholder="Buscar cliente..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+
+                    <!-- Dropdown de resultados -->
+                    <div *ngIf="isViajeroDropdownOpen('nuevo')"
+                         class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      <div *ngFor="let viajero of getViajerosFiltrados('nuevo')"
+                           (mousedown)="onViajeroSelect('nuevo', viajero)"
+                           class="px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0">
+                        <div class="font-medium text-gray-900">{{ viajero.nombres }} {{ viajero.apellidoPaterno }}</div>
+                        <div *ngIf="viajero.apellidoMaterno" class="text-xs text-gray-500">{{ viajero.apellidoMaterno }}</div>
+                      </div>
+                      <div *ngIf="getViajerosFiltrados('nuevo').length === 0"
+                           class="px-3 py-2 text-sm text-gray-500 text-center">
+                        No se encontraron resultados
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Producto -->
+                  <div>
+                    <select formControlName="productoId"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let producto of productos" [value]="producto.id">
+                        {{ producto.tipo }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Proveedor -->
+                  <div>
+                    <select formControlName="proveedorId"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
+                        {{ proveedor.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Nro de Ticket -->
+                  <div>
+                    <input type="text" formControlName="ticket" placeholder="Ticket"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Operador -->
+                  <div>
+                    <select formControlName="operadorId"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                      <option value="">Seleccionar</option>
+                      <option *ngFor="let operador of operadores" [value]="operador.id">
+                        {{ operador.nombre }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <!-- Costo de Ticket -->
+                  <div>
+                    <input type="number" formControlName="costoTicket" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Cargo por Servicio -->
+                  <div>
+                    <input type="number" formControlName="cargoServicio" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Valor Venta -->
+                  <div>
+                    <input type="number" formControlName="valorVenta" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Factura Compra -->
+                  <div>
+                    <input type="text" formControlName="facturaCompra" placeholder="Factura"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Boleta Pasajero -->
+                  <div>
+                    <input type="text" formControlName="boletaPasajero" placeholder="Boleta"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Monto Descontado -->
+                  <div>
+                    <input type="number" formControlName="montoDescuento" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Pago Pax USD -->
+                  <div>
+                    <input type="number" formControlName="pagoPaxUSD" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Pago Pax PEN -->
+                  <div>
+                    <input type="number" formControlName="pagoPaxPEN" step="0.01" min="0" placeholder="0.00"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                  </div>
+
+                  <!-- Botón Agregar -->
+                  <div class="text-center">
+                    <button type="button" (click)="agregarDetalleFijo()"
+                            class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-lg hover:from-purple-600 hover:to-violet-700 transition-all duration-200 text-sm font-medium">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer con botones de acción (solo en modo edición) -->
+      <div *ngIf="modoEdicion" class="mt-8 flex flex-col sm:flex-row gap-4 justify-between items-center">
+        <div class="flex flex-col sm:flex-row gap-4">
+          <button type="button"
+                  class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"
+                  (click)="agregarProducto()">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Agregar Producto
+          </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4">
+          <button type="button"
+                  class="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                  (click)="cancelar()">
+            Cancelar
+          </button>
+          <button type="button"
+                  class="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"
+                  (click)="guardar()">
+            Guardar
+          </button>
+        </div>
+      </div>
+
+      <!-- Sección de Observaciones al Final -->
+      <div class="bg-white rounded-xl shadow-lg mt-8 overflow-hidden">
+        <div class="bg-gradient-to-r from-amber-50 to-yellow-50 px-6 py-4 border-b border-yellow-200">
+          <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <i class="fas fa-comment-dots text-amber-600"></i>
+            Observaciones
+          </h2>
+        </div>
+
+        <div class="p-6">
+          <!-- Lista de observaciones existentes -->
+          <div *ngIf="observaciones.length > 0" class="space-y-3 mb-6">
+            <div *ngFor="let observacion of observaciones; let i = index"
+                 class="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200 hover:shadow-sm transition-shadow">
+
+              <!-- Icono de observación -->
+              <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                <i class="fas fa-comment text-amber-600 text-sm"></i>
+              </div>
+
+              <!-- Contenido de la observación -->
+              <div class="flex-1 min-w-0">
+                <p class="text-gray-800 text-sm leading-relaxed break-words">{{ observacion.descripcion }}</p>
+                <div *ngIf="observacion.creado" class="text-xs text-gray-500 mt-1">
+                  <i class="fas fa-clock mr-1"></i>
+                  {{ observacion.creado | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+              </div>
+
+              <!-- Botón de eliminar directo -->
+              <button *ngIf="modoEdicion"
+                      (click)="eliminarObservacion(observacion)"
+                      class="inline-flex items-center justify-center w-8 h-8 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 flex-shrink-0"
+                      title="Eliminar observación"
+                      type="button">
+                <i class="fas fa-trash text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mensaje cuando no hay observaciones -->
+          <div *ngIf="observaciones.length === 0" class="text-center py-8">
+            <div class="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <i class="fas fa-comment-slash text-2xl text-amber-400"></i>
+            </div>
+            <p class="text-gray-600 font-medium">No hay observaciones registradas</p>
+            <p class="text-gray-500 text-sm">Las observaciones aparecerán aquí cuando se agreguen</p>
+          </div>
+
+          <!-- Formulario para agregar nueva observación (solo en modo edición) -->
+          <div *ngIf="modoEdicion" class="border-t border-gray-200 pt-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Agregar nueva observación</h3>
+            <div class="flex gap-3">
+              <div class="flex-1">
+                <textarea [(ngModel)]="nuevaObservacion"
+                          [ngModelOptions]="{standalone: true}"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none bg-white"
+                          rows="2"
+                          placeholder="Escriba su observación aquí..."></textarea>
+              </div>
+              <button type="button"
+                      (click)="agregarObservacion()"
+                      [disabled]="!nuevaObservacion || !nuevaObservacion.trim()"
+                      class="px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2">
+                <i class="fas fa-plus"></i>
+                <span class="hidden sm:inline">Agregar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

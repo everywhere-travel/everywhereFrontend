@@ -1,0 +1,98 @@
+/* Status Indicator Styles */
+.live-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.operational {
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+.status-indicator.operational ~ .status-text {
+  color: #059669;
+}
+
+.live-status:has(.status-indicator.operational) {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.status-indicator.warning {
+  background: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2);
+}
+
+.status-indicator.warning ~ .status-text {
+  color: #d97706;
+}
+
+.live-status:has(.status-indicator.warning) {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-indicator.error {
+  background: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+}
+
+.status-indicator.error ~ .status-text {
+  color: #dc2626;
+}
+
+.live-status:has(.status-indicator.error) {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-indicator.maintenance {
+  background: #6b7280;
+  box-shadow: 0 0 0 4px rgba(107, 114, 128, 0.2);
+}
+
+.status-indicator.maintenance ~ .status-text {
+  color: #4b5563;
+}
+
+.live-status:has(.status-indicator.maintenance) {
+  background: rgba(107, 114, 128, 0.1);
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.status-text {
+  font-weight: 500;
+}
+
+.last-update {
+  color: #6b7280;
+  font-size: 0.8rem;
+}
+
+.health-metrics {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+/* Animation */
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1; 
+  }
+  50% { 
+    opacity: 0.5; 
+  }
+}

@@ -1,0 +1,44 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    <!-- Logo y marca -->
+    <div class="navbar-brand">
+      <span class="brand-text">Everywhere Travel</span>
+    </div>
+
+    <!-- Navegación de escritorio -->
+    <div class="navbar-nav">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">Dashboard</a>
+      <a routerLink="/personas" routerLinkActive="active" class="nav-link">Clientes</a>
+      <a routerLink="/cotizaciones" routerLinkActive="active" class="nav-link">Cotizaciones</a>
+      <a routerLink="/liquidaciones" routerLinkActive="active" class="nav-link">Liquidaciones</a>
+      <a routerLink="/productos" routerLinkActive="active" class="nav-link">Productos</a>
+      <a routerLink="/reportes" routerLinkActive="active" class="nav-link">Reportes</a>
+    </div>
+
+    <!-- Menú de usuario -->
+    <div class="navbar-user" *ngIf="currentUser">
+      <div class="user-info">
+        <div class="user-avatar">
+          <!-- Avatar sin rol -->
+          <i class="fas fa-user"></i>
+        </div>
+        <span class="user-name">{{ currentUser.name }}</span>
+      </div>
+      <button class="logout-btn" (click)="logout()" title="Cerrar Sesión">Cerrar Sesión</button>
+    </div>
+
+    <!-- Botón menú móvil -->
+    <button class="mobile-menu-btn" (click)="toggleMobileMenu()">☰</button>
+  </div>
+
+  <!-- Menú móvil -->
+  <div class="mobile-menu" [class.open]="isMobileMenuOpen">
+    <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">Dashboard</a>
+    <a routerLink="/personas" routerLinkActive="active" (click)="closeMobileMenu()">Clientes</a>
+    <a routerLink="/cotizaciones" routerLinkActive="active" (click)="closeMobileMenu()">Cotizaciones</a>
+    <a routerLink="/liquidaciones" routerLinkActive="active" (click)="closeMobileMenu()">Liquidaciones</a>
+    <a routerLink="/productos" routerLinkActive="active" (click)="closeMobileMenu()">Productos</a>
+    <a routerLink="/reportes" routerLinkActive="active" (click)="closeMobileMenu()">Reportes</a>
+    <button class="mobile-logout-btn" (click)="logout()">Cerrar Sesión</button>
+  </div>
+</nav>

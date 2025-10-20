@@ -1,0 +1,35 @@
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Z-index alto para dropdowns */
+.dropdown-menu {
+  z-index: 9999;
+}
+
+/* Scroll suave en móviles */
+@media (max-width: 640px) {
+  .table-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Accesibilidad - Respeto por preferencias de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus visible personalizado para navegación por teclado */
+*:focus-visible {
+  outline: 2px solid #D9043D;
+  outline-offset: 2px;
+}

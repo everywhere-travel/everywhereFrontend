@@ -1,0 +1,112 @@
+/* User Avatar Styles */
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  position: relative;
+}
+
+.user-profile-button {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.user-profile-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.user-avatar {
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color, #D9043D), var(--secondary-color, #A61F43));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.user-avatar-small {
+  width: 32px;
+  height: 32px;
+  font-size: 0.75rem;
+}
+
+.user-avatar-medium {
+  width: 40px;
+  height: 40px;
+  font-size: 0.875rem;
+}
+
+.user-avatar-large {
+  width: 56px;
+  height: 56px;
+  font-size: 1.125rem;
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  text-align: left;
+  align-items: flex-start;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-align: left;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .user-profile {
+    gap: 0.5rem;
+  }
+  
+  .user-info {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-profile {
+    gap: 0.25rem;
+  }
+  
+  .user-avatar-medium {
+    width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
+  }
+}

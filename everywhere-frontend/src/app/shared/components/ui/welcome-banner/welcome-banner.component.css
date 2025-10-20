@@ -1,0 +1,58 @@
+/* Welcome Banner Styles */
+.welcome-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.85) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  text-align: center;
+}
+
+.welcome-content h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary-color, #D9043D), var(--secondary-color, #034C8C));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.welcome-content p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .welcome-section {
+    padding: 1rem 1.5rem;
+  }
+  
+  .welcome-content h2 {
+    font-size: 1.25rem;
+  }
+  
+  .welcome-content p {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-section {
+    padding: 0.875rem 1rem;
+  }
+  
+  .welcome-content h2 {
+    font-size: 1.125rem;
+  }
+  
+  .welcome-content p {
+    font-size: 0.8rem;
+  }
+}
