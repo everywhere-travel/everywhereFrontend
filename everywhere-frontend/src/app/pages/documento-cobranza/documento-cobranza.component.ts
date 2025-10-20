@@ -375,7 +375,18 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   private async loadCotizaciones(): Promise<void> {
     try {
-      this.cotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
+      const todasLasCotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
+
+      // Filtrar solo las cotizaciones que no tienen documento de cobranza creado
+      this.cotizaciones = todasLasCotizaciones.filter(cotizacion => {
+        // Verificar si ya existe un documento de cobranza para esta cotización
+        const yaExisteDocumento = this.documentos.some(documento =>
+          documento.cotizacionId === cotizacion.id ||
+          documento.codigoCotizacion === cotizacion.codigoCotizacion
+        );
+        return !yaExisteDocumento;
+      });
+
       this.cotizacionesFiltradas = [...this.cotizaciones];
     } catch (error) {
       console.error('Error al cargar cotizaciones:', error);
@@ -469,6 +480,12 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   async mostrarFormularioCrear(): Promise<void> {
     this.editandoDocumento = false;
     this.resetForm();
+
+    // Asegurarse de que los documentos estén cargados antes de filtrar las cotizaciones
+    if (this.documentos.length === 0) {
+      await this.loadDocumentos();
+    }
+
     await this.loadCotizaciones();
     this.mostrarModalCotizaciones = true;
   }
@@ -547,6 +564,25 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   cancelarSeleccionCotizacion(): void {
     this.mostrarModalCotizaciones = false;
     this.cotizacionSeleccionada = null;
+  }
+
+  filterCotizaciones(): void {
+    const searchTerm = this.searchCotizacion.toLowerCase().trim();
+
+    if (!searchTerm) {
+      this.cotizacionesFiltradas = [...this.cotizaciones];
+      return;
+    }
+
+    this.cotizacionesFiltradas = this.cotizaciones.filter(cotizacion => {
+      const codigoCotizacion = cotizacion.codigoCotizacion?.toLowerCase() || '';
+      const personaDisplay = this.getPersonaDisplayName(cotizacion).toLowerCase();
+      const origenDestino = cotizacion.origenDestino?.toLowerCase() || '';
+
+      return codigoCotizacion.includes(searchTerm) ||
+             personaDisplay.includes(searchTerm) ||
+             origenDestino.includes(searchTerm);
+    });
   }
 
   // ===== CRUD OPERATIONS =====
@@ -711,6 +747,13 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== UTILITY METHODS =====
+  getPersonaDisplayName(cotizacion: CotizacionResponse): string {
+    if (cotizacion.personas?.email) {
+      return cotizacion.personas.email;
+    }
+    return 'Cliente no especificado';
+  }
+
   formatDate(dateString: string | undefined): string {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('es-ES');

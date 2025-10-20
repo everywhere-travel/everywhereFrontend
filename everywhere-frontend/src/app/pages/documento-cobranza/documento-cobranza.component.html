@@ -633,4 +633,86 @@
 
     </main>
   </div>
+
+  <!-- Modal de Selección de Cotizaciones -->
+  <div *ngIf="mostrarModalCotizaciones" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <!-- Header del Modal -->
+      <div class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold">Seleccionar Cotización</h2>
+            <p class="text-white/80 mt-1">Elige una cotización para crear el documento de cobranza</p>
+          </div>
+          <button (click)="cancelarSeleccionCotizacion()"
+            class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenido del Modal -->
+      <div class="p-6 overflow-y-auto max-h-[60vh]">
+        <!-- Búsqueda -->
+        <div class="mb-6">
+          <div class="relative">
+            <input
+              type="text"
+              [(ngModel)]="searchCotizacion"
+              (input)="filterCotizaciones()"
+              placeholder="Buscar cotización por código o cliente..."
+              class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent">
+            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          </div>
+        </div>
+
+        <!-- Lista de Cotizaciones -->
+        <div class="space-y-3" *ngIf="cotizacionesFiltradas.length > 0">
+          <div *ngFor="let cotizacion of cotizacionesFiltradas"
+            (click)="seleccionarCotizacion(cotizacion)"
+            class="p-4 border border-gray-200 rounded-xl hover:border-everywhere-primary hover:bg-everywhere-primary/5 cursor-pointer transition-all duration-200 group">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 bg-everywhere-primary/10 rounded-xl flex items-center justify-center group-hover:bg-everywhere-primary/20 transition-colors">
+                    <i class="fas fa-file-invoice text-everywhere-primary"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900">{{ cotizacion.codigoCotizacion || 'Sin código' }}</h3>
+                    <p class="text-gray-600">{{ getPersonaDisplayName(cotizacion) }}</p>
+                    <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                      <span><i class="fas fa-calendar mr-1"></i>{{ formatDate(cotizacion.fechaEmision) }}</span>
+                      <span><i class="fas fa-map-marker-alt mr-1"></i>{{ cotizacion.origenDestino || 'Sin destino' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="text-everywhere-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                <i class="fas fa-arrow-right text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado vacío -->
+        <div *ngIf="cotizacionesFiltradas.length === 0" class="text-center py-12">
+          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-search text-gray-400 text-xl"></i>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">No se encontraron cotizaciones</h3>
+          <p class="text-gray-600">No hay cotizaciones disponibles o que coincidan con tu búsqueda.</p>
+        </div>
+      </div>
+
+      <!-- Footer del Modal -->
+      <div class="border-t border-gray-200 p-6">
+        <div class="flex items-center justify-end gap-3">
+          <button (click)="cancelarSeleccionCotizacion()"
+            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
