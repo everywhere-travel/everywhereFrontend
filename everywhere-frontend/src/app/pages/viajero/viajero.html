@@ -1500,7 +1500,7 @@
               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all">
               <option value="">Seleccione un tipo de documento</option>
               <option *ngFor="let documento of documentosDisponibles" [value]="documento.id">
-                {{ documento.tipo }} - {{ documento.descripcion }}
+                {{ documento.tipo }}
               </option>
             </select>
             <div class="text-sm text-red-600 font-medium" *ngIf="documentoForm.get('documentoId')?.invalid && documentoForm.get('documentoId')?.touched">
