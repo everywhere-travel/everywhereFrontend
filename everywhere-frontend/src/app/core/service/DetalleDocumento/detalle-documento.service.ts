@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { DetalleDocumentoRequest, DetalleDocumentoResponse } from '../../../shared/models/Documento/detalleDocumento.model'; // Asegúrate que la ruta sea correcta
-import { environment } from '../../../../environments/enviroment.prod';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { DocumentoCobranzaDTO } from '../../../shared/models/DocumetnoCobranza/documentoCobranza.model';
+import { DocumentoCobranzaDTO, DocumentoCobranzaUpdateDTO } from '../../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -40,5 +40,10 @@ export class DocumentoCobranzaService {
   // Obtener documento por cotización ID
   getDocumentoByCotizacion(cotizacionId: number): Observable<DocumentoCobranzaDTO> {
     return this.http.get<DocumentoCobranzaDTO>(`${this.apiUrl}/cotizacion/${cotizacionId}`);
+  }
+
+  // Actualizar documento de cobranza
+  updateDocumento(id: number, updateDTO: DocumentoCobranzaUpdateDTO): Observable<DocumentoCobranzaDTO> {
+    return this.http.put<DocumentoCobranzaDTO>(`${this.apiUrl}/${id}`, updateDTO);
   }
 }

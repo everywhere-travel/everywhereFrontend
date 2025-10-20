@@ -15,7 +15,7 @@ import { DocumentoCobranzaDTO } from '../../shared/models/DocumetnoCobranza/docu
 import { CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
 
 // Components
-import { SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 
 interface ExtendedSidebarMenuItem extends SidebarMenuItem {
   moduleKey?: string;
@@ -27,7 +27,7 @@ interface ExtendedSidebarMenuItem extends SidebarMenuItem {
   standalone: true,
   templateUrl: './documento-cobranza.component.html',
   styleUrls: ['./documento-cobranza.component.css'],
-  imports: [CommonModule, ReactiveFormsModule, FormsModule]
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent]
 })
 export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
@@ -130,7 +130,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       icon: 'fas fa-file-contract',
       route: '/documentos-cobranza',
       active: true,
-      moduleKey: 'DOCUMENTOS'
+      moduleKey: 'DOCUMENTOS_COBRANZA'
     }
   ];
 
@@ -148,6 +148,19 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     // Cleanup subscriptions if needed
+  }
+
+  // ===== STATS METHODS =====
+  getTotalDocumentos(): number {
+    return this.documentos.length;
+  }
+
+  getDocumentosConPdf(): number {
+    return this.documentos.filter(doc => doc.id).length; // Todos los documentos con ID tienen PDF disponible
+  }
+
+  getCotizacionesDisponibles(): number {
+    return this.cotizaciones.length;
   }
 
   // ===== INITIALIZATION =====
@@ -263,12 +276,20 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
         doc.clienteDocumento?.toLowerCase().includes(term)
       );
     }
+    this.totalItems = this.filteredDocumentos.length;
     this.currentPage = 1;
   }
 
   // ===== VIEW METHODS =====
   changeView(view: 'table' | 'cards' | 'list'): void {
     this.currentView = view;
+  }
+
+  // ===== NAVIGATION METHODS =====
+  verDetalleDocumento(documento: DocumentoCobranzaDTO): void {
+    if (documento.id) {
+      this.router.navigate(['/documentos-cobranza/detalle', documento.id]);
+    }
   }
 
   // ===== MODAL METHODS =====
@@ -466,6 +487,16 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ===== PAGINATION =====
   get totalPages(): number {
     return Math.ceil(this.totalItems / this.itemsPerPage);
+  }
+
+  get paginatedDocumentos(): DocumentoCobranzaDTO[] {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return this.filteredDocumentos.slice(startIndex, endIndex);
+  }
+
+  onItemsPerPageChange(): void {
+    this.currentPage = 1;
   }
 
   goToPage(page: number): void {

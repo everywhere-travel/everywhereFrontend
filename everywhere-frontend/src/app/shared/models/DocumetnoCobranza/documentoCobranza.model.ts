@@ -50,3 +50,10 @@ export interface DocumentoCobranzaDTO {
   // Detalles
   detalles?: DetalleDocumentoCobranza[];
 }
+
+// DTO para actualización de documento de cobranza (equivalente a DocumentoCobranzaUpdateDTO)
+export interface DocumentoCobranzaUpdateDTO {
+  fileVenta?: string;
+  costoEnvio?: number;
+  observaciones?: string;
+}

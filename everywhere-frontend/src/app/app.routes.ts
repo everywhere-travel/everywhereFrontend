@@ -134,6 +134,12 @@ export const routes: Routes = [
       import('./pages/documento-cobranza/documento-cobranza.component').then(m => m.DocumentoCobranzaComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'documentos-cobranza/detalle/:id',
+    loadComponent: () =>
+      import('./pages/detalle-documentoCobranza/detalle-documentoCobranza.component').then(m => m.DetalleDocumentoCobranzaComponent),
+    canActivate: [authGuard]
+  },
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/auth/login' }
 ];

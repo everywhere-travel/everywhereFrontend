@@ -1,0 +1,467 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+  <!-- Sidebar Component -->
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()">
+  </app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+
+    <!-- Loading Spinner Global -->
+    <div *ngIf="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-xl p-8 flex flex-col items-center gap-4">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-everywhere-primary"></div>
+        <span class="text-lg font-medium text-gray-700">Cargando documento...</span>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="fixed top-4 right-4 z-50 space-y-2">
+      <!-- Success Message -->
+      <div *ngIf="success"
+        class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
+        <i class="fas fa-check-circle text-xl"></i>
+        <span>{{ success }}</span>
+        <button (click)="hideMessages()" class="ml-4 hover:text-green-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="error"
+        class="bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
+        <i class="fas fa-exclamation-triangle text-xl"></i>
+        <span>{{ error }}</span>
+        <button (click)="hideMessages()" class="ml-4 hover:text-red-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !isLoading" class="max-w-full mx-auto px-6 py-12">
+      <div class="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+        <i class="fas fa-exclamation-triangle text-red-400 text-6xl mb-4"></i>
+        <h2 class="text-2xl font-bold text-red-800 mb-3">Error al cargar</h2>
+        <p class="text-red-600 mb-6">{{ error }}</p>
+        <div class="flex gap-3 justify-center">
+          <button (click)="recargarDetalles()"
+                  class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+            <i class="fas fa-redo mr-2"></i>
+            Reintentar
+          </button>
+          <button (click)="volverADocumentos()"
+                  class="px-6 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Volver a Documentos
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content when data is loaded -->
+    <div *ngIf="documento && !isLoading" class="max-w-full mx-auto">
+
+      <!-- Header Section -->
+      <header class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12"></div>
+
+        <div class="max-w-full mx-auto px-6 py-8 relative z-10">
+          <!-- Mobile Menu Button -->
+          <button (click)="onToggleSidebar()"
+            class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
+
+          <!-- Breadcrumb -->
+          <nav class="mb-6">
+            <ol class="flex items-center space-x-2 text-sm">
+              <li>
+                <button (click)="volverADocumentos()"
+                        class="text-white/80 hover:text-white transition-colors flex items-center gap-1">
+                  <i class="fas fa-file-contract"></i>
+                  Documentos de Cobranza
+                </button>
+              </li>
+              <li class="text-white/60">
+                <i class="fas fa-chevron-right mx-2"></i>
+              </li>
+              <li class="text-white font-medium">
+                Detalle de Documento #{{ documento.nroSerie || documento.id }}
+              </li>
+            </ol>
+          </nav>
+
+          <!-- Header Info -->
+          <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+            <div class="flex-1">
+              <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                  <i class="fas fa-file-contract text-2xl"></i>
+                </div>
+                <div>
+                  <h1 class="text-3xl font-bold">
+                    Documento #{{ documento.nroSerie || documento.id }}
+                  </h1>
+                  <p class="text-white/80 text-lg">
+                    {{ modoEdicion ? 'Editando detalles del documento' : 'Gestión de detalles del documento de cobranza' }}
+                  </p>
+                  <div *ngIf="modoEdicion" class="mt-2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <i class="fas fa-edit mr-1"></i>
+                      Modo Edición
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Document Info Cards -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                  <div class="text-sm text-white/80">Cliente</div>
+                  <div class="font-semibold text-white">{{ documento.clienteNombre || 'Sin cliente' }}</div>
+                </div>
+                <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                  <div class="text-sm text-white/80">File Venta</div>
+                  <div class="font-semibold text-white">{{ documento.fileVenta || 'Sin file' }}</div>
+                </div>
+                <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-4">
+                  <div class="text-sm text-white/80">Total</div>
+                  <div class="font-semibold text-white">{{ documento.moneda || 'S/' }} {{ documento.total || 0 | number:'1.2-2' }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-3">
+              <button (click)="recargarDetalles()"
+                      class="px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2">
+                <i class="fas fa-sync-alt"></i>
+                <span class="hidden sm:inline">Actualizar</span>
+              </button>
+
+              <button *ngIf="!modoEdicion && !showDocumentoForm" (click)="mostrarFormularioEditarDocumento()"
+                      class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-colors flex items-center gap-2">
+                <i class="fas fa-file-edit"></i>
+                <span class="hidden sm:inline">Editar</span> Documento
+              </button>
+
+              <button *ngIf="!modoEdicion" (click)="irAEditarDocumento()"
+                      class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 rounded-xl font-medium transition-colors flex items-center gap-2">
+                <i class="fas fa-edit"></i>
+                Editar Detalles
+              </button>
+
+              <button *ngIf="modoEdicion" (click)="salirModoEdicion()"
+                      class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-xl font-medium transition-colors flex items-center gap-2">
+                <i class="fas fa-times"></i>
+                Salir de Edición
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="max-w-full mx-auto px-6 py-8">
+
+        <!-- Action Bar -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8" *ngIf="modoEdicion">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 class="text-xl font-semibold text-gray-900">Gestionar Detalles</h2>
+              <p class="text-gray-600">Agregue, edite o elimine detalles del documento de cobranza</p>
+            </div>
+            <button (click)="mostrarFormularioNuevoDetalle()"
+                    class="px-6 py-3 bg-everywhere-primary hover:bg-everywhere-secondary text-white rounded-xl font-medium transition-colors flex items-center gap-2">
+              <i class="fas fa-plus"></i>
+              Agregar Detalle
+            </button>
+          </div>
+        </div>
+
+        <!-- Detalle Form Modal -->
+        <div *ngIf="showDetalleForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+              <!-- Form Header -->
+              <div class="flex items-center justify-between border-b pb-4 mb-6">
+                <h3 class="text-xl font-bold text-gray-900">
+                  {{ editingDetalleId ? 'Editar Detalle' : 'Nuevo Detalle' }}
+                </h3>
+                <button (click)="cancelarEdicion()" class="text-gray-400 hover:text-gray-600">
+                  <i class="fas fa-times text-xl"></i>
+                </button>
+              </div>
+
+              <!-- Form -->
+              <form [formGroup]="detalleForm" (ngSubmit)="guardarDetalle()" class="space-y-6">
+
+                <!-- Producto -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Producto
+                  </label>
+                  <select formControlName="productoId"
+                          class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent">
+                    <option value="">Seleccionar producto</option>
+                    <option *ngFor="let producto of productos" [value]="producto.id">
+                      {{ producto.tipo }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Cantidad -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Cantidad <span class="text-red-500">*</span>
+                  </label>
+                  <input type="number"
+                         formControlName="cantidad"
+                         min="1"
+                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
+                         placeholder="Ingrese la cantidad">
+                  <div *ngIf="detalleForm.get('cantidad')?.invalid && detalleForm.get('cantidad')?.touched"
+                       class="text-red-500 text-sm mt-1">
+                    La cantidad es requerida y debe ser mayor a 0
+                  </div>
+                </div>
+
+                <!-- Descripción -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Descripción <span class="text-red-500">*</span>
+                  </label>
+                  <textarea formControlName="descripcion"
+                            rows="3"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
+                            placeholder="Descripción del detalle"></textarea>
+                  <div *ngIf="detalleForm.get('descripcion')?.invalid && detalleForm.get('descripcion')?.touched"
+                       class="text-red-500 text-sm mt-1">
+                    La descripción es requerida
+                  </div>
+                </div>
+
+                <!-- Precio -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Precio <span class="text-red-500">*</span>
+                  </label>
+                  <input type="number"
+                         formControlName="precio"
+                         min="0"
+                         step="0.01"
+                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
+                         placeholder="0.00">
+                  <div *ngIf="detalleForm.get('precio')?.invalid && detalleForm.get('precio')?.touched"
+                       class="text-red-500 text-sm mt-1">
+                    El precio es requerido y debe ser mayor o igual a 0
+                  </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end gap-3 pt-6 border-t">
+                  <button type="button"
+                          (click)="cancelarEdicion()"
+                          class="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors">
+                    Cancelar
+                  </button>
+                  <button type="submit"
+                          [disabled]="!detalleForm.valid || isLoading"
+                          class="px-6 py-3 bg-everywhere-primary hover:bg-everywhere-secondary text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
+                    {{ editingDetalleId ? 'Actualizar' : 'Crear' }} Detalle
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documento Form Modal -->
+        <div *ngIf="showDocumentoForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+              <!-- Form Header -->
+              <div class="flex items-center justify-between border-b pb-4 mb-6">
+                <h3 class="text-xl font-bold text-gray-900">
+                  <i class="fas fa-edit mr-2 text-everywhere-primary"></i>
+                  Editar Documento
+                </h3>
+                <button (click)="cancelarEdicionDocumento()" class="text-gray-400 hover:text-gray-600">
+                  <i class="fas fa-times text-xl"></i>
+                </button>
+              </div>
+
+              <!-- Form -->
+              <form [formGroup]="documentoForm" (ngSubmit)="guardarDocumento()" class="space-y-6">
+
+                <!-- File Venta -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    File de Venta
+                  </label>
+                  <input type="text"
+                         formControlName="fileVenta"
+                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
+                         placeholder="Ingrese el file de venta">
+                </div>
+
+                <!-- Costo de Envío -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Costo de Envío
+                  </label>
+                  <input type="number"
+                         formControlName="costoEnvio"
+                         min="0"
+                         step="0.01"
+                         class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
+                         placeholder="0.00">
+                </div>
+
+                <!-- Observaciones -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Observaciones
+                  </label>
+                  <textarea formControlName="observaciones"
+                            rows="4"
+                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
+                            placeholder="Ingrese observaciones sobre el documento"></textarea>
+                </div>
+
+                <!-- Current Values Info -->
+                <div class="bg-gray-50 rounded-xl p-4">
+                  <h4 class="text-sm font-medium text-gray-700 mb-2">Valores Actuales:</h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span class="text-gray-600">File Actual:</span>
+                      <span class="font-medium text-gray-900 ml-2">{{ documento.fileVenta || 'Sin file' }}</span>
+                    </div>
+                    <div>
+                      <span class="text-gray-600">Costo Actual:</span>
+                      <span class="font-medium text-gray-900 ml-2">{{ documento.moneda || 'S/' }} {{ documento.costoEnvio || 0 | number:'1.2-2' }}</span>
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    <span class="text-gray-600">Observaciones:</span>
+                    <p class="font-medium text-gray-900 mt-1">{{ documento.observaciones || 'Sin observaciones' }}</p>
+                  </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end gap-3 pt-6 border-t">
+                  <button type="button"
+                          (click)="cancelarEdicionDocumento()"
+                          class="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors">
+                    Cancelar
+                  </button>
+                  <button type="submit"
+                          [disabled]="isLoading"
+                          class="px-6 py-3 bg-everywhere-primary hover:bg-everywhere-secondary text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                    <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
+                    <i *ngIf="!isLoading" class="fas fa-save"></i>
+                    Guardar Cambios
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detalles Table -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div class="p-6 border-b border-gray-100">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 class="text-xl font-semibold text-gray-900">Detalles del Documento</h2>
+                <p class="text-gray-600">{{ detalles.length }} detalle(s) registrado(s)</p>
+              </div>
+              <div class="text-right">
+                <div class="text-sm text-gray-600">Total Calculado:</div>
+                <div class="text-2xl font-bold text-everywhere-primary">
+                  {{ documento.moneda || 'S/' }} {{ calcularTotal() | number:'1.2-2' }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Producto
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Descripción
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cantidad
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Precio Unit.
+                  </th>
+                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total
+                  </th>
+                  <th *ngIf="modoEdicion" class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let detalle of detalles; trackBy: trackByDetalle" class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {{ getProductoNombre(detalle.productoId) }}
+                  </td>
+                  <td class="px-6 py-4 text-sm text-gray-900">
+                    {{ detalle.descripcion }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ detalle.cantidad }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {{ documento.moneda || 'S/' }} {{ detalle.precio | number:'1.2-2' }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {{ documento.moneda || 'S/' }} {{ ((detalle.cantidad || 0) * (detalle.precio || 0)) | number:'1.2-2' }}
+                  </td>
+                  <td *ngIf="modoEdicion" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div class="flex justify-end gap-2">
+                      <button (click)="editarDetalle(detalle)"
+                              class="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                              title="Editar detalle">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button (click)="eliminarDetalle(detalle.id!)"
+                              class="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                              title="Eliminar detalle">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="detalles.length === 0" class="text-center py-12">
+            <i class="fas fa-list text-4xl text-gray-300 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No hay detalles</h3>
+            <p class="text-gray-500 mb-4">Este documento aún no tiene detalles registrados</p>
+            <button *ngIf="modoEdicion"
+                    (click)="mostrarFormularioNuevoDetalle()"
+                    class="px-6 py-3 bg-everywhere-primary hover:bg-everywhere-secondary text-white rounded-xl font-medium transition-colors">
+              Agregar Primer Detalle
+            </button>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</div>
