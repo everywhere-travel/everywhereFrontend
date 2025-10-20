@@ -216,6 +216,10 @@ export class DocumentosComponent implements OnInit {
   // Formularios
   documentoForm!: FormGroup;
   editandoDocumento = false;
+  // Id del documento que se edita actualmente (si aplica)
+  editingDocumentoId: number | null = null;
+  // Copia del documento original para usar como fallback al actualizar
+  originalDocumento: DocumentoTabla | null = null;
   documentoAEliminar: DocumentoTabla | null = null;
   documentoAConfirmar: DocumentoTabla | null = null;
   accionConfirmacion: 'activar' | 'desactivar' = 'activar';
@@ -514,6 +518,8 @@ export class DocumentosComponent implements OnInit {
   abrirModalCrear(): void {
     this.editandoDocumento = false;
     this.documentoForm.reset();
+    this.editingDocumentoId = null;
+    this.originalDocumento = null;
     this.mostrarModalCrear = true;
   }
 
@@ -523,17 +529,38 @@ export class DocumentosComponent implements OnInit {
       tipo: documento.tipo,
       descripcion: documento.descripcion
     });
+    // Guardar referencia al documento original y su id para usar en la actualización
+    this.editingDocumentoId = documento.id;
+    this.originalDocumento = { ...documento };
     this.mostrarModalCrear = true;
   }
 
   guardarDocumento(): void {
     if (this.documentoForm.valid) {
       this.loading = true;
-      const documentoData = this.documentoForm.value;
+      // Construir payload asegurando que siempre enviamos tipo y descripcion.
+      // Si el usuario no modificó alguno de los campos, usamos el valor original como fallback.
+      const formTipo = this.documentoForm.get('tipo')?.value;
+      const formDescripcion = this.documentoForm.get('descripcion')?.value;
 
-      const operation = this.editandoDocumento
-        ? this.documentoService.updateDocumento((this.documentoForm as any).documentoId, documentoData)
-        : this.documentoService.createDocumento(documentoData);
+      const tipo = formTipo ?? this.originalDocumento?.tipo ?? '';
+      const descripcion = formDescripcion ?? this.originalDocumento?.descripcion ?? '';
+
+      const documentoData: DocumentoRequest = { tipo, descripcion };
+
+      let operation: any;
+      if (this.editandoDocumento) {
+        const idToUpdate = this.editingDocumentoId ?? this.originalDocumento?.id;
+        if (idToUpdate == null) {
+          // Estado inconsistente: no tenemos id para actualizar
+          this.mostrarError('Error', 'No se pudo identificar el documento a actualizar.');
+          this.loading = false;
+          return;
+        }
+        operation = this.documentoService.updateDocumento(idToUpdate, documentoData);
+      } else {
+        operation = this.documentoService.createDocumento(documentoData);
+      }
 
       operation.subscribe({
         next: () => {
@@ -541,7 +568,7 @@ export class DocumentosComponent implements OnInit {
           this.cargarDocumentos();
           this.loading = false;
         },
-        error: (error) => {
+        error: (error: unknown) => {
           console.error('Error al guardar documento:', error);
           this.mostrarError(
             this.editandoDocumento ? 'Error al actualizar' : 'Error al crear',
