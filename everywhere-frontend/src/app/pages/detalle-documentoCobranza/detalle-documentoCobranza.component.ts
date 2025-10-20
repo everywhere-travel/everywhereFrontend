@@ -11,6 +11,7 @@ import { DocumentoCobranzaService } from '../../core/service/DocumentoCobranza/D
 import { DetalleDocumentoCobranzaService } from '../../core/service/DetalleDocumentoCobranza/detalle-documentoCobranza.service';
 import { ProductoService } from '../../core/service/Producto/producto.service';
 import { LoadingService } from '../../core/service/loading.service';
+import { AuthServiceService } from '../../core/service/auth/auth.service';
 
 // Models
 import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
@@ -22,6 +23,12 @@ import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+
+// Extender la interfaz para agregar moduleKey
+interface ExtendedSidebarMenuItem extends SidebarMenuItem {
+  moduleKey?: string;
+  children?: ExtendedSidebarMenuItem[];
+}
 
 @Component({
   selector: 'app-detalle-documentoCobranza',
@@ -62,7 +69,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   editingDetalleId: number | null = null;
 
   // Sidebar Configuration
-  sidebarMenuItems: SidebarMenuItem[] = [
+  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
@@ -70,21 +77,132 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       route: '/dashboard'
     },
     {
+      id: 'clientes',
+      title: 'Gestión de Clientes',
+      icon: 'fas fa-users',
+      moduleKey: 'CLIENTES',
+      children: [
+        {
+          id: 'personas',
+          title: 'Clientes',
+          icon: 'fas fa-address-card',
+          route: '/personas',
+          moduleKey: 'PERSONAS'
+        },
+        {
+          id: 'viajeros',
+          title: 'Viajeros',
+          icon: 'fas fa-passport',
+          route: '/viajero',
+          moduleKey: 'VIAJEROS'
+        },
+        {
+          id: 'viajeros-frecuentes',
+          title: 'Viajeros Frecuentes',
+          icon: 'fas fa-crown',
+          route: '/viajero-frecuente',
+          moduleKey: 'VIAJEROS'
+        }
+      ]
+    },
+    {
       id: 'cotizaciones',
       title: 'Cotizaciones',
       icon: 'fas fa-file-invoice',
-      route: '/cotizaciones'
+      route: '/cotizaciones',
+      moduleKey: 'COTIZACIONES'
+    },
+    {
+      id: 'liquidaciones',
+      title: 'Liquidaciones',
+      icon: 'fas fa-credit-card',
+      route: '/liquidaciones',
+      moduleKey: 'LIQUIDACIONES'
+    },
+    {
+      id: 'documentos',
+      title: 'Documentos de clientes',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      moduleKey: 'DOCUMENTOS'
     },
     {
       id: 'documentos-cobranza',
       title: 'Documentos de Cobranza',
       icon: 'fas fa-file-contract',
+      route: '/documentos-cobranza',
       active: true,
-      route: '/documento-cobranza'
+      moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
+      id: 'recursos',
+      title: 'Recursos',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'productos',
+          title: 'Productos',
+          icon: 'fas fa-cube',
+          route: '/productos',
+          moduleKey: 'PRODUCTOS'
+        },
+        {
+          id: 'proveedores',
+          title: 'Proveedores',
+          icon: 'fas fa-truck',
+          route: '/proveedores',
+          moduleKey: 'PROVEEDORES'
+        },
+        {
+          id: 'operadores',
+          title: 'Operadores',
+          icon: 'fas fa-headset',
+          route: '/operadores',
+          moduleKey: 'OPERADOR'
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      children: [
+        {
+          id: 'counters',
+          title: 'Counters',
+          icon: 'fas fa-users-line',
+          route: '/counters',
+          moduleKey: 'COUNTERS'
+        },
+        {
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales',
+          moduleKey: 'SUCURSALES'
+        }
+      ]
+    },
+    {
+      id: 'archivos',
+      title: 'Gestión de Archivos',
+      icon: 'fas fa-folder',
+      children: [
+        {
+          id: 'carpetas',
+          title: 'Explorador',
+          icon: 'fas fa-folder-open',
+          route: '/carpetas',
+          moduleKey: 'CARPETAS'
+        }
+      ]
     }
   ];
 
+  sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
+
   private subscriptions = new Subscription();
+  private authService = inject(AuthServiceService);
 
   constructor() {
     this.detalleForm = this.fb.group({
@@ -102,12 +220,87 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.initializeSidebar();
     this.loadDocumentoFromRoute();
     this.loadProductos();
   }
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+  }
+
+  // =================================================================
+  // SIDEBAR FILTERING
+  // =================================================================
+
+  private initializeSidebar(): void {
+    const authData = this.authService.getUser();
+    const userPermissions = authData?.permissions || {};
+
+    // Si tiene ALL_MODULES, mostrar todos los items, sino filtrar por permisos específicos
+    if (userPermissions['ALL_MODULES']) {
+      this.sidebarMenuItems = this.allSidebarMenuItems;
+    } else {
+      this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems, userPermissions);
+    }
+  }
+
+  private filterSidebarItems(items: ExtendedSidebarMenuItem[], userPermissions: any): ExtendedSidebarMenuItem[] {
+    return items.filter(item => {
+      // Dashboard siempre visible
+      if (item.id === 'dashboard') {
+        return true;
+      }
+
+      // Items sin moduleKey (como configuración, reportes) siempre visibles
+      if (!item.moduleKey) {
+        // Si tiene children, filtrar los children
+        if (item.children) {
+          const filteredChildren = this.filterSidebarItems(item.children, userPermissions);
+          // Solo mostrar el padre si tiene al menos un hijo visible
+          if (filteredChildren.length > 0) {
+            return {
+              ...item,
+              children: filteredChildren
+            };
+          }
+          return false;
+        }
+        return true;
+      }
+
+      // Verificar si el usuario tiene permisos para este módulo
+      const hasPermission = Object.keys(userPermissions).includes(item.moduleKey);
+
+      if (hasPermission) {
+        // Si tiene children, filtrar los children también
+        if (item.children) {
+          const filteredChildren = this.filterSidebarItems(item.children, userPermissions);
+          return {
+            ...item,
+            children: filteredChildren
+          };
+        }
+        return true;
+      }
+
+      return false;
+    }).map(item => {
+      // Asegurar que los children filtrados se apliquen correctamente
+      if (item.children) {
+        return {
+          ...item,
+          children: this.filterSidebarItems(item.children, userPermissions)
+        };
+      }
+      return item;
+    }).filter(item => {
+      // Filtrar items padre que no tengan children después del filtrado
+      if (item.children) {
+        return item.children.length > 0;
+      }
+      return true;
+    });
   }
 
   // ===== NAVIGATION METHODS =====
@@ -370,7 +563,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   volverADocumentos(): void {
-    this.router.navigate(['/documento-cobranza']);
+    this.router.navigate(['/documentos-cobranza']);
   }
 
   recargarDetalles(): void {

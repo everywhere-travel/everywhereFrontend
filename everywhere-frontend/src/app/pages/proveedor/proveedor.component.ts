@@ -58,7 +58,7 @@ export class ProveedorComponent implements OnInit {
           title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas',
-          moduleKey: 'CLIENTES'
+          moduleKey: 'PERSONAS'
         },
         {
           id: 'viajeros',
@@ -91,10 +91,23 @@ export class ProveedorComponent implements OnInit {
       moduleKey: 'LIQUIDACIONES'
     },
     {
+      id: 'documentos',
+      title: 'Documentos de clientes',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documento-cobranza',
+      moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
-      active: true,
       children: [
         {
           id: 'productos',
@@ -107,9 +120,9 @@ export class ProveedorComponent implements OnInit {
           id: 'proveedores',
           title: 'Proveedores',
           icon: 'fas fa-truck',
+          active: true,
           route: '/proveedores',
-          moduleKey: 'PROVEEDORES',
-          active: true
+          moduleKey: 'PROVEEDORES'
         },
         {
           id: 'operadores',
@@ -117,13 +130,6 @@ export class ProveedorComponent implements OnInit {
           icon: 'fas fa-headset',
           route: '/operadores',
           moduleKey: 'OPERADOR'
-        },
-        {
-          id: 'documentos',
-          title: 'Documentos',
-          icon: 'fas fa-file-alt',
-          route: '/documentos',
-          moduleKey: 'DOCUMENTOS'
         }
       ]
     },

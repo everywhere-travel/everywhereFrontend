@@ -49,7 +49,7 @@ export class Viajero implements OnInit {
 
   // Sidebar Configuration
   sidebarCollapsed = false;
-    allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+   allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
@@ -60,23 +60,22 @@ export class Viajero implements OnInit {
       id: 'clientes',
       title: 'Gestión de Clientes',
       icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
       active: true,
+      moduleKey: 'CLIENTES',
       children: [
         {
           id: 'personas',
           title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas',
-          moduleKey: 'CLIENTES'
+          moduleKey: 'PERSONAS'
         },
         {
           id: 'viajeros',
           title: 'Viajeros',
           icon: 'fas fa-passport',
           route: '/viajero',
-          moduleKey: 'VIAJEROS',
-          active: true
+          moduleKey: 'VIAJEROS'
         },
         {
           id: 'viajeros-frecuentes',
@@ -102,10 +101,23 @@ export class Viajero implements OnInit {
       moduleKey: 'LIQUIDACIONES'
     },
     {
+      id: 'documentos',
+      title: 'Documentos de clientes',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documento-cobranza',
+      moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
-
       children: [
         {
           id: 'productos',
@@ -126,15 +138,7 @@ export class Viajero implements OnInit {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores',
-          moduleKey: 'OPERADOR',
-          active: true
-        },
-        {
-          id: 'documentos',
-          title: 'Documentos',
-          icon: 'fas fa-file-alt',
-          route: '/documentos',
-          moduleKey: 'DOCUMENTOS'
+          moduleKey: 'OPERADOR'
         }
       ]
     },
@@ -142,14 +146,13 @@ export class Viajero implements OnInit {
       id: 'organización',
       title: 'Organización',
       icon: 'fas fa-sitemap',
-
       children: [
         {
           id: 'counters',
           title: 'Counters',
           icon: 'fas fa-users-line',
           route: '/counters',
-          moduleKey: 'COUNTERS',
+          moduleKey: 'COUNTERS'
         },
         {
           id: 'sucursales',
