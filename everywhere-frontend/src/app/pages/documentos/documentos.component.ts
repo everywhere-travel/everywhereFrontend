@@ -64,7 +64,7 @@ export class DocumentosComponent implements OnInit {
           title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas',
-          moduleKey: 'CLIENTES'
+          moduleKey: 'PERSONAS'
         },
         {
           id: 'viajeros',
@@ -136,13 +136,6 @@ export class DocumentosComponent implements OnInit {
           icon: 'fas fa-headset',
           route: '/operadores',
           moduleKey: 'OPERADOR'
-        },
-        {
-          id: 'documentos',
-          title: 'Documentos',
-          icon: 'fas fa-file-alt',
-          route: '/documentos',
-          moduleKey: 'DOCUMENTOS'
         }
       ]
     },

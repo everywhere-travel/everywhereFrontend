@@ -126,14 +126,6 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       moduleKey: 'COTIZACIONES'
     },
     {
-      id: 'documentos-cobranza',
-      title: 'Documentos de Cobranza',
-      icon: 'fas fa-file-contract',
-      route: '/documento-cobranza',
-      active: true,
-      moduleKey: 'DOCUMENTOS_COBRANZA'
-    },
-    {
       id: 'liquidaciones',
       title: 'Liquidaciones',
       icon: 'fas fa-credit-card',
@@ -142,10 +134,18 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     },
     {
       id: 'documentos',
-      title: 'Documentos',
+      title: 'Documentos de clientes',
       icon: 'fas fa-file-alt',
       route: '/documentos',
       moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documentos-cobranza',
+      active: true,
+      moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {
       id: 'recursos',
@@ -282,30 +282,51 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       return [];
     }
 
+    const userPermissions = currentUser.permissions;
+
     // Si el usuario tiene permisos de ALL_MODULES, mostrar todo
-    if (currentUser.permissions['ALL_MODULES']) {
+    if (userPermissions['ALL_MODULES']) {
       return items;
     }
 
     return items.filter(item => {
-      // Si tiene moduleKey, verificar permisos directos
-      if (item.moduleKey) {
-        return currentUser.permissions[item.moduleKey] && currentUser.permissions[item.moduleKey].length > 0;
+      // Dashboard siempre visible
+      if (item.id === 'dashboard') {
+        return true;
       }
 
-      // Si no tiene moduleKey pero tiene children, verificar si algún hijo tiene permisos
-      if (item.children && item.children.length > 0) {
-        const filteredChildren = this.filterSidebarItems(item.children);
-        if (filteredChildren.length > 0) {
-          // Actualizar el item con solo los children filtrados
-          item.children = filteredChildren;
-          return true;
+      // Items sin moduleKey (como configuración, reportes) siempre visibles
+      if (!item.moduleKey) {
+        // Si tiene children, filtrar los children
+        if (item.children) {
+          const filteredChildren = this.filterSidebarItems(item.children);
+          // Solo mostrar el padre si tiene al menos un hijo visible
+          if (filteredChildren.length > 0) {
+            item.children = filteredChildren;
+            return true;
+          }
+          return false;
         }
-        return false;
+        return true;
       }
 
-      // Si no tiene moduleKey ni children, mostrar por defecto (como Dashboard)
-      return true;
+      // Verificar si el usuario tiene permisos para este módulo
+      const hasPermission = Object.keys(userPermissions).includes(item.moduleKey);
+
+      if (hasPermission) {
+        // Si tiene children, filtrar los children también
+        if (item.children) {
+          const filteredChildren = this.filterSidebarItems(item.children);
+          if (filteredChildren.length > 0) {
+            item.children = filteredChildren;
+            return true;
+          }
+          return false;
+        }
+        return true;
+      }
+
+      return false;
     });
   }
 

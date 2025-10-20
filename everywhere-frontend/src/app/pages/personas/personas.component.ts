@@ -59,15 +59,15 @@ export class PersonasComponent implements OnInit {
       id: 'clientes',
       title: 'Gestión de Clientes',
       icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
       active: true,
+      moduleKey: 'CLIENTES',
       children: [
         {
           id: 'personas',
           title: 'Clientes',
           icon: 'fas fa-address-card',
           route: '/personas',
-          moduleKey: 'CLIENTES'
+          moduleKey: 'PERSONAS'
         },
         {
           id: 'viajeros',
@@ -100,6 +100,20 @@ export class PersonasComponent implements OnInit {
       moduleKey: 'LIQUIDACIONES'
     },
     {
+      id: 'documentos',
+      title: 'Documentos de clientes',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documento-cobranza',
+      moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
@@ -124,13 +138,6 @@ export class PersonasComponent implements OnInit {
           icon: 'fas fa-headset',
           route: '/operadores',
           moduleKey: 'OPERADOR'
-        },
-        {
-          id: 'documentos',
-          title: 'Documentos',
-          icon: 'fas fa-file-alt',
-          route: '/documentos',
-          moduleKey: 'DOCUMENTOS'
         }
       ]
     },
@@ -138,15 +145,13 @@ export class PersonasComponent implements OnInit {
       id: 'organización',
       title: 'Organización',
       icon: 'fas fa-sitemap',
-
       children: [
         {
           id: 'counters',
           title: 'Counters',
           icon: 'fas fa-users-line',
           route: '/counters',
-          moduleKey: 'COUNTERS',
-          active: true
+          moduleKey: 'COUNTERS'
         },
         {
           id: 'sucursales',
