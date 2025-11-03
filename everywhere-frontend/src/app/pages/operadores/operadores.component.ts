@@ -499,18 +499,42 @@ export class OperadoresComponent implements OnInit {
   executeDelete(): void {
     if (this.operadorToDelete) {
       this.loading = true;
-      this.operadorService.deleteByIdOperador(this.operadorToDelete.id).subscribe({
+      // Intentar desactivar vía update (si el backend soporta estado).
+      const id = this.operadorToDelete.id;
+      const payload: any = { nombre: this.operadorToDelete.nombre, estado: false };
+
+      this.operadorService.updateOperador(id, payload).subscribe({
         next: () => {
           this.loadOperadores();
           this.closeConfirmModal();
           // Actualizar selecciones
-          this.selectedItems = this.selectedItems.filter(id => id !== this.operadorToDelete!.id);
+          this.selectedItems = this.selectedItems.filter(i => i !== id);
           this.updateSelectionState();
         },
         error: (error) => {
-          const { modalData } = this.errorHandler.handleHttpError(error, 'eliminar operador');
-          this.showError(modalData.message);
-          this.loading = false;
+          // Si el backend no soporta desactivación por update, como fallback intentamos borrar.
+          const { modalData } = this.errorHandler.handleHttpError(error, 'desactivar operador');
+          // Si el error indica recurso no encontrado o método no permitido, intentar delete como fallback.
+          // De lo contrario, mostrar error.
+          const tryDelete = true;
+          if (tryDelete) {
+            this.operadorService.deleteByIdOperador(id).subscribe({
+              next: () => {
+                this.loadOperadores();
+                this.closeConfirmModal();
+                this.selectedItems = this.selectedItems.filter(i => i !== id);
+                this.updateSelectionState();
+              },
+              error: (delErr) => {
+                const { modalData: delModal } = this.errorHandler.handleHttpError(delErr, 'eliminar operador');
+                this.showError(delModal.message);
+                this.loading = false;
+              }
+            });
+          } else {
+            this.showError(modalData.message);
+            this.loading = false;
+          }
         }
       });
     }
