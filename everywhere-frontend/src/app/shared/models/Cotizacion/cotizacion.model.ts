@@ -6,6 +6,10 @@ import { CarpetaResponse } from '../Carpeta/carpeta.model'
 import { PersonaResponse } from '../Persona/persona.model'
 import { DetalleCotizacionSimpleDTO } from '../Cotizacion/detalleCotizacion.model'
 
+/**
+ * DTO para crear o actualizar cotizaciones
+ * Todos los campos son opcionales ya que usamos PATCH para actualizaciones
+ */
 export interface CotizacionRequest {
   cantAdultos?: number
   cantNinos?: number
@@ -15,29 +19,36 @@ export interface CotizacionRequest {
   fechaRegreso?: string
   moneda?: string
   observacion?: string
+  counterId?: number
+  formaPagoId?: number
+  estadoCotizacionId?: number
+  sucursalId?: number
+  carpetaId?: number
 }
+
+export type CotizacionPatchRequest = Partial<CotizacionRequest>
 
 export interface CotizacionResponse {
   id: number
-  codigoCotizacion?: string
-  cantAdultos?: number
-  cantNinos?: number
-  fechaEmision?: string
-  fechaVencimiento?: string
-  actualizado?: string
-  origenDestino?: string
-  fechaSalida?: string
-  fechaRegreso?: string
-  moneda?: string
+  codigoCotizacion: string
+  cantAdultos: number
+  cantNinos: number
+  fechaEmision: string
+  fechaVencimiento: string
+  actualizado: string
+  origenDestino: string
+  fechaSalida: string
+  fechaRegreso: string
+  moneda: string
   observacion?: string
   grupoSeleccionadoId?: number
+
   counter?: CounterResponse
+  formaPago?: FormaPagoResponse
   estadoCotizacion?: EstadoCotizacionResponse
   sucursal?: SucursalResponse
   carpeta?: CarpetaResponse
   personas?: PersonaResponse
-  formaPago?: FormaPagoResponse
-
 }
 
 export interface CotizacionConDetallesResponseDTO {
@@ -56,13 +67,13 @@ export interface CotizacionConDetallesResponseDTO {
   grupoSeleccionadoId?: number
 
   // Relaciones de la cotización
-  counter?: CounterResponse;
-  formaPago?: FormaPagoResponse;
-  estadoCotizacion?: EstadoCotizacionResponse;
-  sucursal?: SucursalResponse;
-  carpeta?: CarpetaResponse;
-  personas?: PersonaResponse;
+  counter?: CounterResponse
+  formaPago?: FormaPagoResponse
+  estadoCotizacion?: EstadoCotizacionResponse
+  sucursal?: SucursalResponse
+  carpeta?: CarpetaResponse
+  personas?: PersonaResponse
 
-  // Lista de detalles anidados
-  detalles: DetalleCotizacionSimpleDTO[];
+  // Lista de detalles anidados (sin la cotización repetida)
+  detalles: DetalleCotizacionSimpleDTO[]
 }

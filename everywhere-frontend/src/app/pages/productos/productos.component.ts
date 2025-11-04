@@ -399,7 +399,15 @@ export class ProductosComponent implements OnInit {
 
       this.productoService.updateProducto(this.productoSeleccionado.id, productoRequest).subscribe({
         next: (response) => {
+          // Actualizar el producto en la lista local
+          const index = this.productos.findIndex(p => p.id === response.id);
+          if (index !== -1) {
+            this.productos[index] = response;
+          }
+
+          // Recargar los datos de la tabla
           this.loadProductos();
+
           this.cerrarModal();
           this.loading = false;
         },

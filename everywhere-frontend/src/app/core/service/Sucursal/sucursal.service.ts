@@ -29,7 +29,7 @@ export class SucursalService {
   }
 
   updateSucursal(id: number, sucursal: SucursalRequest): Observable<SucursalResponse> {
-    return this.http.put<SucursalResponse>(`${this.apiUrl}/${id}`, sucursal);
+    return this.http.patch<SucursalResponse>(`${this.apiUrl}/${id}`, sucursal);
   }
 
   cambiarEstadoSucursal(id: number, estado: boolean): Observable<SucursalResponse> {

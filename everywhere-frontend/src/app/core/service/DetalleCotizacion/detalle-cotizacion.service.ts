@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { DetalleCotizacionResponse, DetalleCotizacionRequest } from '../../../shared/models/Cotizacion/detalleCotizacion.model'
+import { DetalleCotizacionResponse, DetalleCotizacionRequest, DetalleCotizacionPatchRequest } from '../../../shared/models/Cotizacion/detalleCotizacion.model'
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -28,28 +28,29 @@ export class DetalleCotizacionService {
     return this.http.post<DetalleCotizacionResponse>(`${this.apiUrl}/cotizacion/${cotizacionId}`, detalleCotizacionRequest);
   }
 
-  updateDetalleCotizacion(id: number, detalleCotizacionRequest: DetalleCotizacionRequest): Observable<DetalleCotizacionResponse> {
-    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${id}`, detalleCotizacionRequest);
+  /**
+   * Actualiza un detalle de cotización con PATCH (payloads parciales)
+   * 
+   * @param id ID del detalle a actualizar
+   * @param patchPayload Contiene solo los campos a actualizar
+   * @returns Observable con la respuesta actualizada
+   * 
+   * @example
+   * // Actualizar solo cantidad y descripción
+   * updateDetalleCotizacion(1, { cantidad: 5, descripcion: 'Nuevo valor' })
+   * 
+   * // Actualizar producto y proveedor
+   * updateDetalleCotizacion(1, { productoId: 10, proveedorId: 20 })
+   * 
+   * // Marcar como seleccionado
+   * updateDetalleCotizacion(1, { seleccionado: true })
+   */
+  updateDetalleCotizacion(id: number, patchPayload: DetalleCotizacionPatchRequest): Observable<DetalleCotizacionResponse> {
+    return this.http.patch<DetalleCotizacionResponse>(`${this.apiUrl}/${id}`, patchPayload);
   }
 
   deleteDetalleCotizacion(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
-
-  setCotizacion(detalleId: number, cotizacionId: number): Observable<DetalleCotizacionResponse> {
-    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${detalleId}/cotizacion/${cotizacionId}`, {});
-  }
-
-  setProducto(detalleId: number, productoId: number): Observable<DetalleCotizacionResponse> {
-    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${detalleId}/producto/${productoId}`, {});
-  }
-
-  setProveedor(detalleId: number, proveedorId: number): Observable<DetalleCotizacionResponse> {
-    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${detalleId}/proveedor/${proveedorId}`, {});
-  }
-
-  setSeleccionDetalleCotizacion(detalleId: number, seleccionado: boolean): Observable<DetalleCotizacionResponse> {
-    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${detalleId}/seleccionado?seleccionado=${seleccionado}`, {});
   }
 
 }

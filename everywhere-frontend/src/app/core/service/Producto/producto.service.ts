@@ -17,8 +17,8 @@ export class ProductoService {
     return this.http.post<ProductoResponse>(this.apiUrl, productoRequest);
   }
 
-  updateProducto(id: number, productoRequest: ProductoRequest): Observable<ProductoResponse> {
-    return this.http.put<ProductoResponse>(`${this.apiUrl}/${id}`, productoRequest);
+  updateProducto(id: number, productoRequest: Partial<ProductoRequest>): Observable<ProductoResponse> {
+    return this.http.patch<ProductoResponse>(`${this.apiUrl}/${id}`, productoRequest);
   }
 
   getByIdProducto(id: number): Observable<ProductoResponse> {
