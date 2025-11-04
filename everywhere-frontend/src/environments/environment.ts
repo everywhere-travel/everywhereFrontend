@@ -1,4 +1,4 @@
 export const environment = {
     production : false,
-    baseURL : "https://api.eddyacv.dev/api/v1"
+    baseURL : "http://everywherebackend.onrender.com/api/v1"
 };

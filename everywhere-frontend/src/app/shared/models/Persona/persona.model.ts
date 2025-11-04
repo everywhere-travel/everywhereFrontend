@@ -1,6 +1,7 @@
+import { TelefonoPersonaResponse } from '../TelefonoPersona/telefonoPersona.models';
+import { CorreoPersonaResponse } from '../CorreoPersona/correoPersona.model';
+
 export interface PersonaRequest {
-  email?: string
-  telefono?: string
   direccion?: string
   observacion?: string
 }
@@ -13,11 +14,13 @@ export interface PersonaResponse {
   observacion?: string
   creado: string
   actualizado: string
+  telefonos?: TelefonoPersonaResponse[]
+  correos?: CorreoPersonaResponse[]
 }
 
 export interface personaDisplay {
   id: number;
-  tipo: string; // 'JURIDICA' | 'NATURAL' | etc.
-  identificador: string; // RUC, DNI, etc.
+  tipo: string;
+  identificador: string;
   nombre: string;
 }

@@ -23,7 +23,8 @@ export interface PersonaTabla {
   tipo: 'natural' | 'juridica';
   nombre: string;
   nombres?: string;  // Para compatibilidad con el HTML
-  apellidos?: string; // Para compatibilidad con el HTML
+  apellidosPaterno?: string; // Opcional para personas jurídicas
+  apellidosMaterno?: string; // Para compatibilidad con el HTML
   razonSocial?: string; // Para compatibilidad con el HTML
   documento: string;
   ruc?: string; // Para compatibilidad con el HTML
@@ -433,13 +434,9 @@ export class PersonasComponent implements OnInit {
         : formData.residencia;
 
       const request: ViajeroRequest = {
-        nombres: formData.nombres,
-        apellidoPaterno: formData.apellidoPaterno,
-        apellidoMaterno: formData.apellidoMaterno,
         fechaNacimiento: formData.fechaNacimiento,
         nacionalidad: nacionalidadFinal,
         residencia: residenciaFinal,
-        persona: formData.persona
       };
 
       this.viajeroService.save(request).subscribe({
@@ -743,8 +740,9 @@ export class PersonasComponent implements OnInit {
   getClientInitials(persona: PersonaTabla): string {
     if (persona.tipo === 'natural') {
       const nombres = persona.nombres || '';
-      const apellidos = persona.apellidos || '';
-      return (nombres.charAt(0) + apellidos.charAt(0)).toUpperCase();
+      const apellidosPaterno = persona.apellidosPaterno || '';
+      const apellidosMaterno = persona.apellidosMaterno || '';
+      return (nombres.charAt(0) + apellidosPaterno.charAt(0)).toUpperCase() + apellidosMaterno.charAt(0).toUpperCase();
     } else {
       const razon = persona.razonSocial || '';
       return razon.substring(0, 2).toUpperCase();
@@ -1111,9 +1109,10 @@ export class PersonasComponent implements OnInit {
           personasTabla.push({
             id: natural.id,
             tipo: 'natural',
-            nombre: `${natural.nombres || ''} ${natural.apellidos || ''}`.trim(),
+            nombre: `${natural.nombres || ''} ${natural.apellidosPaterno || ''} ${natural.apellidosMaterno || ''}`.trim(),
             nombres: natural.nombres,
-            apellidos: natural.apellidos,
+            apellidosPaterno: natural.apellidosPaterno || '',
+            apellidosMaterno: natural.apellidosMaterno || '',
             documento: natural.documento || '',
             email: natural.persona?.email,
             telefono: natural.persona?.telefono,
@@ -1129,6 +1128,7 @@ export class PersonasComponent implements OnInit {
             id: juridica.id,
             tipo: 'juridica',
             nombre: juridica.razonSocial || '',
+            apellidosPaterno: '', // Vacío para personas jurídicas
             razonSocial: juridica.razonSocial,
             documento: juridica.ruc || '',
             ruc: juridica.ruc,
@@ -1261,10 +1261,13 @@ export class PersonasComponent implements OnInit {
       next: (personaCompleta) => {
         this.personaNaturalForm.patchValue({
           nombres: personaCompleta.nombres || '',
-          apellidos: personaCompleta.apellidos || '',
+          apellidos: {
+            paterno: personaCompleta.apellidosPaterno || '',
+            materno: personaCompleta.apellidosMaterno || ''
+          },
           documento: personaCompleta.documento || '',
-          cliente: personaCompleta.cliente || false,
-          categoria: personaCompleta.categoria || '',
+          cliente: false, // No existe en el modelo, usar valor por defecto
+          categoria: '', // No existe en el modelo, usar valor por defecto
           persona: {
             telefono: personaCompleta.persona?.telefono || '',
             email: personaCompleta.persona?.email || '',
@@ -1332,10 +1335,9 @@ export class PersonasComponent implements OnInit {
       const formData = this.personaNaturalForm.value;
       const request: PersonaNaturalRequest = {
         nombres: formData.nombres,
-        apellidos: formData.apellidos,
+        apellidosPaterno: formData.apellidos?.paterno || '',
+        apellidosMaterno: formData.apellidos?.materno || '',
         documento: formData.documento,
-        cliente: formData.cliente,
-        categoria: formData.categoria,
         persona: formData.persona
       };
 

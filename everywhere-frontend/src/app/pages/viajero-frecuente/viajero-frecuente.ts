@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { ViajeroFrecuenteService } from '../../core/service/viajero/viajero-frecuente.service';
 import { ViajeroService } from '../../core/service/viajero/viajero.service';
 import { ViajeroFrecuenteRequest, ViajeroFrecuenteResponse } from '../../shared/models/Viajero/viajeroFrecuente.model';
-import { ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
+import { ViajeroConPersonaNatural, ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
 
@@ -174,7 +174,7 @@ export class ViajeroFrecuente implements OnInit {
   // Data arrays
   viajerosFrecuentes: ViajeroFrecuenteResponse[] = [];
   viajerosFrecuentesFiltrados: ViajeroFrecuenteResponse[] = [];
-  viajeros: ViajeroResponse[] = [];
+  viajeros: ViajeroConPersonaNatural[] = [];
 
   // Loading state
   isLoading = true;
@@ -232,8 +232,8 @@ export class ViajeroFrecuente implements OnInit {
 
   // Viajero search
   viajeroSearchQuery = '';
-  viajerosFiltrados: ViajeroResponse[] = [];
-  selectedViajero: ViajeroResponse | null = null;
+  viajerosFiltrados: ViajeroConPersonaNatural[] = [];
+  selectedViajero: ViajeroConPersonaNatural | null = null;
   showViajeroDropdown = false;
 
   constructor(
@@ -439,11 +439,8 @@ export class ViajeroFrecuente implements OnInit {
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase();
       filtered = filtered.filter(vf =>
-        vf.codigo.toLowerCase().includes(query) ||
-        vf.areolinea.toLowerCase().includes(query) ||
-        vf.viajero.nombres.toLowerCase().includes(query) ||
-        vf.viajero.apellidoPaterno.toLowerCase().includes(query) ||
-        vf.viajero.apellidoMaterno.toLowerCase().includes(query)
+        vf.codigo?.toLowerCase().includes(query) ||
+        vf.areolinea?.toLowerCase().includes(query)
       );
     }
 
@@ -591,8 +588,8 @@ export class ViajeroFrecuente implements OnInit {
           valueB = b.areolinea;
           break;
         case 'viajero':
-          valueA = `${a.viajero.nombres} ${a.viajero.apellidoPaterno}`;
-          valueB = `${b.viajero.nombres} ${b.viajero.apellidoPaterno}`;
+          valueA = `${a.viajero} ${a.viajero}`;
+          valueB = `${b.viajero} ${b.viajero}`;
           break;
         case 'fechaCreacion':
           valueA = new Date(a.creado);
@@ -699,7 +696,6 @@ export class ViajeroFrecuente implements OnInit {
 
     // Para el modo edición, configurar el viajero seleccionado en el campo de búsqueda
     this.selectedViajero = viajeroFrecuente.viajero;
-    this.viajeroSearchQuery = `${viajeroFrecuente.viajero.nombres} ${viajeroFrecuente.viajero.apellidoPaterno} ${viajeroFrecuente.viajero.apellidoMaterno}`;
   }
 
   // Método para cerrar modal de detalles
@@ -796,10 +792,9 @@ export class ViajeroFrecuente implements OnInit {
       this.viajerosFiltrados = this.viajeros.slice(0, 10);
     } else {
       // Con búsqueda: filtrar los que coincidan
-      this.viajerosFiltrados = this.viajeros.filter((viajero: ViajeroResponse) => {
-        const nombreCompleto = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`.toLowerCase();
+      this.viajerosFiltrados = this.viajeros.filter((viajero: ViajeroConPersonaNatural) => {
 
-        return nombreCompleto.includes(query)
+        return `${viajero?.personaNatural?.nombres} ${viajero?.personaNatural?.apellidosPaterno} ${viajero?.personaNatural?.apellidosMaterno}`.toLowerCase().includes(query);
       }).slice(0, 10);
     }
 
@@ -814,9 +809,9 @@ export class ViajeroFrecuente implements OnInit {
     this.showViajeroDropdown = true;
   }
 
-  selectViajero(viajero: ViajeroResponse): void {
+  selectViajero(viajero: ViajeroConPersonaNatural): void {
     this.selectedViajero = viajero;
-    this.viajeroSearchQuery = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno}`;
+    this.viajeroSearchQuery = `${viajero?.personaNatural?.nombres} ${viajero?.personaNatural?.apellidosPaterno} ${viajero?.personaNatural?.apellidosMaterno}`;
     this.viajeroFrecuenteForm.patchValue({ viajeroId: viajero.id });
     this.showViajeroDropdown = false;
   }
@@ -849,7 +844,7 @@ export class ViajeroFrecuente implements OnInit {
     return item.id;
   }
 
-  trackByViajero(index: number, item: ViajeroResponse): number {
+  trackByViajero(index: number, item: ViajeroConPersonaNatural): number {
     return item.id;
   }
 

@@ -1,8 +1,8 @@
-import { ViajeroRequest,ViajeroResponse } from './viajero.model';
+import { ViajeroResponse } from './viajero.model';
 
 export interface ViajeroFrecuenteRequest {
-  areolinea: string;
-  codigo: string;
+  areolinea?: string;
+  codigo?: string;
 }
 
 export interface ViajeroFrecuenteResponse {

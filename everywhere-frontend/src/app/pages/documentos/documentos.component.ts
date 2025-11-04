@@ -546,7 +546,11 @@ export class DocumentosComponent implements OnInit {
       const tipo = formTipo ?? this.originalDocumento?.tipo ?? '';
       const descripcion = formDescripcion ?? this.originalDocumento?.descripcion ?? '';
 
-      const documentoData: DocumentoRequest = { tipo, descripcion };
+      const documentoData: DocumentoRequest = {
+        tipo,
+        descripcion,
+        estado: this.originalDocumento?.estado ?? true
+      };
 
       let operation: any;
       if (this.editandoDocumento) {

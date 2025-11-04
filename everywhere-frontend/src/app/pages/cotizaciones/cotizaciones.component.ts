@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import { Subscription, of } from 'rxjs';
+import { Subscription, of, firstValueFrom } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 import { environment } from '../../../environments/environment';
 
@@ -300,10 +300,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   cotizacionesFiltradas: CotizacionConDetallesResponseDTO[] = [];
 
   // ===== CLIENT SELECTION =====
-  personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
-  todosLosClientes: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
+  personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
+  todosLosClientes: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
   buscandoClientes = false;
-  clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | null = null;
+  clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay | null = null;
 
   // ===== CATEGORY MANAGEMENT =====
   creandoCategoria = false;
@@ -1103,7 +1103,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadClienteForEdit(personaId: number): Promise<void> {
     try {
-      const persona = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
+      const persona = await firstValueFrom(this.personaService.findPersonaNaturalOrJuridicaById(personaId));
       if (persona) {
         this.clienteSeleccionado = persona;
 
@@ -2433,7 +2433,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.loadingPersonas.add(personaId);
 
     // Cargar persona de forma asíncrona
-    this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise()
+    firstValueFrom(this.personaService.findPersonaNaturalOrJuridicaById(personaId))
       .then(persona => {
         if (persona) {
           this.todosLosClientes.push(persona);
@@ -2548,7 +2548,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // CLIENT SEARCH METHODS (SIMPLIFIED)
   // ============================================
 
-  private async buscarClientesEnTiempoReal(searchTerm: string): Promise<(PersonaNaturalResponse | PersonaJuridicaResponse)[]> {
+  private async buscarClientesEnTiempoReal(searchTerm: string): Promise<(PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[]> {
     if (!searchTerm || searchTerm.length < 1) {
       // Si no hay término de búsqueda, mostrar todos los clientes (primeros 20)
       return this.todosLosClientes.slice(0, 20);
@@ -2556,15 +2556,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     try {
       const term = searchTerm.toLowerCase();
-      const resultados: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
+      const resultados: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
 
       // Filtrar todos los clientes cargados
       const clientesFiltrados = this.todosLosClientes.filter(persona => {
         if ('nombres' in persona && 'apellidos' in persona) {
           // Persona Natural
-          const nombres = (persona.nombres || '').toLowerCase();
-          const apellidos = (persona.apellidos || '').toLowerCase();
-          const documento = (persona.documento || '').toLowerCase();
+          const nombres = ((persona as any).nombres || '').toString().toLowerCase();
+          const apellidos = ((persona as any).apellidos || '').toString().toLowerCase();
+          const documento = ((persona as any).documento || '').toString().toLowerCase();
           const nombreCompleto = `${nombres} ${apellidos}`.trim();
 
           return nombres.includes(term) ||
@@ -2573,8 +2573,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
             nombreCompleto.includes(term);
         } else if ('razonSocial' in persona) {
           // Persona Jurídica
-          const razonSocial = (persona.razonSocial || '').toLowerCase();
-          const ruc = (persona.ruc || '').toLowerCase();
+          const razonSocial = ((persona as any).razonSocial || '').toString().toLowerCase();
+          const ruc = ((persona as any).ruc || '').toString().toLowerCase();
 
           return razonSocial.includes(term) || ruc.includes(term);
         }
@@ -2618,29 +2618,48 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.clearClienteSearch();
   }
 
-  seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse): void {
-    // Usar el FK de la tabla persona base si existe, si no el id propio
-    const personaId = typeof (persona as any).persona === 'object'
-      ? (persona as any).persona.id
-      : (persona as any).persona || persona.id;
+  seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): void {
+    // Obtener el ID del cliente para el formulario
+    let personaId: number;
+
+    // Si es personaDisplay (tipo unificado)
+    if ('tipo' in persona && 'identificador' in persona) {
+      personaId = persona.id;
+    } else {
+      // Para tipos originales, usar el FK de la tabla persona base si existe, si no el id propio
+      personaId = typeof (persona as any).persona === 'object'
+        ? (persona as any).persona.id
+        : (persona as any).persona || persona.id;
+    }
 
     this.clienteSeleccionado = persona;
     this.cotizacionForm.patchValue({ personaId: personaId });
     this.clearClienteSearch();
   }
 
-  getClienteType(persona: any): string {
+  getClienteType(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
     if (!persona) return 'Cliente';
+
     // Si es personaDisplay (nuevo modelo unificado)
-    if ('tipo' in persona) return persona.tipo === 'JURIDICA' ? 'Persona Jurídica' : 'Persona Natural';
+    if ('tipo' in persona && 'identificador' in persona) {
+      const tipo = persona.tipo.toUpperCase();
+      return tipo === 'JURIDICA' ? 'Persona Jurídica' : 'Persona Natural';
+    }
+
     // Compatibilidad con modelos antiguos
     if ('ruc' in persona && persona.ruc) return 'Persona Jurídica';
 
     return 'Persona Natural';
   }
 
-  getClienteDocumento(persona: any): string {
+  getClienteDocumento(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
     if (!persona) return '';
+
+    // Si es personaDisplay (nuevo modelo unificado)
+    if ('tipo' in persona && 'identificador' in persona) {
+      return persona.identificador || '';
+    }
+
     // Si es persona jurídica, devolver RUC
     if ('ruc' in persona && persona.ruc) return persona.ruc;
     // Si es persona natural, devolver documento
@@ -2649,10 +2668,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  hasDocumento(persona: any): boolean {
+  hasDocumento(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): boolean {
     if (!persona) return false;
 
-    return ('documento' in persona && persona.documento) || ('ruc' in persona && persona.ruc);
+    // Si es personaDisplay (nuevo modelo unificado)
+    if ('tipo' in persona && 'identificador' in persona) {
+      return !!persona.identificador;
+    }
+
+    return !!('documento' in persona && persona.documento) || !!('ruc' in persona && persona.ruc);
   }
 
   getSelectedClienteName(): string {
@@ -2660,9 +2684,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     return this.getClienteDisplayName(this.clienteSeleccionado);
   }
 
-  getClienteDisplayName(persona: any): string {
+  getClienteDisplayName(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
     // Soporta personaDisplay, PersonaNaturalResponse y PersonaJuridicaResponse
     if (!persona) return 'Cliente';
+
     // Si es personaDisplay (nuevo modelo unificado)
     if ('tipo' in persona && 'identificador' in persona && 'nombre' in persona) {
       if (persona.tipo === 'JURIDICA') {
@@ -2671,15 +2696,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         return `DNI: ${persona.identificador} - ${persona.nombre}`;
       }
     }
+
     // Compatibilidad con modelos antiguos
     if ('nombres' in persona && 'apellidos' in persona) {
-      const doc = persona.documento ? ` - ${persona.documento}` : '';
-      return `${persona.nombres || ''} ${persona.apellidos || ''}${doc}`.trim();
+      const doc = (persona as any).documento ? ` - ${(persona as any).documento}` : '';
+      return `${(persona as any).nombres || ''} ${(persona as any).apellidos || ''}${doc}`.trim();
     }
+
     if ('razonSocial' in persona) {
-      const ruc = persona.ruc ? ` - RUC: ${persona.ruc}` : '';
-      return `${persona.razonSocial || 'Empresa'}${ruc}`.trim();
+      const ruc = (persona as any).ruc ? ` - RUC: ${(persona as any).ruc}` : '';
+      return `${(persona as any).razonSocial || 'Empresa'}${ruc}`.trim();
     }
+
     return 'Cliente';
   }
 

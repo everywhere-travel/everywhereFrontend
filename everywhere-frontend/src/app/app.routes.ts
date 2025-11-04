@@ -3,7 +3,6 @@ import { authGuard } from './core/guards/auth/auth.guard';
 import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { PersonasComponent } from './pages/personas/personas.component';
-import { Viajero } from './pages/viajero/viajero';
 import { ViajeroFrecuente } from './pages/viajero-frecuente/viajero-frecuente';
 import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.component';
 import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
@@ -32,12 +31,6 @@ export const routes: Routes = [
     path: 'personas',
     loadComponent: () =>
       import('./pages/personas/personas.component').then(m => m.PersonasComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'viajero',
-    loadComponent: () =>
-      import('./pages/viajero/viajero').then(m => m.Viajero),
     canActivate: [authGuard]
   },
   {

@@ -37,7 +37,7 @@ interface ObservacionConEdicion extends ObservacionLiquidacionResponse {
 }
 import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { OperadorResponse } from '../../shared/models/Operador/operador.model';
-import { ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
+import { ViajeroResponse, ViajeroConPersonaNatural } from '../../shared/models/Viajero/viajero.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -92,10 +92,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   formasPago: FormaPagoResponse[] = [];
   proveedores: ProveedorResponse[] = [];
   operadores: OperadorResponse[] = [];
-  viajeros: ViajeroResponse[] = [];
+  viajeros: ViajeroConPersonaNatural[] = [];
 
   // Search/Filter state for dropdowns
-  viajerosFiltrados: { [index: string]: ViajeroResponse[] } = {};
+  viajerosFiltrados: { [index: string]: ViajeroConPersonaNatural[] } = {};
   viajeroSearchTerms: { [index: string]: string } = {};
   viajeroDropdownsOpen: { [index: string]: boolean } = {};
 
@@ -533,6 +533,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           // Cargar observaciones de la liquidación
           this.cargarObservacionesLiquidacion(liquidacion.id);
 
+          // Extraer viajeros únicos de los detalles
+          this.extraerViajerosDeDetalles();
+
           // Cargar información del cliente si existe cotización
           if (liquidacion?.cotizacion?.personas?.id) {
             this.loadClienteInfo(liquidacion.cotizacion.personas.id);
@@ -589,27 +592,27 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         this.operadores = operadores;
       });
 
-    // Cargar viajeros
-    const viajerosSubscription = this.viajeroService.findAll()
-      .pipe(
-        catchError(() => {
-          return of([]);
-        })
-      )
-      .subscribe((viajeros: ViajeroResponse[]) => {
-        this.viajeros = viajeros;
+    // No cargar viajeros desde servicio separado, se obtienen de los detalles
+    // const viajerosSubscription = this.viajeroService.findAll()
+    //   .pipe(
+    //     catchError(() => {
+    //       return of([]);
+    //     })
+    //   )
+    //   .subscribe((viajeros: ViajeroResponse[]) => {
+    //     this.viajeros = viajeros;
 
-        // Inicializar los valores de búsqueda después de cargar los viajeros
-        setTimeout(() => {
-          this.initializeAllViajeroSearchValues();
-        }, 100);
-      });
+    //     // Inicializar los valores de búsqueda después de cargar los viajeros
+    //     setTimeout(() => {
+    //       this.initializeAllViajeroSearchValues();
+    //     }, 100);
+    //   });
 
     this.subscriptions.add(productosSubscription);
     this.subscriptions.add(formasPagoSubscription);
     this.subscriptions.add(proveedoresSubscription);
     this.subscriptions.add(operadoresSubscription);
-    this.subscriptions.add(viajerosSubscription);
+    // this.subscriptions.add(viajerosSubscription); // Comentado porque ya no se usa
   }
 
   // Navigation methods
@@ -657,6 +660,30 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       });
 
     this.subscriptions.add(subscription);
+  }
+
+  // Extraer viajeros únicos de los detalles de liquidación
+  private extraerViajerosDeDetalles(): void {
+    if (!this.liquidacion?.detalles) {
+      this.viajeros = [];
+      return;
+    }
+
+    // Extraer viajeros únicos que no sean null/undefined
+    const viajerosMap = new Map<number, ViajeroConPersonaNatural>();
+
+    this.liquidacion.detalles.forEach(detalle => {
+      if (detalle.viajero && detalle.viajero.id) {
+        viajerosMap.set(detalle.viajero.id, detalle.viajero);
+      }
+    });
+
+    this.viajeros = Array.from(viajerosMap.values());
+
+    // Inicializar los valores de búsqueda después de extraer los viajeros
+    setTimeout(() => {
+      this.initializeAllViajeroSearchValues();
+    }, 100);
   }
 
   // Métodos para manejar observaciones múltiples
@@ -1320,8 +1347,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (!viajeroId) return 'Sin viajero';
 
     const viajero = this.viajeros.find(v => v.id === viajeroId);
-    if (viajero) {
-      return `${viajero.nombres} ${viajero.apellidoPaterno}`;
+    if (viajero && viajero.personaNatural) {
+      return `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno}`;
     }
 
     return 'Viajero no encontrado';
@@ -1412,7 +1439,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   // Obtener los viajeros filtrados para un índice
-  getViajerosFiltrados(index: string): ViajeroResponse[] {
+  getViajerosFiltrados(index: string): ViajeroConPersonaNatural[] {
     return this.viajerosFiltrados[index] || [];
   }
 
@@ -1429,16 +1456,19 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     } else {
       // Filtrar viajeros que contengan el término de búsqueda (nombres o apellidos)
       this.viajerosFiltrados[index] = this.viajeros.filter(viajero => {
-        const nombreCompleto = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno || ''}`.toLowerCase();
+        if (!viajero.personaNatural) return false;
+        const nombreCompleto = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno} ${viajero.personaNatural.apellidosMaterno || ''}`.toLowerCase();
         return nombreCompleto.includes(searchTerm.toLowerCase());
       });
     }
   }
 
   // Seleccionar un viajero
-  onViajeroSelect(index: string, viajero: ViajeroResponse): void {
+  onViajeroSelect(index: string, viajero: ViajeroConPersonaNatural): void {
     // Actualizar el término de búsqueda con el nombre seleccionado
-    this.viajeroSearchTerms[index] = `${viajero.nombres} ${viajero.apellidoPaterno}`;
+    if (viajero.personaNatural) {
+      this.viajeroSearchTerms[index] = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno}`;
+    }
 
     // Cerrar dropdown
     this.viajeroDropdownsOpen[index] = false;
@@ -1465,7 +1495,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (currentSearchTerm.trim()) {
       // Filtrar basado en el término actual
       this.viajerosFiltrados[index] = this.viajeros.filter(viajero => {
-        const nombreCompleto = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno || ''}`.toLowerCase();
+        if (!viajero.personaNatural) return false;
+        const nombreCompleto = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno} ${viajero.personaNatural.apellidosMaterno || ''}`.toLowerCase();
         return nombreCompleto.includes(currentSearchTerm.toLowerCase());
       });
     } else {
@@ -1496,8 +1527,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Inicializar el valor de búsqueda con el viajero ya seleccionado
   initViajeroSearchValue(index: string, viajero: any): void {
-    if (viajero && viajero.nombres) {
-      this.viajeroSearchTerms[index] = `${viajero.nombres} ${viajero.apellidoPaterno}`;
+    if (viajero && viajero.personaNatural && viajero.personaNatural.nombres) {
+      this.viajeroSearchTerms[index] = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno}`;
     }
   }
 

@@ -403,7 +403,7 @@
                       <div class="min-w-0 flex-1">
                         <div class="font-bold text-gray-900 text-lg mb-1 truncate">
                           {{ persona.tipo === 'natural' ?
-                          (persona.nombres + ' ' + persona.apellidos) :
+                          (persona.nombres + ' ' + (persona.apellidosPaterno || '') + ' ' + (persona.apellidosMaterno || '')) :
                           persona.razonSocial }}
                         </div>
                         <div class="flex items-center gap-3 text-sm">
@@ -504,7 +504,7 @@
                 <div class="flex-1 min-w-0">
                   <div class="font-bold text-gray-900 text-lg mb-1 truncate">
                     {{ persona.tipo === 'natural' ?
-                    (persona.nombres + ' ' + persona.apellidos) :
+                    (persona.nombres + ' ' + (persona.apellidosPaterno || '') + ' ' + (persona.apellidosMaterno || '')) :
                     persona.razonSocial }}
                   </div>
                   <div class="text-gray-600 font-mono text-sm">ID: #{{ persona.id }}</div>
@@ -639,7 +639,7 @@
                   <div class="flex items-center gap-3 mb-1">
                     <div class="font-bold text-gray-900 text-lg truncate">
                       {{ persona.tipo === 'natural' ?
-                      (persona.nombres + ' ' + persona.apellidos) :
+                      (persona.nombres + ' ' + (persona.apellidosPaterno || '') + ' ' + (persona.apellidosMaterno || '')) :
                       persona.razonSocial }}
                     </div>
                     <span
@@ -1294,7 +1294,7 @@
             <div>
               <h2 class="text-2xl font-bold">
                 {{ personaDetalles?.tipo === 'natural' ?
-                ((personaDetalles?.nombres || '') + ' ' + (personaDetalles?.apellidos || '')) :
+                ((personaDetalles?.nombres || '') + ' ' + (personaDetalles?.apellidosPaterno || '') + ' ' + (personaDetalles?.apellidosMaterno || '')) :
                 (personaDetalles?.razonSocial || '') }}
               </h2>
               <p class="text-red-100">
