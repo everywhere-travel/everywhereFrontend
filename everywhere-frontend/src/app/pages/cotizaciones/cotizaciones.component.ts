@@ -23,7 +23,7 @@ import { CategoriaService } from '../../core/service/Categoria/categoria.service
 
 import { personaDisplay } from '../../shared/models/Persona/persona.model';
 // Models
-import { CotizacionRequest, CotizacionResponse, CotizacionConDetallesResponseDTO } from '../../shared/models/Cotizacion/cotizacion.model';
+import { CotizacionRequest, CotizacionResponse, CotizacionConDetallesResponseDTO, CotizacionPatchRequest } from '../../shared/models/Cotizacion/cotizacion.model';
 import { DetalleCotizacionRequest, DetalleCotizacionResponse } from '../../shared/models/Cotizacion/detalleCotizacion.model';
 import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
@@ -123,6 +123,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   cotizacionSeleccionada: CotizacionResponse | null = null;
   cotizacionCompleta: CotizacionConDetallesResponseDTO | null = null;
   cotizacionEditandoId: number | null = null;
+  cotizacionOriginal: CotizacionResponse | null = null; // Para comparar cambios en PATCH
 
   selectedItems: number[] = [];
   allSelected: boolean = false;
@@ -414,6 +415,53 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Setup real-time client search DESPUÉS de cargar datos iniciales
     // this.setupClienteSearch(); // Movido a loadInitialData
+  }
+
+  /**
+   * Relaja los validadores de cotizacionForm para modo EDICIÓN
+   * Permite actualizar solo los campos que cambien (PATCH)
+   */
+  private relaxCotizacionFormValidators(): void {
+    const fieldsToRelax = [
+      'personaId',
+      'fechaEmision',
+      'fechaVencimiento',
+      'moneda',
+      'cantAdultos',
+      'cantNinos'
+    ];
+
+    fieldsToRelax.forEach(fieldName => {
+      const control = this.cotizacionForm.get(fieldName);
+      if (control) {
+        control.clearAsyncValidators();
+        control.setValidators([Validators.nullValidator]);
+        control.updateValueAndValidity({ emitEvent: false });
+      }
+    });
+  }
+
+  /**
+   * Restaura validadores estrictos para modo CREACIÓN
+   */
+  private strictCotizacionFormValidators(): void {
+    // Re-crear el formulario con validadores originales
+    this.cotizacionForm = this.fb.group({
+      codigoCotizacion: [{ value: '', disabled: true }],
+      personaId: ['', [Validators.required]],
+      fechaEmision: ['', [Validators.required]],
+      fechaVencimiento: ['', [Validators.required]],
+      estadoCotizacionId: [''],
+      sucursalId: [''],
+      origenDestino: [''],
+      fechaSalida: [''],
+      fechaRegreso: [''],
+      formaPagoId: [''],
+      cantAdultos: [1, [Validators.min(1)]],
+      cantNinos: [0, [Validators.min(0)]],
+      moneda: ['USD', [Validators.required]],
+      observacion: ['']
+    });
   }
 
   private setupClienteSearch(): void {
@@ -712,6 +760,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       }
 
       this.resetForm(); // Prepara el formulario y la lista de clientes
+      this.strictCotizacionFormValidators(); // Aplicar validadores estrictos para creación
       this.editandoCotizacion = false;
       this.cotizacionEditandoId = null;
       this.setupDatesForNew();
@@ -739,8 +788,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       }
 
       this.resetForm(); // Limpia el estado del formulario anterior
+      this.relaxCotizacionFormValidators(); // Relajar validadores para edición (PATCH)
       this.editandoCotizacion = true;
       this.cotizacionEditandoId = cotizacion.id;
+      this.cotizacionOriginal = cotizacion; // Guardar datos originales para comparar PATCH
 
       // MEJORA: Usar getCotizacionConDetalles para obtener datos completos
       await this.loadCotizacionCompleta(cotizacion.id);
@@ -820,6 +871,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.editandoCotizacion = false;
     this.cotizacionEditandoId = null;
     this.cotizacionCompleta = null;
+    this.cotizacionOriginal = null; // Limpiar datos originales
     this.resetForm();
   }
 
@@ -1226,10 +1278,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   // Función para calcular el total en tiempo real del formulario de detalle
+  // Total = (cantidad × precioUnitario) + comision
   calcularTotalDetalle(): number {
     const cantidad = this.detalleForm.get('cantidad')?.value || 0;
     const precioUnitario = this.detalleForm.get('precioHistorico')?.value || 0;
-    return cantidad * precioUnitario;
+    const comision = this.detalleForm.get('comision')?.value || 0;
+    return (cantidad * precioUnitario) + comision;
   }
 
   // Detalle cotización methods (Productos Fijos)
@@ -1746,9 +1800,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
 
 
-      // Usar método individual para cada detalle (ya que sabemos que funciona)
+      // Actualizar cada detalle con PATCH para cambiar solo el campo 'seleccionado'
       for (const seleccion of selecciones) {
-        await this.detalleCotizacionService.setSeleccionDetalleCotizacion(seleccion.detalleId, seleccion.seleccionado).toPromise();
+        await this.detalleCotizacionService.updateDetalleCotizacion(seleccion.detalleId, { seleccionado: seleccion.seleccionado }).toPromise();
       }
 
       const detallesSeleccionados = selecciones.filter(s => s.seleccionado).length;
@@ -2094,75 +2148,158 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     try {
-      const formValue = this.cotizacionForm.value; // Prepare cotización request
-      const cotizacionRequest: CotizacionRequest = {
-        cantAdultos: formValue.cantAdultos,
-        cantNinos: formValue.cantNinos,
-        fechaVencimiento: formValue.fechaVencimiento,
-        origenDestino: formValue.origenDestino,
-        fechaSalida: formValue.fechaSalida,
-        fechaRegreso: formValue.fechaRegreso,
-        moneda: formValue.moneda,
-        observacion: formValue.observacion || ''
-      };
-
+      const formValue = this.cotizacionForm.value;
       let cotizacionResponse: CotizacionResponse;
-      if (this.editandoCotizacion && this.cotizacionEditandoId) {
 
-        // Update existing cotización
-        const updateResult = await this.cotizacionService.updateCotizacion(this.cotizacionEditandoId, cotizacionRequest).toPromise();
+      if (this.editandoCotizacion && this.cotizacionEditandoId) {
+        // ===== UPDATE con PATCH (actualización parcial) =====
+        const patchPayload = this.buildPatchPayload(formValue);
+
+        // Incluir relaciones (ids) en el PATCH si están presentes o cambiaron
+        const relationFields: (keyof CotizacionPatchRequest)[] = [
+          'counterId',
+          'formaPagoId',
+          'estadoCotizacionId',
+          'sucursalId',
+          'carpetaId'
+        ];
+
+        relationFields.forEach(field => {
+          const val = (formValue as any)[field as string];
+          const originalVal = this.cotizacionOriginal ? (this.cotizacionOriginal as any)[field as string] : undefined;
+          if (val !== undefined && val !== null && val !== '' && val !== originalVal) {
+            (patchPayload as any)[field] = val;
+          }
+        });
+
+        // Si hay cambios, enviar PATCH; si no, mostrar mensaje
+        if (Object.keys(patchPayload).length === 0) {
+          this.showSuccess('No hay cambios que guardar.');
+          this.isLoading = false;
+          return;
+        }
+
+        // Sanitizar fechas y formatos antes de enviar
+        const sanitized = this.sanitizePatchPayload(patchPayload);
+
+        console.log('🚀 PATCH Payload:', sanitized);
+
+        const updateResult = await this.cotizacionService
+          .updateCotizacion(this.cotizacionEditandoId, sanitized)
+          .toPromise();
+
         if (!updateResult) throw new Error('Failed to update cotización');
         cotizacionResponse = updateResult;
 
-        // Set relationships
-        await this.setRelacionesCotizacion(cotizacionResponse.id, formValue);
         // Handle deleted detalles
         await this.eliminarDetallesEliminados();
+
+        this.showSuccess('Cotización actualizada exitosamente!');
       } else {
-        // Create new cotización
-        const createResult = await this.cotizacionService.createCotizacion(cotizacionRequest).toPromise();
+        // ===== CREATE con POST (creación completa) =====
+        const cotizacionRequest: CotizacionRequest = {
+          cantAdultos: formValue.cantAdultos,
+          cantNinos: formValue.cantNinos,
+          fechaVencimiento: formValue.fechaVencimiento,
+          origenDestino: formValue.origenDestino,
+          fechaSalida: formValue.fechaSalida,
+          fechaRegreso: formValue.fechaRegreso,
+          moneda: formValue.moneda,
+          observacion: formValue.observacion || '',
+          // Incluir relaciones en el create si vienen del formulario
+          counterId: formValue.counterId,
+          formaPagoId: formValue.formaPagoId,
+          estadoCotizacionId: formValue.estadoCotizacionId,
+          sucursalId: formValue.sucursalId,
+          carpetaId: formValue.carpetaId
+        };
+
+  let createResult: CotizacionResponse | undefined = undefined;
+        if (formValue.personaId) {
+          // Si se seleccionó una persona, usar el endpoint que crea la cotización vinculada a la persona
+          createResult = await this.cotizacionService.createCotizacionWithPersona(formValue.personaId, cotizacionRequest).toPromise();
+        } else {
+          createResult = await this.cotizacionService.createCotizacion(cotizacionRequest).toPromise();
+        }
         if (!createResult) throw new Error('Failed to create cotización');
         cotizacionResponse = createResult;
-        // Set relationships
-        await this.setRelacionesCotizacion(cotizacionResponse.id, formValue);
+
+  // Ya incluimos las relaciones en el payload de creación (si vienen)
+
+        this.showSuccess('Cotización creada exitosamente!');
       }
+
       // Create/update detalles
       await this.procesarDetalles(cotizacionResponse.id);
-
-      // Show success message
-      const successMessage = this.editandoCotizacion
-        ? 'Cotización actualizada exitosamente!'
-        : 'Cotización creada exitosamente!';
-      this.showSuccess(successMessage);
 
       // Reload data and close form
       await this.loadCotizaciones();
       this.cerrarFormulario();
     } catch (error) {
-
+      console.error('Error al guardar cotización:', error);
       this.showError('Error al guardar la cotización. Por favor, verifique los datos e intente nuevamente.');
     } finally {
       this.isLoading = false;
     }
   }
 
-  private async setRelacionesCotizacion(cotizacionId: number, formValue: any): Promise<void> {
-    // Ejecutar secuencialmente para evitar conflictos con IDs
-    if (formValue.personaId)
-      await this.cotizacionService.setPersona(cotizacionId, formValue.personaId).toPromise();
+  /**
+   * Construye un payload PATCH con solo los campos que han cambiado
+   * Compara el formulario actual con los datos originales de la cotización
+   */
+  private buildPatchPayload(formValue: any): CotizacionPatchRequest {
+    const patch: CotizacionPatchRequest = {};
 
-    if (formValue.formaPagoId)
-      await this.cotizacionService.setFormaPago(cotizacionId, formValue.formaPagoId).toPromise();
+    if (!this.cotizacionOriginal) {
+      return patch;
+    }
 
-    if (formValue.estadoCotizacionId)
-      await this.cotizacionService.setEstadoCotizacion(cotizacionId, formValue.estadoCotizacionId).toPromise();
+    // Campos a comparar para el PATCH
+    const fieldsToCheck: (keyof CotizacionRequest)[] = [
+      'cantAdultos',
+      'cantNinos',
+      'origenDestino',
+      'fechaSalida',
+      'fechaRegreso',
+      'moneda',
+      'observacion',
+      'fechaVencimiento'
+    ];
 
-    if (formValue.sucursalId)
-      await this.cotizacionService.setSucursal(cotizacionId, formValue.sucursalId).toPromise();
+    fieldsToCheck.forEach(field => {
+      const newValue = formValue[field];
+      const originalValue = this.cotizacionOriginal![field as keyof CotizacionResponse];
 
-    // NOTA: El grupo seleccionado se maneja a través de las selecciones de detalles
-    // No hay endpoint específico para guardar grupoSeleccionadoId en la cotización
+      // Si el valor cambió, agregarlo al patch
+      if (newValue !== undefined && newValue !== null && newValue !== originalValue) {
+        patch[field] = newValue;
+      }
+    });
+
+    return patch;
   }
+
+  /**
+   * Sanitiza el payload PATCH para asegurar que las fechas estén en formato ISO
+   */
+  private sanitizePatchPayload(patch: CotizacionPatchRequest): CotizacionPatchRequest {
+    const sanitized: CotizacionPatchRequest = {};
+
+    Object.keys(patch).forEach(key => {
+      let value: any = patch[key as keyof CotizacionPatchRequest];
+
+      // Convertir Date objects a string ISO
+      if (value instanceof Date) {
+        value = (value as Date).toISOString().split('T')[0]; // YYYY-MM-DD
+      }
+
+      sanitized[key as keyof CotizacionPatchRequest] = value;
+    });
+
+    return sanitized;
+  }
+
+  // Relaciones ahora se envían como parte del payload de creación/actualización (PATCH/POST)
 
   private async eliminarDetallesEliminados(): Promise<void> {
     const deletePromises = this.deletedDetalleIds.map(id =>
@@ -2223,11 +2360,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       proveedorId = nuevoProveedor?.id;
     }
 
+    const productoId = detalle.producto?.id;
     const request: DetalleCotizacionRequest = {
       cantidad: detalle.cantidad || 1,                   // Default 1
       unidad: detalle.unidad || 1,                       // Default 1
       descripcion: detalle.descripcion || '',            // Default empty
-      categoria: categoria,                              // Cambio: categoriaId → categoria
+      categoria: categoria,                              // Mantener para compatibilidad local
+      categoriaId: categoria,                            // Enviar categoriaId al backend
+      productoId: productoId,                            // Enviar productoId si existe
+      proveedorId: proveedorId,                          // Enviar proveedorId si existe
       comision: detalle.comision || 0,                   // Default 0
       precioHistorico: detalle.precioHistorico || 0,     // Default 0
       seleccionado: detalle.seleccionado || false        // Campo de selección
@@ -2240,13 +2381,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     const detalleCreado = await this.detalleCotizacionService.createDetalleCotizacion(cotizacionId, request).toPromise();
 
-    if (detalleCreado && detalle.producto) {
-      await this.detalleCotizacionService.setProducto(detalleCreado.id, detalle.producto.id).toPromise();
-    }
+    // NOTA: Los endpoints setProducto() y setProveedor() no existen en el backend actual.
+    // El producto y proveedor deben incluirse en el payload al crear el detalle.
+    // Si necesitas usar esos endpoints, debes implementarlos en el backend primero.
 
-    if (detalleCreado && proveedorId) {
-      await this.detalleCotizacionService.setProveedor(detalleCreado.id, proveedorId).toPromise();
-    }
+    // if (detalleCreado && detalle.producto) {
+    //   await this.detalleCotizacionService.setProducto(detalleCreado.id, detalle.producto.id).toPromise();
+    // }
+
+    // if (detalleCreado && proveedorId) {
+    //   await this.detalleCotizacionService.setProveedor(detalleCreado.id, proveedorId).toPromise();
+    // }
   }
 
   private async actualizarDetalle(detalle: DetalleCotizacionTemp): Promise<void> {
@@ -2259,11 +2404,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     } else {
       categoriaId = detalle.categoria as number;
     }
+    const productoId = detalle.producto?.id;
+    const proveedorId = detalle.proveedor?.id;
+
     const request: DetalleCotizacionRequest = {
       cantidad: detalle.cantidad || 1,
       unidad: (detalle.unidad !== undefined && detalle.unidad !== null) ? detalle.unidad : 0,
       descripcion: detalle.descripcion || '',
       categoria: categoriaId,
+      categoriaId: categoriaId,
+      productoId: productoId,
+      proveedorId: proveedorId,
       comision: detalle.comision || 0,
       precioHistorico: detalle.precioHistorico || 0,
       seleccionado: detalle.seleccionado || false        // Campo de selección

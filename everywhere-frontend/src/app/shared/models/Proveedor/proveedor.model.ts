@@ -6,6 +6,8 @@ export interface ProveedorRequest {
 export interface ProveedorResponse {
   id: number;
   nombre: string;
+  nombreJuridico?: string;
+  ruc?: number;
   creado: string;
   actualizado: string;
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CotizacionConDetallesResponseDTO, CotizacionRequest, CotizacionResponse } from '../../../shared/models/Cotizacion/cotizacion.model';
+import { CotizacionConDetallesResponseDTO, CotizacionRequest, CotizacionResponse, CotizacionPatchRequest } from '../../../shared/models/Cotizacion/cotizacion.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -31,39 +31,28 @@ export class CotizacionService {
   getCotizacionConDetalles(id: number): Observable<CotizacionConDetallesResponseDTO> {
       return this.http.get<CotizacionConDetallesResponseDTO>(`${this.apiUrl}/${id}/con-detalles`);
     }
-  updateCotizacion(id: number, cotizacionRequest: CotizacionRequest): Observable<CotizacionResponse> {
-    return this.http.put<CotizacionResponse>(`${this.apiUrl}/${id}`, cotizacionRequest);
+
+  /**
+   * Actualiza una cotización con PATCH (actualización parcial)
+   * @param id - ID de la cotización
+   * @param cotizacionPatchRequest - Objeto con solo los campos a actualizar (p.ej. { observacion: "nuevo valor" })
+   * @returns Observable con la cotización actualizada
+   *
+   * Ejemplo de uso:
+   * cotizacionService.updateCotizacion(1, { observacion: 'Cotización revisada' })
+   * cotizacionService.updateCotizacion(1, { cantAdultos: 2, moneda: 'USD' })
+   */
+  updateCotizacion(id: number, cotizacionPatchRequest: CotizacionPatchRequest): Observable<CotizacionResponse> {
+    return this.http.patch<CotizacionResponse>(`${this.apiUrl}/${id}`, cotizacionPatchRequest);
   }
 
   deleteByIdCotizacion(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
+  // NOTE: Relationship setters (setFormaPago, setEstadoCotizacion, setCounter, setSucursal, setPersona)
+  // were removed in favor of including relationship IDs in the create/update payloads (POST / PATCH).
+  // If you need to use separate endpoints for relationships, reintroduce the methods here.
 
-  setFormaPago(id: number, formaPagoId: number): Observable<CotizacionResponse> {
-    return this.http.put<CotizacionResponse>(`${this.apiUrl}/${id}/forma-pago/${formaPagoId}`, {});
-  }
-
-  setEstadoCotizacion(id: number, estadoId: number): Observable<CotizacionResponse> {
-    return this.http.put<CotizacionResponse>(`${this.apiUrl}/${id}/estado/${estadoId}`, {});
-  }
-
-  setCounter(id: number, counterId: number): Observable<CotizacionResponse> {
-    return this.http.put<CotizacionResponse>(`${this.apiUrl}/${id}/counter/${counterId}`, {});
-  }
-
-  setSucursal(id: number, sucursalId: number): Observable<CotizacionResponse> {
-    return this.http.put<CotizacionResponse>(`${this.apiUrl}/${id}/sucursal/${sucursalId}`, {});
-  }
-
-  setPersona(id: number, personaId: number): Observable<CotizacionResponse> {
-    return this.http.put<CotizacionResponse>(`${this.apiUrl}/${id}/persona/${personaId}`, {});
-  }
-
-  /**
-   * Actualiza el estado de selección de múltiples detalles de cotización
-   * @param cotizacionId ID de la cotización
-   * @param detalleSelecciones Array de objetos con ID del detalle y estado de selección
-   */
   actualizarSeleccionesDetalles(cotizacionId: number, detalleSelecciones: {detalleId: number, seleccionado: boolean}[]): Observable<CotizacionResponse> {
     const payload = {
       selecciones: detalleSelecciones
