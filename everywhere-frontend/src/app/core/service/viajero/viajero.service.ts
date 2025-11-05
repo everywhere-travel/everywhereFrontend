@@ -8,6 +8,9 @@ import { ViajeroRequest, ViajeroResponse } from '../../../shared/models/Viajero/
   providedIn: 'root'
 })
 export class ViajeroService {
+  exportViajeros(selectedItems: number[]) {
+    throw new Error('Method not implemented.');
+  }
   private baseURL = `${environment.baseURL}/viajeros`;
   private http = inject(HttpClient);
 

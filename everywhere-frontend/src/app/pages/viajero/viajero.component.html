@@ -1,0 +1,1548 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+
+  <!-- Sidebar Component -->
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()"></app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+
+    <!-- Header Section -->
+    <header
+      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
+      </div>
+
+      <div class="max-w-full mx-auto px-6 py-6 relative z-10">
+        <!-- Mobile Menu Button -->
+        <button (click)="onToggleSidebar()"
+          class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
+
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+          <!-- Header Info -->
+          <div class="flex-1">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-passport text-2xl"></i>
+              </div>
+              <div>
+                <h1 class="text-4xl font-bold">Gestión de Viajeros</h1>
+                <p class="text-xl opacity-90 mt-2">Administra y organiza toda tu base de viajeros de manera eficiente
+                </p>
+              </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!isLoading">
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
+                  <i class="fas fa-passport text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ viajeros.length }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Viajero{{ viajeros.length === 1 ?
+                    '' : 's' }} Total{{ viajeros.length === 1 ? '' : 'es' }}</div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-globe text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ estadisticas.totalNacionalidades }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Nacionalidad{{
+                    estadisticas.totalNacionalidades === 1 ? '' : 'es' }}</div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-everywhere-secondary rounded-xl flex items-center justify-center">
+                  <i class="fas fa-id-card text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ estadisticas.documentosVenciendo }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Documento{{
+                    estadisticas.documentosVenciendo === 1 ? '' : 's' }} por Vencer</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header Action -->
+          <div class="z-10">
+            <button (click)="abrirModalCrearViajero()" [disabled]="isLoading"
+              class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+              </div>
+              <i class="fas fa-plus text-lg"></i>
+              <span>Nuevo Viajero</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-full mx-auto px-6 py-8 space-y-8">
+      <!-- Search & Filters Panel -->
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <!-- Panel Header -->
+        <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-everywhere-primary rounded-xl flex items-center justify-center">
+                <i class="fas fa-search text-white"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-900">Buscar y Filtrar</h2>
+                <p class="text-sm text-gray-600">Encuentra viajeros específicos</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 bg-gray-100 rounded-xl p-1">
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                [class]="currentView === 'table' ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                (click)="changeView('table')" title="Vista de Tabla">
+                <i class="fas fa-table mr-2"></i>Tabla
+              </button>
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                [class]="currentView === 'cards' ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                (click)="changeView('cards')" title="Vista de Tarjetas">
+                <i class="fas fa-th mr-2"></i>Tarjetas
+              </button>
+              <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                [class]="currentView === 'list' ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900'"
+                (click)="changeView('list')" title="Vista de Lista">
+                <i class="fas fa-list mr-2"></i>Lista
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Controls -->
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Search Input -->
+          <div class="lg:col-span-2">
+            <div class="relative">
+              <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <input type="text" placeholder="Buscar por nombre, documento, nacionalidad o residencia..."
+                [(ngModel)]="searchQuery" (input)="onSearchChange()" [disabled]="isLoading"
+                class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+              <button *ngIf="searchQuery" (click)="clearSearch()"
+                class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex flex-wrap gap-2">
+            <div class="bg-gray-100 p-1 rounded-2xl border border-gray-200 flex flex-wrap gap-2">
+              <button *ngFor="let filter of [
+                {key: 'todos', label: 'Todos', icon: 'fa-passport', count: viajeros.length},
+                {key: 'vencimiento-proximo', label: 'Doc. por Vencer', icon: 'fa-exclamation-triangle', count: estadisticas.documentosVenciendo}
+              ]" [class.bg-red-600]="filtroTipo === filter.key" [class.text-white]="filtroTipo === filter.key"
+                [class.text-gray-600]="filtroTipo !== filter.key" [class.bg-transparent]="filtroTipo !== filter.key"
+                [class.hover:bg-red-50]="filtroTipo !== filter.key"
+                [class.hover:text-red-600]="filtroTipo !== filter.key" (click)="aplicarFiltroTipo(filter.key)"
+                [disabled]="isLoading"
+                class="px-4 py-2 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 text-sm whitespace-nowrap">
+                <i class="fas" [class]="filter.icon"></i>
+                <span>{{ filter.label }}</span>
+                <span class="px-2 py-1 rounded-lg text-xs font-bold min-w-[20px] text-center"
+                  [class.bg-white/25]="filtroTipo === filter.key" [class.bg-gray-200]="filtroTipo !== filter.key"
+                  *ngIf="!isLoading">{{ filter.count }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="flex flex-col items-center justify-center py-16 px-6">
+          <div
+            class="w-16 h-16 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary rounded-2xl flex items-center justify-center mb-4">
+            <i class="fas fa-spinner fa-spin text-white text-2xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Cargando Viajeros</h3>
+          <p class="text-gray-600">Por favor espera mientras obtenemos los datos...</p>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="text-center py-20 bg-white" *ngIf="viajerosFiltrados.length === 0 && !isLoading">
+        <div
+          class="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border-4 border-gray-300">
+          <i class="fas fa-passport text-5xl text-gray-400"></i>
+        </div>
+        <div class="max-w-md mx-auto">
+          <h3 class="text-2xl font-bold text-gray-900 mb-4">No se encontraron viajeros</h3>
+          <p class="text-gray-600 text-lg mb-8" *ngIf="searchQuery || filtroTipo !== 'todos'">
+            Prueba ajustando los filtros o realizando una nueva búsqueda
+          </p>
+          <p class="text-gray-600 text-lg mb-8" *ngIf="!searchQuery && filtroTipo === 'todos'">
+            Comienza agregando tu primer viajero al sistema
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button (click)="abrirModalCrearViajero()"
+              class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 justify-center transition-all duration-300 hover:-translate-y-1 shadow-lg">
+              <i class="fas fa-plus"></i>
+              <span>Crear Primer Viajero</span>
+            </button>
+            <button (click)="clearAllFilters()" *ngIf="searchQuery || filtroTipo !== 'todos'"
+              class="bg-white border-2 border-red-600 text-red-600 hover:bg-red-600 hover:text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 justify-center transition-all duration-300 hover:-translate-y-1">
+              <i class="fas fa-filter"></i>
+              <span>Limpiar Filtros</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Content -->
+      <div *ngIf="!loading && viajerosFiltrados.length > 0" class="space-y-2">
+        <!-- Data Header -->
+        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-4">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-3">
+                  <i class="fas fa-database text-red-600"></i>
+                  <h2 class="text-xl font-bold text-gray-900">Lista de Viajeros</h2>
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <button (click)="refreshData()"
+                  class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5">
+                  <i class="fas fa-sync-alt"></i>
+                  <span>Actualizar</span>
+                </button>
+                <button (click)="abrirModalCrearViajero()"
+                  class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 shadow-lg">
+                  <i class="fas fa-plus"></i>
+                  <span>Nuevo Viajero</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bulk Actions Bar -->
+        <div
+          class="bg-blue-600 text-white px-8 py-4 flex justify-between items-center animate-in slide-in-from-top duration-300"
+          *ngIf="selectedItems.length > 0">
+          <div class="flex items-center gap-3 font-semibold">
+            <i class="fas fa-check-circle"></i>
+            <span>{{ selectedItems.length }} elemento{{ selectedItems.length === 1 ? '' : 's' }} seleccionado{{
+              selectedItems.length === 1 ? '' : 's' }}</span>
+          </div>
+          <div class="flex gap-3">
+            <!-- Botón exportar temporalmente deshabilitado -->
+            <button disabled
+              class="bg-gray-400 border border-gray-400 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 opacity-50">
+              <i class="fas fa-download"></i>
+              <span>Exportar</span>
+              <span *ngIf="exportandoViajeros">Procesando...</span>
+            </button>
+            <button (click)="editarSeleccionados()"
+              class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-edit"></i>
+              Editar
+            </button>
+            <button (click)="eliminarSeleccionados()"
+              class="bg-white/20 border border-white/30 hover:bg-red-600 hover:border-red-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-trash"></i>
+              Eliminar seleccionados
+            </button>
+            <button (click)="clearSelection()"
+              class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-times"></i>
+              Cancelar
+            </button>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div *ngIf="currentView === 'table'"
+          class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <!-- Table Header -->
+              <thead class="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+                <tr>
+                  <th class="w-12 p-5 text-center">
+                    <label class="relative inline-block cursor-pointer">
+                      <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
+                        (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0">
+                      <span
+                        class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
+                        [class.bg-red-600]="allSelected || someSelected"
+                        [class.border-red-600]="allSelected || someSelected">
+                        <i class="fas fa-check text-white text-xs" [class.hidden]="!allSelected && !someSelected"></i>
+                        <i class="fas fa-minus text-white text-xs" [class.hidden]="!someSelected || allSelected"></i>
+                      </span>
+                    </label>
+                  </th>
+
+                  <th
+                    class="p-5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                    (click)="sortBy('nombres')" [class.bg-everywhere-primary/5]="sortColumn === 'nombres'">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <i class="fas fa-user-circle text-gray-500"></i>
+                        <span>Viajero</span>
+                      </div>
+                      <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                        [class.opacity-100]="sortColumn === 'nombres'">
+                        <i class="fas fa-caret-up text-xs leading-none"
+                          [class.text-everywhere-primary]="sortColumn === 'nombres' && sortDirection === 'asc'"></i>
+                        <i class="fas fa-caret-down text-xs leading-none"
+                          [class.text-everywhere-primary]="sortColumn === 'nombres' && sortDirection === 'desc'"></i>
+                      </div>
+                    </div>
+                  </th>
+
+                  <th class="p-5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-globe text-gray-500"></i>
+                      <span>Nacionalidad</span>
+                    </div>
+                  </th>
+
+                  <th class="p-5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-calendar text-gray-500"></i>
+                      <span>Vencimiento Doc.</span>
+                    </div>
+                  </th>
+
+                  <th class="p-5 text-center text-xs font-bold text-gray-900 uppercase tracking-wider">
+                    <div class="flex items-center justify-center gap-2">
+                      <i class="fas fa-cog text-gray-500"></i>
+                      <span>Acciones</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+
+              <!-- Table Body -->
+              <tbody class="divide-y divide-gray-200">
+                <tr *ngFor="let viajero of paginatedViajeros; let i = index"
+                  class="hover:bg-red-50 transition-colors duration-200">
+
+                  <!-- Checkbox -->
+                  <td class="p-5 text-center">
+                    <label class="relative inline-block cursor-pointer">
+                      <input type="checkbox" [checked]="isSelected(viajero.id)" (change)="toggleSelection(viajero.id)"
+                        class="absolute opacity-0 w-0 h-0">
+                      <span
+                        class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
+                        [class.bg-red-600]="isSelected(viajero.id)" [class.border-red-600]="isSelected(viajero.id)">
+                        <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(viajero.id)"></i>
+                      </span>
+                    </label>
+                  </td>
+
+                  <!-- Viajero -->
+                  <td class="p-5">
+                    <div class="flex items-center gap-4">
+                      <div
+                        class="w-12 h-12 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                        {{ getViajeroInitials(viajero) }}
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <div class="font-bold text-gray-900 text-lg mb-1 truncate">
+                          Viajero #{{ viajero.id }}
+                        </div>
+                        <div class="flex items-center gap-3 text-sm">
+                          <span class="text-gray-600">🌍 {{ viajero.nacionalidad || 'N/A' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Nacionalidad -->
+                  <td class="p-5">
+                    <div class="flex items-center gap-2">
+                      <div class="text-lg">🌍</div>
+                      <span class="text-gray-900 font-medium">{{ viajero.nacionalidad }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Acciones -->
+                  <td class="px-6 py-4 whitespace-nowrap text-center">
+                    <div class="flex justify-center items-center gap-2">
+                      <button (click)="verViajero(viajero)"
+                        class="w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        title="Ver detalles">
+                        <i class="fas fa-eye text-green-500"></i>
+                      </button>
+                      <button (click)="abrirModalAsignarDocumento(viajero)"
+                        class="w-9 h-9 bg-purple-100 hover:bg-purple-200 text-purple-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        title="Asignar documento">
+                        <lucide-icon [img]="FilePlusIcon" class="text-purple-500" size="16"></lucide-icon>
+                      </button>
+                      <button (click)="editarViajero(viajero)"
+                        class="w-9 h-9 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        title="Editar viajero">
+                        <i class="fas fa-edit text-blue-500"></i>
+                      </button>
+                      <button (click)="confirmarEliminar(viajero)"
+                        class="w-9 h-9 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        title="Eliminar viajero">
+                        <i class="fas fa-trash text-red-500"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Cards View -->
+        <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4" *ngIf="currentView === 'cards'">
+          <div *ngFor="let viajero of paginatedViajeros; trackBy: trackByViajeroId; let i = index"
+            class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 flex flex-col h-full"
+            [class.ring-2]="isSelected(viajero.id)" [class.ring-red-500]="isSelected(viajero.id)"
+            [class.shadow-red-100]="isSelected(viajero.id)">
+
+            <!-- Card Header -->
+            <div class="relative p-6 border-b border-gray-100">
+              <!-- Selection Checkbox -->
+              <div class="absolute top-4 right-4">
+                <label class="relative inline-block cursor-pointer">
+                  <input type="checkbox" [checked]="isSelected(viajero.id)" (change)="toggleSelection(viajero.id)"
+                    class="absolute opacity-0 w-0 h-0">
+                  <span
+                    class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500"
+                    [class.bg-red-600]="isSelected(viajero.id)" [class.border-red-600]="isSelected(viajero.id)">
+                    <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(viajero.id)"></i>
+                  </span>
+                </label>
+              </div>
+
+              <!-- Viajero Avatar and Info -->
+              <div class="flex items-center gap-4">
+                <div
+                  class="w-16 h-16 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                  {{ getViajeroInitials(viajero) }}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-bold text-gray-900 text-lg mb-1 truncate">
+                    Viajero #{{ viajero.id }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-6 space-y-4 flex-1">
+              <!-- Nationality -->
+              <div class="flex items-center gap-2">
+                <div class="text-lg">🌍</div>
+                <span class="text-gray-900 font-medium">{{ viajero.nacionalidad }}</span>
+              </div>
+
+              <!-- Residencia -->
+              <div class="space-y-1">
+                <div class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Residencia</div>
+                <div class="font-bold text-gray-900">{{ viajero.residencia }}</div>
+              </div>
+            </div>
+
+            <!-- Card Footer -->
+            <div class="px-6 py-4 border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white rounded-b-xl">
+              <div class="flex justify-end items-center">
+                <div class="flex items-center gap-1">
+                  <button (click)="verViajero(viajero)"
+                    class="group relative p-2 text-gray-400 hover:text-green-600 rounded-lg hover:bg-green-50 transition-all duration-200"
+                    title="Ver detalles">
+                    <i class="fas fa-eye text-sm"></i>
+                  </button>
+                  <button (click)="abrirModalAsignarDocumento(viajero)"
+                    class="group relative p-2 text-gray-400 hover:text-purple-600 rounded-lg hover:bg-purple-50 transition-all duration-200"
+                    title="Asignar documento">
+                    <lucide-icon [img]="FilePlusIcon" class="text-gray-400 hover:text-purple-600" size="14"></lucide-icon>
+                  </button>
+                  <button (click)="editarViajero(viajero)"
+                    class="group relative p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-all duration-200"
+                    title="Editar viajero">
+                    <i class="fas fa-edit text-sm"></i>
+                  </button>
+                  <button (click)="confirmarEliminar(viajero)"
+                    class="group relative p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all duration-200"
+                    title="Eliminar viajero">
+                    <i class="fas fa-trash text-sm"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden" *ngIf="currentView === 'list'">
+          <!-- List Header -->
+          <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <label class="relative inline-block cursor-pointer">
+                  <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
+                    (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0">
+                  <span
+                    class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500"
+                    [class.bg-red-600]="allSelected || someSelected"
+                    [class.border-red-600]="allSelected || someSelected">
+                    <i class="fas fa-check text-white text-xs" [class.hidden]="!allSelected && !someSelected"></i>
+                  </span>
+                </label>
+                <span class="font-bold text-gray-900 uppercase tracking-wide text-sm">Seleccionar todos</span>
+              </div>
+              <span class="text-sm text-gray-600">{{ viajerosFiltrados.length }} viajeros</span>
+            </div>
+          </div>
+
+          <!-- List Items -->
+          <div class="divide-y divide-gray-200">
+            <div *ngFor="let viajero of paginatedViajeros; trackBy: trackByViajeroId; let i = index"
+              class="px-6 py-4 hover:bg-red-50/50 transition-colors cursor-pointer"
+              [class.bg-red-50]="isSelected(viajero.id)">
+
+              <div class="flex items-center gap-4">
+                <!-- Checkbox -->
+                <label class="relative inline-block cursor-pointer">
+                  <input type="checkbox" [checked]="isSelected(viajero.id)" (change)="toggleSelection(viajero.id)"
+                    class="absolute opacity-0 w-0 h-0">
+                  <span
+                    class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500"
+                    [class.bg-red-600]="isSelected(viajero.id)" [class.border-red-600]="isSelected(viajero.id)">
+                    <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(viajero.id)"></i>
+                  </span>
+                </label>
+
+                <!-- Avatar -->
+                <div
+                  class="w-12 h-12 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  {{ getViajeroInitials(viajero) }}
+                </div>
+
+                <!-- Viajero Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-3 mb-1">
+                    <div class="font-bold text-gray-900 text-lg truncate">
+                      Viajero #{{ viajero.id }}
+                    </div>
+
+                  </div>
+                  <div class="flex items-center gap-4 text-sm text-gray-600">
+                    <span class="flex items-center gap-1">
+                      <span>🌍</span>
+                      {{ viajero.nacionalidad }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <i class="fas fa-home text-gray-400"></i>
+                      {{ viajero.residencia }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-center items-center gap-2">
+                  <button (click)="verViajero(viajero)"
+                    class="w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    title="Ver viajero">
+                    <i class="fas fa-eye text-green-500"></i>
+                  </button>
+                  <button (click)="abrirModalAsignarDocumento(viajero)"
+                    class="w-9 h-9 bg-purple-100 hover:bg-purple-200 text-purple-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    title="Asignar documento">
+                    <lucide-icon [img]="FilePlusIcon" class="text-purple-500" size="16"></lucide-icon>
+                  </button>
+                  <button (click)="editarViajero(viajero)"
+                    class="w-9 h-9 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    title="Editar viajero">
+                    <i class="fas fa-edit text-blue-500"></i>
+                  </button>
+                  <div class="h-px bg-gray-200 my-1"></div>
+                  <button (click)="confirmarEliminar(viajero)"
+                    class="w-9 h-9 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                    title="Eliminar viajero">
+                    <i class="fas fa-trash text-red-500"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+          <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <!-- Items per page selector -->
+            <div class="flex items-center gap-2 text-sm text-gray-700 font-medium">
+              <span>Mostrar:</span>
+              <select [(ngModel)]="itemsPerPage" (change)="onItemsPerPageChange()"
+                class="border border-gray-300 rounded-lg px-3 py-2 bg-white font-medium">
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+              <span>por página</span>
+            </div>
+
+            <!-- Results info -->
+            <div class="text-sm font-semibold text-gray-700">
+              Mostrando {{ Math.min((currentPage - 1) * itemsPerPage + 1, totalItems) }} -
+              {{ Math.min(currentPage * itemsPerPage, totalItems) }} de {{ totalItems }} cliente{{ totalItems === 1 ?
+              '' : 's' }}
+            </div>
+
+            <!-- Navigation buttons -->
+            <nav class="flex items-center gap-2" *ngIf="totalPages > 1">
+              <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              <div class="flex items-center gap-1">
+                <button *ngFor="let page of getVisiblePages()" (click)="goToPage(page)"
+                  class="w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-200"
+                  [class]="page === currentPage ? 'bg-everywhere-primary text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'">
+                  {{ page }}
+                </button>
+              </div>
+
+              <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)"
+                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </nav>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal de confirmación de eliminación -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+    *ngIf="mostrarModalEliminar" (click)="cerrarModalEliminar()">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full transform transition-all"
+      (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-6 rounded-t-3xl">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+            <i class="fas fa-trash text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold">Confirmar Eliminación</h2>
+            <p class="text-red-100 mt-1">Esta acción no se puede deshacer</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-8" *ngIf="viajeroAEliminar">
+        <div class="text-center mb-6">
+          <div
+            class="w-20 h-20 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-lg">
+            {{ getViajeroInitials(viajeroAEliminar) }}
+          </div>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Viajero #{{ viajeroAEliminar.id }}</h3>
+          <div class="space-y-2 text-sm text-gray-600">
+            <div class="flex items-center justify-center gap-2">
+              <i class="fas fa-globe text-gray-400"></i>
+              <span>{{ viajeroAEliminar.nacionalidad }}</span>
+            </div>
+            <div class="flex items-center justify-center gap-2">
+              <i class="fas fa-home text-gray-400"></i>
+              <span>{{ viajeroAEliminar.residencia }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+          <div class="flex gap-3">
+            <i class="fas fa-exclamation-triangle text-red-500 text-xl mt-1"></i>
+            <div>
+              <h4 class="font-bold text-red-900 mb-2">¿Estás seguro que deseas eliminar este viajero?</h4>
+              <p class="text-red-700 text-sm">
+                Se eliminarán todos los datos asociados a este viajero. Esta acción es permanente y no se puede
+                revertir.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-4">
+          <button (click)="cerrarModalEliminar()"
+            class="flex-1 px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+            Cancelar
+          </button>
+          <button (click)="confirmarEliminacionModal()"
+            class="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors">
+            Sí, Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de detalles del viajero -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+    *ngIf="mostrarModalDetalles" (click)="cerrarModalDetalles()">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white px-8 py-6 rounded-t-3xl">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold">Detalles del Viajero</h2>
+          <button (click)="cerrarModalDetalles()"
+            class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-8" *ngIf="viajeroDetalles">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Información Principal -->
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Datos Personales -->
+            <div class="bg-gray-50 rounded-xl p-6">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-user text-red-600"></i>
+                Información Personal
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-sm font-semibold text-gray-600">ID Viajero</label>
+                  <p class="text-gray-900 font-medium">{{ viajeroDetalles.id }}</p>
+                </div>
+                <div>
+                  <label class="text-sm font-semibold text-gray-600">Fecha de Nacimiento</label>
+                  <p class="text-gray-900 font-medium">{{ viajeroDetalles.fechaNacimiento || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ubicación -->
+            <div class="bg-green-50 rounded-xl p-6">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-globe text-green-600"></i>
+                Ubicación
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="text-sm font-semibold text-gray-600">Nacionalidad</label>
+                  <p class="text-gray-900 font-medium flex items-center gap-2">
+                    <span class="text-xl">🌍</span>
+                    {{ viajeroDetalles.nacionalidad }}
+                  </p>
+                </div>
+                <div>
+                  <label class="text-sm font-semibold text-gray-600">Residencia</label>
+                  <p class="text-gray-900 font-medium">{{ viajeroDetalles.residencia }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Información de Contacto no disponible en ViajeroResponse -->
+            <div class="bg-purple-50 rounded-xl p-6">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <i class="fas fa-address-book text-purple-600"></i>
+                Información de Contacto
+              </h3>
+              <div class="space-y-3">
+                <div class="text-gray-500 italic text-center py-4">
+                  Sin información de contacto disponible
+                </div>
+              </div>
+            </div>
+
+            <!-- Documentos del Viajero -->
+            <div class="bg-blue-50 rounded-xl p-6">
+              <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <lucide-icon [img]="FileTextIcon" class="text-blue-600" size="20"></lucide-icon>
+                Documentos Asignados
+              </h3>
+
+              <!-- Estado de carga -->
+              <div *ngIf="cargandoDocumentos" class="text-center py-4">
+                <i class="fas fa-spinner fa-spin text-blue-600 text-xl mb-2"></i>
+                <p class="text-gray-600">Cargando documentos...</p>
+              </div>
+
+              <!-- Lista de documentos -->
+              <div *ngIf="!cargandoDocumentos && documentosViajero.length > 0" class="space-y-4">
+                <div *ngFor="let documento of documentosViajero"
+                     class="bg-white rounded-lg p-4 border border-blue-200 hover:shadow-md transition-all">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <h4 class="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                        <lucide-icon [img]="CreditCardIcon" class="text-blue-600" size="16"></lucide-icon>
+                        {{ documento.documento.tipo }}
+                      </h4>
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <span class="text-gray-600">Número:</span>
+                          <span class="font-mono font-medium ml-1">{{ documento.numero }}</span>
+                        </div>
+                        <div *ngIf="documento.origen">
+                          <span class="text-gray-600">Origen:</span>
+                          <span class="font-medium ml-1">{{ documento.origen }}</span>
+                        </div>
+                        <div *ngIf="documento.fechaEmision">
+                          <span class="text-gray-600">Emisión:</span>
+                          <span class="font-medium ml-1">{{ documento.fechaEmision | date:'dd/MM/yyyy' }}</span>
+                        </div>
+                        <div *ngIf="documento.fechaVencimiento">
+                          <span class="text-gray-600">Vencimiento:</span>
+                          <span class="font-medium ml-1">{{ documento.fechaVencimiento | date:'dd/MM/yyyy' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="ml-4">
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <i class="fas fa-circle text-xs mr-1"></i>
+                        {{ documento.fechaVencimiento ? 'Con fecha' : 'Sin fecha' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Estado vacío -->
+              <div *ngIf="!cargandoDocumentos && documentosViajero.length === 0"
+                   class="text-center py-6">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <lucide-icon [img]="FilePlusIcon" class="text-blue-600" size="24"></lucide-icon>
+                </div>
+                <p class="text-gray-600 mb-3">Sin documentos asignados</p>
+                <button (click)="abrirModalAsignarDocumento(viajeroDetalles!)"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                  <lucide-icon [img]="FilePlusIcon" class="inline mr-2" size="16"></lucide-icon>
+                  Asignar Documento
+                </button>
+              </div>
+
+              <!-- Botón para agregar más documentos cuando ya existen -->
+              <div *ngIf="!cargandoDocumentos && documentosViajero.length > 0"
+                   class="border-t border-blue-200 pt-4 mt-4">
+                <button (click)="abrirModalAsignarDocumento(viajeroDetalles!)"
+                        class="w-full px-4 py-2 border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">
+                  <lucide-icon [img]="FilePlusIcon" class="inline mr-2" size="16"></lucide-icon>
+                  Agregar Otro Documento
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar con Avatar y Resumen -->
+          <div class="space-y-6">
+            <!-- Avatar y Nombre -->
+            <div class="text-center">
+              <div
+                class="w-32 h-32 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-full flex items-center justify-center text-white font-bold text-4xl mx-auto mb-4 shadow-xl">
+                {{ getViajeroInitials(viajeroDetalles) }}
+              </div>
+              <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                Viajero #{{ viajeroDetalles.id }}
+              </h2>
+            </div>
+
+            <!-- Información Rápida -->
+            <div class="bg-gray-100 rounded-xl p-4">
+              <h4 class="font-bold text-gray-900 mb-3">Información Rápida</h4>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Nacionalidad:</span>
+                  <span>{{ viajeroDetalles.nacionalidad }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Residencia:</span>
+                  <span>{{ viajeroDetalles.residencia }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Fecha Nac.:</span>
+                  <span>{{ viajeroDetalles.fechaNacimiento || 'N/A' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fechas del Sistema -->
+            <div class="bg-gray-100 rounded-xl p-4">
+              <h4 class="font-bold text-gray-900 mb-3">Información del Sistema</h4>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Registrado:</span>
+                  <span>{{ formatDate(viajeroDetalles.creado) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Actualizado:</span>
+                  <span>{{ formatDate(viajeroDetalles.actualizado) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="flex justify-end gap-4 pt-6 border-t border-gray-200 mt-8">
+          <button (click)="cerrarModalDetalles()"
+            class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+            Cerrar
+          </button>
+          <button (click)="editarViajero(viajeroDetalles!); cerrarModalDetalles()"
+            class="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2">
+            <i class="fas fa-edit"></i>
+            Editar Viajero
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de creación/edición de viajero -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+    *ngIf="mostrarModalCrearViajero" (click)="cerrarModalCrearViajero()">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white px-8 py-6 rounded-t-3xl">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold">{{ editandoViajero ? 'Editar' : 'Crear Nuevo' }} Viajero</h2>
+          <button (click)="cerrarModalCrearViajero()"
+            class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-8">
+        <form [formGroup]="viajeroForm" (ngSubmit)="onSubmitViajero()" class="space-y-8">
+          <!-- Información Personal -->
+          <div class="bg-gray-50 rounded-xl p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <i class="fas fa-user text-red-600"></i>
+              Información Personal
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="space-y-2">
+                <label for="nombres" class="text-sm font-semibold text-gray-700">Nombres *</label>
+                <input type="text" id="nombres" formControlName="nombres" placeholder="Ingrese los nombres"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+              </div>
+
+              <div class="space-y-2">
+                <label for="apellidoPaterno" class="text-sm font-semibold text-gray-700">Apellido Paterno *</label>
+                <input type="text" id="apellidoPaterno" formControlName="apellidoPaterno" placeholder="Apellido paterno"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+              </div>
+
+              <div class="space-y-2">
+                <label for="apellidoMaterno" class="text-sm font-semibold text-gray-700">Apellido Materno *</label>
+                <input type="text" id="apellidoMaterno" formControlName="apellidoMaterno" placeholder="Apellido materno"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+              </div>
+
+              <div class="space-y-2">
+                <label for="fechaNacimiento" class="text-sm font-semibold text-gray-700">Fecha de Nacimiento *</label>
+                <input type="date" id="fechaNacimiento" formControlName="fechaNacimiento"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+              </div>
+
+              <div class="space-y-2">
+                <label for="nacionalidad" class="text-sm font-semibold text-gray-700">Nacionalidad *</label>
+                <select id="nacionalidad" formControlName="nacionalidad"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+                  <option value="">Seleccione nacionalidad</option>
+                  <option value="Peruana">🇵🇪 Peruana</option>
+                  <option value="Colombiana">🇨🇴 Colombiana</option>
+                  <option value="Ecuatoriana">🇪🇨 Ecuatoriana</option>
+                  <option value="Brasileña">🇧🇷 Brasileña</option>
+                  <option value="Argentina">🇦🇷 Argentina</option>
+                  <option value="Chilena">🇨🇱 Chilena</option>
+                  <option value="Venezolana">🇻🇪 Venezolana</option>
+                  <option value="Boliviana">🇧🇴 Boliviana</option>
+                  <option value="Uruguaya">🇺🇾 Uruguaya</option>
+                  <option value="Paraguaya">🇵🇾 Paraguaya</option>
+                  <option value="Española">🇪🇸 Española</option>
+                  <option value="Italiana">🇮🇹 Italiana</option>
+                  <option value="Francesa">🇫🇷 Francesa</option>
+                  <option value="Alemana">🇩🇪 Alemana</option>
+                  <option value="Estadounidense">🇺🇸 Estadounidense</option>
+                  <option value="Canadiense">🇨🇦 Canadiense</option>
+                  <option value="Mexicana">🇲🇽 Mexicana</option>
+                  <option value="China">🇨🇳 China</option>
+                  <option value="Japonesa">🇯🇵 Japonesa</option>
+                  <option value="Coreana">🇰🇷 Coreana</option>
+                </select>
+              </div>
+
+              <div class="space-y-2">
+                <label for="residencia" class="text-sm font-semibold text-gray-700">Residencia *</label>
+                <input type="text" id="residencia" formControlName="residencia" placeholder="País/Ciudad de residencia"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+              </div>
+            </div>
+          </div>
+
+          <!-- Información de Contacto -->
+          <div formGroupName="persona" class="bg-purple-50 rounded-xl p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <i class="fas fa-address-book text-purple-600"></i>
+              Información de Contacto (Opcional)
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-2">
+                <label for="email" class="text-sm font-semibold text-gray-700">Email</label>
+                <input type="email" id="email" formControlName="email" placeholder="correo@ejemplo.com"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+              </div>
+
+              <div class="space-y-2">
+                <label for="telefono" class="text-sm font-semibold text-gray-700">Teléfono</label>
+                <input type="tel" id="telefono" formControlName="telefono" placeholder="+51 999 999 999"
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all">
+              </div>
+
+              <div class="space-y-2 md:col-span-2">
+                <label for="direccion" class="text-sm font-semibold text-gray-700">Dirección</label>
+                <textarea id="direccion" formControlName="direccion" rows="3" placeholder="Dirección completa..."
+                  class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all resize-none"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button type="button" (click)="cerrarModalCrearViajero()"
+              class="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+              Cancelar
+            </button>
+            <button type="submit" [disabled]="viajeroForm.invalid || isSubmitting"
+              class="px-8 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white rounded-xl font-semibold hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 transition-colors flex items-center gap-2 disabled:opacity-50">
+              <i class="fas fa-spinner fa-spin" *ngIf="isSubmitting"></i>
+              <i class="fas fa-save" *ngIf="!isSubmitting"></i>
+              {{ editandoViajero ? 'Actualizar' : 'Crear' }} Viajero
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmación de Eliminación Múltiple -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+    *ngIf="mostrarModalEliminarMultiple" (click)="cerrarModalEliminarMultiple()">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100"
+      (click)="$event.stopPropagation()">
+
+      <!-- Header del Modal -->
+      <div class="bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-6 rounded-t-3xl">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+            <i class="fas fa-exclamation-triangle text-2xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold">Confirmar Eliminación Múltiple</h2>
+            <p class="text-red-100 text-sm">Esta acción no se puede deshacer</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenido del Modal -->
+      <div class="p-8">
+        <!-- Información de los viajeros a eliminar -->
+        <div class="bg-gray-50 rounded-2xl p-6 mb-6">
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="w-16 h-16 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
+              <i class="fas fa-users text-2xl"></i>
+            </div>
+            <div class="flex-1">
+              <div class="font-bold text-gray-900 text-lg mb-1">
+                {{ selectedItems.length }} viajero{{ selectedItems.length > 1 ? 's' : '' }} seleccionado{{
+                selectedItems.length > 1 ? 's' : '' }}
+              </div>
+              <div class="text-gray-600 text-sm">
+                Se eliminarán permanentemente
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mensaje de advertencia -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-triangle text-amber-500 text-lg mt-1"></i>
+            <div>
+              <h4 class="font-bold text-amber-800 mb-2">¿Estás seguro de que quieres eliminar estos viajeros?</h4>
+              <p class="text-amber-700 text-sm">
+                Esta acción eliminará permanentemente todos los datos de los viajeros seleccionados, incluyendo:
+              </p>
+              <ul class="list-disc list-inside text-amber-700 text-sm mt-2 space-y-1">
+                <li>Información personal y documentos</li>
+                <li>Historial de viajes</li>
+                <li>Información de contacto</li>
+                <li>Registros asociados</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="flex gap-4">
+          <button (click)="cerrarModalEliminarMultiple()"
+            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3">
+            <i class="fas fa-times"></i>
+            <span>Cancelar</span>
+          </button>
+          <button (click)="confirmarEliminacionMultiple()"
+            class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 transform hover:scale-105">
+            <i class="fas fa-trash"></i>
+            <span>Sí, Eliminar {{ selectedItems.length }} viajero{{ selectedItems.length > 1 ? 's' : '' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Exportación de Viajeros -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+    *ngIf="mostrarModalExportar" (click)="cerrarModalExportar()">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-6 rounded-t-3xl relative">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+              <i class="fas fa-download text-2xl"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold">Exportación de Viajeros</h2>
+              <p class="text-purple-100 mt-1">{{ viajerosProcesados.length }} viajero{{ viajerosProcesados.length !== 1 ? 's' : '' }} procesado{{ viajerosProcesados.length !== 1 ? 's' : '' }} y ordenado{{ viajerosProcesados.length !== 1 ? 's' : '' }}</p>
+            </div>
+          </div>
+          <button (click)="cerrarModalExportar()"
+            class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+
+        <!-- Toast de confirmación de copia -->
+        <div *ngIf="copiandoTexto"
+          class="absolute top-4 right-20 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-pulse">
+          <i class="fas fa-check-circle"></i>
+          <span class="text-sm font-medium">{{ ultimoTextoCopiado }} copiado ✓</span>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-8">
+        <!-- Resumen de Clasificaciones -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+          <div class="bg-blue-50 rounded-xl p-4 text-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+              <i class="fas fa-user text-blue-600"></i>
+            </div>
+            <div class="text-2xl font-bold text-blue-900">{{ getCountByClassification('Adulto') }}</div>
+            <div class="text-sm text-blue-700 font-medium">Adultos (12+ años)</div>
+          </div>
+
+          <div class="bg-green-50 rounded-xl p-4 text-center">
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+              <i class="fas fa-child text-green-600"></i>
+            </div>
+            <div class="text-2xl font-bold text-green-900">{{ getCountByClassification('Niño') }}</div>
+            <div class="text-sm text-green-700 font-medium">Niños (2-11 años)</div>
+          </div>
+
+          <div class="bg-pink-50 rounded-xl p-4 text-center">
+            <div class="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-2">
+              <i class="fas fa-baby text-pink-600"></i>
+            </div>
+            <div class="text-2xl font-bold text-pink-900">{{ getCountByClassification('Infante') }}</div>
+            <div class="text-sm text-pink-700 font-medium">Infantes (0-1 años)</div>
+          </div>
+        </div>
+
+        <!-- Lista de Viajeros Procesados -->
+        <div class="space-y-4">
+          <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <i class="fas fa-list text-purple-600"></i>
+            Lista de Viajeros Exportados
+          </h3>
+
+          <!-- Información de ordenación -->
+          <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-6">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-info-circle text-purple-600 text-xl mt-1"></i>
+              <div>
+                <h4 class="font-bold text-purple-900 mb-2">Orden de Exportación</h4>
+                <p class="text-purple-800 text-sm">
+                  Los viajeros han sido automáticamente ordenados según su clasificación por edad:
+                  <strong>Adultos</strong> → <strong>Niños</strong> → <strong>Infantes</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid de Viajeros -->
+          <div class="grid gap-4">
+            <div *ngFor="let viajero of viajerosProcesados; let i = index"
+              class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200">
+
+              <!-- Header del viajero con número de orden -->
+              <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    {{ i + 1 }}
+                  </div>
+                  <div>
+                    <h4 class="text-lg font-bold text-gray-900">{{ viajero.nombreCompleto }}</h4>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span class="px-3 py-1 rounded-full text-xs font-bold"
+                        [class]="getClasificacionClass(viajero.clasificacionEdad)">
+                        <i [class]="getClasificacionIcon(viajero.clasificacionEdad)" class="mr-1"></i>
+                        {{ viajero.clasificacionEdad }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Información del viajero -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                <!-- Información Personal -->
+                <div class="space-y-3">
+                  <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wide border-b border-gray-200 pb-1">
+                    Información Personal
+                  </h5>
+
+                  <div class="space-y-2 text-sm">
+                    <div class="flex justify-between items-center group">
+                      <span class="text-gray-600">Nombres:</span>
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">{{ viajero.nombres }}</span>
+                        <button (click)="copiarAlPortapapeles(viajero.nombres, 'Nombres')"
+                          class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                          title="Copiar nombres">
+                          <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="flex justify-between items-center group">
+                      <span class="text-gray-600">Apellidos:</span>
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">{{ viajero.apellidos }}</span>
+                        <button (click)="copiarAlPortapapeles(viajero.apellidos, 'Apellidos')"
+                          class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                          title="Copiar apellidos">
+                          <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="flex justify-between items-center group">
+                      <span class="text-gray-600">Fecha Nacimiento:</span>
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">{{ viajero.fechaNacimiento }}</span>
+                        <button (click)="copiarAlPortapapeles(viajero.fechaNacimiento, 'Fecha de Nacimiento')"
+                          class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                          title="Copiar fecha de nacimiento">
+                          <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+
+
+                  </div>
+                </div>
+
+                <!-- Información de Contacto -->
+                <div class="space-y-3">
+                  <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wide border-b border-gray-200 pb-1">
+                    Contacto
+                  </h5>
+
+                  <div class="space-y-2 text-sm">
+                    <div class="flex justify-between items-center group">
+                      <span class="text-gray-600">Teléfono:</span>
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">{{ viajero.telefono || 'No disponible' }}</span>
+                        <button (click)="copiarAlPortapapeles(viajero.telefono || 'No disponible', 'Teléfono')"
+                          class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                          title="Copiar teléfono">
+                          <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="flex justify-between items-center group">
+                      <span class="text-gray-600">Email:</span>
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium break-all">{{ viajero.email }}</span>
+                        <button (click)="copiarAlPortapapeles(viajero.email, 'Email')"
+                          class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                          title="Copiar email">
+                          <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Documento -->
+                <div class="space-y-3">
+                  <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wide border-b border-gray-200 pb-1">
+                    <lucide-icon [img]="FileTextIcon" class="text-blue-600 mr-1 inline" size="14"></lucide-icon>
+                    Documento
+                  </h5>
+
+                  <div class="space-y-2 text-sm">
+                    <!-- Selector de documento -->
+                    <div *ngIf="viajero.documentos.length > 1" class="mb-3">
+                      <label class="text-xs font-semibold text-gray-600 mb-1 block">Seleccionar documento:</label>
+                      <select (change)="onDocumentoSelectionChange($event, viajero)"
+                              class="w-full text-xs border border-gray-300 rounded px-2 py-1 bg-white">
+                        <option *ngFor="let doc of viajero.documentos; let idx = index"
+                                [value]="idx"
+                                [selected]="viajero.documentoSeleccionado?.id === doc.id">
+                          {{ getDocumentoDisplay(doc) }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <!-- Información del documento seleccionado -->
+                    <div *ngIf="viajero.documentoSeleccionado">
+                      <div class="flex justify-between items-center group">
+                        <span class="text-gray-600">Tipo:</span>
+                        <div class="flex items-center gap-2">
+                          <span class="font-medium">{{ viajero.documentoSeleccionado.documento.tipo }}</span>
+                          <button (click)="copiarAlPortapapeles(viajero.documentoSeleccionado.documento.tipo, 'Tipo de Documento')"
+                            class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                            title="Copiar tipo de documento">
+                            <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="flex justify-between items-center group">
+                        <span class="text-gray-600">Número:</span>
+                        <div class="flex items-center gap-2">
+                          <span class="font-medium font-mono">{{ viajero.documentoSeleccionado.numero }}</span>
+                          <button (click)="copiarAlPortapapeles(viajero.documentoSeleccionado.numero, 'Número de Documento')"
+                            class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                            title="Copiar número de documento">
+                            <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="flex justify-between items-center group">
+                        <span class="text-gray-600">Completo:</span>
+                        <div class="flex items-center gap-2">
+                          <span class="font-medium">{{ getDocumentoInfo(viajero) }}</span>
+                          <button (click)="copiarDocumento(viajero)"
+                            class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                            title="Copiar documento completo">
+                            <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Sin documento -->
+                    <div *ngIf="!viajero.documentoSeleccionado" class="text-center py-2">
+                      <span class="text-gray-500 italic text-xs">Sin documento asignado</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Información Adicional -->
+                <div class="space-y-3">
+                  <h5 class="text-sm font-bold text-gray-700 uppercase tracking-wide border-b border-gray-200 pb-1">
+                    Detalles Adicionales
+                  </h5>
+
+                  <div class="space-y-2 text-sm">
+                    <div class="flex justify-between items-center group">
+                      <span class="text-gray-600">ID:</span>
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">#{{ viajero.id }}</span>
+                        <button (click)="copiarAlPortapapeles(viajero.id.toString(), 'ID')"
+                          class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                          title="Copiar ID">
+                          <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="flex justify-between items-center group">
+                      <span class="text-gray-600">Nacionalidad:</span>
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">{{ viajero.viajeroOriginal.nacionalidad || 'N/A' }}</span>
+                        <button disabled
+                          class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
+                          title="Copiar nacionalidad">
+                          <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+
+
+                  </div>
+                </div>
+              </div>
+
+              <!-- Botón para copiar todos los datos del viajero -->
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <button (click)="copiarTodosLosDatos(viajero)"
+                  class="w-full bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border border-blue-200 text-blue-800 py-2 px-4 rounded-lg font-medium flex items-center justify-center gap-2 transition-all duration-200">
+                  <i class="fas fa-clipboard-list"></i>
+                  Copiar Todos los Datos
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones del Modal -->
+        <div class="flex justify-end gap-4 pt-8 border-t border-gray-200 mt-8">
+          <button (click)="cerrarModalExportar()"
+            class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+            Cerrar
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Asignación de Documento -->
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
+    *ngIf="mostrarModalAsignarDocumento" (click)="cerrarModalAsignarDocumento()">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+      (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-6 rounded-t-3xl">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+              <lucide-icon [img]="FilePlusIcon" class="text-white" size="28"></lucide-icon>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold">Asignar Documento</h2>
+              <p class="text-purple-100 mt-1" *ngIf="viajeroParaDocumento">
+                Para: Viajero #{{ viajeroParaDocumento.id }}
+              </p>
+            </div>
+          </div>
+          <button (click)="cerrarModalAsignarDocumento()"
+            class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-8">
+        <form [formGroup]="documentoForm" (ngSubmit)="onSubmitDocumento()" class="space-y-6">
+
+          <!-- Tipo de Documento -->
+          <div class="space-y-2">
+            <label for="documentoId" class="text-sm font-semibold text-gray-700">Tipo de Documento *</label>
+            <select id="documentoId" formControlName="documentoId"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all">
+              <option value="">Seleccione un tipo de documento</option>
+              <option *ngFor="let documento of documentosDisponibles" [value]="documento.id">
+                {{ documento.tipo }}
+              </option>
+            </select>
+            <div class="text-sm text-red-600 font-medium" *ngIf="documentoForm.get('documentoId')?.invalid && documentoForm.get('documentoId')?.touched">
+              Este campo es requerido
+            </div>
+          </div>
+
+          <!-- Número de Documento -->
+          <div class="space-y-2">
+            <label for="numero" class="text-sm font-semibold text-gray-700">Número de Documento *</label>
+            <input type="text" id="numero" formControlName="numero"
+              placeholder="Ingrese el número del documento"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all">
+            <div class="text-sm text-red-600 font-medium" *ngIf="documentoForm.get('numero')?.invalid && documentoForm.get('numero')?.touched">
+              Este campo es requerido
+            </div>
+          </div>
+
+          <!-- Fechas -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-2">
+              <label for="fechaEmision" class="text-sm font-semibold text-gray-700">Fecha de Emisión *</label>
+              <input type="date" id="fechaEmision" formControlName="fechaEmision"
+                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all">
+              <div class="text-sm text-red-600 font-medium" *ngIf="documentoForm.get('fechaEmision')?.invalid && documentoForm.get('fechaEmision')?.touched">
+                Este campo es requerido
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label for="fechaVencimiento" class="text-sm font-semibold text-gray-700">Fecha de Vencimiento *</label>
+              <input type="date" id="fechaVencimiento" formControlName="fechaVencimiento"
+                class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all">
+              <div class="text-sm text-red-600 font-medium" *ngIf="documentoForm.get('fechaVencimiento')?.invalid && documentoForm.get('fechaVencimiento')?.touched">
+                Este campo es requerido
+              </div>
+            </div>
+          </div>
+
+          <!-- Origen -->
+          <div class="space-y-2">
+            <label for="origen" class="text-sm font-semibold text-gray-700">Origen/País de Emisión *</label>
+            <input type="text" id="origen" formControlName="origen"
+              placeholder="País o entidad emisora del documento"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-lg focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all">
+            <div class="text-sm text-red-600 font-medium" *ngIf="documentoForm.get('origen')?.invalid && documentoForm.get('origen')?.touched">
+              Este campo es requerido
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            <button type="button" (click)="cerrarModalAsignarDocumento()"
+              class="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+              Cancelar
+            </button>
+            <button type="submit" [disabled]="documentoForm.invalid || isSubmittingDocumento"
+              class="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50">
+              <i class="fas fa-spinner fa-spin" *ngIf="isSubmittingDocumento"></i>
+              <i class="fas fa-save" *ngIf="!isSubmittingDocumento"></i>
+              Asignar Documento
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>

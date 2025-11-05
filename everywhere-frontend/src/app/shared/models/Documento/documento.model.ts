@@ -9,6 +9,6 @@ export interface DocumentoResponse {
   tipo: string;
   descripcion?: string;
   estado: boolean;
-  creado: Date;
-  actualizado: Date;
+  creado: string;
+  actualizado: string;
 }

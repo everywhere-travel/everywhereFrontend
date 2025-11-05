@@ -22,8 +22,8 @@ export class CorreoPersonaService {
     return this.http.get<CorreoPersonaResponse>(`${this.baseURL}/${correoId}`);
   }
 
-  create(correoData: CorreoPersonaRequest): Observable<CorreoPersonaResponse> {
-    return this.http.post<CorreoPersonaResponse>(`${this.baseURL}`, correoData);
+  create(personaId: number, correoData: CorreoPersonaRequest): Observable<CorreoPersonaResponse> {
+    return this.http.post<CorreoPersonaResponse>(`${this.baseURL}/personas/${personaId}`, correoData);
   }
 
   update(personaId: number, correoId: number, correoData: CorreoPersonaRequest): Observable<CorreoPersonaResponse> {

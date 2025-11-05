@@ -1,11 +1,11 @@
 export interface CategoriaPersonaRequest {
-    nombre?: string;
+    nombre: string;
     descripcion?: string;
 }
 
 export interface CategoriaPersonaResponse {
-    id?: number;
-    nombre?: string;
+    id: number;
+    nombre: string;
     descripcion?: string;
     creado: string;
     actualizado: string;

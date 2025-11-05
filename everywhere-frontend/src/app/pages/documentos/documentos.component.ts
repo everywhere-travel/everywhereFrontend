@@ -355,8 +355,8 @@ export class DocumentosComponent implements OnInit {
           tipo: doc.tipo,
           descripcion: doc.descripcion || '',
           estado: doc.estado,
-          creado: this.formatDateToString(doc.creado),
-          actualizado: this.formatDateToString(doc.actualizado)
+          creado: doc.creado,
+          actualizado: doc.actualizado
         }));
         this.aplicarFiltros();
         this.loading = false;

@@ -50,11 +50,11 @@ export class PersonaNaturalService {
   }
 
   asociarViajero(id: number, viajeroId: number): Observable<PersonaNaturalResponse> {
-    return this.http.patch<PersonaNaturalResponse>(`${this.baseURL}/${id}/viajero`, { viajeroId });
+    return this.http.patch<PersonaNaturalResponse>(`${this.baseURL}/${id}/asociar-viajero`, { viajeroId });
   }
 
   desasociarViajero(id: number): Observable<PersonaNaturalResponse> {
-    return this.http.delete<PersonaNaturalResponse>(`${this.baseURL}/${id}/viajero`);
+    return this.http.patch<PersonaNaturalResponse>(`${this.baseURL}/${id}/desasociar-viajero`, null);
   }
 
   deleteById(id: number): Observable<void> {

@@ -283,7 +283,7 @@ export class PersonasComponent implements OnInit {
     this.initializeForms();
   }
 
-  ngOnInit(): void {
+  ngOnInit(): void { 
     this.initializeSidebar();
     this.loadPersonas();
     this.calcularEstadisticas();
@@ -1114,8 +1114,8 @@ export class PersonasComponent implements OnInit {
             apellidosPaterno: natural.apellidosPaterno || '',
             apellidosMaterno: natural.apellidosMaterno || '',
             documento: natural.documento || '',
-            email: natural.persona?.email,
-            telefono: natural.persona?.telefono,
+            email: natural.persona?.correos?.[0]?.email,
+            telefono: natural.persona?.telefonos?.[0]?.numero,
             direccion: natural.persona?.direccion
           });
         });
@@ -1132,8 +1132,8 @@ export class PersonasComponent implements OnInit {
             razonSocial: juridica.razonSocial,
             documento: juridica.ruc || '',
             ruc: juridica.ruc,
-            email: juridica.persona?.email,
-            telefono: juridica.persona?.telefono,
+            email: juridica.persona?.correos?.[0]?.email,
+            telefono: juridica.persona?.telefonos?.[0]?.numero,
             direccion: juridica.persona?.direccion
           });
         });
@@ -1269,8 +1269,6 @@ export class PersonasComponent implements OnInit {
           cliente: false, // No existe en el modelo, usar valor por defecto
           categoria: '', // No existe en el modelo, usar valor por defecto
           persona: {
-            telefono: personaCompleta.persona?.telefono || '',
-            email: personaCompleta.persona?.email || '',
             direccion: personaCompleta.persona?.direccion || ''
           }
         });
@@ -1307,8 +1305,6 @@ export class PersonasComponent implements OnInit {
           razonSocial: personaCompleta.razonSocial || '',
           ruc: personaCompleta.ruc || '',
           persona: {
-            telefono: personaCompleta.persona?.telefono || '',
-            email: personaCompleta.persona?.email || '',
             direccion: personaCompleta.persona?.direccion || ''
           }
         });

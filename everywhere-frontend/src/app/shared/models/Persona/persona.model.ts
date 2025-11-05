@@ -8,8 +8,6 @@ export interface PersonaRequest {
 
 export interface PersonaResponse {
   id: number
-  email?: string
-  telefono?: string
   direccion?: string
   observacion?: string
   creado: string

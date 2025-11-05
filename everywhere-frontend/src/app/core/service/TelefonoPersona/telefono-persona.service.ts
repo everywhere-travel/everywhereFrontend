@@ -20,16 +20,16 @@ export class TelefonoPersonaService {
     return this.http.get<TelefonoPersonaResponse>(`${this.baseURL}/personas/${personaId}/telefono/${telefonoId}`);
   }
 
-  create(telefonoData: TelefonoPersonaRequest): Observable<TelefonoPersonaResponse> {
-    return this.http.post<TelefonoPersonaResponse>(`${this.baseURL}`, telefonoData);
+  create(personaId: number, telefonoData: TelefonoPersonaRequest): Observable<TelefonoPersonaResponse> {
+    return this.http.post<TelefonoPersonaResponse>(`${this.baseURL}/personas/${personaId}/telefono`, telefonoData);
   }
 
   update(personaId: number, telefonoId: number, telefonoData: TelefonoPersonaRequest): Observable<TelefonoPersonaResponse> {
     return this.http.patch<TelefonoPersonaResponse>(`${this.baseURL}/personas/${personaId}/telefono/${telefonoId}`, telefonoData);
   }
 
-  delete(telefonoId: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseURL}/${telefonoId}`);
+  delete(personaId: number,telefonoId: number): Observable<void> {
+    return this.http.delete<void>(`${this.baseURL}/personas/${personaId}/telefono${telefonoId}`);
   }
 
   listarPorPersona(personaId: number): Observable<TelefonoPersonaResponse[]> {

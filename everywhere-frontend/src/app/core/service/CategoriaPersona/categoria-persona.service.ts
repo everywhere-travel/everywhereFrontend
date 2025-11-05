@@ -43,7 +43,7 @@ export class CategoriaPersonaService {
   }
 
   desasignarCategoria(personaNaturalId: number): Observable<PersonaNaturalResponse> {
-    return this.http.delete<PersonaNaturalResponse>(`${this.baseURL}/persona-natural/${personaNaturalId}/desasignar`);
+    return this.http.patch<PersonaNaturalResponse>(`${this.baseURL}/persona-natural/${personaNaturalId}/desasignar`, null);
   }
 
   findPersonasPorCategoria(categoriaId: number): Observable<PersonaNaturalResponse[]> {
