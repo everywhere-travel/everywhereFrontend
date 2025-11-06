@@ -334,7 +334,7 @@ export class CategoriasComponent implements OnInit {
       next: (res) => {
         this.categorias = res || [];
         this.totalCategorias = this.categorias.length;
-        
+
         // Convertir a CategoriaTabla para filtrado y ordenamiento
         this.categoriasTabla = this.categorias.map(c => ({
           id: c.id,
@@ -342,7 +342,7 @@ export class CategoriasComponent implements OnInit {
           creado: c.fechaCreacion ? new Date(c.fechaCreacion).toISOString() : undefined,
           actualizado: c.fechaActualizacion ? new Date(c.fechaActualizacion).toISOString() : undefined
         }));
-        
+
         this.applyFilters();
         this.loading = false;
       },

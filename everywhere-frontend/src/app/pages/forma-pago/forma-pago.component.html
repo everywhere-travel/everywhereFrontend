@@ -151,7 +151,7 @@
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!loading && formasPagoFiltradas.length === 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
+      <div *ngIf="!loading && filteredFormasPago.length === 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
         <div class="flex flex-col items-center gap-4">
           <i class="fas fa-inbox text-6xl text-gray-300"></i>
           <h3 class="text-2xl font-bold text-gray-900">No hay formas de pago</h3>
@@ -163,31 +163,100 @@
       </div>
 
       <!-- TABLE VIEW -->
-      <div *ngIf="!loading && currentView === 'table' && formasPagoFiltradas.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+      <div *ngIf="!loading && currentView === 'table' && filteredFormasPago.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
               <tr>
-                <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Código</th>
-                <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Descripción</th>
-                <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Creado</th>
-                <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Actualizado</th>
-                <th class="px-6 py-4 text-right text-sm font-bold text-gray-700">Acciones</th>
+                <th
+                  class="px-6 py-4 text-left text-sm font-bold text-gray-700 cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                  (click)="sortBy('codigo')" [class.bg-everywhere-primary/5]="sortColumn === 'codigo'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-barcode text-gray-500"></i>
+                      <span>Código</span>
+                    </div>
+                    <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                      [class.opacity-100]="sortColumn === 'codigo'">
+                      <i class="fas fa-caret-up text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'codigo' && sortDirection === 'asc'"></i>
+                      <i class="fas fa-caret-down text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'codigo' && sortDirection === 'desc'"></i>
+                    </div>
+                  </div>
+                </th>
+                <th
+                  class="px-6 py-4 text-left text-sm font-bold text-gray-700 cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                  (click)="sortBy('descripcion')" [class.bg-everywhere-primary/5]="sortColumn === 'descripcion'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-align-left text-gray-500"></i>
+                      <span>Descripción</span>
+                    </div>
+                    <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                      [class.opacity-100]="sortColumn === 'descripcion'">
+                      <i class="fas fa-caret-up text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'descripcion' && sortDirection === 'asc'"></i>
+                      <i class="fas fa-caret-down text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'descripcion' && sortDirection === 'desc'"></i>
+                    </div>
+                  </div>
+                </th>
+                <th
+                  class="px-6 py-4 text-left text-sm font-bold text-gray-700 cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                  (click)="sortBy('creado')" [class.bg-everywhere-primary/5]="sortColumn === 'creado'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-calendar-plus text-gray-500"></i>
+                      <span>Creado</span>
+                    </div>
+                    <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                      [class.opacity-100]="sortColumn === 'creado'">
+                      <i class="fas fa-caret-up text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'creado' && sortDirection === 'asc'"></i>
+                      <i class="fas fa-caret-down text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'creado' && sortDirection === 'desc'"></i>
+                    </div>
+                  </div>
+                </th>
+                <th
+                  class="px-6 py-4 text-left text-sm font-bold text-gray-700 cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                  (click)="sortBy('actualizado')" [class.bg-everywhere-primary/5]="sortColumn === 'actualizado'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-calendar-check text-gray-500"></i>
+                      <span>Última Actualización</span>
+                    </div>
+                    <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                      [class.opacity-100]="sortColumn === 'actualizado'">
+                      <i class="fas fa-caret-up text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'actualizado' && sortDirection === 'asc'"></i>
+                      <i class="fas fa-caret-down text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'actualizado' && sortDirection === 'desc'"></i>
+                    </div>
+                  </div>
+                </th>
+                <th class="px-6 py-4 text-right text-sm font-bold text-gray-700">
+                  <div class="flex items-center justify-end gap-2">
+                    <i class="fas fa-cogs text-gray-500"></i>
+                    <span>Acciones</span>
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr *ngFor="let forma of paginatedFormasPago" class="hover:bg-gray-50 transition-colors">
                 <td class="px-6 py-4 text-sm font-semibold text-gray-900">{{ forma.codigo || '-' }}</td>
                 <td class="px-6 py-4 text-sm text-gray-700">{{ forma.descripcion || '-' }}</td>
-                <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(forma.fechaCreacion) }}</td>
-                <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(forma.fechaActualizacion) }}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(forma.creado) }}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(forma.actualizado) }}</td>
                 <td class="px-6 py-4 text-right">
                   <div class="flex items-center justify-end gap-2">
-                    <button (click)="openEditModal(forma)"
+                    <button (click)="openEditModal(getFormaPagoById(forma.id))"
                       class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
                       <i class="fas fa-edit"></i>Editar
                     </button>
-                    <button (click)="confirmDelete(forma)"
+                    <button (click)="confirmDelete(getFormaPagoById(forma.id))"
                       class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
                       <i class="fas fa-trash"></i>Eliminar
                     </button>
@@ -224,16 +293,16 @@
       </div>
 
       <!-- CARDS VIEW -->
-      <div *ngIf="!loading && currentView === 'cards' && formasPagoFiltradas.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div *ngIf="!loading && currentView === 'cards' && filteredFormasPago.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <div *ngFor="let forma of paginatedFormasPago" class="relative">
-          <app-module-card [data]="convertToModuleCard(forma)"></app-module-card>
+          <app-module-card [data]="convertToModuleCard(getFormaPagoById(forma.id)!)"></app-module-card>
           <!-- Quick Actions -->
           <div class="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 hover:opacity-100 transition-opacity">
-            <button (click)="openEditModal(forma)"
+            <button (click)="openEditModal(getFormaPagoById(forma.id))"
               class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1">
               <i class="fas fa-edit"></i>Editar
             </button>
-            <button (click)="confirmDelete(forma)"
+            <button (click)="confirmDelete(getFormaPagoById(forma.id))"
               class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1">
               <i class="fas fa-trash"></i>Eliminar
             </button>
@@ -242,7 +311,7 @@
       </div>
 
       <!-- LIST VIEW -->
-      <div *ngIf="!loading && currentView === 'list' && formasPagoFiltradas.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+      <div *ngIf="!loading && currentView === 'list' && filteredFormasPago.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
         <div *ngFor="let forma of paginatedFormasPago" class="px-6 py-4 border-b border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-between">
           <div class="flex items-center gap-4 flex-1">
             <div class="h-12 w-12 rounded-xl forma-avatar flex items-center justify-center bg-red-600 text-white font-bold text-lg">
@@ -254,10 +323,10 @@
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <button (click)="openEditModal(forma)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+            <button (click)="openEditModal(getFormaPagoById(forma.id))" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
               <i class="fas fa-edit mr-2"></i>Editar
             </button>
-            <button (click)="confirmDelete(forma)" class="bg-red-100 hover:bg-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+            <button (click)="confirmDelete(getFormaPagoById(forma.id))" class="bg-red-100 hover:bg-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
               <i class="fas fa-trash mr-2"></i>Eliminar
             </button>
           </div>

@@ -10,6 +10,15 @@ import { ErrorHandlerService } from '../../shared/services/error-handler.service
 import { AuthServiceService } from '../../core/service/auth/auth.service';
 import { ModuleCardComponent, ModuleCardData } from '../../shared/components/ui/module-card/module-card.component';
 
+// Interfaz para tabla de formas de pago
+export interface FormaPagoTabla {
+  id?: number;
+  codigo?: string;
+  descripcion?: string;
+  creado?: string;
+  actualizado?: string;
+}
+
 // Extender la interfaz para agregar moduleKey
 interface ExtendedSidebarMenuItem extends SidebarMenuItem {
   moduleKey?: string;
@@ -220,6 +229,8 @@ export class FormaPagoComponent implements OnInit {
 
   // Datos
   formasPago: FormaPagoResponse[] = [];
+  formaPagoTabla: FormaPagoTabla[] = [];
+  filteredFormasPago: FormaPagoTabla[] = [];
   formasPagoFiltradas: FormaPagoResponse[] = [];
 
   constructor(
@@ -337,21 +348,75 @@ export class FormaPagoComponent implements OnInit {
 
   clearSearch(): void {
     this.searchQuery = '';
+    this.currentPage = 1;
     this.applyFilters();
   }
 
   applyFilters(): void {
-    const q = this.searchQuery?.trim().toLowerCase();
-    if (!q) {
-      this.formasPagoFiltradas = [...this.formasPago];
-    } else {
-      this.formasPagoFiltradas = this.formasPago.filter(f => {
-        const desc = (f.descripcion || '').toString().toLowerCase();
-        const cod = (f.codigo !== undefined && f.codigo !== null) ? f.codigo.toString() : '';
-        return desc.includes(q) || cod.includes(q) || (f.id && f.id.toString().includes(q));
+    let filtered = [...this.formaPagoTabla];
+
+    // Filtro por búsqueda
+    const term = this.searchQuery?.trim().toLowerCase();
+    if (term) {
+      filtered = filtered.filter(forma => {
+        const searchableText = `${forma.descripcion} ${forma.codigo}`.toLowerCase();
+        return searchableText.includes(term);
       });
     }
-    this.totalItems = this.formasPagoFiltradas.length;
+
+    this.filteredFormasPago = filtered;
+    this.totalItems = filtered.length;
+
+    // Aplicar ordenamiento
+    this.applySorting();
+  }
+
+  sortBy(column: string): void {
+    if (this.sortColumn === column) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn = column;
+      this.sortDirection = 'asc';
+    }
+    this.applySorting();
+  }
+
+  private applySorting(): void {
+    if (!this.filteredFormasPago.length) return;
+
+    this.filteredFormasPago.sort((a, b) => {
+      let valueA: any;
+      let valueB: any;
+
+      switch (this.sortColumn) {
+        case 'codigo':
+          valueA = a.codigo?.toLowerCase() || '';
+          valueB = b.codigo?.toLowerCase() || '';
+          break;
+        case 'descripcion':
+          valueA = a.descripcion?.toLowerCase() || '';
+          valueB = b.descripcion?.toLowerCase() || '';
+          break;
+        case 'creado':
+          valueA = new Date(a.creado || 0);
+          valueB = new Date(b.creado || 0);
+          break;
+        case 'actualizado':
+          valueA = new Date(a.actualizado || 0);
+          valueB = new Date(b.actualizado || 0);
+          break;
+        default:
+          return 0;
+      }
+
+      if (valueA < valueB) {
+        return this.sortDirection === 'asc' ? -1 : 1;
+      }
+      if (valueA > valueB) {
+        return this.sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
   }
 
   hasActiveFilters(): boolean {
@@ -375,11 +440,22 @@ export class FormaPagoComponent implements OnInit {
       next: (res) => {
         this.formasPago = res || [];
         this.totalFormasPago = this.formasPago.length;
+
+        // Convertir a FormaPagoTabla para filtrado y ordenamiento
+        this.formaPagoTabla = this.formasPago.map(f => ({
+          id: f.id,
+          codigo: f.codigo ? f.codigo.toString() : undefined,
+          descripcion: f.descripcion,
+          creado: f.fechaCreacion ? new Date(f.fechaCreacion).toISOString() : undefined,
+          actualizado: f.fechaActualizacion ? new Date(f.fechaActualizacion).toISOString() : undefined
+        }));
+
         this.applyFilters();
         this.loading = false;
       },
       error: () => {
         this.formasPago = [];
+        this.formaPagoTabla = [];
         this.totalFormasPago = 0;
         this.loading = false;
         this.showError('Error al cargar las formas de pago');
@@ -391,10 +467,10 @@ export class FormaPagoComponent implements OnInit {
   // PAGINATION
   // =================================================================
 
-  get paginatedFormasPago(): FormaPagoResponse[] {
+  get paginatedFormasPago(): FormaPagoTabla[] {
     const start = (this.currentPage - 1) * this.itemsPerPage;
     const end = start + this.itemsPerPage;
-    return this.formasPagoFiltradas.slice(start, end);
+    return this.filteredFormasPago.slice(start, end);
   }
 
   get totalPages(): number {
@@ -434,7 +510,8 @@ export class FormaPagoComponent implements OnInit {
     this.showModal = true;
   }
 
-  openEditModal(formaPago: FormaPagoResponse): void {
+  openEditModal(formaPago: FormaPagoResponse | undefined): void {
+    if (!formaPago) return;
     this.isEditMode = true;
     this.editingId = formaPago.id;
     this.formaPagoForm.patchValue({
@@ -479,7 +556,8 @@ export class FormaPagoComponent implements OnInit {
   }
 
   // Eliminar forma de pago
-  confirmDelete(formaPago: FormaPagoResponse): void {
+  confirmDelete(formaPago: FormaPagoResponse | undefined): void {
+    if (!formaPago) return;
     this.formaPagoToDelete = formaPago;
     this.showConfirmModal = true;
   }
@@ -518,6 +596,10 @@ export class FormaPagoComponent implements OnInit {
     const date = d instanceof Date ? d : new Date(d as string);
     if (isNaN(date.getTime())) return '-';
     return date.toLocaleString();
+  }
+
+  getFormaPagoById(id?: number): FormaPagoResponse | undefined {
+    return this.formasPago.find(f => f.id === id);
   }
 
   convertToModuleCard(f: FormaPagoResponse): ModuleCardData {
