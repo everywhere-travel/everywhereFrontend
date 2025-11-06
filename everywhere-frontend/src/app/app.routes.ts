@@ -10,6 +10,7 @@ import { ProductosComponent } from './pages/productos/productos.component';
 import { ProveedorComponent } from './pages/proveedor/proveedor.component';
 import { OperadoresComponent } from './pages/operadores/operadores.component';
 import { CategoriaPersonaComponent } from './pages/categoria-persona/categoria-persona.component';
+import { EstadoCotizacionComponent } from './pages/estado-cotizacion/estado-cotizacion.component';
 
 
 export const routes: Routes = [
@@ -101,6 +102,11 @@ export const routes: Routes = [
     path: 'productos',
     loadComponent: () =>
       import('./pages/productos/productos.component').then(m => m.ProductosComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'estado-cotizacion',
+    component: EstadoCotizacionComponent,
     canActivate: [authGuard]
   },
   {
