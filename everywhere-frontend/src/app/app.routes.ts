@@ -1,6 +1,12 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth/auth.guard';
 import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { PersonasComponent } from './pages/personas/personas.component';
+import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.component';
+import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
+import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.component';
+import { ProductosComponent } from './pages/productos/productos.component';
 import { ProveedorComponent } from './pages/proveedor/proveedor.component';
 import { OperadoresComponent } from './pages/operadores/operadores.component';
 import { CategoriaPersonaComponent } from './pages/categoria-persona/categoria-persona.component';
@@ -101,6 +107,18 @@ export const routes: Routes = [
   {
     path: 'estado-cotizacion',
     component: EstadoCotizacionComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'formas-pago',
+    loadComponent: () =>
+      import('./pages/forma-pago/forma-pago.component').then(m => m.FormaPagoComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'categorias',
+    loadComponent: () =>
+      import('./pages/categorias/categorias.component').then(m => m.CategoriasComponent),
     canActivate: [authGuard]
   },
   {

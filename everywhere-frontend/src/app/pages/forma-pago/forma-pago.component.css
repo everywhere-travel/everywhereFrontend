@@ -1,0 +1,140 @@
+/* Estilos para el componente Forma de Pago */
+
+/* Estilos para los avatares de formas de pago */
+.forma-avatar {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3), 0 2px 4px -1px rgba(220, 38, 38, 0.2);
+}
+
+/* Estilos para los menús de acciones */
+.action-menu-container {
+  position: relative;
+}
+
+/* Estilos para el modal de eliminación */
+.modal-backdrop {
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  animation: fadeIn 0.3s ease-out;
+  transform-origin: center;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para los elementos seleccionados */
+.selected-item {
+  background: linear-gradient(45deg, rgba(217, 4, 61, 0.1), rgba(191, 73, 104, 0.1));
+  border-color: var(--everywhere-primary);
+}
+
+/* Estilos para las acciones masivas */
+.bulk-actions {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Transiciones suaves para cambios de vista */
+.view-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mejoras de accesibilidad */
+.focus-visible:focus {
+  outline: 2px solid var(--everywhere-primary);
+  outline-offset: 2px;
+}
+
+/* Estilos para los tooltips */
+.tooltip {
+  position: relative;
+}
+
+.tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .action-menu {
+    position: fixed !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 1rem 1rem 0 0;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+/* Estilos para la tabla */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table thead {
+  background: linear-gradient(to right, #f9fafb, #f3f4f6);
+  border-bottom: 2px solid #e5e7eb;
+}
+
+table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s ease;
+}
+
+table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+table th,
+table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+}
+
+table th {
+  font-weight: 700;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+table td {
+  color: #6b7280;
+  font-size: 0.875rem;
+}

@@ -1,0 +1,445 @@
+<!-- Layout con Sidebar -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+  <!-- Sidebar Component -->
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()">
+  </app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+
+    <!-- Header Section -->
+    <header
+      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
+      </div>
+
+      <div class="max-w-full mx-auto px-6 py-6 relative z-10">
+        <!-- Mobile Menu Button -->
+        <button (click)="onToggleSidebar()"
+          class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
+
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+          <!-- Header Info -->
+          <div class="flex-1">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-tags text-2xl"></i>
+              </div>
+              <div>
+                <h1 class="text-4xl font-bold">Gestión de Categorías</h1>
+                <p class="text-xl opacity-90 mt-2">Administra y organiza todas las categorías de productos</p>
+              </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!loading">
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-orange-400 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-tags text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ filteredCategorias.length }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Categoría{{ filteredCategorias.length === 1 ? '' : 's' }} Total{{ filteredCategorias.length === 1 ? '' : 'es' }}</div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-check-circle text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ categorias.length }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Registrada{{ categorias.length === 1 ? '' : 's' }}</div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-everywhere-secondary rounded-xl flex items-center justify-center">
+                  <i class="fas fa-filter text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ hasActiveFilters() ? '1' : '0' }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Filtro{{ hasActiveFilters() ? '' : 's' }} Activo{{ hasActiveFilters() ? '' : 's' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header Action -->
+          <div class="z-10">
+            <button (click)="openCreateModal()" [disabled]="loading"
+              class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+              </div>
+              <i class="fas fa-plus text-lg"></i>
+              <span>Nueva Categoría</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-full mx-auto px-6 py-6 space-y-6">
+      <!-- Search & Filters Panel -->
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <!-- Panel Header -->
+        <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-everywhere-primary rounded-xl flex items-center justify-center">
+                <i class="fas fa-search text-white"></i>
+              </div>
+              <div>
+                <h2 class="text-lg font-bold text-gray-900">Buscar y Filtrar</h2>
+                <p class="text-sm text-gray-600">Encuentra categorías específicas</p>
+              </div>
+            </div>
+
+            <!-- View Controls -->
+            <div class="flex items-center gap-4">
+              <!-- View Type Selector -->
+              <div class="flex bg-gray-100 rounded-xl p-1">
+                <button (click)="changeView('table')"
+                  [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('table') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
+                  <i class="fas fa-table mr-2"></i>Tabla
+                </button>
+                <button (click)="changeView('cards')"
+                  [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('cards') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
+                  <i class="fas fa-th-large mr-2"></i>Tarjetas
+                </button>
+                <button (click)="changeView('list')"
+                  [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('list') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
+                  <i class="fas fa-list mr-2"></i>Lista
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search Controls -->
+        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Search Input -->
+          <div class="lg:col-span-2">
+            <div class="relative">
+              <input type="text" [(ngModel)]="searchTerm" (input)="onSearchChange()"
+                placeholder="Buscar categorías por nombre..."
+                class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-everywhere-primary focus:ring-4 focus:ring-everywhere-primary/20 transition-all bg-gray-50 focus:bg-white">
+              <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <button *ngIf="searchTerm" (click)="clearSearch()"
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
+        <div class="flex flex-col items-center gap-4">
+          <div class="w-16 h-16 border-4 border-gray-200 border-t-everywhere-primary rounded-full animate-spin"></div>
+          <p class="text-gray-600 font-medium">Cargando categorías...</p>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && filteredCategorias.length === 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
+        <div class="flex flex-col items-center gap-4">
+          <i class="fas fa-inbox text-6xl text-gray-300"></i>
+          <h3 class="text-2xl font-bold text-gray-900">No hay categorías</h3>
+          <p class="text-gray-600 max-w-md">{{ searchTerm ? 'No se encontraron resultados para tu búsqueda.' : 'Comienza creando una nueva categoría.' }}</p>
+          <button (click)="openCreateModal()" class="mt-4 bg-everywhere-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-everywhere-secondary transition-all">
+            <i class="fas fa-plus mr-2"></i>Crear Categoría
+          </button>
+        </div>
+      </div>
+
+      <!-- TABLE VIEW -->
+      <div *ngIf="!loading && currentView === 'table' && filteredCategorias.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
+              <tr>
+                <th
+                  class="px-6 py-4 text-left text-sm font-bold text-gray-700 cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                  (click)="sortBy('nombre')" [class.bg-everywhere-primary/5]="sortColumn === 'nombre'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-tag text-gray-500"></i>
+                      <span>Nombre</span>
+                    </div>
+                    <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                      [class.opacity-100]="sortColumn === 'nombre'">
+                      <i class="fas fa-caret-up text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'nombre' && sortDirection === 'asc'"></i>
+                      <i class="fas fa-caret-down text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'nombre' && sortDirection === 'desc'"></i>
+                    </div>
+                  </div>
+                </th>
+                <th
+                  class="px-6 py-4 text-left text-sm font-bold text-gray-700 cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                  (click)="sortBy('creado')" [class.bg-everywhere-primary/5]="sortColumn === 'creado'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-calendar-plus text-gray-500"></i>
+                      <span>Creado</span>
+                    </div>
+                    <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                      [class.opacity-100]="sortColumn === 'creado'">
+                      <i class="fas fa-caret-up text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'creado' && sortDirection === 'asc'"></i>
+                      <i class="fas fa-caret-down text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'creado' && sortDirection === 'desc'"></i>
+                    </div>
+                  </div>
+                </th>
+                <th
+                  class="px-6 py-4 text-left text-sm font-bold text-gray-700 cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                  (click)="sortBy('actualizado')" [class.bg-everywhere-primary/5]="sortColumn === 'actualizado'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-calendar-check text-gray-500"></i>
+                      <span>Última Actualización</span>
+                    </div>
+                    <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                      [class.opacity-100]="sortColumn === 'actualizado'">
+                      <i class="fas fa-caret-up text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'actualizado' && sortDirection === 'asc'"></i>
+                      <i class="fas fa-caret-down text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'actualizado' && sortDirection === 'desc'"></i>
+                    </div>
+                  </div>
+                </th>
+                <th class="px-6 py-4 text-right text-sm font-bold text-gray-700">
+                  <div class="flex items-center justify-end gap-2">
+                    <i class="fas fa-cogs text-gray-500"></i>
+                    <span>Acciones</span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr *ngFor="let categoria of paginatedCategorias" class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 text-sm font-semibold text-gray-900">{{ categoria.nombre || '-' }}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(categoria.creado) }}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(categoria.actualizado) }}</td>
+                <td class="px-6 py-4 text-right">
+                  <div class="flex items-center justify-end gap-2">
+                    <button (click)="openEditModal(getCategoriaById(categoria.id))"
+                      class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
+                      <i class="fas fa-edit"></i>Editar
+                    </button>
+                    <button (click)="confirmDelete(getCategoriaById(categoria.id))" [disabled]="categoria.id === 1"
+                      [class.opacity-50]="categoria.id === 1" [class.cursor-not-allowed]="categoria.id === 1"
+                      [title]="categoria.id === 1 ? 'No se puede eliminar la categoría por defecto' : 'Eliminar categoría'"
+                      class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 disabled:hover:bg-red-50">
+                      <i class="fas fa-trash"></i>Eliminar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div *ngIf="totalPages > 1" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+          <div class="text-sm text-gray-600">
+            Mostrando <strong>{{ (currentPage - 1) * itemsPerPage + 1 }}</strong> a <strong>{{ Math.min(currentPage * itemsPerPage, totalItems) }}</strong> de <strong>{{ totalItems }}</strong>
+          </div>
+          <nav class="flex items-center gap-2">
+            <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"
+              class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <button *ngFor="let page of getPageNumbers()" (click)="goToPage(page)"
+              [class]="page === currentPage ? 'bg-everywhere-primary text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'"
+              class="w-10 h-10 flex items-center justify-center rounded-xl font-semibold transition-all">
+              {{ page }}
+            </button>
+
+            <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)"
+              class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- CARDS VIEW -->
+      <div *ngIf="!loading && currentView === 'cards' && filteredCategorias.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div *ngFor="let categoria of paginatedCategorias" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
+          <div class="p-6">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ categoria.nombre }}</h3>
+              </div>
+            </div>
+
+            <div class="space-y-3 mb-6">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">ID:</span>
+                <span class="text-sm text-gray-900 font-semibold">{{ categoria.id }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Creado:</span>
+                <span class="text-sm text-gray-900">{{ categoria.creado }}</span>
+              </div>
+            </div>
+
+            <div class="flex gap-2 pt-4 border-t border-gray-100">
+              <button (click)="openEditModal(getCategoriaById(categoria.id))"
+                class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2">
+                <i class="fas fa-edit"></i>Editar
+              </button>
+              <button (click)="confirmDelete(getCategoriaById(categoria.id))" [disabled]="categoria.id === 1"
+                [class.opacity-50]="categoria.id === 1" [class.cursor-not-allowed]="categoria.id === 1"
+                [title]="categoria.id === 1 ? 'No se puede eliminar la categoría por defecto' : 'Eliminar categoría'"
+                class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 disabled:hover:bg-red-50">
+                <i class="fas fa-trash"></i>Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIST VIEW -->
+      <div *ngIf="!loading && currentView === 'list' && filteredCategorias.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div *ngFor="let categoria of paginatedCategorias" class="px-6 py-4 border-b border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-between">
+          <div class="flex items-center gap-4 flex-1">
+            <div class="h-12 w-12 rounded-xl categoria-avatar flex items-center justify-center bg-red-600 text-white font-bold text-lg">
+              <i class="fas fa-tags"></i>
+            </div>
+            <div class="flex-1">
+              <div class="text-base font-bold text-gray-900">{{ categoria.nombre || 'Sin nombre' }}</div>
+              <div class="text-sm text-gray-500">ID: {{ categoria.id }}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button (click)="openEditModal(getCategoriaById(categoria.id))" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+              <i class="fas fa-edit mr-2"></i>Editar
+            </button>
+            <button (click)="confirmDelete(getCategoriaById(categoria.id))" [disabled]="categoria.id === 1"
+              [class.opacity-50]="categoria.id === 1" [class.cursor-not-allowed]="categoria.id === 1"
+              [title]="categoria.id === 1 ? 'No se puede eliminar la categoría por defecto' : 'Eliminar categoría'"
+              class="bg-red-100 hover:bg-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:hover:bg-red-100">
+              <i class="fas fa-trash mr-2"></i>Eliminar
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modal para Crear/Editar Categoría -->
+<div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-screen overflow-y-auto">
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white p-6 border-b border-red-100">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+            <i class="fas fa-tags text-xl"></i>
+          </div>
+          <h2 class="text-xl font-bold">{{ isEditMode ? 'Editar' : 'Crear' }} Categoría</h2>
+        </div>
+        <button (click)="closeModal()"
+          class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <form [formGroup]="categoriaForm" (ngSubmit)="saveCategoria()">
+        <div class="space-y-4">
+          <!-- Nombre -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">Nombre *</label>
+            <input type="text" formControlName="nombre"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-everywhere-primary focus:ring-4 focus:ring-everywhere-primary/20 transition-all bg-gray-50 focus:bg-white"
+              placeholder="Ej: Electrónica, Ropa, Alimentos...">
+            <div *ngIf="categoriaForm.get('nombre')?.invalid && categoriaForm.get('nombre')?.touched"
+              class="text-red-600 text-sm mt-2">
+              El nombre es obligatorio
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="mt-8 flex gap-3 border-t border-gray-200 pt-6">
+          <button type="button" (click)="closeModal()"
+            class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-xl font-semibold transition-all">
+            Cancelar
+          </button>
+          <button type="submit" [disabled]="categoriaForm.invalid || loading"
+            class="flex-1 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white py-3 px-4 rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+            <i *ngIf="loading" class="fas fa-spinner fa-spin"></i>
+            <span>{{ isEditMode ? 'Actualizar' : 'Crear' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div *ngIf="showConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <!-- Modal Header -->
+    <div class="p-6 border-b border-gray-200">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+          <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">Confirmar Eliminación</h2>
+          <p class="text-sm text-gray-600 mt-1">Esta acción no se puede deshacer</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <p class="text-gray-700">
+        ¿Está seguro de que desea eliminar la categoría
+        <strong class="text-gray-900">{{ categoriaToDelete?.nombre }}</strong>?
+      </p>
+      <p class="text-sm text-gray-500 mt-2">
+        Al eliminar la categoría, se quitará del sistema y no podrá ser recuperada fácilmente.
+      </p>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="p-6 border-t border-gray-200 flex gap-3">
+      <button (click)="closeConfirmModal()"
+        class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-xl font-semibold transition-all">
+        Cancelar
+      </button>
+      <button (click)="executeDelete()" [disabled]="loading"
+        class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+        <i *ngIf="loading" class="fas fa-spinner fa-spin"></i>
+        <i *ngIf="!loading" class="fas fa-trash"></i>
+        <span>Eliminar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Modal Component -->
+<app-error-modal *ngIf="showErrorModal" [show]="showErrorModal"
+  [data]="{ title: 'Error', message: errorMessage, type: 'error' }" (close)="closeErrorModal()">
+</app-error-modal>
