@@ -35,7 +35,7 @@ import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { OperadorResponse } from '../../shared/models/Operador/operador.model';
-import { ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
+import { ViajeroConPersonaNatural, ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -53,7 +53,7 @@ interface DetalleLiquidacionTemp {
   proveedor?: ProveedorResponse | null;
   producto?: ProductoResponse;
   operador?: OperadorResponse;
-  viajero?: ViajeroResponse;
+  viajero?: ViajeroConPersonaNatural;
   ticket?: string;
   costoTicket?: number;
   cargoServicio?: number;

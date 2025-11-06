@@ -13,62 +13,55 @@ export class PersonaNaturalService {
 
   constructor() { }
 
-  /**
-   * Obtiene todas las personas naturales
-   */
   findAll(): Observable<PersonaNaturalResponse[]> {
     return this.http.get<PersonaNaturalResponse[]>(this.baseURL);
   }
 
-  /**
-   * Obtiene una persona natural por ID
-   */
   findById(id: number): Observable<PersonaNaturalResponse> {
     return this.http.get<PersonaNaturalResponse>(`${this.baseURL}/${id}`);
   }
 
-  /**
-   * Busca personas naturales por documento
-   */
   findByDocumento(documento: string): Observable<PersonaNaturalResponse[]> {
     const params = new HttpParams().set('documento', documento);
     return this.http.get<PersonaNaturalResponse[]>(`${this.baseURL}/documento`, { params });
   }
 
-  /**
-   * Busca personas naturales por nombres
-   */
   findByNombres(nombres: string): Observable<PersonaNaturalResponse[]> {
     const params = new HttpParams().set('nombres', nombres);
     return this.http.get<PersonaNaturalResponse[]>(`${this.baseURL}/nombres`, { params });
   }
 
-  /**
-   * Busca personas naturales por apellidos
-   */
-  findByApellidos(apellidos: string): Observable<PersonaNaturalResponse[]> {
+  findByApellidosPaternos(apellidos: string): Observable<PersonaNaturalResponse[]> {
     const params = new HttpParams().set('apellidos', apellidos);
-    return this.http.get<PersonaNaturalResponse[]>(`${this.baseURL}/apellidos`, { params });
+    return this.http.get<PersonaNaturalResponse[]>(`${this.baseURL}/apellidos-paterno`, { params });
   }
 
-  /**
-   * Crea una nueva persona natural
-   */
+  findByApellidosMaternos(apellidos: string): Observable<PersonaNaturalResponse[]> {
+    const params = new HttpParams().set('apellidos', apellidos);
+    return this.http.get<PersonaNaturalResponse[]>(`${this.baseURL}/apellidos-materno`, { params });
+  }
+
   save(personaNaturalRequest: PersonaNaturalRequest): Observable<PersonaNaturalResponse> {
     return this.http.post<PersonaNaturalResponse>(this.baseURL, personaNaturalRequest);
   }
 
-  /**
-   * Actualiza una persona natural existente
-   */
   update(id: number, personaNaturalRequest: PersonaNaturalRequest): Observable<PersonaNaturalResponse> {
-    return this.http.put<PersonaNaturalResponse>(`${this.baseURL}/${id}`, personaNaturalRequest);
+    return this.http.patch<PersonaNaturalResponse>(`${this.baseURL}/${id}`, personaNaturalRequest);
   }
 
-  /**
-   * Elimina una persona natural por ID
-   */
+  asociarViajero(id: number, viajeroId: number): Observable<PersonaNaturalResponse> {
+    return this.http.patch<PersonaNaturalResponse>(`${this.baseURL}/${id}/asociar-viajero`, { viajeroId });
+  }
+
+  desasociarViajero(id: number): Observable<PersonaNaturalResponse> {
+    return this.http.patch<PersonaNaturalResponse>(`${this.baseURL}/${id}/desasociar-viajero`, null);
+  }
+
   deleteById(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseURL}/${id}`);
+  }
+
+  findByApellidos(apellidos: string): Observable<PersonaNaturalResponse[]> {
+    return this.findByApellidosPaternos(apellidos);
   }
 }

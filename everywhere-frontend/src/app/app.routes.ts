@@ -2,17 +2,13 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth/auth.guard';
 import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
-import { PersonasComponent } from './pages/personas/personas.component';
-import { Viajero } from './pages/viajero/viajero';
-import { ViajeroFrecuente } from './pages/viajero-frecuente/viajero-frecuente';
+import { PersonasComponent } from './pages/personas/personas.component'; 
 import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.component';
 import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
 import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.component';
 import { ProductosComponent } from './pages/productos/productos.component';
 import { ProveedorComponent } from './pages/proveedor/proveedor.component';
 import { OperadoresComponent } from './pages/operadores/operadores.component';
-import { ReportesComponent } from './pages/reportes/reportes.component';
-import { EstadisticaComponent } from './pages/estadistica/estadistica.component';
 
 
 export const routes: Routes = [
@@ -35,9 +31,15 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'personas/detalle/:id',
+    loadComponent: () =>
+      import('./pages/detalle-persona/detalle-persona.component').then(m => m.DetallePersonaComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'viajero',
     loadComponent: () =>
-      import('./pages/viajero/viajero').then(m => m.Viajero),
+      import('./pages/viajero/viajero.component').then(m => m.ViajeroComponent),
     canActivate: [authGuard]
   },
   {

@@ -748,9 +748,20 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // ===== UTILITY METHODS =====
   getPersonaDisplayName(cotizacion: CotizacionResponse): string {
-    if (cotizacion.personas?.email) {
-      return cotizacion.personas.email;
+    // Intentar obtener el primer email de la persona
+    if (cotizacion.personas?.correos && cotizacion.personas.correos.length > 0) {
+      return cotizacion.personas.correos[0].email;
     }
+
+    // Si no hay email, intentar mostrar dirección o ID
+    if (cotizacion.personas?.direccion) {
+      return cotizacion.personas.direccion;
+    }
+
+    if (cotizacion.personas?.id) {
+      return `Cliente ID: ${cotizacion.personas.id}`;
+    }
+
     return 'Cliente no especificado';
   }
 

@@ -1,24 +1,27 @@
-import { PersonaRequest, PersonaResponse } from '../Persona/persona.model';
+import { PersonaResponse } from "../Persona/persona.model";
+import { PersonaNaturalSinViajero } from "../Persona/personaNatural.model";
 
 export interface ViajeroRequest {
-  nombres: string;
-  apellidoPaterno: string;
-  apellidoMaterno: string;
-  fechaNacimiento: string;
-  nacionalidad: string;
-  residencia: string;
-  persona: PersonaRequest;
+  fechaNacimiento?: string;
+  nacionalidad?: string;
+  residencia?: string;
 }
 
 export interface ViajeroResponse {
   id: number;
-  nombres: string;
-  apellidoPaterno: string;
-  apellidoMaterno: string;
-  fechaNacimiento: string;
-  nacionalidad: string;
-  residencia: string;
+  fechaNacimiento?: string;
+  nacionalidad?: string;
+  residencia?: string;
   creado: string;
   actualizado: string;
-  persona: PersonaResponse;
+}
+
+export interface ViajeroConPersonaNatural {
+  id: number;
+  fechaNacimiento?: string;
+  nacionalidad?: string;
+  residencia?: string;
+  creado?: string;
+  actualizado?: string;
+  personaNatural?: PersonaNaturalSinViajero
 }

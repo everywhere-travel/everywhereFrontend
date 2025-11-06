@@ -355,8 +355,8 @@ export class DocumentosComponent implements OnInit {
           tipo: doc.tipo,
           descripcion: doc.descripcion || '',
           estado: doc.estado,
-          creado: this.formatDateToString(doc.creado),
-          actualizado: this.formatDateToString(doc.actualizado)
+          creado: doc.creado,
+          actualizado: doc.actualizado
         }));
         this.aplicarFiltros();
         this.loading = false;
@@ -546,7 +546,11 @@ export class DocumentosComponent implements OnInit {
       const tipo = formTipo ?? this.originalDocumento?.tipo ?? '';
       const descripcion = formDescripcion ?? this.originalDocumento?.descripcion ?? '';
 
-      const documentoData: DocumentoRequest = { tipo, descripcion };
+      const documentoData: DocumentoRequest = {
+        tipo,
+        descripcion,
+        estado: this.originalDocumento?.estado ?? true
+      };
 
       let operation: any;
       if (this.editandoDocumento) {

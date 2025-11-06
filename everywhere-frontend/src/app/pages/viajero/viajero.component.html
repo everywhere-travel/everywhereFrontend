@@ -245,10 +245,11 @@
               selectedItems.length === 1 ? '' : 's' }}</span>
           </div>
           <div class="flex gap-3">
-            <button (click)="exportarViajeros()" [disabled]="exportandoViajeros"
-              class="bg-white/20 border border-white/30 hover:bg-purple-600 hover:border-purple-600 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-              <i class="fas fa-download" [class.animate-pulse]="exportandoViajeros"></i>
-              <span *ngIf="!exportandoViajeros">Exportar</span>
+            <!-- Botón exportar temporalmente deshabilitado -->
+            <button disabled
+              class="bg-gray-400 border border-gray-400 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 opacity-50">
+              <i class="fas fa-download"></i>
+              <span>Exportar</span>
               <span *ngIf="exportandoViajeros">Procesando...</span>
             </button>
             <button (click)="editarSeleccionados()"
@@ -359,10 +360,10 @@
                       </div>
                       <div class="min-w-0 flex-1">
                         <div class="font-bold text-gray-900 text-lg mb-1 truncate">
-                          {{ viajero.nombres + ' ' + viajero.apellidoPaterno + ' ' + viajero.apellidoMaterno }}
+                          Viajero #{{ viajero.id }}
                         </div>
                         <div class="flex items-center gap-3 text-sm">
-                          <span class="text-gray-600">{{ getNacionalidadFlag(viajero.nacionalidad) }} {{ viajero.nacionalidad }}</span>
+                          <span class="text-gray-600">🌍 {{ viajero.nacionalidad || 'N/A' }}</span>
                         </div>
                       </div>
                     </div>
@@ -371,7 +372,7 @@
                   <!-- Nacionalidad -->
                   <td class="p-5">
                     <div class="flex items-center gap-2">
-                      <div class="text-lg">{{ getNacionalidadFlag(viajero.nacionalidad) }}</div>
+                      <div class="text-lg">🌍</div>
                       <span class="text-gray-900 font-medium">{{ viajero.nacionalidad }}</span>
                     </div>
                   </td>
@@ -437,7 +438,7 @@
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="font-bold text-gray-900 text-lg mb-1 truncate">
-                    {{ viajero.nombres + ' ' + viajero.apellidoPaterno + ' ' + viajero.apellidoMaterno }}
+                    Viajero #{{ viajero.id }}
                   </div>
                 </div>
               </div>
@@ -447,7 +448,7 @@
             <div class="p-6 space-y-4 flex-1">
               <!-- Nationality -->
               <div class="flex items-center gap-2">
-                <div class="text-lg">{{ getNacionalidadFlag(viajero.nacionalidad) }}</div>
+                <div class="text-lg">🌍</div>
                 <span class="text-gray-900 font-medium">{{ viajero.nacionalidad }}</span>
               </div>
 
@@ -538,13 +539,13 @@
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-3 mb-1">
                     <div class="font-bold text-gray-900 text-lg truncate">
-                      {{ viajero.nombres + ' ' + viajero.apellidoPaterno + ' ' + viajero.apellidoMaterno }}
+                      Viajero #{{ viajero.id }}
                     </div>
 
                   </div>
                   <div class="flex items-center gap-4 text-sm text-gray-600">
                     <span class="flex items-center gap-1">
-                      <span>{{ getNacionalidadFlag(viajero.nacionalidad) }}</span>
+                      <span>🌍</span>
                       {{ viajero.nacionalidad }}
                     </span>
                     <span class="flex items-center gap-1">
@@ -658,8 +659,7 @@
             class="w-20 h-20 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4 shadow-lg">
             {{ getViajeroInitials(viajeroAEliminar) }}
           </div>
-          <h3 class="text-xl font-bold text-gray-900 mb-2">{{ viajeroAEliminar.nombres + ' ' +
-            viajeroAEliminar.apellidoPaterno + ' ' + viajeroAEliminar.apellidoMaterno }}</h3>
+          <h3 class="text-xl font-bold text-gray-900 mb-2">Viajero #{{ viajeroAEliminar.id }}</h3>
           <div class="space-y-2 text-sm text-gray-600">
             <div class="flex items-center justify-center gap-2">
               <i class="fas fa-globe text-gray-400"></i>
@@ -728,20 +728,12 @@
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="text-sm font-semibold text-gray-600">Nombres</label>
-                  <p class="text-gray-900 font-medium">{{ viajeroDetalles.nombres }}</p>
-                </div>
-                <div>
-                  <label class="text-sm font-semibold text-gray-600">Apellido Paterno</label>
-                  <p class="text-gray-900 font-medium">{{ viajeroDetalles.apellidoPaterno }}</p>
-                </div>
-                <div>
-                  <label class="text-sm font-semibold text-gray-600">Apellido Materno</label>
-                  <p class="text-gray-900 font-medium">{{ viajeroDetalles.apellidoMaterno }}</p>
+                  <label class="text-sm font-semibold text-gray-600">ID Viajero</label>
+                  <p class="text-gray-900 font-medium">{{ viajeroDetalles.id }}</p>
                 </div>
                 <div>
                   <label class="text-sm font-semibold text-gray-600">Fecha de Nacimiento</label>
-                  <p class="text-gray-900 font-medium">{{ formatDate(viajeroDetalles.fechaNacimiento) }}</p>
+                  <p class="text-gray-900 font-medium">{{ viajeroDetalles.fechaNacimiento || 'N/A' }}</p>
                 </div>
               </div>
             </div>
@@ -756,7 +748,7 @@
                 <div>
                   <label class="text-sm font-semibold text-gray-600">Nacionalidad</label>
                   <p class="text-gray-900 font-medium flex items-center gap-2">
-                    <span class="text-xl">{{ getNacionalidadFlag(viajeroDetalles.nacionalidad) }}</span>
+                    <span class="text-xl">🌍</span>
                     {{ viajeroDetalles.nacionalidad }}
                   </p>
                 </div>
@@ -767,29 +759,15 @@
               </div>
             </div>
 
-            <!-- Información de Contacto -->
-            <div class="bg-purple-50 rounded-xl p-6" *ngIf="viajeroDetalles.persona">
+            <!-- Información de Contacto no disponible en ViajeroResponse -->
+            <div class="bg-purple-50 rounded-xl p-6">
               <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <i class="fas fa-address-book text-purple-600"></i>
                 Información de Contacto
               </h3>
               <div class="space-y-3">
-                <div *ngIf="viajeroDetalles.persona.email" class="flex items-start gap-3">
-                  <i class="fas fa-envelope text-gray-500 w-5 mt-1"></i>
-                  <span class="text-gray-900">{{ viajeroDetalles.persona.email }}</span>
-                </div>
-                <div *ngIf="viajeroDetalles.persona.telefono" class="flex items-start gap-3">
-                  <i class="fas fa-phone text-gray-500 w-5 mt-1"></i>
-                  <span class="text-gray-900">{{ viajeroDetalles.persona.telefono }}</span>
-                </div>
-                <div *ngIf="viajeroDetalles.persona.direccion" class="flex items-start gap-3">
-                  <i class="fas fa-map-marker-alt text-gray-500 w-5 mt-1"></i>
-                  <span class="text-gray-900">{{ viajeroDetalles.persona.direccion }}</span>
-                </div>
-                <div
-                  *ngIf="!viajeroDetalles.persona.email && !viajeroDetalles.persona.telefono && !viajeroDetalles.persona.direccion"
-                  class="text-gray-500 italic text-center py-4">
-                  Sin información de contacto registrada
+                <div class="text-gray-500 italic text-center py-4">
+                  Sin información de contacto disponible
                 </div>
               </div>
             </div>
@@ -837,10 +815,9 @@
                       </div>
                     </div>
                     <div class="ml-4">
-                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                            [class]="getDocumentoStatusClass(documento.fechaVencimiento)">
+                      <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                         <i class="fas fa-circle text-xs mr-1"></i>
-                        {{ getDocumentoStatusText(documento.fechaVencimiento) }}
+                        {{ documento.fechaVencimiento ? 'Con fecha' : 'Sin fecha' }}
                       </span>
                     </div>
                   </div>
@@ -882,8 +859,7 @@
                 {{ getViajeroInitials(viajeroDetalles) }}
               </div>
               <h2 class="text-2xl font-bold text-gray-900 mb-2">
-                {{ viajeroDetalles.nombres + ' ' + viajeroDetalles.apellidoPaterno + ' ' +
-                viajeroDetalles.apellidoMaterno }}
+                Viajero #{{ viajeroDetalles.id }}
               </h2>
             </div>
 
@@ -901,7 +877,7 @@
                 </div>
                 <div class="flex justify-between">
                   <span class="text-gray-600">Fecha Nac.:</span>
-                  <span>{{ formatDate(viajeroDetalles.fechaNacimiento) }}</span>
+                  <span>{{ viajeroDetalles.fechaNacimiento || 'N/A' }}</span>
                 </div>
               </div>
             </div>
@@ -1424,8 +1400,8 @@
                     <div class="flex justify-between items-center group">
                       <span class="text-gray-600">Nacionalidad:</span>
                       <div class="flex items-center gap-2">
-                        <span class="font-medium">{{ viajero.viajeroOriginal.nacionalidad }}</span>
-                        <button (click)="copiarAlPortapapeles(viajero.viajeroOriginal.nacionalidad, 'Nacionalidad')"
+                        <span class="font-medium">{{ viajero.viajeroOriginal.nacionalidad || 'N/A' }}</span>
+                        <button disabled
                           class="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-all duration-200"
                           title="Copiar nacionalidad">
                           <i class="fas fa-copy text-gray-400 hover:text-blue-600 text-xs"></i>
@@ -1478,7 +1454,7 @@
             <div>
               <h2 class="text-2xl font-bold">Asignar Documento</h2>
               <p class="text-purple-100 mt-1" *ngIf="viajeroParaDocumento">
-                Para: {{ viajeroParaDocumento.nombres }} {{ viajeroParaDocumento.apellidoPaterno }}
+                Para: Viajero #{{ viajeroParaDocumento.id }}
               </p>
             </div>
           </div>

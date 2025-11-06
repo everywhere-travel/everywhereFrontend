@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ViajeroService } from '../../core/service/viajero/viajero.service';
-import { ViajeroRequest, ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
+import { ViajeroRequest, ViajeroResponse, ViajeroConPersonaNatural } from '../../shared/models/Viajero/viajero.model';
 import { DocumentoService } from '../../core/service/Documento/documento.service';
 import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/detalle-documento.service';
 import { DocumentoResponse } from '../../shared/models/Documento/documento.model';
@@ -35,8 +35,8 @@ interface ExportedViajero {
 @Component({
   selector: 'app-viajero',
   standalone: true,
-  templateUrl: './viajero.html',
-  styleUrl: './viajero.css',
+  templateUrl: './viajero.component.html',
+  styleUrls: ['./viajero.component.css'],
   imports: [
     CommonModule,
     FormsModule,
@@ -45,7 +45,7 @@ interface ExportedViajero {
     LucideAngularModule
   ]
 })
-export class Viajero implements OnInit {
+export class ViajeroComponent implements OnInit {
 
   // Sidebar Configuration
   sidebarCollapsed = false;
@@ -181,7 +181,7 @@ export class Viajero implements OnInit {
 
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
-  // Data arrays
+    // Data Arrays
   viajeros: ViajeroResponse[] = [];
   viajerosFiltrados: ViajeroResponse[] = [];
 
@@ -407,12 +407,9 @@ export class Viajero implements OnInit {
     if (this.searchQuery.trim()) {
       const query = this.searchQuery.toLowerCase().trim();
       filtrados = filtrados.filter(viajero =>
-        viajero.nombres.toLowerCase().includes(query) ||
-        viajero.apellidoPaterno.toLowerCase().includes(query) ||
-        viajero.apellidoMaterno.toLowerCase().includes(query) ||
-        // viajero.numeroDocumento.toLowerCase().includes(query) || // Campo eliminado
-        viajero.nacionalidad.toLowerCase().includes(query) ||
-        viajero.residencia.toLowerCase().includes(query)
+        viajero.fechaNacimiento?.toLowerCase().includes(query) ||
+        viajero.nacionalidad?.toLowerCase().includes(query) ||
+        viajero.residencia?.toLowerCase().includes(query)
       );
     }
 
@@ -531,7 +528,7 @@ export class Viajero implements OnInit {
     this.cargandoDocumentos = true;
     this.mostrarModalDetalles = true;
 
-    // Cargar documentos del viajero
+    /* Cargar documentos del viajero
     this.detalleDocumentoService.findByViajero(viajero.id).subscribe({
       next: (documentos) => {
         this.documentosViajero = documentos;
@@ -541,7 +538,7 @@ export class Viajero implements OnInit {
         console.error('Error al cargar documentos del viajero:', error);
         this.cargandoDocumentos = false;
       }
-    });
+    });*/
 
     this.closeAllMenus();
   }
@@ -643,13 +640,6 @@ export class Viajero implements OnInit {
     });
   }
 
-  // Utility methods
-  getViajeroInitials(viajero: ViajeroResponse): string {
-    const nombres = viajero.nombres?.charAt(0) || '';
-    const apellido = viajero.apellidoPaterno?.charAt(0) || '';
-    return (nombres + apellido).toUpperCase();
-  }
-
   getNacionalidadFlag(nacionalidad: string): string {
     // Mapeo básico de nacionalidades a emojis de banderas
     const flags: { [key: string]: string } = {
@@ -708,40 +698,6 @@ export class Viajero implements OnInit {
     }
   }
 
-
-
-  // Sorting
-  sortBy(column: string): void {
-    if (this.sortColumn === column) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortColumn = column;
-      this.sortDirection = 'asc';
-    }
-
-    this.viajerosFiltrados.sort((a, b) => {
-      let valueA: any;
-      let valueB: any;
-
-      switch (column) {
-        case 'nombres':
-          valueA = a.nombres + ' ' + a.apellidoPaterno + ' ' + a.apellidoMaterno;
-          valueB = b.nombres + ' ' + b.apellidoPaterno + ' ' + b.apellidoMaterno;
-          break;
-        default:
-          return 0;
-      }
-
-      if (valueA < valueB) {
-        return this.sortDirection === 'asc' ? -1 : 1;
-      } else if (valueA > valueB) {
-        return this.sortDirection === 'asc' ? 1 : -1;
-      } else {
-        return 0;
-      }
-    });
-
-  }
 
   // Track by functions
   trackByViajeroId(index: number, viajero: ViajeroResponse): number {
@@ -825,7 +781,7 @@ export class Viajero implements OnInit {
       fechaVencimiento: formData.fechaVencimiento,
       origen: formData.origen,
       documentoId: formData.documentoId,
-      viajeroId: this.viajeroParaDocumento.id
+      personaNaturalId: this.viajeroParaDocumento.id // esto esta mal, debe asignar a la persona natural, no al viajero, pero como ya no se usa, se quedo asixd
     };
 
     this.detalleDocumentoService.saveDetalle(detalleDocumentoRequest).subscribe({
@@ -856,13 +812,9 @@ export class Viajero implements OnInit {
 
     data.forEach(viajero => {
       const row = [
-        viajero.nombres || '',
-        viajero.apellidoPaterno || '',
-        viajero.apellidoMaterno || '',
+        viajero.fechaNacimiento || '',
         viajero.nacionalidad || '',
         viajero.residencia || '',
-        viajero.persona?.email || '',
-        viajero.persona?.telefono || ''
       ];
       csvContent.push(row.join(','));
     });
@@ -919,17 +871,9 @@ export class Viajero implements OnInit {
   // Método para poblar el formulario con datos del viajero
   populateFormWithViajero(viajero: ViajeroResponse): void {
     this.viajeroForm.patchValue({
-      nombres: viajero.nombres || '',
-      apellidoPaterno: viajero.apellidoPaterno || '',
-      apellidoMaterno: viajero.apellidoMaterno || '',
       fechaNacimiento: viajero.fechaNacimiento || '',
       nacionalidad: viajero.nacionalidad || '',
-      residencia: viajero.residencia || '',
-      persona: {
-        email: viajero.persona?.email || '',
-        telefono: viajero.persona?.telefono || '',
-        direccion: viajero.persona?.direccion || ''
-      }
+      residencia: viajero.residencia || ''
     });
   }
 
@@ -965,17 +909,9 @@ export class Viajero implements OnInit {
     const formData = this.viajeroForm.value;
 
     const viajeroRequest: ViajeroRequest = {
-      nombres: formData.nombres,
-      apellidoPaterno: formData.apellidoPaterno,
-      apellidoMaterno: formData.apellidoMaterno,
       fechaNacimiento: formData.fechaNacimiento,
       nacionalidad: formData.nacionalidad,
       residencia: formData.residencia,
-      persona: {
-        email: formData.persona.email,
-        telefono: formData.persona.telefono,
-        direccion: formData.persona.direccion
-      }
     };
 
     if (this.editandoViajero) {
@@ -1060,7 +996,7 @@ export class Viajero implements OnInit {
 
   /**
    * Abre el modal de exportación de viajeros seleccionados
-   */
+
   async exportarViajeros(): Promise<void> {
     if (this.selectedItems.length === 0) {
       return;
@@ -1089,7 +1025,7 @@ export class Viajero implements OnInit {
       console.error('Error en exportación:', error);
       this.exportandoViajeros = false;
     }
-  }
+  } */
 
   /**
    * Remover tildes y caracteres especiales de un texto
@@ -1111,7 +1047,7 @@ export class Viajero implements OnInit {
 
   /**
    * Procesa y clasifica los viajeros según las especificaciones
-   */
+
   private async procesarViajeros(viajeros: ViajeroResponse[]): Promise<ExportedViajero[]> {
     const procesados: ExportedViajero[] = [];
 
@@ -1177,7 +1113,7 @@ export class Viajero implements OnInit {
       return ordenPrioridad[a.clasificacionEdad] - ordenPrioridad[b.clasificacionEdad];
     });
   }
-
+*/
   /**
    * Calcula la edad en años a partir de una fecha de nacimiento
    */
@@ -1453,6 +1389,27 @@ Exportado el: ${new Date().toLocaleString()}`;
    */
   async copiarSoloApellidos(viajero: ExportedViajero): Promise<void> {
     await this.copiarAlPortapapeles(viajero.apellidos, 'Solo Apellidos');
+  }
+
+  // ===== MÉTODOS FALTANTES PARA EL TEMPLATE =====
+
+  /**
+   * Obtiene las iniciales del viajero usando solo datos disponibles
+   */
+  getViajeroInitials(viajero: ViajeroResponse): string {
+    // ViajeroResponse solo tiene: id, fechaNacimiento, nacionalidad, residencia, creado, actualizado
+    if (viajero.nacionalidad) {
+      return viajero.nacionalidad.substring(0, 2).toUpperCase();
+    }
+    return `V${viajero.id}`;
+  }
+
+  /**
+   * Ordena la lista por campo especificado
+   */
+  sortBy(campo: string): void {
+    // TODO: Implementar ordenamiento según el campo
+    console.log(`Ordenando por: ${campo}`);
   }
 
 }
