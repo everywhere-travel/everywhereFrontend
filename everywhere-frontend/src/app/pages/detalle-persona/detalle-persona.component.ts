@@ -295,7 +295,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     });
 
     this.telefonoForm = this.fb.group({
-      numero: ['', [Validators.required, Validators.pattern(/^[0-9]{6,15}$/)]],
+      numero: [''],
       codigoPais: ['+51', [Validators.required]],
       tipo: ['PRINCIPAL', [Validators.required]],
       descripcion: ['']
