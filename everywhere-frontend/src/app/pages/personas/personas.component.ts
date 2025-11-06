@@ -97,6 +97,20 @@ export class PersonasComponent implements OnInit {
       moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {
+      id: 'categorias',
+      title: 'Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Persona',
+          icon: 'fas fa-cube',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+      ]
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
