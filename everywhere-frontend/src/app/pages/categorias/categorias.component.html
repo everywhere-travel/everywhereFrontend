@@ -278,20 +278,37 @@
 
       <!-- CARDS VIEW -->
       <div *ngIf="!loading && currentView === 'cards' && filteredCategorias.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div *ngFor="let categoria of paginatedCategorias" class="relative">
-          <app-module-card [data]="convertToModuleCard(getCategoriaById(categoria.id)!)"></app-module-card>
-          <!-- Quick Actions -->
-          <div class="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 hover:opacity-100 transition-opacity">
-            <button (click)="openEditModal(getCategoriaById(categoria.id))"
-              class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1">
-              <i class="fas fa-edit"></i>Editar
-            </button>
-            <button (click)="confirmDelete(getCategoriaById(categoria.id))" [disabled]="categoria.id === 1"
-              [class.opacity-50]="categoria.id === 1" [class.cursor-not-allowed]="categoria.id === 1"
-              [title]="categoria.id === 1 ? 'No se puede eliminar la categoría por defecto' : 'Eliminar categoría'"
-              class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1 disabled:hover:bg-red-50">
-              <i class="fas fa-trash"></i>Eliminar
-            </button>
+        <div *ngFor="let categoria of paginatedCategorias" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
+          <div class="p-6">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1">
+                <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ categoria.nombre }}</h3>
+              </div>
+            </div>
+
+            <div class="space-y-3 mb-6">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">ID:</span>
+                <span class="text-sm text-gray-900 font-semibold">{{ categoria.id }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Creado:</span>
+                <span class="text-sm text-gray-900">{{ categoria.creado }}</span>
+              </div>
+            </div>
+
+            <div class="flex gap-2 pt-4 border-t border-gray-100">
+              <button (click)="openEditModal(getCategoriaById(categoria.id))"
+                class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2">
+                <i class="fas fa-edit"></i>Editar
+              </button>
+              <button (click)="confirmDelete(getCategoriaById(categoria.id))" [disabled]="categoria.id === 1"
+                [class.opacity-50]="categoria.id === 1" [class.cursor-not-allowed]="categoria.id === 1"
+                [title]="categoria.id === 1 ? 'No se puede eliminar la categoría por defecto' : 'Eliminar categoría'"
+                class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 disabled:hover:bg-red-50">
+                <i class="fas fa-trash"></i>Eliminar
+              </button>
+            </div>
           </div>
         </div>
       </div>
