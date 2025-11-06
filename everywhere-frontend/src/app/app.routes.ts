@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth/auth.guard';
 import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
-import { PersonasComponent } from './pages/personas/personas.component'; 
+import { PersonasComponent } from './pages/personas/personas.component';
 import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.component';
 import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
 import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.component';
@@ -94,6 +94,12 @@ export const routes: Routes = [
     path: 'productos',
     loadComponent: () =>
       import('./pages/productos/productos.component').then(m => m.ProductosComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'formas-pago',
+    loadComponent: () =>
+      import('./pages/forma-pago/forma-pago.component').then(m => m.FormaPagoComponent),
     canActivate: [authGuard]
   },
   {

@@ -225,6 +225,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           moduleKey: 'PROVEEDORES'
         },
         {
+          id: 'formas-pago',
+          title: 'Forma De Pago',
+          icon: 'fas fa-money-bill-wave',
+          route: '/formas-pago',
+          moduleKey: 'FORMAS_PAGO'
+        },
+        {
           id: 'operadores',
           title: 'Operadores',
           icon: 'fas fa-headset',
