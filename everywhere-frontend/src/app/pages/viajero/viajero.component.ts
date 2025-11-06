@@ -781,7 +781,7 @@ export class ViajeroComponent implements OnInit {
       fechaVencimiento: formData.fechaVencimiento,
       origen: formData.origen,
       documentoId: formData.documentoId,
-      viajeroId: this.viajeroParaDocumento.id
+      personaNaturalId: this.viajeroParaDocumento.id // esto esta mal, debe asignar a la persona natural, no al viajero, pero como ya no se usa, se quedo asixd
     };
 
     this.detalleDocumentoService.saveDetalle(detalleDocumentoRequest).subscribe({

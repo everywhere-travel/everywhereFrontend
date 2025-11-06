@@ -1,3 +1,4 @@
+import { PersonaJuridicaResponse } from "../Persona/personaJuridica.models";
 import { PersonaNaturalResponse } from "../Persona/personaNatural.model";
 
 export interface NaturalJuridicaRequest {
@@ -7,8 +8,8 @@ export interface NaturalJuridicaRequest {
 
 export interface NaturalJuridicaResponse {
   id: number;
-  personaNatural: PersonaNaturalResponse;
-  personaJuridica: PersonaNaturalResponse[]
+  personaNatural: PersonaNaturalResponse
+  personaJuridica: PersonaJuridicaResponse
   fechaCreacion: string;
   fechaActualizacion: string;
 }

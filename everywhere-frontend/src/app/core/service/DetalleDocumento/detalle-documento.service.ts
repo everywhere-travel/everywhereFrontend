@@ -29,6 +29,10 @@ export class DetalleDocumentoService {
     return this.http.get<DetalleDocumentoResponse[]>(`${this.apiUrl}/numero/${numero}`);
   }
 
+  findByPersonaNaturalId(personaNaturalId: number): Observable<DetalleDocumentoResponse[]> {
+    return this.http.get<DetalleDocumentoResponse[]>(`${this.apiUrl}/persona-natural/${personaNaturalId}`);
+  }
+
   saveDetalle(detalle: DetalleDocumentoRequest): Observable<DetalleDocumentoResponse> {
     return this.http.post<DetalleDocumentoResponse>(this.apiUrl, detalle);
   }

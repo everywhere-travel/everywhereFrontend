@@ -1,3 +1,4 @@
+import { PersonaNaturalResponse } from '../Persona/personaNatural.model';
 import { ViajeroResponse } from '../Viajero/viajero.model';
 import { DocumentoResponse } from './documento.model';
 
@@ -7,7 +8,7 @@ export interface DetalleDocumentoRequest {
   fechaVencimiento?: string
   origen: string
   documentoId: number
-  viajeroId: number
+  personaNaturalId: number
 }
 
 export interface DetalleDocumentoResponse {
@@ -16,6 +17,8 @@ export interface DetalleDocumentoResponse {
   fechaEmision?: string
   fechaVencimiento?: string
   origen: string
+  creado: string
+  actualizado: string
   documento: DocumentoResponse
-  viajero: ViajeroResponse
+  personaNatural: PersonaNaturalResponse
 }

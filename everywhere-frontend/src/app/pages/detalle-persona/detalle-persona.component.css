@@ -1,0 +1,161 @@
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Z-index alto para modales */
+.modal-backdrop {
+  z-index: 9999;
+}
+
+.modal-container {
+  z-index: 10000;
+}
+
+/* Scroll suave en tabs y contenedores */
+.tab-content {
+  scroll-behavior: smooth;
+}
+
+/* Accesibilidad - Respeto por preferencias de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus visible personalizado para navegación por teclado */
+*:focus-visible {
+  outline: 2px solid #D9043D;
+  outline-offset: 2px;
+}
+
+/* Optimización para móviles */
+@media (max-width: 640px) {
+  .sidebar-content {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-container {
+    padding: 1rem;
+  }
+
+  .tab-button {
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Transiciones suaves para los radio buttons */
+input[type="radio"]:checked + span {
+  transition: all 0.3s ease;
+}
+
+/* Animación para las tarjetas */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bg-white.border-2 {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Mejora para inputs con error */
+input.border-red-500 {
+  animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Hover mejorado para botones de editar/eliminar */
+button[title]:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+/* Estilo para el select de países */
+select option {
+  padding: 10px;
+}
+
+/* Scrollbar personalizado para el select de países */
+select::-webkit-scrollbar {
+  width: 8px;
+}
+
+select::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+select::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+select::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Mejora visual para badges de tipo */
+.px-3.py-1.rounded-full {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive para las tarjetas de contacto */
+@media (max-width: 768px) {
+  .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Focus visible mejorado */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid #D9043D;
+  outline-offset: 2px;
+  border-color: transparent;
+}
+
+/* Mejora para campos deshabilitados */
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Animación para los iconos de check en radio buttons */
+.fa-check-circle {
+  animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
