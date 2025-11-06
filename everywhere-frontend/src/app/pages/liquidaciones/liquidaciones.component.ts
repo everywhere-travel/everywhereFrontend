@@ -495,7 +495,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
           this.personasCache[personaId] = {
             id: personaId,
             identificador: persona.ruc || persona.documento || persona.cedula || '',
-            nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
+            nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidosPaterno || ''} ${persona.apellidosMaterno || ''}`.trim() || 'Sin nombre',
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
           const cached = this.personasCache[personaId];

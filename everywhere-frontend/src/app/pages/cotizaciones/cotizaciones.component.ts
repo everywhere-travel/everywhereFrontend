@@ -76,7 +76,8 @@ interface GrupoHotelTemp {
 })
 export class CotizacionesComponent implements OnInit, OnDestroy {
   // ===== CACHE AND MAPPING =====
-  personasCache: { [id: number]: any } = {};
+  // Cache entries are normalized to the `personaDisplay` shape
+  personasCache: { [id: number]: personaDisplay } = {};
   personasDisplayMap: { [id: number]: string } = {};
   loadingPersonas: Set<number> = new Set(); // Para evitar cargas duplicadas
 
@@ -282,7 +283,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // ===== DATA ARRAYS =====
   cotizaciones: CotizacionResponse[] = [];
-  personas: any[] = [];
+  // personas holds raw API responses (natural or juridica)
+  personas: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
   formasPago: FormaPagoResponse[] = [];
   estadosCotizacion: EstadoCotizacionResponse[] = [];
   sucursales: SucursalResponse[] = [];
@@ -559,23 +561,38 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       // Poblar cache usando ENFOQUE HÍBRIDO (tabla padre SI existe, sino tabla hija)
       this.personas.forEach(persona => {
         // Intentar usar ID de tabla padre PRIMERO, si no existe usar tabla hija
-        const personaId = persona.persona?.id || persona.id;
+  const personaId = persona.persona?.id || persona.id; // persona.id exists on both responses
 
-        if (personaId) {
+        if (!personaId) return;
+
+        // Normalizar según tipo
+        if ('ruc' in persona) {
+          // Persona jurídica
+          const pj = persona as PersonaJuridicaResponse;
           this.personasCache[personaId] = {
             id: personaId,
-            identificador: persona.ruc || persona.documento || persona.cedula || '',
-            nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
-            tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
+            identificador: pj.ruc || '',
+            nombre: pj.razonSocial || 'Sin nombre',
+            tipo: 'JURIDICA'
           };
-          const cached = this.personasCache[personaId];
+        } else {
+          // Persona natural
+          const pn = persona as PersonaNaturalResponse;
+          const apellidos = `${pn.apellidosPaterno || ''} ${pn.apellidosMaterno || ''}`.trim();
+          this.personasCache[personaId] = {
+            id: personaId,
+            identificador: pn.documento || '',
+            nombre: `${pn.nombres || ''} ${apellidos}`.trim() || 'Sin nombre',
+            tipo: 'NATURAL'
+          };
+        }
 
-          // Mejorar el formato del display para asegurar que se muestre el documento
-          if (cached.identificador) {
-            this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
-          } else {
-            this.personasDisplayMap[personaId] = cached.nombre;
-          }
+        const cached = this.personasCache[personaId];
+        // Mejorar el formato del display para asegurar que se muestre el documento
+        if (cached.identificador) {
+          this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+        } else {
+          this.personasDisplayMap[personaId] = cached.nombre;
         }
       });
 
@@ -1156,6 +1173,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private async loadClienteForEdit(personaId: number): Promise<void> {
     try {
       const persona = await firstValueFrom(this.personaService.findPersonaNaturalOrJuridicaById(personaId));
+      console.debug('[cotizaciones] loadClienteForEdit -> persona fetched for id:', personaId, persona);
       if (persona) {
         this.clienteSeleccionado = persona;
 
@@ -2552,23 +2570,49 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Agrega una persona al cache
+   * Agrega una persona al cache (acepta respuesta natural/juridica o `personaDisplay` normalizado)
    */
-  private addPersonaToCache(persona: any): void {
-    if (!persona.id) return;
+  private addPersonaToCache(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): void {
+    console.debug('[cotizaciones] addPersonaToCache -> persona:', persona);
+    if (!persona || !persona.id) return;
 
-    this.personasCache[persona.id] = {
-      id: persona.id,
-      identificador: persona.ruc || persona.documento || persona.cedula || '',
-      nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
-      tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
-    };
+    // Si ya es un personaDisplay normalizado, usarlo tal cual
+    if ('tipo' in persona && 'nombre' in persona) {
+      this.personasCache[persona.id] = persona;
+    } else if ('ruc' in persona) {
+      // Persona jurídica
+      const pj = persona as PersonaJuridicaResponse;
+      this.personasCache[persona.id] = {
+        id: persona.id,
+        identificador: pj.ruc || '',
+        nombre: pj.razonSocial || 'Sin nombre',
+        tipo: 'JURIDICA'
+      };
+    } else {
+      // Persona natural
+      const pn = persona as PersonaNaturalResponse;
+      const apellidosCache = `${pn.apellidosPaterno || ''} ${pn.apellidosMaterno || ''}`.trim();
+      this.personasCache[persona.id] = {
+        id: persona.id,
+        identificador: pn.documento || '',
+        nombre: `${pn.nombres || ''} ${apellidosCache}`.trim() || 'Sin nombre',
+        tipo: 'NATURAL'
+      };
+    }
 
+    // Registrar la representación para el map de display
     const cached = this.personasCache[persona.id];
     if (cached.identificador) {
       this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
     } else {
       this.personasDisplayMap[persona.id] = cached.nombre;
+    }
+
+    // Si la entidad tiene una relación `persona` (tabla padre) y su id difiere, duplicar la entrada
+    if ('persona' in (persona as any) && (persona as any).persona?.id && (persona as any).persona.id !== persona.id) {
+      const parentId = (persona as any).persona.id as number;
+      this.personasCache[parentId] = { ...this.personasCache[persona.id], id: parentId };
+      this.personasDisplayMap[parentId] = this.personasDisplayMap[persona.id];
     }
   }
 
@@ -2587,6 +2631,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     firstValueFrom(this.personaService.findPersonaNaturalOrJuridicaById(personaId))
       .then(persona => {
         if (persona) {
+          console.debug('[cotizaciones] loadMissingPersona -> loaded:', personaId, persona);
           this.todosLosClientes.push(persona);
           this.addPersonaToCache(persona);
           // Forzar actualización de la vista
@@ -2711,18 +2756,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       // Filtrar todos los clientes cargados
       const clientesFiltrados = this.todosLosClientes.filter(persona => {
-        if ('nombres' in persona && 'apellidos' in persona) {
-          // Persona Natural
-          const nombres = ((persona as any).nombres || '').toString().toLowerCase();
-          const apellidos = ((persona as any).apellidos || '').toString().toLowerCase();
-          const documento = ((persona as any).documento || '').toString().toLowerCase();
-          const nombreCompleto = `${nombres} ${apellidos}`.trim();
+        if ('nombres' in persona && ('apellidos' in persona || 'apellidosPaterno' in persona || 'apellidosMaterno' in persona)) {
+            // Persona Natural (soporta apellidosPaterno/apellidosMaterno)
+            const nombres = ((persona as any).nombres || '').toString().toLowerCase();
+            const apellidos = ((persona as any).apellidosPaterno || (persona as any).apellidos || (persona as any).apellidosMaterno || '').toString().toLowerCase();
+            const documento = ((persona as any).documento || '').toString().toLowerCase();
+            const nombreCompleto = `${nombres} ${apellidos}`.trim();
 
-          return nombres.includes(term) ||
-            apellidos.includes(term) ||
-            documento.includes(term) ||
-            nombreCompleto.includes(term);
-        } else if ('razonSocial' in persona) {
+            return nombres.includes(term) ||
+              apellidos.includes(term) ||
+              documento.includes(term) ||
+              nombreCompleto.includes(term);
+          } else if ('razonSocial' in persona) {
           // Persona Jurídica
           const razonSocial = ((persona as any).razonSocial || '').toString().toLowerCase();
           const ruc = ((persona as any).ruc || '').toString().toLowerCase();
@@ -2848,10 +2893,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Compatibilidad con modelos antiguos
-    if ('nombres' in persona && 'apellidos' in persona) {
+    // Compatibilidad con modelos antiguos (soporta apellidosPaterno/apellidosMaterno)
+    if ('nombres' in persona && ('apellidos' in persona || 'apellidosPaterno' in persona || 'apellidosMaterno' in persona)) {
       const doc = (persona as any).documento ? ` - ${(persona as any).documento}` : '';
-      return `${(persona as any).nombres || ''} ${(persona as any).apellidos || ''}${doc}`.trim();
+      const apellidos = ((persona as any).apellidosPaterno || (persona as any).apellidos || (persona as any).apellidosMaterno || '').trim();
+      const nombreCompleto = `${(persona as any).nombres || ''} ${apellidos}`.trim();
+      return `${nombreCompleto}${doc}`.trim();
     }
 
     if ('razonSocial' in persona) {
@@ -2859,7 +2906,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return `${(persona as any).razonSocial || 'Empresa'}${ruc}`.trim();
     }
 
-    return 'Cliente';
+    return 'ClienteABc';
   }
 
   // Métodos para estadísticas en el header
