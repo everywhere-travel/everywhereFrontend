@@ -18,6 +18,7 @@ import { DocumentoService } from '../../core/service/Documento/documento.service
 import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/detalle-documento.service';
 import { CorreoPersonaService } from '../../core/service/CorreoPersona/correo-persona.service';
 import { TelefonoPersonaService } from '../../core/service/TelefonoPersona/telefono-persona.service';
+import { CategoriaPersonaService } from '../../core/service/CategoriaPersona/categoria-persona.service';
 
 // Models
 import { PersonaNaturalResponse, PersonaNaturalRequest, PersonaNaturalViajero, PersonaNaturalCategoria, PersonaNaturalSinViajero } from '../../shared/models/Persona/personaNatural.model';
@@ -30,6 +31,7 @@ import { DetalleDocumentoResponse, DetalleDocumentoRequest } from '../../shared/
 import { CorreoPersonaResponse, CorreoPersonaRequest } from '../../shared/models/CorreoPersona/correoPersona.model';
 import { TelefonoPersonaResponse, TelefonoPersonaRequest } from '../../shared/models/TelefonoPersona/telefonoPersona.models';
 import { NaturalJuridicaResponse, NaturalJuridicaRequest, NaturalJuridicoPatch } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
+import { CategoriaPersonaResponse } from '../../shared/models/CategoriaPersona/categoriaPersona.models';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -70,6 +72,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   private detalleDocumentoService = inject(DetalleDocumentoService);
   private correoPersonaService = inject(CorreoPersonaService);
   private telefonoPersonaService = inject(TelefonoPersonaService);
+  private categoriaPersonaService = inject(CategoriaPersonaService);
   private fb = inject(FormBuilder);
 
   // Data properties
@@ -82,6 +85,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   viajerosFrecuentes: ViajeroFrecuenteResponse[] = [];
   todasLasEmpresas: PersonaJuridicaResponse[] = [];
   tiposDocumento: DocumentoResponse[] = [];
+  categoriasPersona: CategoriaPersonaResponse[] = [];
   documentoForm!: FormGroup;
   showDocumentoModal = false;
   editingDocumentoId: number | null = null;
@@ -291,11 +295,12 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       observacion: [''],
       fechaNacimiento: [''],
       nacionalidad: [''],
-      residencia: ['']
+      residencia: [''],
+      categoriaPersonaId: [null]
     });
 
     this.telefonoForm = this.fb.group({
-      numero: ['', [Validators.required, Validators.pattern(/^[0-9]{6,15}$/)]],
+      numero: [''],
       codigoPais: ['+51', [Validators.required]],
       tipo: ['PRINCIPAL', [Validators.required]],
       descripcion: ['']
@@ -358,7 +363,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       correos: this.correoPersonaService.findByPersonaId(this.personaId),
       documentos: this.detalleDocumentoService.findByPersonaNaturalId(this.personaId),
       todasLasEmpresas: this.personaJuridicaService.findAll(),
-      tiposDocumento: this.documentoService.getAllDocumentos()
+      tiposDocumento: this.documentoService.getAllDocumentos(),
+      categoriasPersona: this.categoriaPersonaService.findAll()
     });
 
     const subscription = dataLoaders$
@@ -371,6 +377,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           this.documentos = data.documentos;
           this.todasLasEmpresas = data.todasLasEmpresas;
           this.tiposDocumento = data.tiposDocumento;
+          this.categoriasPersona = data.categoriasPersona;
 
           // Cargar viajeros frecuentes si la persona tiene viajero asociado
           if (this.personaNatural?.viajero) {
@@ -432,12 +439,14 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
     const subscription = forkJoin({
       empresas: this.personaJuridicaService.findAll(),
-      tiposDocumento: this.documentoService.getAllDocumentos()
+      tiposDocumento: this.documentoService.getAllDocumentos(),
+      categoriasPersona: this.categoriaPersonaService.findAll()
     })
       .pipe(
         tap(data => {
           this.todasLasEmpresas = data.empresas;
           this.tiposDocumento = data.tiposDocumento;
+          this.categoriasPersona = data.categoriasPersona;
         }),
         catchError(error => {
           this.error = 'Error al cargar datos iniciales';
@@ -534,6 +543,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       apellidosPaterno: formValue.apellidosPaterno,
       apellidosMaterno: formValue.apellidosMaterno,
       sexo: formValue.sexo,
+      categoriaPersonaId: formValue.categoriaPersonaId || undefined,
       persona: {
         direccion: formValue.direccion,
         observacion: formValue.observacion
@@ -592,7 +602,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       observacion: this.personaNatural.persona?.observacion || '',
       fechaNacimiento: this.personaNatural.viajero?.fechaNacimiento || '',
       nacionalidad: this.personaNatural.viajero?.nacionalidad || '',
-      residencia: this.personaNatural.viajero?.residencia || ''
+      residencia: this.personaNatural.viajero?.residencia || '',
+      categoriaPersonaId: this.personaNatural.categoriaPersona?.id || null
     });
 
     this.showPersonaNaturalModal = true;
@@ -617,6 +628,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       apellidosPaterno: formValue.apellidosPaterno,
       apellidosMaterno: formValue.apellidosMaterno,
       sexo: formValue.sexo,
+      categoriaPersonaId: formValue.categoriaPersonaId || undefined,
       persona: {
         direccion: formValue.direccion,
         observacion: formValue.observacion

@@ -97,6 +97,20 @@ export class PersonasComponent implements OnInit {
       moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {
+      id: 'categorias',
+      title: 'Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Persona',
+          icon: 'fas fa-cube',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+      ]
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
@@ -315,13 +329,13 @@ export class PersonasComponent implements OnInit {
   }
 
   crearPersonaNatural(): void {
-    this.cerrarModalSeleccionTipo();
-    this.router.navigate(['/personas/detalle', 'nuevo']);
+  this.cerrarModalSeleccionTipo();
+  this.router.navigate(['/personas/detalle', 'nuevo']);
   }
 
   crearPersonaJuridica(): void {
-    this.cerrarModalSeleccionTipo();
-    this.router.navigate(['/empresas', 'nuevo']);
+  this.cerrarModalSeleccionTipo();
+  this.router.navigate(['/juridico/detalles', 'nuevo']);
   }
 
   // ============ CLIENTE TABLE EVENTOS ============
@@ -332,7 +346,11 @@ export class PersonasComponent implements OnInit {
   }
 
   onEditarCliente(cliente: PersonaTabla): void {
-    this.router.navigate(['/personas/detalle', cliente.id]);
+    if (cliente.tipo === 'natural') {
+      this.router.navigate(['/personas/detalle', cliente.id]);
+    } else {
+      this.router.navigate(['/juridico/detalles', cliente.id]);
+    }
   }
 
   onEliminarCliente(cliente: PersonaTabla): void {
@@ -418,7 +436,11 @@ export class PersonasComponent implements OnInit {
   }
 
   onEditarCompleto(cliente: PersonaTabla): void {
-    this.router.navigate(['/personas/detalle', cliente.id]);
+    if (cliente.tipo === 'natural') {
+      this.router.navigate(['/personas/detalle', cliente.id]);
+    } else {
+      this.router.navigate(['/juridico/detalles', cliente.id]);
+    }
     this.cerrarModalDetalles();
   }
 }

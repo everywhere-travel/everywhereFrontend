@@ -9,6 +9,7 @@ import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.comp
 import { ProductosComponent } from './pages/productos/productos.component';
 import { ProveedorComponent } from './pages/proveedor/proveedor.component';
 import { OperadoresComponent } from './pages/operadores/operadores.component';
+import { CategoriaPersonaComponent } from './pages/categoria-persona/categoria-persona.component';
 
 
 export const routes: Routes = [
@@ -34,6 +35,12 @@ export const routes: Routes = [
     path: 'personas/detalle/:id',
     loadComponent: () =>
       import('./pages/detalle-persona/detalle-persona.component').then(m => m.DetallePersonaComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'juridico/detalles/:id',
+    loadComponent: () =>
+      import('./pages/detalle-juridico/detalle-juridico.component').then(m => m.DetalleJuridicoComponent),
     canActivate: [authGuard]
   },
   {
@@ -111,6 +118,11 @@ export const routes: Routes = [
   {
     path: 'proveedores',
     component: ProveedorComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'categorias-persona',
+    component: CategoriaPersonaComponent,
     canActivate: [authGuard]
   },
   {
