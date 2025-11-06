@@ -35,7 +35,7 @@ export class FormaPagoService {
   }
 
   updateByIdFormaPago(id: number, formaPago: FormaPagoRequest): Observable<FormaPagoResponse> {
-    return this.http.put<FormaPagoResponse>(`${this.apiUrl}/${id}`, formaPago);
+    return this.http.patch<FormaPagoResponse>(`${this.apiUrl}/${id}`, formaPago);
   }
 
   deleteByIdFormaPago(id: number): Observable<void> {
@@ -43,3 +43,4 @@ export class FormaPagoService {
   }
 
 }
+
