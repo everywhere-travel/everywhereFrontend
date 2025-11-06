@@ -108,6 +108,13 @@ export class PersonasComponent implements OnInit {
           route: '/categorias-persona',
           moduleKey: 'CATEGORIA_PERSONAS'
         },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        }
       ]
     },
     {

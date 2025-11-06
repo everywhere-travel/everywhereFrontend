@@ -1,13 +1,14 @@
+import { EstadoCotizacionRequest, EstadoCotizacionResponse } from './../../shared/models/Cotizacion/estadoCotizacion.model';
+import { EstadoCotizacionService } from './../../core/service/EstadoCotizacion/estado-cotizacion.service';
 import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
-import { CategoriaPersonaService } from '../../core/service/CategoriaPersona/categoria-persona.service';
-import { CategoriaPersonaRequest, CategoriaPersonaResponse } from '../../shared/models/CategoriaPersona/categoriaPersona.models';
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { CategoriaResponse } from '../../shared/models/Categoria/categoria.model';
 
 // Extender la interfaz para agregar moduleKey
 interface ExtendedSidebarMenuItem extends SidebarMenuItem {
@@ -16,29 +17,27 @@ interface ExtendedSidebarMenuItem extends SidebarMenuItem {
 }
 
 // Interface para la tabla
-export interface CategoriaPersonaTabla {
+export interface EstadoCotizacionTabla {
   id: number;
-  nombre: string;
   descripcion: string;
   creado: string;
   actualizado: string;
 }
 
-
 @Component({
-  selector: 'app-categoria-persona',
+  selector: 'app-estado-cotizacion',
   standalone: true,
-  templateUrl: './categoria-persona.component.html',
-  styleUrls: ['./categoria-persona.component.css'],
+  templateUrl: './estado-cotizacion.component.html',
+  styleUrls: ['./estado-cotizacion.component.css'],
   imports: [
-      CommonModule,
-      FormsModule,
-      ReactiveFormsModule,
-      SidebarComponent,
-      ErrorModalComponent
-    ]
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    SidebarComponent,
+    ErrorModalComponent
+  ]
 })
-export class CategoriaPersonaComponent implements OnInit {
+export class EstadoCotizacionComponent implements OnInit {
 
   // Sidebar Configuration
   sidebarCollapsed = false;
@@ -175,21 +174,21 @@ export class CategoriaPersonaComponent implements OnInit {
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // Forms
-  categoriaPersonaForm!: FormGroup;
+  estadoCotizacionForm!: FormGroup;
 
   // Data arrays
-  categoriasPersona: CategoriaPersonaResponse[] = [];
-  categoriaPersonaTabla: CategoriaPersonaTabla[] = [];
-  filteredCategoriaPersona: CategoriaPersonaTabla[] = [];
+  estadosCotizacion: EstadoCotizacionResponse[] = [];
+  EstadoCotizacionTabla: EstadoCotizacionTabla[] = [];
+  filteredEstadoCotizacion: EstadoCotizacionTabla[] = [];
 
   // Control variables
   loading = false;
   mostrarModalCrear = false;
   mostrarModalEliminar = false;
   mostrarModalError = false;
-  editandoCategoriaPersona = false;
-  categoriaPersonaSeleccionada: CategoriaPersonaResponse | null = null;
-  categoriaPersonaAEliminar: CategoriaPersonaResponse | null = null;
+  editandoEstadoCotizacion = false;
+  estadoCotizacionSeleccionada: EstadoCotizacionResponse | null = null;
+  estadoCotizacionAEliminar: EstadoCotizacionResponse | null = null;
 
   // Error modal data
   errorModalData: ErrorModalData | null = null;
@@ -218,14 +217,14 @@ export class CategoriaPersonaComponent implements OnInit {
   showQuickActions: number | null = null;
 
   // Estadísticas
-  totalCategoriaPersona = 0;
+  totalEstadoCotizacion = 0;
 
   // Math object for template use
   Math = Math;
 
   constructor(
     private fb: FormBuilder,
-    private categoriaPersonaService: CategoriaPersonaService,
+    private estadoCotizacionService: EstadoCotizacionService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private errorHandler: ErrorHandlerService,
@@ -236,7 +235,7 @@ export class CategoriaPersonaComponent implements OnInit {
 
   ngOnInit(): void {
     this.initializeSidebar();
-    this.loadCategoriasPersona();
+    this.loadEstadosCotizacion();
     this.calcularEstadisticas();
   }
 
@@ -326,18 +325,17 @@ export class CategoriaPersonaComponent implements OnInit {
   }
 
   private initializeForms(): void {
-    this.categoriaPersonaForm = this.fb.group({
-      nombre: [''],
+    this.estadoCotizacionForm = this.fb.group({
       descripcion: ['']
     });
   }
 
   // CRUD Operations
-  loadCategoriasPersona(): void {
+  loadEstadosCotizacion(): void {
     this.loading = true;
-    this.categoriaPersonaService.findAll().subscribe({
-      next: (categoriasPersona) => {
-        this.categoriasPersona = categoriasPersona;
+    this.estadoCotizacionService.getAllEstadosCotizacion().subscribe({
+      next: (estadosCotizacion) => {
+        this.estadosCotizacion = estadosCotizacion;
         this.convertirATabla();
         this.applyFilters();
         this.loading = false;
@@ -351,122 +349,120 @@ export class CategoriaPersonaComponent implements OnInit {
   }
 
   private convertirATabla(): void {
-    this.categoriaPersonaTabla = this.categoriasPersona.map(categoria => ({
-      id: categoria.id,
-      nombre: categoria.nombre,
-      descripcion: categoria.descripcion || '',
-      creado: categoria.creado,
-      actualizado: categoria.actualizado
+    this.EstadoCotizacionTabla = this.estadosCotizacion.map(estadoCotizacion => ({
+      id: estadoCotizacion.id,
+      descripcion: estadoCotizacion.descripcion || '',
+      creado: estadoCotizacion.fechaCreacion,
+      actualizado: estadoCotizacion.fechaActualizacion
     }));
-    this.totalCategoriaPersona = this.categoriaPersonaTabla.length;
+    this.totalEstadoCotizacion = this.EstadoCotizacionTabla.length;
   }
 
   // Método principal para guardar (crea o actualiza según el estado)
-  guardarCategoriaPersona(): void {
-    if (this.editandoCategoriaPersona) {
-      this.actualizarCategoriaPersona();
+  guardarEstadoCotizacion(): void {
+    if (this.editandoEstadoCotizacion) {
+      this.actualizarEstadoCotizacion();
     } else {
-      this.crearCategoriaPersona();
+      this.crearEstadoCotizacion();
     }
   }
 
-  crearCategoriaPersona(): void {
-    if (this.categoriaPersonaForm.valid) {
+  crearEstadoCotizacion(): void {
+    if (this.estadoCotizacionForm.valid) {
       this.loading = true;
-      const categoriaPersonaRequest: CategoriaPersonaRequest = this.categoriaPersonaForm.value;
+      const estadoCotizacionRequest: EstadoCotizacionRequest = this.estadoCotizacionForm.value;
 
-      this.categoriaPersonaService.save(categoriaPersonaRequest).subscribe({
+      this.estadoCotizacionService.createEstadoCotizacion(estadoCotizacionRequest).subscribe({
         next: (response) => {
-          this.loadCategoriasPersona();
+          this.loadEstadosCotizacion();
           this.cerrarModal();
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al crear categoría de persona:', error);
+          console.error('Error al crear estado de cotizacion:', error);
           this.loading = false;
         }
       });
     }
   }
 
-  actualizarCategoriaPersona(): void {
-    if (this.categoriaPersonaForm.valid && this.categoriaPersonaSeleccionada) {
+  actualizarEstadoCotizacion(): void {
+    if (this.estadoCotizacionForm.valid && this.estadoCotizacionSeleccionada) {
       this.loading = true;
-      const categoriaPersonaRequest: CategoriaPersonaRequest = this.categoriaPersonaForm.value;
+      const estadoCotizacionRequest: EstadoCotizacionRequest = this.estadoCotizacionForm.value;
 
-      this.categoriaPersonaService.patch(this.categoriaPersonaSeleccionada.id, categoriaPersonaRequest).subscribe({
+      this.estadoCotizacionService.updateEstadoCotizacion(this.estadoCotizacionSeleccionada.id, estadoCotizacionRequest).subscribe({
         next: (response) => {
-          this.loadCategoriasPersona();
+          this.loadEstadosCotizacion();
           this.cerrarModal();
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al actualizar categoría de persona:', error);
+          console.error('Error al actualizar estado de cotizacion:', error);
           this.loading = false;
         }
       });
     }
   }
 
-  editarCategoriaPersona(categoriaPersona: CategoriaPersonaTabla): void {
-    this.editandoCategoriaPersona = true;
-    this.categoriaPersonaSeleccionada = this.categoriasPersona.find(c => c.id === categoriaPersona.id) || null;
+  editarEstadoCotizacion(estadoCotizacion: EstadoCotizacionTabla): void {
+    this.editandoEstadoCotizacion = true;
+    this.estadoCotizacionSeleccionada = this.estadosCotizacion.find(c => c.id === estadoCotizacion.id) || null;
 
-    if (this.categoriaPersonaSeleccionada) {
-      this.categoriaPersonaForm.patchValue({
-        nombre: this.categoriaPersonaSeleccionada.nombre || '',
-        descripcion: this.categoriaPersonaSeleccionada.descripcion || ''
+    if (this.estadoCotizacionSeleccionada) {
+      this.estadoCotizacionForm.patchValue({
+        descripcion: this.estadoCotizacionSeleccionada.descripcion || ''
       });
 
       this.mostrarModalCrear = true;
     }
   }
 
-  eliminarCategoriaPersona(id: number): void {
-    const categoriaPersona = this.categoriasPersona.find(c => c.id === id);
-    if (categoriaPersona) {
-      this.categoriaPersonaAEliminar = categoriaPersona;
+  eliminarEstadoCotizacion(id: number): void {
+    const estadoCotizacion = this.estadosCotizacion.find(c => c.id === id);
+    if (estadoCotizacion) {
+      this.estadoCotizacionAEliminar = estadoCotizacion;
       this.mostrarModalEliminar = true;
     }
   }
 
   // Modal de confirmación de eliminación
-  confirmarEliminar(categoriaPersona: CategoriaPersonaResponse): void {
-    this.categoriaPersonaAEliminar = categoriaPersona;
+  confirmarEliminar(estadoCotizacion: EstadoCotizacionResponse): void {
+    this.estadoCotizacionAEliminar = estadoCotizacion;
     this.mostrarModalEliminar = true;
   }
 
   cerrarModalEliminar(): void {
     this.mostrarModalEliminar = false;
-    this.categoriaPersonaAEliminar = null;
+    this.estadoCotizacionAEliminar = null;
   }
 
   // Nuevo método para confirmar eliminación desde el modal
   confirmarEliminacionModal(): void {
-    if (this.categoriaPersonaAEliminar) {
-      this.eliminarCategoriaPersonaDefinitivo(this.categoriaPersonaAEliminar.id);
+    if (this.estadoCotizacionAEliminar) {
+      this.eliminarEstadoCotizacionDefinitivo(this.estadoCotizacionAEliminar.id);
     }
   }
 
-  eliminarCategoriaPersonaDefinitivo(id: number): void {
+  eliminarEstadoCotizacionDefinitivo(id: number): void {
     this.loading = true;
-    this.categoriaPersonaService.deleteById(id).subscribe({
+    this.estadoCotizacionService.deleteByIdEstadoCotizacion(id).subscribe({
       next: () => {
         this.cerrarModalEliminar();
-        this.loadCategoriasPersona();
+        this.loadEstadosCotizacion();
       },
       error: (error) => {
         this.loading = false;
         this.cerrarModalEliminar();
 
         // Usar el servicio de manejo de errores
-        const { modalData, backendError } = this.errorHandler.handleHttpError(error, 'eliminar proveedor');
+        const { modalData, backendError } = this.errorHandler.handleHttpError(error, 'eliminar estado cotizacion');
 
         this.errorModalData = modalData;
         this.backendErrorData = backendError || null;
         this.mostrarModalError = true;
 
-        console.error('Error al eliminar proveedor:', error);
+        console.error('Error al eliminar estado de cotizacion:', error);
       }
     });
   }
@@ -479,21 +475,21 @@ export class CategoriaPersonaComponent implements OnInit {
 
   // Modal management
   abrirModalCrear(): void {
-    this.editandoCategoriaPersona = false;
-    this.categoriaPersonaSeleccionada = null;
-    this.categoriaPersonaForm.reset();
+    this.editandoEstadoCotizacion = false;
+    this.estadoCotizacionSeleccionada = null;
+    this.estadoCotizacionForm.reset();
     this.mostrarModalCrear = true;
   }
 
   cerrarModal(): void {
     this.mostrarModalCrear = false;
-    this.editandoCategoriaPersona = false;
-    this.categoriaPersonaSeleccionada = null;
-    this.categoriaPersonaForm.reset();
+    this.editandoEstadoCotizacion = false;
+    this.estadoCotizacionSeleccionada = null;
+    this.estadoCotizacionForm.reset();
   }
 
   updateSelectionState(): void {
-    const totalItems = this.filteredCategoriaPersona.length;
+    const totalItems = this.filteredEstadoCotizacion.length;
     const selectedCount = this.selectedItems.length;
 
     this.allSelected = selectedCount === totalItems && totalItems > 0;
@@ -501,7 +497,7 @@ export class CategoriaPersonaComponent implements OnInit {
   }
 
   refreshData(): void {
-    this.loadCategoriasPersona();
+    this.loadEstadosCotizacion();
   }
 
   // Métodos para acciones masivas
@@ -514,14 +510,14 @@ export class CategoriaPersonaComponent implements OnInit {
     if (this.selectedItems.length === 0) return;
 
     if (this.selectedItems.length === 1) {
-      const categoriaPersonaTabla = this.categoriaPersonaTabla.find(c => c.id === this.selectedItems[0]);
-      if (categoriaPersonaTabla) {
-        this.editarCategoriaPersona(categoriaPersonaTabla);
+      const EstadoCotizacionTabla = this.EstadoCotizacionTabla.find(c => c.id === this.selectedItems[0]);
+      if (EstadoCotizacionTabla) {
+        this.editarEstadoCotizacion(EstadoCotizacionTabla);
       }
     } else {
-      const categoriaPersonaTabla = this.categoriaPersonaTabla.find(c => c.id === this.selectedItems[0]);
-      if (categoriaPersonaTabla) {
-        this.editarCategoriaPersona(categoriaPersonaTabla);
+      const EstadoCotizacionTabla = this.EstadoCotizacionTabla.find(c => c.id === this.selectedItems[0]);
+      if (EstadoCotizacionTabla) {
+        this.editarEstadoCotizacion(EstadoCotizacionTabla);
       }
     }
   }
@@ -529,29 +525,29 @@ export class CategoriaPersonaComponent implements OnInit {
   eliminarSeleccionados(): void {
     if (this.selectedItems.length === 0) return;
 
-    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cliente${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
+    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} estado${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
     if (confirm(confirmMessage)) {
       this.loading = true;
       let eliminados = 0;
       const total = this.selectedItems.length;
 
       this.selectedItems.forEach(id => {
-        const categoriaPersona = this.categoriasPersona.find(p => p.id === id);
-        if (categoriaPersona) {
-          this.categoriaPersonaService.deleteById(categoriaPersona.id).subscribe({
+        const estadoCotizacion = this.estadosCotizacion.find(p => p.id === id);
+        if (estadoCotizacion) {
+          this.estadoCotizacionService.deleteByIdEstadoCotizacion(estadoCotizacion.id).subscribe({
             next: () => {
               eliminados++;
               if (eliminados === total) {
-                this.loadCategoriasPersona();
+                this.loadEstadosCotizacion();
                 this.clearSelection();
                 this.loading = false;
               }
             },
             error: (error) => {
-              console.error('Error al eliminar persona natural:', error);
+              console.error('Error al eliminar estado de cotizacion:', error);
               eliminados++;
               if (eliminados === total) {
-                this.loadCategoriasPersona();
+                this.loadEstadosCotizacion();
                 this.clearSelection();
                 this.loading = false;
               }
@@ -565,18 +561,18 @@ export class CategoriaPersonaComponent implements OnInit {
 
   // Search and filter
   applyFilters(): void {
-    let filtered = [...this.categoriaPersonaTabla];
+    let filtered = [...this.EstadoCotizacionTabla];
 
     // Filtro por búsqueda
     if (this.searchTerm.trim()) {
       const term = this.searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(categoriaPersona => {
-        const searchableText = `${categoriaPersona.nombre}`.toLowerCase();
+      filtered = filtered.filter(estadoCotizacion => {
+        const searchableText = `${estadoCotizacion.descripcion}`.toLowerCase();
         return searchableText.includes(term);
       });
     }
 
-    this.filteredCategoriaPersona = filtered;
+    this.filteredEstadoCotizacion = filtered;
     this.totalItems = filtered.length;
 
     // Aplicar ordenamiento
@@ -595,16 +591,16 @@ export class CategoriaPersonaComponent implements OnInit {
   }
 
   applySorting(): void {
-    if (!this.filteredCategoriaPersona.length) return;
+    if (!this.filteredEstadoCotizacion.length) return;
 
-    this.filteredCategoriaPersona.sort((a, b) => {
+    this.filteredEstadoCotizacion.sort((a, b) => {
       let aValue: any = '';
       let bValue: any = '';
 
       switch (this.sortColumn) {
         case 'nombre':
-          aValue = a.nombre || '';
-          bValue = b.nombre || '';
+          aValue = a.descripcion || '';
+          bValue = b.descripcion || '';
           break;
         case 'creado':
           aValue = new Date(a.creado);
@@ -632,10 +628,10 @@ export class CategoriaPersonaComponent implements OnInit {
   }
 
   // Pagination
-  get paginatedCategoriasPersona(): CategoriaPersonaTabla[] {
+  get paginatedEstadoCotizacion(): EstadoCotizacionTabla[] {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
-    return this.filteredCategoriaPersona.slice(startIndex, endIndex);
+    return this.filteredEstadoCotizacion.slice(startIndex, endIndex);
   }
 
   get totalPages(): number {
@@ -678,7 +674,7 @@ export class CategoriaPersonaComponent implements OnInit {
     if (this.allSelected) {
       this.selectedItems = [];
     } else {
-      this.selectedItems = this.filteredCategoriaPersona.map(p => p.id!);
+      this.selectedItems = this.filteredEstadoCotizacion.map(p => p.id!);
     }
     this.updateSelectionState();
   }
@@ -760,7 +756,7 @@ export class CategoriaPersonaComponent implements OnInit {
     });
   }
 
-  trackByCategoriaPersonaId(index: number, item: CategoriaPersonaTabla): number {
+  trackByEstadoCotizacionId(index: number, item: EstadoCotizacionTabla): number {
     return item.id;
   }
 }
