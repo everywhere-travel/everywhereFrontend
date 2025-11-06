@@ -26,11 +26,11 @@
           <div class="flex-1">
             <div class="flex items-center gap-4 mb-4">
               <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                <i class="fas fa-money-bill-wave text-2xl"></i>
+                <i class="fas fa-tags text-2xl"></i>
               </div>
               <div>
-                <h1 class="text-4xl font-bold">Gestión de Formas de Pago</h1>
-                <p class="text-xl opacity-90 mt-2">Administra y organiza todas las formas de pago disponibles en el sistema</p>
+                <h1 class="text-4xl font-bold">Gestión de Categorías</h1>
+                <p class="text-xl opacity-90 mt-2">Administra y organiza todas las categorías de productos</p>
               </div>
             </div>
 
@@ -38,12 +38,12 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!loading">
               <div
                 class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
-                <div class="w-14 h-14 bg-blue-400 rounded-xl flex items-center justify-center">
-                  <i class="fas fa-money-bill-wave text-white text-xl"></i>
+                <div class="w-14 h-14 bg-orange-400 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-tags text-white text-xl"></i>
                 </div>
                 <div>
-                  <div class="text-2xl font-bold">{{ formasPagoFiltradas.length }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Forma{{ formasPagoFiltradas.length === 1 ? '' : 's' }} Total{{ formasPagoFiltradas.length === 1 ? '' : 'es' }}</div>
+                  <div class="text-2xl font-bold">{{ filteredCategorias.length }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Categoría{{ filteredCategorias.length === 1 ? '' : 's' }} Total{{ filteredCategorias.length === 1 ? '' : 'es' }}</div>
                 </div>
               </div>
 
@@ -53,8 +53,8 @@
                   <i class="fas fa-check-circle text-white text-xl"></i>
                 </div>
                 <div>
-                  <div class="text-2xl font-bold">{{ formasPago.length }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Registrada{{ formasPago.length === 1 ? '' : 's' }}</div>
+                  <div class="text-2xl font-bold">{{ categorias.length }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Registrada{{ categorias.length === 1 ? '' : 's' }}</div>
                 </div>
               </div>
 
@@ -79,7 +79,7 @@
                 class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
               </div>
               <i class="fas fa-plus text-lg"></i>
-              <span>Nueva Forma de Pago</span>
+              <span>Nueva Categoría</span>
             </button>
           </div>
         </div>
@@ -99,7 +99,7 @@
               </div>
               <div>
                 <h2 class="text-lg font-bold text-gray-900">Buscar y Filtrar</h2>
-                <p class="text-sm text-gray-600">Encuentra formas de pago específicas</p>
+                <p class="text-sm text-gray-600">Encuentra categorías específicas</p>
               </div>
             </div>
 
@@ -129,11 +129,11 @@
           <!-- Search Input -->
           <div class="lg:col-span-2">
             <div class="relative">
-              <input type="text" [(ngModel)]="searchQuery" (input)="onSearchChange()"
-                placeholder="Buscar formas de pago por descripción o código..."
+              <input type="text" [(ngModel)]="searchTerm" (input)="onSearchChange()"
+                placeholder="Buscar categorías por nombre..."
                 class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-everywhere-primary focus:ring-4 focus:ring-everywhere-primary/20 transition-all bg-gray-50 focus:bg-white">
               <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              <button *ngIf="searchQuery" (click)="clearSearch()"
+              <button *ngIf="searchTerm" (click)="clearSearch()"
                 class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">
                 <i class="fas fa-times"></i>
               </button>
@@ -146,49 +146,97 @@
       <div *ngIf="loading" class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
         <div class="flex flex-col items-center gap-4">
           <div class="w-16 h-16 border-4 border-gray-200 border-t-everywhere-primary rounded-full animate-spin"></div>
-          <p class="text-gray-600 font-medium">Cargando formas de pago...</p>
+          <p class="text-gray-600 font-medium">Cargando categorías...</p>
         </div>
       </div>
 
       <!-- Empty State -->
-      <div *ngIf="!loading && formasPagoFiltradas.length === 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
+      <div *ngIf="!loading && filteredCategorias.length === 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
         <div class="flex flex-col items-center gap-4">
           <i class="fas fa-inbox text-6xl text-gray-300"></i>
-          <h3 class="text-2xl font-bold text-gray-900">No hay formas de pago</h3>
-          <p class="text-gray-600 max-w-md">{{ searchQuery ? 'No se encontraron resultados para tu búsqueda.' : 'Comienza creando una nueva forma de pago.' }}</p>
+          <h3 class="text-2xl font-bold text-gray-900">No hay categorías</h3>
+          <p class="text-gray-600 max-w-md">{{ searchTerm ? 'No se encontraron resultados para tu búsqueda.' : 'Comienza creando una nueva categoría.' }}</p>
           <button (click)="openCreateModal()" class="mt-4 bg-everywhere-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-everywhere-secondary transition-all">
-            <i class="fas fa-plus mr-2"></i>Crear Forma de Pago
+            <i class="fas fa-plus mr-2"></i>Crear Categoría
           </button>
         </div>
       </div>
 
       <!-- TABLE VIEW -->
-      <div *ngIf="!loading && currentView === 'table' && formasPagoFiltradas.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+      <div *ngIf="!loading && currentView === 'table' && filteredCategorias.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
               <tr>
-                <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Código</th>
-                <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Descripción</th>
-                <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Creado</th>
-                <th class="px-6 py-4 text-left text-sm font-bold text-gray-700">Actualizado</th>
-                <th class="px-6 py-4 text-right text-sm font-bold text-gray-700">Acciones</th>
+                <th
+                  class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                  (click)="sortBy('nombre')" [class.bg-everywhere-primary/5]="sortColumn === 'nombre'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-tag text-gray-500"></i>
+                      <span>Nombre</span>
+                    </div>
+                    <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                      [class.opacity-100]="sortColumn === 'nombre'">
+                      <i class="fas fa-caret-up text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'nombre' && sortDirection === 'asc'"></i>
+                      <i class="fas fa-caret-down text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'nombre' && sortDirection === 'desc'"></i>
+                    </div>
+                  </div>
+                </th>
+                <th
+                  class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                  (click)="sortBy('creado')" [class.bg-everywhere-primary/5]="sortColumn === 'creado'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-calendar-plus text-gray-500"></i>
+                      <span>Creado</span>
+                    </div>
+                    <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                      [class.opacity-100]="sortColumn === 'creado'">
+                      <i class="fas fa-caret-up text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'creado' && sortDirection === 'asc'"></i>
+                      <i class="fas fa-caret-down text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'creado' && sortDirection === 'desc'"></i>
+                    </div>
+                  </div>
+                </th>
+                <th
+                  class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                  (click)="sortBy('actualizado')" [class.bg-everywhere-primary/5]="sortColumn === 'actualizado'">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-calendar-edit text-gray-500"></i>
+                      <span>Actualizado</span>
+                    </div>
+                    <div class="flex flex-col opacity-40 group-hover:opacity-70"
+                      [class.opacity-100]="sortColumn === 'actualizado'">
+                      <i class="fas fa-caret-up text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'actualizado' && sortDirection === 'asc'"></i>
+                      <i class="fas fa-caret-down text-xs leading-none"
+                        [class.text-everywhere-primary]="sortColumn === 'actualizado' && sortDirection === 'desc'"></i>
+                    </div>
+                  </div>
+                </th>
+                <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              <tr *ngFor="let forma of paginatedFormasPago" class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 text-sm font-semibold text-gray-900">{{ forma.codigo || '-' }}</td>
-                <td class="px-6 py-4 text-sm text-gray-700">{{ forma.descripcion || '-' }}</td>
-                <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(forma.fechaCreacion) }}</td>
-                <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(forma.fechaActualizacion) }}</td>
+              <tr *ngFor="let categoria of paginatedCategorias" class="hover:bg-gray-50 transition-colors">
+                <td class="px-6 py-4 text-sm font-semibold text-gray-900">{{ categoria.nombre || '-' }}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(categoria.creado) }}</td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(categoria.actualizado) }}</td>
                 <td class="px-6 py-4 text-right">
                   <div class="flex items-center justify-end gap-2">
-                    <button (click)="openEditModal(forma)"
+                    <button (click)="openEditModal(getCategoriaById(categoria.id))" 
                       class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
                       <i class="fas fa-edit"></i>Editar
                     </button>
-                    <button (click)="confirmDelete(forma)"
-                      class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
+                    <button (click)="confirmDelete(getCategoriaById(categoria.id))" [disabled]="categoria.id === 1"
+                      [class.opacity-50]="categoria.id === 1" [class.cursor-not-allowed]="categoria.id === 1"
+                      [title]="categoria.id === 1 ? 'No se puede eliminar la categoría por defecto' : 'Eliminar categoría'"
+                      class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 disabled:hover:bg-red-50">
                       <i class="fas fa-trash"></i>Eliminar
                     </button>
                   </div>
@@ -224,17 +272,19 @@
       </div>
 
       <!-- CARDS VIEW -->
-      <div *ngIf="!loading && currentView === 'cards' && formasPagoFiltradas.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div *ngFor="let forma of paginatedFormasPago" class="relative">
-          <app-module-card [data]="convertToModuleCard(forma)"></app-module-card>
+      <div *ngIf="!loading && currentView === 'cards' && filteredCategorias.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div *ngFor="let categoria of paginatedCategorias" class="relative">
+          <app-module-card [data]="convertToModuleCard(getCategoriaById(categoria.id)!)"></app-module-card>
           <!-- Quick Actions -->
           <div class="absolute bottom-4 left-4 right-4 flex gap-2 opacity-0 hover:opacity-100 transition-opacity">
-            <button (click)="openEditModal(forma)"
+            <button (click)="openEditModal(getCategoriaById(categoria.id))"
               class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1">
               <i class="fas fa-edit"></i>Editar
             </button>
-            <button (click)="confirmDelete(forma)"
-              class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1">
+            <button (click)="confirmDelete(getCategoriaById(categoria.id))" [disabled]="categoria.id === 1"
+              [class.opacity-50]="categoria.id === 1" [class.cursor-not-allowed]="categoria.id === 1"
+              [title]="categoria.id === 1 ? 'No se puede eliminar la categoría por defecto' : 'Eliminar categoría'"
+              class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1 disabled:hover:bg-red-50">
               <i class="fas fa-trash"></i>Eliminar
             </button>
           </div>
@@ -242,22 +292,25 @@
       </div>
 
       <!-- LIST VIEW -->
-      <div *ngIf="!loading && currentView === 'list' && formasPagoFiltradas.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-        <div *ngFor="let forma of paginatedFormasPago" class="px-6 py-4 border-b border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-between">
+      <div *ngIf="!loading && currentView === 'list' && filteredCategorias.length > 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div *ngFor="let categoria of paginatedCategorias" class="px-6 py-4 border-b border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-between">
           <div class="flex items-center gap-4 flex-1">
-            <div class="h-12 w-12 rounded-xl forma-avatar flex items-center justify-center bg-red-600 text-white font-bold text-lg">
-              <i class="fas fa-money-bill-wave"></i>
+            <div class="h-12 w-12 rounded-xl categoria-avatar flex items-center justify-center bg-red-600 text-white font-bold text-lg">
+              <i class="fas fa-tags"></i>
             </div>
             <div class="flex-1">
-              <div class="text-base font-bold text-gray-900">{{ forma.descripcion || 'Sin descripción' }}</div>
-              <div class="text-sm text-gray-500">ID: {{ forma.id }} • {{ forma.codigo ? ('Código: ' + forma.codigo) : 'Sin código' }}</div>
+              <div class="text-base font-bold text-gray-900">{{ categoria.nombre || 'Sin nombre' }}</div>
+              <div class="text-sm text-gray-500">ID: {{ categoria.id }}</div>
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <button (click)="openEditModal(forma)" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+            <button (click)="openEditModal(getCategoriaById(categoria.id))" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
               <i class="fas fa-edit mr-2"></i>Editar
             </button>
-            <button (click)="confirmDelete(forma)" class="bg-red-100 hover:bg-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+            <button (click)="confirmDelete(getCategoriaById(categoria.id))" [disabled]="categoria.id === 1"
+              [class.opacity-50]="categoria.id === 1" [class.cursor-not-allowed]="categoria.id === 1"
+              [title]="categoria.id === 1 ? 'No se puede eliminar la categoría por defecto' : 'Eliminar categoría'"
+              class="bg-red-100 hover:bg-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:hover:bg-red-100">
               <i class="fas fa-trash mr-2"></i>Eliminar
             </button>
           </div>
@@ -268,17 +321,17 @@
   </div>
 </div>
 
-<!-- Modal para Crear/Editar Forma de Pago -->
+<!-- Modal para Crear/Editar Categoría -->
 <div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-screen overflow-y-auto">
-    <!-- Modal Header (styled like Operadores) -->
+    <!-- Modal Header -->
     <div class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white p-6 border-b border-red-100">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-            <i class="fas fa-money-bill-wave text-xl"></i>
+            <i class="fas fa-tags text-xl"></i>
           </div>
-          <h2 class="text-xl font-bold">{{ isEditMode ? 'Editar' : 'Crear' }} Forma de Pago</h2>
+          <h2 class="text-xl font-bold">{{ isEditMode ? 'Editar' : 'Crear' }} Categoría</h2>
         </div>
         <button (click)="closeModal()"
           class="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-all">
@@ -289,25 +342,17 @@
 
     <!-- Modal Body -->
     <div class="p-6">
-      <form [formGroup]="formaPagoForm" (ngSubmit)="saveFormaPago()">
+      <form [formGroup]="categoriaForm" (ngSubmit)="saveCategoria()">
         <div class="space-y-4">
-          <!-- Código -->
+          <!-- Nombre -->
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">Código</label>
-            <input type="number" formControlName="codigo"
+            <label class="block text-sm font-bold text-gray-700 mb-2">Nombre *</label>
+            <input type="text" formControlName="nombre"
               class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-everywhere-primary focus:ring-4 focus:ring-everywhere-primary/20 transition-all bg-gray-50 focus:bg-white"
-              placeholder="Ej: 1, 2, 3...">
-          </div>
-
-          <!-- Descripción -->
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-2">Descripción *</label>
-            <input type="text" formControlName="descripcion"
-              class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-everywhere-primary focus:ring-4 focus:ring-everywhere-primary/20 transition-all bg-gray-50 focus:bg-white"
-              placeholder="Ej: Transferencia bancaria, Tarjeta de crédito...">
-            <div *ngIf="formaPagoForm.get('descripcion')?.invalid && formaPagoForm.get('descripcion')?.touched"
+              placeholder="Ej: Electrónica, Ropa, Alimentos...">
+            <div *ngIf="categoriaForm.get('nombre')?.invalid && categoriaForm.get('nombre')?.touched"
               class="text-red-600 text-sm mt-2">
-              La descripción es obligatoria
+              El nombre es obligatorio
             </div>
           </div>
         </div>
@@ -318,7 +363,7 @@
             class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-xl font-semibold transition-all">
             Cancelar
           </button>
-          <button type="submit" [disabled]="formaPagoForm.invalid || loading"
+          <button type="submit" [disabled]="categoriaForm.invalid || loading"
             class="flex-1 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white py-3 px-4 rounded-xl font-semibold transition-all disabled:opacity-50 flex items-center justify-center gap-2">
             <i *ngIf="loading" class="fas fa-spinner fa-spin"></i>
             <span>{{ isEditMode ? 'Actualizar' : 'Crear' }}</span>
@@ -348,11 +393,11 @@
     <!-- Modal Body -->
     <div class="p-6">
       <p class="text-gray-700">
-        ¿Está seguro de que desea eliminar la forma de pago
-        <strong class="text-gray-900">{{ formaPagoToDelete?.descripcion }}</strong>?
+        ¿Está seguro de que desea eliminar la categoría
+        <strong class="text-gray-900">{{ categoriaToDelete?.nombre }}</strong>?
       </p>
       <p class="text-sm text-gray-500 mt-2">
-        Al eliminar la forma de pago, se quitará del sistema y no podrá ser recuperada fácilmente.
+        Al eliminar la categoría, se quitará del sistema y no podrá ser recuperada fácilmente.
       </p>
     </div>
 
