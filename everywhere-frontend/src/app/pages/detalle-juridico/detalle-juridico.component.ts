@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription, Observable, of, forkJoin } from 'rxjs';
 import { catchError, finalize, tap, switchMap } from 'rxjs/operators';
@@ -40,6 +40,18 @@ interface CodigoPais {
   code: string;
   name: string;
   dialCode: string;
+}
+
+function atLeastOneRequired(fieldNames: string[]) {
+  return (formGroup: AbstractControl): ValidationErrors | null => {
+    const form = formGroup as FormGroup;
+    const hasValue = fieldNames.some(fieldName => {
+      const control = form.get(fieldName);
+      return control && control.value && control.value.trim().length > 0;
+    });
+
+    return hasValue ? null : { atLeastOneRequired: true };
+  };
 }
 
 @Component({
@@ -268,10 +280,12 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
 
   private initializeForms(): void {
     this.personaJuridicaForm = this.fb.group({
-      ruc: ['', [Validators.required]],
-      razonSocial: ['', [Validators.required]],
+      ruc: [''],
+      razonSocial: [''],
       direccion: [''],
       observacion: [''],
+    },{
+      validators: atLeastOneRequired(['ruc', 'razonSocial'])
     });
 
     this.telefonoForm = this.fb.group({
@@ -446,8 +460,8 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
 
     const formValue = this.personaJuridicaForm.value;
     const personaJuridicaData: PersonaJuridicaRequest = {
-      ruc: formValue.documento,
-      razonSocial: formValue.nombres,
+      ruc: formValue.ruc,
+      razonSocial: formValue.razonSocial,
       persona: {
         direccion: formValue.direccion,
         observacion: formValue.observacion
@@ -506,44 +520,39 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
     this.showPersonaJuridicaModal = true;
   }
 
-  cerrarModalPersonaNatural(): void {
+  cerrarModalPersonaJuridica(): void {
     this.showPersonaJuridicaModal = false;
     this.personaJuridicaForm.reset();
   }
 
-  guardarPersonaNatural(): void {
+  guardarPersonaJuridica(): void {
     if (!this.personaJuridicaForm.valid || !this.personaId) return;
 
     this.loadingService.setLoading(true);
 
     const formValue = this.personaJuridicaForm.value;
 
-    // Preparar datos de persona natural
-    const personaNaturalData: PersonaNaturalRequest = {
-      documento: formValue.documento,
-      nombres: formValue.nombres,
-      apellidosPaterno: formValue.apellidosPaterno,
-      apellidosMaterno: formValue.apellidosMaterno,
-      sexo: formValue.sexo,
+    // Preparar datos de persona juridica
+    const personaJuridicaData: PersonaJuridicaRequest = {
+      ruc: formValue.ruc,
+      razonSocial: formValue.razonSocial,
       persona: {
         direccion: formValue.direccion,
         observacion: formValue.observacion
       }
     };
 
-    // Actualizar persona natural
-    const updatePersonaNatural$ = this.personaNaturalService.update(this.personaId, personaNaturalData);
-
-
+    // Actualizar persona juridica
+    const updatePersonaJuridica$ = this.personaJuridicaService.update(this.personaId, personaJuridicaData);
 
     // Ejecutar las operaciones
     const subscription = forkJoin({
-      personaNatural: updatePersonaNatural$,
+      per: updatePersonaJuridica$,
     })
       .pipe(
         tap(() => {
           this.loadPersonaData();
-          this.cerrarModalPersonaNatural();
+          this.cerrarModalPersonaJuridica();
         }),
         catchError(error => {
           console.error('Error al actualizar:', error);

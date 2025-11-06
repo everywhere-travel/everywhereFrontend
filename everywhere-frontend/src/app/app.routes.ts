@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth/auth.guard';
 import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
-import { PersonasComponent } from './pages/personas/personas.component'; 
+import { PersonasComponent } from './pages/personas/personas.component';
 import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.component';
 import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
 import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.component';
@@ -34,6 +34,12 @@ export const routes: Routes = [
     path: 'personas/detalle/:id',
     loadComponent: () =>
       import('./pages/detalle-persona/detalle-persona.component').then(m => m.DetallePersonaComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'juridico/detalles/:id',
+    loadComponent: () =>
+      import('./pages/detalle-juridico/detalle-juridico.component').then(m => m.DetalleJuridicoComponent),
     canActivate: [authGuard]
   },
   {

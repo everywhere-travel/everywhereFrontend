@@ -91,57 +91,20 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Documento
+                  RUC
                 </label>
-                <input type="text" formControlName="documento"
-                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent">
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Nombres *
-                </label>
-                <input type="text" formControlName="nombres"
+                <input type="text" formControlName="ruc"
                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                  [class.border-red-500]="personaJuridicaForm.get('nombres')?.invalid && personaJuridicaForm.get('nombres')?.touched">
-                <div *ngIf="personaJuridicaForm.get('nombres')?.invalid && personaJuridicaForm.get('nombres')?.touched"
-                  class="mt-1 text-sm text-red-600">
-                  El nombre es requerido
-                </div>
+                  [class.border-red-500]="personaJuridicaForm.get('ruc')?.invalid && personaJuridicaForm.get('ruc')?.touched">
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Apellido Paterno *
+                  Razón Social
                 </label>
-                <input type="text" formControlName="apellidosPaterno"
+                <input type="text" formControlName="razonSocial"
                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                  [class.border-red-500]="personaJuridicaForm.get('apellidosPaterno')?.invalid && personaJuridicaForm.get('apellidosPaterno')?.touched">
-                <div
-                  *ngIf="personaJuridicaForm.get('apellidosPaterno')?.invalid && personaJuridicaForm.get('apellidosPaterno')?.touched"
-                  class="mt-1 text-sm text-red-600">
-                  El apellido paterno es requerido
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Apellido Materno
-                </label>
-                <input type="text" formControlName="apellidosMaterno"
-                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent">
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Sexo
-                </label>
-                <select formControlName="sexo"
-                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent bg-white">
-                  <option value="">Seleccione</option>
-                  <option value="M">Masculino</option>
-                  <option value="F">Femenino</option>
-                </select>
+                  [class.border-red-500]="personaJuridicaForm.get('razonSocial')?.invalid && personaJuridicaForm.get('razonSocial')?.touched">
               </div>
             </div>
           </div>
@@ -196,6 +159,7 @@
           </div>
         </form>
       </div>
+
       <ng-container *ngIf="!isCreating">
         <!-- Loading State -->
         <div *ngIf="isLoading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
@@ -227,14 +191,11 @@
           <div class="border-b border-gray-200">
             <nav class="flex">
               <button *ngFor="let tab of [
-                {key: 'info', label: 'Información General', icon: 'fa-user'},
-                {key: 'clientes', label: 'Clientes Asociadas', icon: 'fa-building'},
-                {key: 'contacto', label: 'Contacto', icon: 'fa-phone'},
-              ]"
-                (click)="setActiveTabFromString(tab.key)"
-                [class.bg-everywhere-primary]="activeTab === tab.key"
-                [class.text-white]="activeTab === tab.key"
-                [class.hover:bg-gray-50]="activeTab !== tab.key"
+            {key: 'info', label: 'Información General', icon: 'fa-user'},
+            {key: 'clientes', label: 'Clientes Asociados', icon: 'fa-building'},
+            {key: 'contacto', label: 'Contacto', icon: 'fa-phone'},
+          ]" (click)="setActiveTabFromString(tab.key)" [class.bg-everywhere-primary]="activeTab === tab.key"
+                [class.text-white]="activeTab === tab.key" [class.hover:bg-gray-50]="activeTab !== tab.key"
                 class="flex-1 px-6 py-4 font-semibold flex items-center justify-center gap-3 transition-all duration-200 border-b-4 border-transparent">
                 <i class="fas" [class]="tab.icon"></i>
                 <span class="hidden sm:inline">{{ tab.label }}</span>
@@ -322,17 +283,31 @@
                   <!-- Información de la empresa -->
                   <div class="space-y-2">
                     <h4 class="font-bold text-gray-900 text-lg line-clamp-2">
-
+                      {{ empresa.nombres }} {{ empresa.apellidosPaterno }} {{ empresa.apellidosMaterno }}
                     </h4>
 
+                    <!-- Documento -->
                     <div class="flex items-center gap-2 text-sm text-gray-600">
                       <i class="fas fa-id-card text-gray-400"></i>
-                      <span class="font-mono"> </span>
+                      <span class="font-mono">{{ empresa.documento || 'N/A' }}</span>
                     </div>
 
+                    <!-- Dirección -->
                     <div *ngIf="empresa.persona?.direccion" class="flex items-start gap-2 text-sm text-gray-600">
                       <i class="fas fa-map-marker-alt text-gray-400 mt-1"></i>
-                      <span class="line-clamp-2"> </span>
+                      <span class="line-clamp-2">{{ empresa.persona.direccion }}</span>
+                    </div>
+
+                    <!-- Sexo -->
+                    <div *ngIf="empresa.sexo" class="flex items-center gap-2 text-sm text-gray-600">
+                      <i class="fas fa-venus-mars text-gray-400"></i>
+                      <span>{{ empresa.sexo }}</span>
+                    </div>
+
+                    <!-- Categoría -->
+                    <div *ngIf="empresa.categoriaPersona" class="flex items-center gap-2 text-sm text-gray-600">
+                      <i class="fas fa-tag text-gray-400"></i>
+                      <span>{{ empresa.categoriaPersona.nombre }}</span>
                     </div>
 
                     <!-- Información adicional -->
@@ -340,10 +315,19 @@
                       class="pt-3 mt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                       <span>
                         <i class="fas fa-clock mr-1"></i>
+                        {{ empresa.creado | date: 'dd/MM/yyyy' }}
                       </span>
                       <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+                        <i class="fas fa-check-circle mr-1"></i>
                         Activo
                       </span>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div *ngIf="empresa.persona?.observacion"
+                      class="pt-3 mt-3 border-t border-gray-100 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                      <i class="fas fa-comment mr-1"></i>
+                      {{ empresa.persona.observacion }}
                     </div>
                   </div>
                 </div>
@@ -559,7 +543,7 @@
         </h3>
       </div>
 
-      <form [formGroup]="personaJuridicaForm" (ngSubmit)="guardarPersonaNatural()"
+      <form [formGroup]="personaJuridicaForm" (ngSubmit)="guardarPersonaJuridica()"
         class="flex-1 flex flex-col overflow-hidden">
         <div class="flex-1 overflow-y-auto p-6 space-y-6">
 
@@ -576,18 +560,18 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   RUC
                 </label>
-                <input type="text" formControlName="nombres"
+                <input type="text" formControlName="ruc"
                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                  [class.border-red-500]="personaJuridicaForm.get('nombres')?.invalid && personaJuridicaForm.get('nombres')?.touched">
+                  [class.border-red-500]="personaJuridicaForm.get('ruc')?.invalid && personaJuridicaForm.get('ruc')?.touched">
               </div>
 
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                   Razón Social
                 </label>
-                <input type="text" formControlName="apellidosPaterno"
+                <input type="text" formControlName="razonSocial"
                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                  [class.border-red-500]="personaJuridicaForm.get('apellidosPaterno')?.invalid && personaJuridicaForm.get('apellidosPaterno')?.touched">
+                  [class.border-red-500]="personaJuridicaForm.get('razonSocial')?.invalid && personaJuridicaForm.get('razonSocial')?.touched">
               </div>
             </div>
           </div>
@@ -621,7 +605,7 @@
 
         <!-- Footer con botones -->
         <div class="border-t border-gray-200 px-6 py-4 bg-gray-50 flex justify-end gap-3">
-          <button type="button" (click)="cerrarModalPersonaNatural()"
+          <button type="button" (click)="cerrarModalPersonaJuridica()"
             class="px-6 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg font-medium transition-colors">
             <i class="fas fa-times mr-2"></i>
             Cancelar
