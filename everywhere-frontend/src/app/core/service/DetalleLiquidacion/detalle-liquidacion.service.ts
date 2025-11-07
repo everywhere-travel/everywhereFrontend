@@ -32,7 +32,7 @@ export class DetalleLiquidacionService {
   }
 
   updateDetalleLiquidacion(id: number, detalleLiquidacionRequest: DetalleLiquidacionRequest): Observable<DetalleLiquidacionResponse> {
-    return this.http.put<DetalleLiquidacionResponse>(`${this.apiUrl}/${id}`, detalleLiquidacionRequest);
+    return this.http.patch<DetalleLiquidacionResponse>(`${this.apiUrl}/${id}`, detalleLiquidacionRequest);
   }
 
   deleteDetalleLiquidacion(id: number): Observable<void> {
