@@ -44,8 +44,7 @@ export interface DocumentoCobranzaResponseDTO {
   observaciones?: string;
   fileVenta?: string;
   costoEnvio?: number;
-  moneda?: string;
-  total?: number;  // Total del documento
+  moneda?: string; 
 
   // Información de relaciones
   cotizacionId?: number;
@@ -56,6 +55,7 @@ export interface DocumentoCobranzaResponseDTO {
 
   // Información básica para mostrar
   clienteNombre?: string;     // Nombre de la persona
+  clienteDocumento?: string;  // DNI o RUC de la persona
   sucursalDescripcion?: string;
   formaPagoDescripcion?: string;
 }
@@ -65,4 +65,5 @@ export interface DocumentoCobranzaUpdateDTO {
   fileVenta?: string;
   costoEnvio?: number;
   observaciones?: string;
+  detalleDocumentoId?: number;
 }

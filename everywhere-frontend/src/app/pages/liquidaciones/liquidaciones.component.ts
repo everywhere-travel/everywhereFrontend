@@ -1,11 +1,10 @@
-import { Component, OnInit, OnDestroy, inject, importProvidersFrom } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { Subscription, of } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
-import { environment } from '../../../environments/environment';
 
 // Services
 import { LiquidacionService } from '../../core/service/Liquidacion/liquidacion.service';
@@ -22,12 +21,10 @@ import { ProveedorService } from '../../core/service/Proveedor/proveedor.service
 import { OperadorService } from '../../core/service/Operador/operador.service';
 import { ViajeroService } from '../../core/service/viajero/viajero.service';
 
-import { personaDisplay } from '../../shared/models/Persona/persona.model';
 // Models
 import { LiquidacionRequest, LiquidacionResponse, LiquidacionConDetallesResponse } from '../../shared/models/Liquidacion/liquidacion.model';
 import { DetalleLiquidacionRequest, DetalleLiquidacionResponse } from '../../shared/models/Liquidacion/detalleLiquidacion.model';
 import { CotizacionResponse, CotizacionConDetallesResponseDTO } from '../../shared/models/Cotizacion/cotizacion.model';
-import { DetalleCotizacionResponse } from '../../shared/models/Cotizacion/detalleCotizacion.model';
 
 import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';

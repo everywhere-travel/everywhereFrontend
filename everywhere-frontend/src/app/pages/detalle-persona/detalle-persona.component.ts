@@ -21,16 +21,15 @@ import { TelefonoPersonaService } from '../../core/service/TelefonoPersona/telef
 import { CategoriaPersonaService } from '../../core/service/CategoriaPersona/categoria-persona.service';
 
 // Models
-import { PersonaNaturalResponse, PersonaNaturalRequest, PersonaNaturalViajero, PersonaNaturalCategoria, PersonaNaturalSinViajero } from '../../shared/models/Persona/personaNatural.model';
-import { PersonaJuridicaResponse, PersonaJuridicaRequest } from '../../shared/models/Persona/personaJuridica.models';
-import { PersonaResponse, PersonaRequest, personaDisplay } from '../../shared/models/Persona/persona.model';
-import { ViajeroResponse, ViajeroRequest, ViajeroConPersonaNatural } from '../../shared/models/Viajero/viajero.model';
+import { PersonaNaturalResponse, PersonaNaturalRequest } from '../../shared/models/Persona/personaNatural.model';
+import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
+import { ViajeroResponse, ViajeroRequest } from '../../shared/models/Viajero/viajero.model';
 import { ViajeroFrecuenteResponse, ViajeroFrecuenteRequest } from '../../shared/models/Viajero/viajeroFrecuente.model';
-import { DocumentoResponse, DocumentoRequest } from '../../shared/models/Documento/documento.model';
+import { DocumentoResponse } from '../../shared/models/Documento/documento.model';
 import { DetalleDocumentoResponse, DetalleDocumentoRequest } from '../../shared/models/Documento/detalleDocumento.model';
 import { CorreoPersonaResponse, CorreoPersonaRequest } from '../../shared/models/CorreoPersona/correoPersona.model';
 import { TelefonoPersonaResponse, TelefonoPersonaRequest } from '../../shared/models/TelefonoPersona/telefonoPersona.models';
-import { NaturalJuridicaResponse, NaturalJuridicaRequest, NaturalJuridicoPatch } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
+import { NaturalJuridicaResponse, NaturalJuridicaRequest } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
 import { CategoriaPersonaResponse } from '../../shared/models/CategoriaPersona/categoriaPersona.models';
 
 // Components

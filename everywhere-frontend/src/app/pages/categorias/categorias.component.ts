@@ -8,7 +8,7 @@ import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sideb
 import { ErrorModalComponent } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
-import { ModuleCardComponent, ModuleCardData } from '../../shared/components/ui/module-card/module-card.component';
+import { ModuleCardData } from '../../shared/components/ui/module-card/module-card.component';
 
 // Interfaz para tabla de categorías
 export interface CategoriaTabla {
@@ -33,8 +33,7 @@ interface ExtendedSidebarMenuItem extends SidebarMenuItem {
     FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
-    ErrorModalComponent,
-    ModuleCardComponent
+    ErrorModalComponent
   ]
 })
 export class CategoriasComponent implements OnInit {
