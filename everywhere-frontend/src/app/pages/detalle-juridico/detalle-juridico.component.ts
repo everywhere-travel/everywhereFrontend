@@ -3,29 +3,22 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription, Observable, of, forkJoin } from 'rxjs';
-import { catchError, finalize, tap, switchMap } from 'rxjs/operators';
+import { catchError, finalize, tap } from 'rxjs/operators';
 
 // Services
 import { LoadingService } from '../../core/service/loading.service';
 import { AuthorizationService } from '../../core/service/authorization.service';
-import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
-import { PersonaService } from '../../core/service/persona/persona.service';
-import { ViajeroService } from '../../core/service/viajero/viajero.service';
-import { ViajeroFrecuenteService } from '../../core/service';
 import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
-import { DocumentoService } from '../../core/service/Documento/documento.service';
-import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/detalle-documento.service';
 import { CorreoPersonaService } from '../../core/service/CorreoPersona/correo-persona.service';
 import { TelefonoPersonaService } from '../../core/service/TelefonoPersona/telefono-persona.service';
 
 // Models
-import { PersonaNaturalResponse, PersonaNaturalRequest, PersonaNaturalViajero, PersonaNaturalCategoria, PersonaNaturalSinViajero } from '../../shared/models/Persona/personaNatural.model';
+import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaResponse, PersonaJuridicaRequest } from '../../shared/models/Persona/personaJuridica.models';
-import { PersonaResponse, PersonaRequest, personaDisplay } from '../../shared/models/Persona/persona.model';
 import { CorreoPersonaResponse, CorreoPersonaRequest } from '../../shared/models/CorreoPersona/correoPersona.model';
 import { TelefonoPersonaResponse, TelefonoPersonaRequest } from '../../shared/models/TelefonoPersona/telefonoPersona.models';
-import { NaturalJuridicaResponse, NaturalJuridicaRequest, NaturalJuridicoPatch } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
+import { NaturalJuridicaResponse } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -68,14 +61,8 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private loadingService = inject(LoadingService);
   private authService = inject(AuthorizationService);
-  private personaService = inject(PersonaService);
-  private personaNaturalService = inject(PersonaNaturalService);
   private personaJuridicaService = inject(PersonaJuridicaService);
-  private viajeroService = inject(ViajeroService);
-  private viajeroFrecuenteService = inject(ViajeroFrecuenteService);
   private naturalJuridicoService = inject(NaturalJuridicoService);
-  private documentoService = inject(DocumentoService);
-  private detalleDocumentoService = inject(DetalleDocumentoService);
   private correoPersonaService = inject(CorreoPersonaService);
   private telefonoPersonaService = inject(TelefonoPersonaService);
   private fb = inject(FormBuilder);
@@ -284,7 +271,7 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
       razonSocial: [''],
       direccion: [''],
       observacion: [''],
-    },{
+    }, {
       validators: atLeastOneRequired(['ruc', 'razonSocial'])
     });
 

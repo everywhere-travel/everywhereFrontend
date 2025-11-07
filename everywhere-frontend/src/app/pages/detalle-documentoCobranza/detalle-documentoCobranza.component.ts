@@ -14,7 +14,7 @@ import { LoadingService } from '../../core/service/loading.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
 
 // Models
-import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
+import { DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import {
   DetalleDocumentoCobranzaRequestDTO,
   DetalleDocumentoCobranzaResponseDTO
@@ -23,6 +23,9 @@ import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/detalle-documento.service';
+import { DetalleDocumentoResponse } from '../../shared/models/Documento/detalleDocumento.model';
+import { PersonaNaturalService } from '../../core/service';
 
 // Extender la interfaz para agregar moduleKey
 interface ExtendedSidebarMenuItem extends SidebarMenuItem {
@@ -44,6 +47,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private documentoCobranzaService = inject(DocumentoCobranzaService);
   private detalleDocumentoCobranzaService = inject(DetalleDocumentoCobranzaService);
+  private detalleDocumentoService = inject(DetalleDocumentoService);
   private productoService = inject(ProductoService);
   private loadingService = inject(LoadingService);
   private fb = inject(FormBuilder);
@@ -52,6 +56,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   documento: DocumentoCobranzaResponseDTO | null = null;
   documentoId: number | null = null;
   detalles: DetalleDocumentoCobranzaResponseDTO[] = [];
+  detallesDocumento: DetalleDocumentoResponse[] = [];
   productos: ProductoResponse[] = [];
 
   // Forms
@@ -222,7 +227,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.documentoForm = this.fb.group({
       fileVenta: ['', [Validators.maxLength(100)]],
       costoEnvio: [0, [Validators.min(0)]],
-      observaciones: ['', [Validators.maxLength(500)]]
+      observaciones: ['', [Validators.maxLength(500)]],
+      detalleDocumentoId: [null]
     });
   }
 
@@ -330,7 +336,6 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private loadDocumento(id: number): void {
     this.isLoading = true;
     this.error = null;
-
     this.loadingService.setLoading(true);
 
     const subscription = this.documentoCobranzaService.getDocumentoById(id)
@@ -348,7 +353,26 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       .subscribe(documento => {
         if (documento) {
           this.documento = documento;
+          this.loadDetallesDocumento();
         }
+      });
+
+    this.subscriptions.add(subscription);
+  }
+
+  private loadDetallesDocumento(): void {
+    if (!this.documento?.personaId) {
+      return;
+    }
+
+    const subscription = this.detalleDocumentoService.findByPersonaId(this.documento.personaId)
+      .pipe(
+        catchError(error => {
+          return of([]);
+        })
+      )
+      .subscribe(detallesDoc => {
+        this.detallesDocumento = detallesDoc;
       });
 
     this.subscriptions.add(subscription);
@@ -490,7 +514,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     const updateDTO: DocumentoCobranzaUpdateDTO = {
       fileVenta: formValue.fileVenta?.trim() || undefined,
       costoEnvio: formValue.costoEnvio || undefined,
-      observaciones: formValue.observaciones?.trim() || undefined
+      observaciones: formValue.observaciones?.trim() || undefined,
+      detalleDocumentoId: formValue.detalleDocumentoId || undefined
     };
 
     this.isLoading = true;
@@ -587,9 +612,11 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   calcularTotal(): number {
-    return this.detalles.reduce((total, detalle) => {
+    const totalDetalles = this.detalles.reduce((total, detalle) => {
       return total + ((detalle.cantidad || 0) * (detalle.precio || 0));
     }, 0);
+    const costoEnvio = this.documento?.costoEnvio || 0;
+    return totalDetalles + costoEnvio;
   }
 
   hideMessages(): void {
@@ -610,5 +637,18 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   trackByDetalle(index: number, detalle: DetalleDocumentoCobranzaResponseDTO): number {
     return detalle.id || index;
+  }
+
+  // ============ HELPER METHODS =============
+  getDetalleDocumentoInfo(id: number): DetalleDocumentoResponse | undefined {
+    return this.detallesDocumento.find(d => d.id === id);
+  }
+
+  onDetalleDocumentoChange(event: any): void {
+    const detalleId = event.target.value;
+    if (detalleId) {
+      const detalle = this.getDetalleDocumentoInfo(Number(detalleId));
+      console.log('Detalle de documento seleccionado:', detalle);
+    }
   }
 }

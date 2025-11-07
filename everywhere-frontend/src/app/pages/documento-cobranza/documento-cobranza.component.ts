@@ -353,12 +353,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       }
 
       this.documentos = await this.documentoCobranzaService.getAllDocumentos().toPromise() || [];
-      console.log('Documentos recibidos del backend:', this.documentos);
-      console.log('Primer documento estructura:', this.documentos[0]);
-      if (this.documentos[0]) {
-        console.log('Valor del total del primer documento:', this.documentos[0].total);
-        console.log('Tipo del total:', typeof this.documentos[0].total);
-      }
+      
       this.filteredDocumentos = [...this.documentos];
       this.totalItems = this.documentos.length;
     } catch (error) {
