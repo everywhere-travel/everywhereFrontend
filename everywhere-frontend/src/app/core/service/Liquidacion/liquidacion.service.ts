@@ -27,7 +27,7 @@ export class LiquidacionService {
   }
 
   updateLiquidacion(id: number, liquidacionRequest: LiquidacionRequest): Observable<LiquidacionResponse> {
-    return this.http.put<LiquidacionResponse>(`${this.apiUrl}/${id}`, liquidacionRequest);
+    return this.http.patch<LiquidacionResponse>(`${this.apiUrl}/${id}`, liquidacionRequest);
   }
 
   getLiquidacionConDetalles(id: number): Observable<LiquidacionConDetallesResponse> {
@@ -42,8 +42,5 @@ export class LiquidacionService {
     return this.http.post<LiquidacionResponse>(`${this.apiUrl}/cotizacion/${cotizacionId}`, liquidacionRequest);
   }
 
-  setCarpeta(liquidacionId: number, carpetaId: number): Observable<LiquidacionResponse> {
-    return this.http.put<LiquidacionResponse>(`${this.apiUrl}/${liquidacionId}/carpeta/${carpetaId}`, {});
-  }
 
 }

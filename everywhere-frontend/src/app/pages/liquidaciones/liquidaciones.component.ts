@@ -1312,8 +1312,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         cotizacionId: cotizacion.id, // ✅ Agregar cotizacionId requerido por el backend
         fechaCompra: cotizacion.fechaEmision ? this.formatDateForInput(new Date(cotizacion.fechaEmision)) : undefined,
         destino: cotizacion.origenDestino,
-        numeroPasajeros: (cotizacion.cantAdultos || 0) + (cotizacion.cantNinos || 0)
-      };
+        numeroPasajeros: (cotizacion.cantAdultos || 0) + (cotizacion.cantNinos || 0),
+        formaPagoId: cotizacion.formaPago?.id   };
 
       // Crear la liquidación
       const nuevaLiquidacion = await this.liquidacionService.createLiquidacionConCotizacion(cotizacion.id, liquidacionRequest).toPromise();
@@ -1368,6 +1368,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         // Construir request con campos disponibles (ahora son opcionales en backend)
         const detalleRequest: DetalleLiquidacionRequest = {
           costoTicket: detalleCot.precioHistorico || 0,
+          cargoServicio: detalleCot.comision || 0,
 
           // Campos opcionales - solo agregar si están disponibles
           ...(detalleCot.producto?.id && { productoId: detalleCot.producto.id }),
@@ -1375,7 +1376,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
           // Campos básicos con valores por defecto
           ticket: '',
-          cargoServicio: 0,
           valorVenta: 0,
           facturaCompra: '',
           boletaPasajero: '',
