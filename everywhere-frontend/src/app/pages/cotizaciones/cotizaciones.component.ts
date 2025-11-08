@@ -1366,7 +1366,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       comision,
       cantidad,
       unidad,
-      total: (precioHistorico * cantidad) + comision,
+      total: (precioHistorico + comision) * cantidad, // Correcto: (precio + comisión) * cantidad
       isTemporary: true,
       seleccionado: true     // PRODUCTOS FIJOS siempre seleccionados
     };
@@ -1430,7 +1430,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   recalcularTotalDetalle(index: number): void {
     if (index >= 0 && index < this.detallesFijos.length) {
       const detalle = this.detallesFijos[index];
-      detalle.total = (detalle.precioHistorico * detalle.cantidad) + detalle.comision;
+      detalle.total = (detalle.precioHistorico + detalle.comision) * detalle.cantidad;
     }
   }
 
@@ -1477,7 +1477,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const grupo = this.gruposHoteles[groupIndex];
       if (detailIndex >= 0 && detailIndex < grupo.detalles.length) {
         const detalle = grupo.detalles[detailIndex];
-        detalle.total = (detalle.precioHistorico * detalle.cantidad) + (detalle.comision || 0);
+        detalle.total = (detalle.precioHistorico + (detalle.comision || 0)) * detalle.cantidad;
       }
     }
   }
@@ -2097,7 +2097,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const producto = this.productos.find(p => p.id === Number(formValue.productoId));
     const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
     const precioHistorico = formValue.precioHistorico || 0;
-    const comision = 0; // Siempre 0 para grupo hotel
+    const comision = formValue.comision || 0; // Leer comisión del formulario
     const cantidad = formValue.cantidad || 1;
     const unidad = formValue.unidad || 1;
 
@@ -2110,17 +2110,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       comision,
       cantidad,
       unidad,
-      total: precioHistorico + comision,
+      total: (precioHistorico + comision) * cantidad, // Calcular correctamente: (precio + comisión) * cantidad
       isTemporary: true,
       seleccionado: false     // Inicializar como no seleccionado
     };
 
     grupo.detalles.push(nuevoDetalle);
-    grupo.total = grupo.detalles.reduce((sum, d) => sum + d.total, 0);
+    grupo.total = grupo.detalles.reduce((sum, d) => sum + ((d.precioHistorico + d.comision) * d.cantidad), 0);
     this.detalleForm.reset({
       cantidad: 1,
       unidad: 1,
-      precioHistorico: 0
+      precioHistorico: 0,
+      comision: 0 // Resetear comisión también
     });
   }
 
@@ -2206,8 +2207,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
         // Sanitizar fechas y formatos antes de enviar
         const sanitized = this.sanitizePatchPayload(patchPayload);
-
-        console.log('🚀 PATCH Payload:', sanitized);
 
         const updateResult = await this.cotizacionService
           .updateCotizacion(this.cotizacionEditandoId, sanitized)

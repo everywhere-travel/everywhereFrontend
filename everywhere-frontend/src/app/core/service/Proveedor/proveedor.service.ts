@@ -26,7 +26,7 @@ export class ProveedorService {
   }
 
   updateProveedor(id: number, proveedorRequest: ProveedorRequest): Observable<ProveedorResponse> {
-    return this.http.put<ProveedorResponse>(`${this.apiUrl}/${id}`, proveedorRequest);
+    return this.http.patch<ProveedorResponse>(`${this.apiUrl}/${id}`, proveedorRequest);
   }
 
   deleteByIdProveedor(id: number): Observable<void> {

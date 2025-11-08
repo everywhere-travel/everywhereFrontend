@@ -114,6 +114,12 @@ export class PersonasComponent implements OnInit {
           icon: 'fas fa-clipboard-check',
           route: '/estado-cotizacion',
           moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-cube',
+          route: '/categorias',
         }
       ]
     },
@@ -342,7 +348,7 @@ export class PersonasComponent implements OnInit {
 
   crearPersonaJuridica(): void {
   this.cerrarModalSeleccionTipo();
-  this.router.navigate(['/juridico/detalles', 'nuevo']);
+  this.router.navigate(['/juridico/detalle', 'nuevo']);
   }
 
   // ============ CLIENTE TABLE EVENTOS ============
@@ -356,7 +362,7 @@ export class PersonasComponent implements OnInit {
     if (cliente.tipo === 'natural') {
       this.router.navigate(['/personas/detalle', cliente.id]);
     } else {
-      this.router.navigate(['/juridico/detalles', cliente.id]);
+      this.router.navigate(['/juridico/detalle', cliente.id]);
     }
   }
 
@@ -446,7 +452,7 @@ export class PersonasComponent implements OnInit {
     if (cliente.tipo === 'natural') {
       this.router.navigate(['/personas/detalle', cliente.id]);
     } else {
-      this.router.navigate(['/juridico/detalles', cliente.id]);
+      this.router.navigate(['/juridico/detalle', cliente.id]);
     }
     this.cerrarModalDetalles();
   }

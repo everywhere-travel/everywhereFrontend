@@ -368,6 +368,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     const subscription = this.detalleDocumentoService.findByPersonaId(this.documento.personaId)
       .pipe(
         catchError(error => {
+          console.error('❌ Error al cargar detalles de documento:', error);
           return of([]);
         })
       )
@@ -647,8 +648,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   onDetalleDocumentoChange(event: any): void {
     const detalleId = event.target.value;
     if (detalleId) {
-      const detalle = this.getDetalleDocumentoInfo(Number(detalleId));
-      console.log('Detalle de documento seleccionado:', detalle);
+      const detalle = this.getDetalleDocumentoInfo(Number(detalleId)); 
     }
   }
 }

@@ -25,7 +25,7 @@ export class OperadorService {
   }
 
   updateOperador(id: number, operadorRequest: any): Observable<OperadorResponse> {
-    return this.http.put<OperadorResponse>(`${this.apiUrl}/${id}`, operadorRequest);
+    return this.http.patch<OperadorResponse>(`${this.apiUrl}/${id}`, operadorRequest);
   }
 
   deleteByIdOperador(id: number): Observable<void> {

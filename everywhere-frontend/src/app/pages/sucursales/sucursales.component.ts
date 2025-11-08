@@ -322,7 +322,8 @@ export class SucursalesComponent implements OnInit {
       descripcion: ['', this.optionalMinLength(3)],
       direccion: ['', this.optionalMinLength(5)],
       telefono: ['', this.optionalMinLength(7)],
-      email: ['', this.optionalEmail()]
+      email: ['', this.optionalEmail()],
+      estado: [false] // Sin valor por defecto, usuario debe elegir
     });
   }
 
@@ -385,8 +386,7 @@ export class SucursalesComponent implements OnInit {
 
   crearSucursal(): void {
     const sucursalData: SucursalRequest = {
-      ...this.sucursalForm.value,
-      estado: true
+      ...this.sucursalForm.value
     };
 
     this.loading = true;
@@ -406,8 +406,7 @@ export class SucursalesComponent implements OnInit {
   actualizarSucursal(): void {
     if (this.sucursalSeleccionada) {
       const sucursalData: SucursalRequest = {
-        ...this.sucursalForm.value,
-        estado: this.sucursalSeleccionada.estado
+        ...this.sucursalForm.value
       };
 
       this.loading = true;

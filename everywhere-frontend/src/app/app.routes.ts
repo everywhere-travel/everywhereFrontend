@@ -39,7 +39,7 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'juridico/detalles/:id',
+    path: 'juridico/detalle/:id',
     loadComponent: () =>
       import('./pages/detalle-juridico/detalle-juridico.component').then(m => m.DetalleJuridicoComponent),
     canActivate: [authGuard]

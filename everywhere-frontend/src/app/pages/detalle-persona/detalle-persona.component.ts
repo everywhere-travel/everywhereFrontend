@@ -336,6 +336,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       this.personaId = null;
       this.isLoading = false;
       this.personaNaturalForm.reset();
+      this.loadDatosParaCreacion();
       return;
     }
 
