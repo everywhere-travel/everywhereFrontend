@@ -40,18 +40,88 @@ export class CategoriasComponent implements OnInit {
 
   // Sidebar Configuration
   sidebarCollapsed = false;
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
+    {
+      id: 'clientes',
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
+      moduleKey: 'PERSONAS'
+    },
+    {
+      id: 'cotizaciones',
+      title: 'Cotizaciones',
+      icon: 'fas fa-file-invoice',
+      route: '/cotizaciones',
+      moduleKey: 'COTIZACIONES'
+    },
+    {
+      id: 'liquidaciones',
+      title: 'Liquidaciones',
+      icon: 'fas fa-credit-card',
+      route: '/liquidaciones',
+      moduleKey: 'LIQUIDACIONES'
+    },
+    {
+      id: 'documentos',
+      title: 'Documentos de clientes',
+      icon: 'fas fa-file-alt',
+      route: '/documentos',
+      moduleKey: 'DOCUMENTOS'
+    },
+    {
+      id: 'documentos-cobranza',
+      title: 'Documentos de Cobranza',
+      icon: 'fas fa-file-contract',
+      route: '/documentos-cobranza',
+      moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
+      id: 'categorias',
+      title: 'Gestion de Categorias',
+      icon: 'fas fa-box',
+      active: true,
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Persona',
+          icon: 'fas fa-users',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
+        },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
+        }
+      ]
+    },
     {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
-      active: true,
       children: [
         {
           id: 'productos',
@@ -73,20 +143,20 @@ export class CategoriasComponent implements OnInit {
           icon: 'fas fa-headset',
           route: '/operadores',
           moduleKey: 'OPERADOR'
-        },
+        }
+      ]
+    },
+    {
+      id: 'organización',
+      title: 'Organización',
+      icon: 'fas fa-sitemap',
+      children: [
         {
-          id: 'formas-pago',
-          title: 'Formas De Pago',
-          icon: 'fas fa-money-bill-wave',
-          route: '/formas-pago',
-          moduleKey: 'FORMAS_PAGO'
-        },
-        {
-          id: 'categorias',
-          title: 'Categorías',
-          icon: 'fas fa-tags',
-          route: '/categorias',
-          moduleKey: 'CATEGORIAS'
+          id: 'sucursales',
+          title: 'Sucursales',
+          icon: 'fas fa-building',
+          route: '/sucursales',
+          moduleKey: 'SUCURSALES'
         }
       ]
     }
@@ -219,8 +289,10 @@ export class CategoriasComponent implements OnInit {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
 
-  onSidebarItemClick(event: any): void {
-    // Manejar clicks en sidebar si es necesario
+  onSidebarItemClick(item: ExtendedSidebarMenuItem): void {
+    if (item.route) {
+      this.router.navigate([item.route]);
+    }
   }
 
   // =================================================================

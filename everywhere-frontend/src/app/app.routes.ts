@@ -45,18 +45,6 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'viajero',
-    loadComponent: () =>
-      import('./pages/viajero/viajero.component').then(m => m.ViajeroComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'viajero-frecuente',
-    loadComponent: () =>
-      import('./pages/viajero-frecuente/viajero-frecuente').then(m => m.ViajeroFrecuente),
-    canActivate: [authGuard]
-  },
-  {
     path: 'cotizaciones',
     loadComponent: () =>
       import('./pages/cotizaciones/cotizaciones.component').then(m => m.CotizacionesComponent),
@@ -134,12 +122,6 @@ export const routes: Routes = [
   {
     path: 'operadores',
     component: OperadoresComponent,
-    canActivate: [authGuard]
-  },
-  {
-    path: 'reportes',
-    loadComponent: () =>
-      import('./pages/reportes/reportes.component').then(m => m.ReportesComponent),
     canActivate: [authGuard]
   },
   {
