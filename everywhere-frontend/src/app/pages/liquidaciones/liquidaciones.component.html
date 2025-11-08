@@ -274,7 +274,7 @@
             <table class="w-full">
               <!-- Table Header -->
               <thead class="bg-gray-50">
-                <tr>
+                <tr><!--
                   <th class="w-12 p-5 text-center">
                     <label class="relative inline-block cursor-pointer">
                       <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
@@ -287,7 +287,7 @@
                         <i class="fas fa-minus text-white text-xs" [class.hidden]="!someSelected || allSelected"></i>
                       </span>
                     </label>
-                  </th>
+                  </th>-->
                   <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Número
                   </th>
@@ -319,7 +319,7 @@
               <tbody class="bg-white divide-y divide-gray-200">
                 <tr *ngFor="let liquidacion of filteredLiquidaciones; trackBy: trackByLiquidacion"
                   class="hover:bg-gray-50 transition-colors duration-200">
-                  <!-- Checkbox -->
+                  <!-- Checkbox
                   <td class="p-5 text-center">
                     <label class="relative inline-block cursor-pointer">
                       <input type="checkbox" [checked]="isSelected(liquidacion.id)"
@@ -331,7 +331,7 @@
                         <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(liquidacion.id)"></i>
                       </span>
                     </label>
-                  </td>
+                  </td>-->
                   <!-- Número -->
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center">
@@ -381,7 +381,7 @@
                   <!-- Producto -->
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-900">
-                      {{ liquidacion.producto?.descripcion || 'Sin producto' }}
+                      {{ liquidacion.producto?.tipo || 'Sin producto' }}
                     </div>
                   </td>
                   <!-- Forma Pago -->
@@ -485,8 +485,8 @@
                 <div class="text-sm text-gray-600 mb-2" *ngIf="liquidacion.cotizacion">
                   <i class="fas fa-file-invoice mr-2 text-blue-500"></i>
                   {{ liquidacion.cotizacion.codigoCotizacion }}
-                  <div class="text-xs text-gray-500 ml-6" *ngIf="liquidacion.cotizacion?.personas">
-                    {{ getPersonaDisplayName(liquidacion.cotizacion.personas?.id || 0) }}
+                  <div class="text-xs text-gray-500 ml-6" *ngIf="liquidacion.cotizacion.personas">
+                    {{ getPersonaDisplayName(liquidacion.cotizacion.personas.id || 0) }}
                   </div>
                 </div>
               </div>

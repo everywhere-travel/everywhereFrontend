@@ -52,21 +52,14 @@ export class PersonasComponent implements OnInit {
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
     {
       id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
       active: true,
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        }
-      ]
+      moduleKey: 'PERSONAS'
     },
     {
       id: 'cotizaciones',
@@ -93,20 +86,26 @@ export class PersonasComponent implements OnInit {
       id: 'documentos-cobranza',
       title: 'Documentos de Cobranza',
       icon: 'fas fa-file-contract',
-      route: '/documento-cobranza',
+      route: '/documentos-cobranza',
       moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {
       id: 'categorias',
-      title: 'Categorias',
+      title: 'Gestion de Categorias',
       icon: 'fas fa-box',
       children: [
         {
           id: 'categorias-persona',
           title: 'Categorias de Persona',
-          icon: 'fas fa-cube',
+          icon: 'fas fa-users',
           route: '/categorias-persona',
           moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
         },
         {
           id: 'estado-cotizacion',
@@ -114,6 +113,13 @@ export class PersonasComponent implements OnInit {
           icon: 'fas fa-clipboard-check',
           route: '/estado-cotizacion',
           moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
         }
       ]
     },
@@ -151,32 +157,11 @@ export class PersonasComponent implements OnInit {
       icon: 'fas fa-sitemap',
       children: [
         {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
           route: '/sucursales',
           moduleKey: 'SUCURSALES'
-        }
-      ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
         }
       ]
     }
@@ -342,7 +327,7 @@ export class PersonasComponent implements OnInit {
 
   crearPersonaJuridica(): void {
   this.cerrarModalSeleccionTipo();
-  this.router.navigate(['/juridico/detalles', 'nuevo']);
+  this.router.navigate(['/juridico/detalle', 'nuevo']);
   }
 
   // ============ CLIENTE TABLE EVENTOS ============
@@ -356,7 +341,7 @@ export class PersonasComponent implements OnInit {
     if (cliente.tipo === 'natural') {
       this.router.navigate(['/personas/detalle', cliente.id]);
     } else {
-      this.router.navigate(['/juridico/detalles', cliente.id]);
+      this.router.navigate(['/juridico/detalle', cliente.id]);
     }
   }
 
@@ -446,7 +431,7 @@ export class PersonasComponent implements OnInit {
     if (cliente.tipo === 'natural') {
       this.router.navigate(['/personas/detalle', cliente.id]);
     } else {
-      this.router.navigate(['/juridico/detalles', cliente.id]);
+      this.router.navigate(['/juridico/detalle', cliente.id]);
     }
     this.cerrarModalDetalles();
   }

@@ -1,7 +1,7 @@
 <div class="dashboard-layout">
   <!-- Header with reusable component -->
-  <app-dashboard-header 
-    [data]="headerData" 
+  <app-dashboard-header
+    [data]="headerData"
     (refreshClicked)="onHeaderRefresh()"
     (logoutClicked)="logout()">
   </app-dashboard-header>
@@ -17,10 +17,10 @@
         <h3>Módulos del Sistema</h3>
         <p>Accede a todas las funcionalidades principales</p>
       </div>
-      
-      <div class="modules-grid">  
-        <app-module-card 
-          *ngFor="let module of modules" 
+
+      <div class="modules-grid">
+        <app-module-card
+          *ngFor="let module of modules"
           [data]="module">
         </app-module-card>
       </div>

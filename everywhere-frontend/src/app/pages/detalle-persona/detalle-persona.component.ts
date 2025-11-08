@@ -152,28 +152,21 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
   // Sidebar Configuration
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
     {
       id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
       active: true,
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        }
-      ]
+      moduleKey: 'PERSONAS'
     },
     {
       id: 'cotizaciones',
@@ -204,6 +197,40 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {
+      id: 'categorias',
+      title: 'Gestion de Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Persona',
+          icon: 'fas fa-users',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
+        },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
+        }
+      ]
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
@@ -227,7 +254,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores',
-          moduleKey: 'OPERADORES'
+          moduleKey: 'OPERADOR'
         }
       ]
     },
@@ -237,13 +264,6 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       icon: 'fas fa-sitemap',
       children: [
         {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
@@ -251,23 +271,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           moduleKey: 'SUCURSALES'
         }
       ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
-        }
-      ]
     }
   ];
-
   private subscriptions = new Subscription();
 
   constructor() {
@@ -336,6 +341,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       this.personaId = null;
       this.isLoading = false;
       this.personaNaturalForm.reset();
+      this.loadDatosParaCreacion();
       return;
     }
 

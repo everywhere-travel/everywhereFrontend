@@ -42,41 +42,20 @@ export class FormaPagoComponent implements OnInit {
 
   // Sidebar Configuration
   sidebarCollapsed = false;
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
     {
       id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        },
-        {
-          id: 'viajeros',
-          title: 'Viajeros',
-          icon: 'fas fa-passport',
-          route: '/viajero',
-          moduleKey: 'VIAJEROS'
-        },
-        {
-          id: 'viajeros-frecuentes',
-          title: 'Viajeros Frecuentes',
-          icon: 'fas fa-crown',
-          route: '/viajero-frecuente',
-          moduleKey: 'VIAJEROS'
-        }
-      ]
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
+      moduleKey: 'PERSONAS'
     },
     {
       id: 'cotizaciones',
@@ -107,10 +86,43 @@ export class FormaPagoComponent implements OnInit {
       moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {
+      id: 'categorias',
+      title: 'Gestion de Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Persona',
+          icon: 'fas fa-users',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
+        },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
+        }
+      ]
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
-      active: true,
       children: [
         {
           id: 'productos',
@@ -127,14 +139,6 @@ export class FormaPagoComponent implements OnInit {
           moduleKey: 'PROVEEDORES'
         },
         {
-          id: 'formas-pago',
-          title: 'Forma De Pago',
-          icon: 'fas fa-money-bill-wave',
-          route: '/formas-pago',
-          active: true,
-          moduleKey: 'FORMAS_PAGO'
-        },
-        {
           id: 'operadores',
           title: 'Operadores',
           icon: 'fas fa-headset',
@@ -149,32 +153,11 @@ export class FormaPagoComponent implements OnInit {
       icon: 'fas fa-sitemap',
       children: [
         {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
           route: '/sucursales',
           moduleKey: 'SUCURSALES'
-        }
-      ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
         }
       ]
     }
@@ -320,8 +303,10 @@ export class FormaPagoComponent implements OnInit {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
 
-  onSidebarItemClick(event: any): void {
-    // Manejar clicks en sidebar si es necesario
+  onSidebarItemClick(item: ExtendedSidebarMenuItem): void {
+    if (item.route) {
+      this.router.navigate([item.route]);
+    }
   }
 
   // =================================================================

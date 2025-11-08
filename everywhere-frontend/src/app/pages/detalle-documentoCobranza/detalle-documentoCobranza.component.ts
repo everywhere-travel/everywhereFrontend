@@ -74,41 +74,20 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   editingDetalleId: number | null = null;
 
   // Sidebar Configuration
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
     {
       id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        },
-        {
-          id: 'viajeros',
-          title: 'Viajeros',
-          icon: 'fas fa-passport',
-          route: '/viajero',
-          moduleKey: 'VIAJEROS'
-        },
-        {
-          id: 'viajeros-frecuentes',
-          title: 'Viajeros Frecuentes',
-          icon: 'fas fa-crown',
-          route: '/viajero-frecuente',
-          moduleKey: 'VIAJEROS'
-        }
-      ]
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
+      moduleKey: 'PERSONAS'
     },
     {
       id: 'cotizaciones',
@@ -135,9 +114,43 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       id: 'documentos-cobranza',
       title: 'Documentos de Cobranza',
       icon: 'fas fa-file-contract',
-      route: '/documentos-cobranza',
       active: true,
+      route: '/documentos-cobranza',
       moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
+      id: 'categorias',
+      title: 'Gestion de Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Persona',
+          icon: 'fas fa-users',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
+        },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
+        }
+      ]
     },
     {
       id: 'recursos',
@@ -159,13 +172,6 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
           moduleKey: 'PROVEEDORES'
         },
         {
-          id: 'formas-pago',
-          title: 'Forma De Pago',
-          icon: 'fas fa-money-bill-wave',
-          route: '/formas-pago',
-          moduleKey: 'FORMAS_PAGO'
-        },
-        {
           id: 'operadores',
           title: 'Operadores',
           icon: 'fas fa-headset',
@@ -180,13 +186,6 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       icon: 'fas fa-sitemap',
       children: [
         {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
@@ -194,23 +193,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
           moduleKey: 'SUCURSALES'
         }
       ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
-        }
-      ]
     }
   ];
-
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   private subscriptions = new Subscription();
@@ -368,6 +352,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     const subscription = this.detalleDocumentoService.findByPersonaId(this.documento.personaId)
       .pipe(
         catchError(error => {
+          console.error('❌ Error al cargar detalles de documento:', error);
           return of([]);
         })
       )
@@ -648,7 +633,6 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     const detalleId = event.target.value;
     if (detalleId) {
       const detalle = this.getDetalleDocumentoInfo(Number(detalleId));
-      console.log('Detalle de documento seleccionado:', detalle);
     }
   }
 }
