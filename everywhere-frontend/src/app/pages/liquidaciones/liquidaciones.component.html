@@ -317,7 +317,7 @@
 
               <!-- Table Body -->
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr *ngFor="let liquidacion of filteredLiquidaciones; trackBy: trackByLiquidacion"
+                <tr *ngFor="let liquidacion of paginatedLiquidaciones; trackBy: trackByLiquidacion"
                   class="hover:bg-gray-50 transition-colors duration-200">
                   <!-- Checkbox
                   <td class="p-5 text-center">
@@ -441,7 +441,7 @@
         <!-- Cards View -->
         <div *ngIf="currentView === 'cards'"
           class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div *ngFor="let liquidacion of filteredLiquidaciones; trackBy: trackByLiquidacion"
+          <div *ngFor="let liquidacion of paginatedLiquidaciones; trackBy: trackByLiquidacion"
             class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group relative"
             [class.border-red-500]="isSelected(liquidacion.id)" [class.shadow-red-200]="isSelected(liquidacion.id)">
             <!-- Checkbox de selección -->
@@ -564,7 +564,7 @@
 
         <!-- List View -->
         <div *ngIf="currentView === 'list'" class="space-y-2">
-          <div *ngFor="let liquidacion of filteredLiquidaciones; trackBy: trackByLiquidacion"
+          <div *ngFor="let liquidacion of paginatedLiquidaciones; trackBy: trackByLiquidacion"
             class="bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-all duration-200 p-4"
             [class.border-red-500]="isSelected(liquidacion.id)" [class.bg-red-50]="isSelected(liquidacion.id)">
             <div class="flex items-center justify-between">
@@ -930,12 +930,12 @@
                   {{ (cotizacion.cantAdultos || 0) + (cotizacion.cantNinos || 0) }} PAX
                 </span>
               </div>
-            </div>
+            </div><!--
             <div class="text-right">
               <div class="text-xl font-bold text-gray-900">
                 {{ '0.00' | currency:'PEN':'symbol':'1.2-2' }}
               </div>
-            </div>
+            </div>-->
           </div>
         </div>
 

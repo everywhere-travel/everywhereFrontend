@@ -950,6 +950,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     return Math.ceil(this.totalItems / itemsPerPageNum);
   }
 
+  get paginatedLiquidaciones(): LiquidacionResponse[] {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * itemsPerPageNum;
+    const endIndex = startIndex + itemsPerPageNum;
+    return this.filteredLiquidaciones.slice(startIndex, endIndex);
+  }
+
   onItemsPerPageChange(): void {
     this.itemsPerPage = Number(this.itemsPerPage);
     this.currentPage = 1;
