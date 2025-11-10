@@ -67,6 +67,35 @@
 
     <!-- Main Content -->
     <main class="max-w-full mx-auto px-6 py-6 space-y-6">
+      <!-- Alert System -->
+      <div class="fixed top-4 right-4 z-[9999] space-y-3 max-w-md">
+        <!-- Success Alert -->
+        <div *ngIf="showSuccessAlert"
+          class="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 rounded-xl shadow-lg border border-green-700 flex items-start gap-4 animate-in fade-in slide-in-from-top duration-300">
+          <i class="fas fa-check-circle mt-1 flex-shrink-0 text-lg"></i>
+          <div class="flex-1">
+            <p class="font-medium">{{ successAlertMessage }}</p>
+          </div>
+          <button (click)="hideAlerts()"
+            class="text-green-100 hover:text-white transition-colors flex-shrink-0">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <!-- Error Alert -->
+        <div *ngIf="showErrorAlert"
+          class="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-6 rounded-xl shadow-lg border border-red-700 flex items-start gap-4 animate-in fade-in slide-in-from-top duration-300">
+          <i class="fas fa-exclamation-circle mt-1 flex-shrink-0 text-lg"></i>
+          <div class="flex-1">
+            <p class="font-medium">{{ errorAlertMessage }}</p>
+          </div>
+          <button (click)="hideAlerts()"
+            class="text-red-100 hover:text-white transition-colors flex-shrink-0">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
       <!-- Search & Filters Panel -->
       <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
         <!-- Panel Header -->

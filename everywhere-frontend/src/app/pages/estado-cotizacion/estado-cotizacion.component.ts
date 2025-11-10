@@ -182,6 +182,12 @@ export class EstadoCotizacionComponent implements OnInit {
   estadoCotizacionSeleccionada: EstadoCotizacionResponse | null = null;
   estadoCotizacionAEliminar: EstadoCotizacionResponse | null = null;
 
+  // Alert system
+  errorAlertMessage: string = '';
+  successAlertMessage: string = '';
+  showErrorAlert: boolean = false;
+  showSuccessAlert: boolean = false;
+
   // Error modal data
   errorModalData: ErrorModalData | null = null;
   backendErrorData: BackendErrorResponse | null = null;
@@ -366,12 +372,17 @@ export class EstadoCotizacionComponent implements OnInit {
 
       this.estadoCotizacionService.createEstadoCotizacion(estadoCotizacionRequest).subscribe({
         next: (response) => {
+          this.showSuccess('Estado de Cotización creado correctamente');
           this.loadEstadosCotizacion();
           this.cerrarModal();
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al crear estado de cotizacion:', error);
+          const errorMessage = error?.error?.detail ||
+                              error?.error?.message ||
+                              error?.message ||
+                              'Error al crear el estado de cotización';
+          this.showError(errorMessage);
           this.loading = false;
         }
       });
@@ -385,12 +396,17 @@ export class EstadoCotizacionComponent implements OnInit {
 
       this.estadoCotizacionService.updateEstadoCotizacion(this.estadoCotizacionSeleccionada.id, estadoCotizacionRequest).subscribe({
         next: (response) => {
+          this.showSuccess('Estado de Cotización actualizado correctamente');
           this.loadEstadosCotizacion();
           this.cerrarModal();
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al actualizar estado de cotizacion:', error);
+          const errorMessage = error?.error?.detail ||
+                              error?.error?.message ||
+                              error?.message ||
+                              'Error al actualizar el estado de cotización';
+          this.showError(errorMessage);
           this.loading = false;
         }
       });
@@ -440,20 +456,19 @@ export class EstadoCotizacionComponent implements OnInit {
     this.loading = true;
     this.estadoCotizacionService.deleteByIdEstadoCotizacion(id).subscribe({
       next: () => {
+        this.showSuccess('Estado de Cotización eliminado correctamente');
         this.cerrarModalEliminar();
         this.loadEstadosCotizacion();
+        this.loading = false;
       },
       error: (error) => {
         this.loading = false;
+        const errorMessage = error?.error?.detail ||
+                            error?.error?.message ||
+                            error?.message ||
+                            'Error al eliminar el estado de cotización';
+        this.showError(errorMessage);
         this.cerrarModalEliminar();
-
-        // Usar el servicio de manejo de errores
-        const { modalData, backendError } = this.errorHandler.handleHttpError(error, 'eliminar estado cotizacion');
-
-        this.errorModalData = modalData;
-        this.backendErrorData = backendError || null;
-        this.mostrarModalError = true;
-
         console.error('Error al eliminar estado de cotizacion:', error);
       }
     });
@@ -750,5 +765,31 @@ export class EstadoCotizacionComponent implements OnInit {
 
   trackByEstadoCotizacionId(index: number, item: EstadoCotizacionTabla): number {
     return item.id;
+  }
+
+  // ===== ALERT SYSTEM =====
+  private showError(message: string): void {
+    this.errorAlertMessage = message;
+    this.showErrorAlert = true;
+    this.showSuccessAlert = false;
+    
+    setTimeout(() => {
+      this.showErrorAlert = false;
+    }, 5000);
+  }
+
+  private showSuccess(message: string): void {
+    this.successAlertMessage = message;
+    this.showSuccessAlert = true;
+    this.showErrorAlert = false;
+    
+    setTimeout(() => {
+      this.showSuccessAlert = false;
+    }, 3000);
+  }
+
+  public hideAlerts(): void {
+    this.showErrorAlert = false;
+    this.showSuccessAlert = false;
   }
 }
