@@ -172,7 +172,6 @@ export class ProductosComponent implements OnInit {
 
   // Forms
   productoForm!: FormGroup;
-
   // Control variables
   loading = false;
   mostrarModalCrear = false;
@@ -181,6 +180,12 @@ export class ProductosComponent implements OnInit {
   editandoProducto = false;
   productoSeleccionado: ProductoResponse | null = null;
   productoAEliminar: ProductoResponse | null = null;
+
+  // Alert messages
+  errorMessage: string = '';
+  successMessage: string = '';
+  showErrorMessage: boolean = false;
+  showSuccessMessage: boolean = false;
 
   // Error modal data
   errorModalData: ErrorModalData | null = null;
@@ -447,20 +452,19 @@ export class ProductosComponent implements OnInit {
     this.productoService.deleteByIdProducto(id).subscribe({
       next: () => {
         this.cerrarModalEliminar();
+        this.showSuccess('Producto eliminado correctamente');
         this.loadProductos();
       },
       error: (error) => {
         this.loading = false;
         this.cerrarModalEliminar();
 
-        // Usar el servicio de manejo de errores
-        const { modalData, backendError } = this.errorHandler.handleHttpError(error, 'eliminar producto');
-
-        this.errorModalData = modalData;
-        this.backendErrorData = backendError || null;
-        this.mostrarModalError = true;
-
-        console.error('Error al eliminar producto:', error);
+        // Capturar error con RFC 7807 priority: detail > message > fallback
+        const errorMessage = error?.error?.detail ||
+                            error?.error?.message ||
+                            error?.message ||
+                            'Error al eliminar producto';
+        this.showError(errorMessage);
       }
     });
   }
@@ -835,5 +839,28 @@ export class ProductosComponent implements OnInit {
       pages.push(i);
     }
     return pages;
+  }
+
+  private showError(message: string): void {
+    this.errorMessage = message;
+    this.showErrorMessage = true;
+    this.showSuccessMessage = false;
+    setTimeout(() => {
+      this.showErrorMessage = false;
+    }, 5000);
+  }
+
+  private showSuccess(message: string): void {
+    this.successMessage = message;
+    this.showSuccessMessage = true;
+    this.showErrorMessage = false;
+    setTimeout(() => {
+      this.showSuccessMessage = false;
+    }, 3000);
+  }
+
+  public hideMessages(): void {
+    this.showErrorMessage = false;
+    this.showSuccessMessage = false;
   }
 }

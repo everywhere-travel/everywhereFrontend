@@ -1059,8 +1059,12 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       await this.liquidacionService.deleteLiquidacion(id).toPromise();
       this.showSuccess('Liquidación eliminada exitosamente');
       await this.loadLiquidaciones();
-    } catch (error) {
-      this.showError('Error al eliminar la liquidación');
+    } catch (error: any) {
+      const errorMessage = error?.error?.detail ||    // RFC 7807 format
+                          error?.error?.message ||     // Custom format
+                          error?.message ||             // Error object
+                          'Error al eliminar la liquidación';
+      this.showError(errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -1112,8 +1116,12 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
       await this.loadLiquidaciones();
       this.cerrarFormulario();
-    } catch (error) {
-      this.showError('Error al guardar la liquidación. Por favor, verifique los datos e intente nuevamente.');
+    } catch (error: any) {
+      const errorMessage = error?.error?.detail ||    // RFC 7807 format
+                          error?.error?.message ||     // Custom format
+                          error?.message ||             // Error object
+                          'Error al guardar la liquidación. Por favor, verifique los datos e intente nuevamente.';
+      this.showError(errorMessage);
     } finally {
       this.isLoading = false;
     }

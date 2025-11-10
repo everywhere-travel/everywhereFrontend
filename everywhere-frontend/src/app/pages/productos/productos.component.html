@@ -8,6 +8,35 @@
   <!-- Main Content Area -->
   <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
 
+    <!-- Messages Section -->
+    <div class="fixed top-4 right-4 z-[9999] space-y-3 max-w-md">
+      <!-- Success Message -->
+      <div *ngIf="showSuccessMessage"
+        class="bg-green-500 text-white px-8 py-5 rounded-xl shadow-2xl flex items-start gap-4 animate-fade-in border-l-4 border-green-300">
+        <i class="fas fa-check-circle text-2xl flex-shrink-0 mt-0.5"></i>
+        <div class="flex-1">
+          <p class="font-semibold text-lg">Éxito</p>
+          <p class="text-sm mt-1">{{ successMessage }}</p>
+        </div>
+        <button (click)="hideMessages()" class="hover:text-green-200 flex-shrink-0">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="showErrorMessage"
+        class="bg-red-600 text-white px-8 py-6 rounded-xl shadow-2xl flex items-start gap-4 animate-fade-in border-l-4 border-red-300">
+        <i class="fas fa-exclamation-triangle text-3xl flex-shrink-0 mt-1"></i>
+        <div class="flex-1">
+          <p class="font-semibold text-lg">Error</p>
+          <p class="text-sm mt-2 break-words whitespace-pre-wrap">{{ errorMessage }}</p>
+        </div>
+        <button (click)="hideMessages()" class="hover:text-red-200 flex-shrink-0">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+    </div>
+
     <!-- Header Section -->
     <header
       class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
