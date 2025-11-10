@@ -1,3 +1,6 @@
+// Servicios de Caché
+export * from './cache.service';
+
 // Servicios de Persona
 export * from './persona/persona.service';
 export * from './natural/persona-natural.service';

@@ -1,14 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { DetalleCotizacionResponse, DetalleCotizacionRequest, DetalleCotizacionPatchRequest } from '../../../shared/models/Cotizacion/detalleCotizacion.model'
 import { environment } from '../../../../environments/environment';
+import { CacheService } from '../cache.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DetalleCotizacionService {
   private apiUrl = `${environment.baseURL}/detalles-cotizacion`;
+  private cacheService = inject(CacheService);
 
   constructor(private http: HttpClient) { }
 
@@ -25,32 +27,29 @@ export class DetalleCotizacionService {
   }
 
   createDetalleCotizacion(cotizacionId: number, detalleCotizacionRequest: DetalleCotizacionRequest): Observable<DetalleCotizacionResponse> {
-    return this.http.post<DetalleCotizacionResponse>(`${this.apiUrl}/cotizacion/${cotizacionId}`, detalleCotizacionRequest);
+    return this.http.post<DetalleCotizacionResponse>(`${this.apiUrl}/cotizacion/${cotizacionId}`, detalleCotizacionRequest).pipe(
+      tap(() => {
+        this.cacheService.invalidatePattern(`/cotizaciones/${cotizacionId}/con-detalles`);
+      })
+    );
   }
 
-  /**
-   * Actualiza un detalle de cotización con PATCH (payloads parciales)
-   * 
-   * @param id ID del detalle a actualizar
-   * @param patchPayload Contiene solo los campos a actualizar
-   * @returns Observable con la respuesta actualizada
-   * 
-   * @example
-   * // Actualizar solo cantidad y descripción
-   * updateDetalleCotizacion(1, { cantidad: 5, descripcion: 'Nuevo valor' })
-   * 
-   * // Actualizar producto y proveedor
-   * updateDetalleCotizacion(1, { productoId: 10, proveedorId: 20 })
-   * 
-   * // Marcar como seleccionado
-   * updateDetalleCotizacion(1, { seleccionado: true })
-   */
   updateDetalleCotizacion(id: number, patchPayload: DetalleCotizacionPatchRequest): Observable<DetalleCotizacionResponse> {
-    return this.http.patch<DetalleCotizacionResponse>(`${this.apiUrl}/${id}`, patchPayload);
+    return this.http.patch<DetalleCotizacionResponse>(`${this.apiUrl}/${id}`, patchPayload).pipe(
+      tap((response) => {
+        if (response.cotizacion?.id) {
+          this.cacheService.invalidatePattern(`/cotizaciones/${response.cotizacion.id}/con-detalles`);
+        }
+      })
+    );
   }
 
   deleteDetalleCotizacion(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => {
+        this.cacheService.invalidatePattern(/\/cotizaciones\/\d+\/con-detalles/);
+      })
+    );
   }
 
 }

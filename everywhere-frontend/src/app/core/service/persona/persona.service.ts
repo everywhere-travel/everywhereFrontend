@@ -1,8 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { personaDisplay, PersonaRequest, PersonaResponse } from '../../../shared/models/Persona/persona.model';
+import { CacheService } from '../cache.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,6 +11,7 @@ import { personaDisplay, PersonaRequest, PersonaResponse } from '../../../shared
 export class PersonaService {
   private baseURL = `${environment.baseURL}/personas`;
   private http = inject(HttpClient);
+  private cacheService = inject(CacheService);
 
   constructor() { }
 
@@ -32,15 +34,21 @@ export class PersonaService {
   }
 
   save(personaRequest: PersonaRequest): Observable<PersonaResponse> {
-    return this.http.post<PersonaResponse>(this.baseURL, personaRequest);
+    return this.http.post<PersonaResponse>(this.baseURL, personaRequest).pipe(
+      tap(() => this.cacheService.invalidateModule('personas'))
+    );
   }
 
   update(id: number, personaRequest: PersonaRequest): Observable<PersonaResponse> {
-    return this.http.patch<PersonaResponse>(`${this.baseURL}/${id}`, personaRequest);
+    return this.http.patch<PersonaResponse>(`${this.baseURL}/${id}`, personaRequest).pipe(
+      tap(() => this.cacheService.invalidateModule('personas'))
+    );
   }
 
   deleteById(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseURL}/${id}`);
+    return this.http.delete<void>(`${this.baseURL}/${id}`).pipe(
+      tap(() => this.cacheService.invalidateModule('personas'))
+    );
   }
 
   findPersonaNaturalOrJuridicaById(id: number): Observable<personaDisplay> {
