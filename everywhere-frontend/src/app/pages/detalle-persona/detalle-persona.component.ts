@@ -654,8 +654,12 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   abrirModalPersonaNatural(): void {
     if (!this.personaNatural) return;
 
+    // Remover documentoInicial si existe (solo es para creación)
+    if (this.personaNaturalForm.get('documentoInicial')) {
+      this.personaNaturalForm.removeControl('documentoInicial');
+    }
+
     this.personaNaturalForm.patchValue({
-      documento: this.personaNatural.documento || '',
       nombres: this.personaNatural.nombres || '',
       apellidosPaterno: this.personaNatural.apellidosPaterno || '',
       apellidosMaterno: this.personaNatural.apellidosMaterno || '',
