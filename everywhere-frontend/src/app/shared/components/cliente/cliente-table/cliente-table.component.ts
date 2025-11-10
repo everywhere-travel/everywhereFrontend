@@ -182,12 +182,7 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   eliminarSeleccionados(): void {
     if (this.selectedItems.length === 0) return;
 
-    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cliente${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
-
-    if (confirm(confirmMessage)) {
-      this.eliminarMasivo.emit([...this.selectedItems]);
-      this.clearSelection();
-    }
+    this.eliminarMasivo.emit([...this.selectedItems]);
   }
 
   cerrarModalEliminar(): void {

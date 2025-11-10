@@ -169,4 +169,13 @@
     </div>
   </div>
 </div>
+
+  <!-- Modal de Confirmación para Eliminación -->
+  <app-error-modal
+    [show]="showConfirmation"
+    [data]="confirmationData"
+    (close)="onCancelDelete()"
+    (confirmed)="onConfirmDelete()">
+  </app-error-modal>
+
 </div>

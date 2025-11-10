@@ -7,6 +7,7 @@ import { AuthServiceService } from '../../core/service/auth/auth.service';
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 import { ClienteDetailModalComponent } from './../../shared/components/cliente/cliente-detail-modal/cliente-detail-modal.component';
 import { ClienteTableComponent } from './../../shared/components/cliente/cliente-table/cliente-table.component';
+import { ErrorModalComponent, ErrorModalData } from '../../shared/components/error-modal/error-modal.component';
 
 interface ExtendedSidebarMenuItem extends SidebarMenuItem {
   moduleKey?: string;
@@ -37,7 +38,8 @@ export interface PersonaTabla {
     CommonModule,
     SidebarComponent,
     ClienteDetailModalComponent,
-    ClienteTableComponent
+    ClienteTableComponent,
+    ErrorModalComponent
   ]
 })
 export class PersonasComponent implements OnInit {
@@ -181,6 +183,17 @@ export class PersonasComponent implements OnInit {
   mostrarModalDetalles: boolean = false;
   mostrarModalSeleccionTipo: boolean = false;
   personaDetalles: PersonaTabla | null = null;
+
+  // Confirmación de eliminación
+  showConfirmation: boolean = false;
+  confirmationData: ErrorModalData = {
+    type: 'warning',
+    title: 'Confirmar eliminación',
+    message: '¿Está seguro de que desea eliminar este cliente?',
+    buttonText: 'Eliminar'
+  };
+  private pendingClienteToDelete: PersonaTabla | null = null;
+  private pendingIdsToDelete: number[] = [];
 
   constructor(
     private personaNaturalService: PersonaNaturalService,
@@ -346,36 +359,66 @@ export class PersonasComponent implements OnInit {
   }
 
   onEliminarCliente(cliente: PersonaTabla): void {
-    if (!confirm(`¿Está seguro de eliminar a ${cliente.nombre}?`)) {
-      return;
-    }
+    this.pendingClienteToDelete = cliente;
+    this.confirmationData = {
+      type: 'warning',
+      title: 'Confirmar eliminación',
+      message: `¿Está seguro de que desea eliminar a ${cliente.nombre}?`,
+      buttonText: 'Eliminar'
+    };
+    this.showConfirmation = true;
+  }
 
-    this.isLoading = true;
+  onConfirmDelete(): void {
+    if (this.pendingClienteToDelete) {
+      const cliente = this.pendingClienteToDelete;
+      this.isLoading = true;
+      this.showConfirmation = false;
 
-    if (cliente.tipo === 'natural') {
-      this.personaNaturalService.deleteById(cliente.id).subscribe({
-        next: () => this.loadPersonas(),
-        error: (error) => {
-          console.error('Error al eliminar persona natural:', error);
-          this.isLoading = false;
-        }
-      });
-    } else {
-      this.personaJuridicaService.deleteById(cliente.id).subscribe({
-        next: () => this.loadPersonas(),
-        error: (error) => {
-          console.error('Error al eliminar persona jurídica:', error);
-          this.isLoading = false;
-        }
-      });
+      if (cliente.tipo === 'natural') {
+        this.personaNaturalService.deleteById(cliente.id).subscribe({
+          next: () => this.loadPersonas(),
+          error: (error) => {
+            console.error('Error al eliminar persona natural:', error);
+            this.isLoading = false;
+          }
+        });
+      } else {
+        this.personaJuridicaService.deleteById(cliente.id).subscribe({
+          next: () => this.loadPersonas(),
+          error: (error) => {
+            console.error('Error al eliminar persona jurídica:', error);
+            this.isLoading = false;
+          }
+        });
+      }
+
+      this.pendingClienteToDelete = null;
+    } else if (this.pendingIdsToDelete.length > 0) {
+      this.showConfirmation = false;
+      this.performMasiveDelete();
     }
   }
 
-  onEliminarMasivo(ids: number[]): void {
-    if (!confirm(`¿Está seguro de eliminar ${ids.length} cliente(s)?`)) {
-      return;
-    }
+  onCancelDelete(): void {
+    this.showConfirmation = false;
+    this.pendingClienteToDelete = null;
+    this.pendingIdsToDelete = [];
+  }
 
+  onEliminarMasivo(ids: number[]): void {
+    this.pendingIdsToDelete = ids;
+    this.confirmationData = {
+      type: 'warning',
+      title: 'Confirmar eliminación masiva',
+      message: `¿Está seguro de que desea eliminar ${ids.length} cliente(s)? Esta acción no se puede deshacer.`,
+      buttonText: 'Eliminar todos'
+    };
+    this.showConfirmation = true;
+  }
+
+  private performMasiveDelete(): void {
+    const ids = this.pendingIdsToDelete;
     this.isLoading = true;
     let eliminados = 0;
     const total = ids.length;
@@ -388,6 +431,7 @@ export class PersonasComponent implements OnInit {
             next: () => {
               eliminados++;
               if (eliminados === total) {
+                this.pendingIdsToDelete = [];
                 this.loadPersonas();
               }
             },
@@ -395,6 +439,7 @@ export class PersonasComponent implements OnInit {
               console.error('Error al eliminar:', error);
               eliminados++;
               if (eliminados === total) {
+                this.pendingIdsToDelete = [];
                 this.loadPersonas();
               }
             }
@@ -404,6 +449,7 @@ export class PersonasComponent implements OnInit {
             next: () => {
               eliminados++;
               if (eliminados === total) {
+                this.pendingIdsToDelete = [];
                 this.loadPersonas();
               }
             },
@@ -411,6 +457,7 @@ export class PersonasComponent implements OnInit {
               console.error('Error al eliminar:', error);
               eliminados++;
               if (eliminados === total) {
+                this.pendingIdsToDelete = [];
                 this.loadPersonas();
               }
             }

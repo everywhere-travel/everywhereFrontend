@@ -62,12 +62,18 @@ export interface BackendErrorResponse {
             </p>
           </div>
           
-          <!-- Botón de cerrar -->
-          <button type="button" (click)="onClose()"
-            [class]="getButtonClass()"
-            class="w-full px-6 py-3 rounded-xl transition-all duration-200 font-medium shadow-lg">
-            <i class="fas fa-check mr-2"></i>{{ data?.buttonText || 'Entendido' }}
-          </button>
+          <!-- Botones -->
+          <div class="flex gap-3">
+            <button type="button" (click)="onClose()"
+              class="flex-1 px-6 py-3 rounded-xl transition-all duration-200 font-medium shadow-lg bg-gray-200 text-gray-700 hover:bg-gray-300">
+              <i class="fas fa-times mr-2"></i>Cancelar
+            </button>
+            <button type="button" (click)="onConfirm()"
+              [class]="getButtonClass()"
+              class="flex-1 px-6 py-3 rounded-xl transition-all duration-200 font-medium shadow-lg">
+              <i [class]="data?.type === 'warning' ? 'fas fa-trash mr-2' : 'fas fa-check mr-2'"></i>{{ data?.buttonText || 'Entendido' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -79,9 +85,15 @@ export class ErrorModalComponent {
   @Input() data: ErrorModalData | null = null;
   @Input() backendError: BackendErrorResponse | null = null;
   @Output() close = new EventEmitter<void>();
+  @Output() confirmed = new EventEmitter<void>();
 
   onClose(): void {
     this.close.emit();
+  }
+
+  onConfirm(): void {
+    this.confirmed.emit();
+    this.onClose();
   }
 
   onBackdropClick(event: Event): void {
@@ -127,7 +139,7 @@ export class ErrorModalComponent {
   getButtonClass(): string {
     switch (this.data?.type) {
       case 'warning':
-        return 'bg-gradient-to-r from-yellow-600 to-yellow-700 text-white hover:from-yellow-700 hover:to-yellow-800';
+        return 'bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800';
       case 'info':
         return 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800';
       case 'success':
