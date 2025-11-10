@@ -185,6 +185,12 @@ export class ProveedorComponent implements OnInit {
   errorModalData: ErrorModalData | null = null;
   backendErrorData: BackendErrorResponse | null = null;
 
+  // Alert messages
+  errorMessage: string = '';
+  successMessage: string = '';
+  showErrorMessage: boolean = false;
+  showSuccessMessage: boolean = false;
+
   searchTerm = '';
   currentView: 'table' | 'cards' | 'list' = 'table';
 
@@ -365,13 +371,18 @@ export class ProveedorComponent implements OnInit {
 
       this.proveedorService.createProveedor(proveedorRequest).subscribe({
         next: (response) => {
+          this.showSuccess('Proveedor creado correctamente');
           this.loadProveedores();
           this.cerrarModal();
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al crear proveedor:', error);
           this.loading = false;
+          const errorMessage = error?.error?.detail ||
+                              error?.error?.message ||
+                              error?.message ||
+                              'Error al crear proveedor';
+          this.showError(errorMessage);
         }
       });
     }
@@ -384,13 +395,18 @@ export class ProveedorComponent implements OnInit {
 
       this.proveedorService.updateProveedor(this.proveedorSeleccionado.id, proveedorRequest).subscribe({
         next: (response) => {
+          this.showSuccess('Proveedor actualizado correctamente');
           this.loadProveedores();
           this.cerrarModal();
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al actualizar proveedor:', error);
           this.loading = false;
+          const errorMessage = error?.error?.detail ||
+                              error?.error?.message ||
+                              error?.message ||
+                              'Error al actualizar proveedor';
+          this.showError(errorMessage);
         }
       });
     }
@@ -440,20 +456,19 @@ export class ProveedorComponent implements OnInit {
     this.proveedorService.deleteByIdProveedor(id).subscribe({
       next: () => {
         this.cerrarModalEliminar();
+        this.showSuccess('Proveedor eliminado correctamente');
         this.loadProveedores();
       },
       error: (error) => {
         this.loading = false;
         this.cerrarModalEliminar();
 
-        // Usar el servicio de manejo de errores
-        const { modalData, backendError } = this.errorHandler.handleHttpError(error, 'eliminar proveedor');
-
-        this.errorModalData = modalData;
-        this.backendErrorData = backendError || null;
-        this.mostrarModalError = true;
-
-        console.error('Error al eliminar proveedor:', error);
+        // Capturar error con RFC 7807 priority: detail > message > fallback
+        const errorMessage = error?.error?.detail ||
+                            error?.error?.message ||
+                            error?.message ||
+                            'Error al eliminar proveedor';
+        this.showError(errorMessage);
       }
     });
   }
@@ -749,5 +764,28 @@ export class ProveedorComponent implements OnInit {
 
   trackByProveedorId(index: number, item: ProveedorTabla): number {
     return item.id;
+  }
+
+  private showError(message: string): void {
+    this.errorMessage = message;
+    this.showErrorMessage = true;
+    this.showSuccessMessage = false;
+    setTimeout(() => {
+      this.showErrorMessage = false;
+    }, 5000);
+  }
+
+  private showSuccess(message: string): void {
+    this.successMessage = message;
+    this.showSuccessMessage = true;
+    this.showErrorMessage = false;
+    setTimeout(() => {
+      this.showSuccessMessage = false;
+    }, 3000);
+  }
+
+  public hideMessages(): void {
+    this.showErrorMessage = false;
+    this.showSuccessMessage = false;
   }
 }
