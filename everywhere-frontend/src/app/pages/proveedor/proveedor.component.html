@@ -8,6 +8,43 @@
   <!-- Main Content Area -->
   <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
 
+    <!-- Alert Messages -->
+    <div class="fixed top-4 right-4 z-[9999] space-y-3 max-w-md">
+      <!-- Success Alert -->
+      <div *ngIf="showSuccessMessage"
+        class="bg-gradient-to-r from-green-600 to-green-700 border border-green-500 rounded-2xl p-4 shadow-lg backdrop-blur-sm animate-in slide-in-from-top text-white">
+        <div class="flex items-start gap-3">
+          <div class="flex-shrink-0 pt-0.5">
+            <i class="fas fa-check-circle text-2xl"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-lg font-bold">Éxito</h3>
+            <p class="text-base mt-1 break-words whitespace-pre-wrap">{{ successMessage }}</p>
+          </div>
+          <button (click)="hideMessages()" class="text-white hover:text-gray-200 transition-colors">
+            <i class="fas fa-times text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Error Alert -->
+      <div *ngIf="showErrorMessage"
+        class="bg-gradient-to-r from-red-600 to-red-700 border border-red-500 rounded-2xl p-4 shadow-lg backdrop-blur-sm animate-in slide-in-from-top text-white py-6">
+        <div class="flex items-start gap-3">
+          <div class="flex-shrink-0 pt-0.5">
+            <i class="fas fa-exclamation-circle text-3xl"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="text-lg font-bold">Error</h3>
+            <p class="text-base mt-1 break-words whitespace-pre-wrap">{{ errorMessage }}</p>
+          </div>
+          <button (click)="hideMessages()" class="text-white hover:text-gray-200 transition-colors">
+            <i class="fas fa-times text-lg"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Header Section -->
     <header
       class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">

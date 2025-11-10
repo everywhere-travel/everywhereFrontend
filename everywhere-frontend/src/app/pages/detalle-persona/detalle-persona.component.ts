@@ -8,6 +8,7 @@ import { catchError, finalize, tap, switchMap } from 'rxjs/operators';
 // Services
 import { LoadingService } from '../../core/service/loading.service';
 import { AuthorizationService } from '../../core/service/authorization.service';
+import { ErrorHandlerService } from '../../core/service/error-handler.service';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
@@ -34,6 +35,7 @@ import { CategoriaPersonaResponse } from '../../shared/models/CategoriaPersona/c
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { ErrorModalComponent, ErrorModalData } from '../../shared/components/error-modal/error-modal.component';
 
 // Interfaces
 interface ExtendedSidebarMenuItem extends SidebarMenuItem {
@@ -47,10 +49,18 @@ interface CodigoPais {
   dialCode: string;
 }
 
+interface DocumentoCreacionData {
+  numero: string;
+  origen: string;
+  documentoId: number;
+  fechaEmision?: string;
+  fechaVencimiento?: string;
+}
+
 @Component({
   selector: 'app-detalle-persona',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, SidebarComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, SidebarComponent, ErrorModalComponent],
   templateUrl: './detalle-persona.component.html',
   styleUrls: ['./detalle-persona.component.css']
 })
@@ -61,6 +71,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private loadingService = inject(LoadingService);
   private authService = inject(AuthorizationService);
+  private errorHandlerService = inject(ErrorHandlerService);
   private personaService = inject(PersonaService);
   private personaNaturalService = inject(PersonaNaturalService);
   private personaJuridicaService = inject(PersonaJuridicaService);
@@ -135,6 +146,11 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   error: string | null = null;
   sidebarCollapsed = false;
   activeTab: 'info' | 'empresas' | 'contacto' | 'documentos' | 'viajeros' = 'info';
+
+  // Error Modal
+  showErrorModal = false;
+  errorModalData: ErrorModalData | null = null;
+  backendErrorResponse: any = null;
 
   // Forms
   telefonoForm!: FormGroup;
@@ -290,7 +306,6 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
   private initializeForms(): void {
     this.personaNaturalForm = this.fb.group({
-      documento: [''],
       nombres: ['', [Validators.required]],
       apellidosPaterno: ['', [Validators.required]],
       apellidosMaterno: [''],
@@ -300,7 +315,15 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       fechaNacimiento: [''],
       nacionalidad: [''],
       residencia: [''],
-      categoriaPersonaId: [null]
+      categoriaPersonaId: [null],
+      // Documento inicial
+      documentoInicial: this.fb.group({
+        numero: ['', [Validators.required]],
+        fechaEmision: [''],
+        fechaVencimiento: [''],
+        origen: ['', [Validators.required]],
+        documentoId: ['', [Validators.required]]
+      })
     });
 
     this.telefonoForm = this.fb.group({
@@ -390,7 +413,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           }
         }),
         catchError(error => {
-          this.error = 'Error al cargar los datos de la persona';
+          this.mostrarErrorModal(error);
           return of(null);
         }),
         finalize(() => {
@@ -454,7 +477,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           this.categoriasPersona = data.categoriasPersona;
         }),
         catchError(error => {
-          this.error = 'Error al cargar datos iniciales';
+          this.mostrarErrorModal(error);
           return of(null);
         }),
         finalize(() => {
@@ -542,8 +565,10 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     this.loadingService.setLoading(true);
 
     const formValue = this.personaNaturalForm.value;
+
+    // Usar el número de documento del documentoInicial para la PersonaNatural
     const personaNaturalData: PersonaNaturalRequest = {
-      documento: formValue.documento,
+      documento: formValue.documentoInicial?.numero || '',
       nombres: formValue.nombres,
       apellidosPaterno: formValue.apellidosPaterno,
       apellidosMaterno: formValue.apellidosMaterno,
@@ -555,22 +580,54 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       }
     };
 
+    // Obtener datos del documento si están disponibles
+    const documentoData = formValue.documentoInicial;
+
     const subscription = this.personaNaturalService.save(personaNaturalData)
       .pipe(
-        tap((response) => {
-          // Cambiar de modo crear a modo detalle/editar
-          this.isCreating = false;
-          this.personaId = response.id;
+        switchMap((personaResponse) => {
+          // Si hay datos de documento, crear el detalleDocumento
+          const documentoId = documentoData.documentoId ? parseInt(documentoData.documentoId, 10) : null;
 
-          // Actualizar la URL sin recargar el componente
-          this.router.navigate(['/personas/detalle', response.id], { replaceUrl: true });
+          if (documentoData.numero && documentoId && documentoData.origen) {
+            const detalleDocumento: DetalleDocumentoRequest = {
+              numero: documentoData.numero.trim(),
+              origen: documentoData.origen.trim(),
+              documentoId: documentoId,
+              personaNaturalId: personaResponse.id,
+              fechaEmision: documentoData.fechaEmision || undefined,
+              fechaVencimiento: documentoData.fechaVencimiento || undefined
+            };
 
-          // Cargar los datos de la persona recién creada
-          this.loadPersonaData();
+            console.log('Creando detalleDocumento con:', detalleDocumento);
+
+            return this.detalleDocumentoService.saveDetalle(detalleDocumento).pipe(
+              tap(() => {
+                // Éxito en ambas creaciones
+                this.isCreating = false;
+                this.personaId = personaResponse.id;
+                this.router.navigate(['/personas/detalle', personaResponse.id], { replaceUrl: true });
+                this.loadPersonaData();
+              }),
+              catchError(error => {
+                console.error('Error al crear documento:', error);
+                this.mostrarErrorModal(error);
+                return of(null);
+              })
+            );
+          } else {
+            console.log('No se crea documento - datos incompletos');
+            // Solo se creó PersonaNatural sin documento
+            this.isCreating = false;
+            this.personaId = personaResponse.id;
+            this.router.navigate(['/personas/detalle', personaResponse.id], { replaceUrl: true });
+            this.loadPersonaData();
+            return of(null);
+          }
         }),
         catchError(error => {
           console.error('Error al crear cliente:', error);
-          this.error = 'Error al crear el cliente. Por favor intente nuevamente.';
+          this.mostrarErrorModal(error);
           return of(null);
         }),
         finalize(() => {
@@ -682,7 +739,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
         }),
         catchError(error => {
           console.error('Error al actualizar:', error);
-          this.error = 'Error al actualizar la información';
+          this.mostrarErrorModal(error);
           return of(null);
         }),
         finalize(() => {
@@ -744,7 +801,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           this.cerrarModalTelefono();
         }),
         catchError(error => {
-          this.error = 'Error al guardar el teléfono';
+          this.mostrarErrorModal(error);
           return of(null);
         })
       )
@@ -760,7 +817,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       .pipe(
         tap(() => this.loadTelefonos()),
         catchError(error => {
-          this.error = 'Error al eliminar el teléfono';
+          this.mostrarErrorModal(error);
           return of(null);
         })
       )
@@ -826,7 +883,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           this.cerrarModalCorreo();
         }),
         catchError(error => {
-          this.error = 'Error al guardar el correo';
+          this.mostrarErrorModal(error);
           return of(null);
         })
       )
@@ -842,7 +899,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       .pipe(
         tap(() => this.loadCorreos()),
         catchError(error => {
-          this.error = 'Error al eliminar el correo';
+          this.mostrarErrorModal(error);
           return of(null);
         })
       )
@@ -929,7 +986,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           this.cerrarModalEmpresa();
         }),
         catchError(error => {
-          this.error = 'Error al asociar empresas';
+          this.mostrarErrorModal(error);
           return of(null);
         }),
         finalize(() => {
@@ -952,7 +1009,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           this.recargarEmpresasAsociadas();
         }),
         catchError(error => {
-          this.error = 'Error al desasociar empresa. Por favor intente nuevamente.';
+          this.mostrarErrorModal(error);
           return of(null);
         }),
         finalize(() => {
@@ -1012,7 +1069,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           this.cerrarModalViajeroFrecuente();
         }),
         catchError(error => {
-          this.error = 'Error al guardar el viajero frecuente';
+          this.mostrarErrorModal(error);
           return of(null);
         })
       )
@@ -1038,7 +1095,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           this.asociarViajeroAPersona(viajeroCreado.id, viajeroFrecuenteData);
         }),
         catchError(error => {
-          this.error = 'Error al crear la información de viajero';
+          this.mostrarErrorModal(error);
           this.loadingService.setLoading(false);
           return of(null);
         })
@@ -1080,7 +1137,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
                 this.cerrarModalViajeroFrecuente();
               }),
               catchError(error => {
-                this.error = 'Error al crear el viajero frecuente';
+                this.mostrarErrorModal(error);
                 return of(null);
               }),
               finalize(() => {
@@ -1092,7 +1149,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           this.subscriptions.add(frecuenteSubscription);
         }),
         catchError(error => {
-          this.error = 'Error al asociar el viajero a la persona';
+          this.mostrarErrorModal(error);
           this.loadingService.setLoading(false);
           return of(null);
         })
@@ -1113,7 +1170,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           }
         }),
         catchError(error => {
-          this.error = 'Error al eliminar el viajero frecuente';
+          this.mostrarErrorModal(error);
           return of(null);
         })
       )
@@ -1171,7 +1228,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
         }),
         catchError(error => {
           console.error('Error al guardar documento:', error);
-          this.error = 'Error al guardar el documento';
+          this.mostrarErrorModal(error);
           return of(null);
         })
       )
@@ -1187,7 +1244,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       .pipe(
         tap(() => this.recargarDocumentos()),
         catchError(error => {
-          this.error = 'Error al eliminar el documento';
+          this.mostrarErrorModal(error);
           return of(null);
         })
       )
@@ -1221,5 +1278,27 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   isEmpresaSeleccionada(empresaId: number): boolean {
     const empresaIds = this.empresaForm.get('empresaIds')?.value || [];
     return empresaIds.includes(empresaId);
+  }
+
+  // Error Modal Management
+  mostrarErrorModal(error: any): void {
+    const mensaje = this.errorHandlerService.getErrorMessage(error);
+    const status = this.errorHandlerService.getStatusCode(error) || 500;
+
+    this.errorModalData = {
+      title: `Error ${status}`,
+      message: mensaje,
+      type: 'error',
+      buttonText: 'Entendido'
+    };
+
+    this.backendErrorResponse = error?.error || null;
+    this.showErrorModal = true;
+  }
+
+  cerrarErrorModal(): void {
+    this.showErrorModal = false;
+    this.errorModalData = null;
+    this.backendErrorResponse = null;
   }
 }

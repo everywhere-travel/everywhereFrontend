@@ -182,6 +182,12 @@ export class CategoriasComponent implements OnInit {
   showErrorModal: boolean = false;
   errorMessage: string = '';
 
+  // Alert messages
+  errorAlertMessage: string = '';
+  successAlertMessage: string = '';
+  showErrorAlert: boolean = false;
+  showSuccessAlert: boolean = false;
+
   // Search and Filter
   searchTerm: string = '';
   currentView: 'table' | 'cards' | 'list' = 'table';
@@ -505,14 +511,18 @@ export class CategoriasComponent implements OnInit {
 
     request.subscribe({
       next: () => {
+        this.showSuccess(this.isEditMode ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente');
         this.closeModal();
         this.loadCategorias();
         this.loading = false;
       },
       error: (error) => {
-        const { modalData } = this.errorHandler.handleHttpError(error, 'guardar categoría');
-        this.showError(modalData.message);
         this.loading = false;
+        const errorMessage = error?.error?.detail ||
+                            error?.error?.message ||
+                            error?.message ||
+                            'Error al guardar categoría';
+        this.showError(errorMessage);
       }
     });
   }
@@ -536,13 +546,18 @@ export class CategoriasComponent implements OnInit {
 
       this.categoriaService.delete(id).subscribe({
         next: () => {
+          this.showSuccess('Categoría eliminada correctamente');
           this.loadCategorias();
           this.closeConfirmModal();
+          this.loading = false;
         },
         error: (error) => {
-          const { modalData } = this.errorHandler.handleHttpError(error, 'eliminar categoría');
-          this.showError(modalData.message);
           this.loading = false;
+          const errorMessage = error?.error?.detail ||
+                              error?.error?.message ||
+                              error?.message ||
+                              'Error al eliminar categoría';
+          this.showError(errorMessage);
         }
       });
     }
@@ -580,13 +595,31 @@ export class CategoriasComponent implements OnInit {
     } as ModuleCardData;
   }
 
-  showError(message: string): void {
-    this.errorMessage = message;
-    this.showErrorModal = true;
-  }
-
   closeErrorModal(): void {
     this.showErrorModal = false;
     this.errorMessage = '';
+  }
+
+  private showError(message: string): void {
+    this.errorAlertMessage = message;
+    this.showErrorAlert = true;
+    this.showSuccessAlert = false;
+    setTimeout(() => {
+      this.showErrorAlert = false;
+    }, 5000);
+  }
+
+  private showSuccess(message: string): void {
+    this.successAlertMessage = message;
+    this.showSuccessAlert = true;
+    this.showErrorAlert = false;
+    setTimeout(() => {
+      this.showSuccessAlert = false;
+    }, 3000);
+  }
+
+  public hideAlerts(): void {
+    this.showErrorAlert = false;
+    this.showSuccessAlert = false;
   }
 }
