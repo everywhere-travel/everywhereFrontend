@@ -187,6 +187,12 @@ export class FormaPagoComponent implements OnInit {
   showErrorModal: boolean = false;
   errorMessage: string = '';
 
+  // Alert messages
+  errorAlertMessage: string = '';
+  successAlertMessage: string = '';
+  showErrorAlert: boolean = false;
+  showSuccessAlert: boolean = false;
+
   // Variables para menú de acciones
   showActionMenu: number | null = null;
   showActionMenuCards: number | null = null;
@@ -527,14 +533,18 @@ export class FormaPagoComponent implements OnInit {
 
     request.subscribe({
       next: () => {
+        this.showSuccess(this.isEditMode ? 'Forma de pago actualizada correctamente' : 'Forma de pago creada correctamente');
         this.closeModal();
         this.loadFormasPago();
         this.loading = false;
       },
       error: (error) => {
-        const { modalData } = this.errorHandler.handleHttpError(error, 'guardar forma de pago');
-        this.showError(modalData.message);
         this.loading = false;
+        const errorMessage = error?.error?.detail ||
+                            error?.error?.message ||
+                            error?.message ||
+                            'Error al guardar forma de pago';
+        this.showError(errorMessage);
       }
     });
   }
@@ -553,14 +563,19 @@ export class FormaPagoComponent implements OnInit {
 
       this.formaPagoService.deleteByIdFormaPago(id).subscribe({
         next: () => {
+          this.showSuccess('Forma de pago eliminada correctamente');
           this.loadFormasPago();
           this.closeConfirmModal();
           this.selectedItems = this.selectedItems.filter(i => i !== id);
+          this.loading = false;
         },
         error: (error) => {
-          const { modalData } = this.errorHandler.handleHttpError(error, 'eliminar forma de pago');
-          this.showError(modalData.message);
           this.loading = false;
+          const errorMessage = error?.error?.detail ||
+                              error?.error?.message ||
+                              error?.message ||
+                              'Error al eliminar forma de pago';
+          this.showError(errorMessage);
         }
       });
     }
@@ -598,13 +613,31 @@ export class FormaPagoComponent implements OnInit {
     } as ModuleCardData;
   }
 
-  showError(message: string): void {
-    this.errorMessage = message;
-    this.showErrorModal = true;
-  }
-
   closeErrorModal(): void {
     this.showErrorModal = false;
     this.errorMessage = '';
+  }
+
+  private showError(message: string): void {
+    this.errorAlertMessage = message;
+    this.showErrorAlert = true;
+    this.showSuccessAlert = false;
+    setTimeout(() => {
+      this.showErrorAlert = false;
+    }, 5000);
+  }
+
+  private showSuccess(message: string): void {
+    this.successAlertMessage = message;
+    this.showSuccessAlert = true;
+    this.showErrorAlert = false;
+    setTimeout(() => {
+      this.showSuccessAlert = false;
+    }, 3000);
+  }
+
+  public hideAlerts(): void {
+    this.showErrorAlert = false;
+    this.showSuccessAlert = false;
   }
 }
