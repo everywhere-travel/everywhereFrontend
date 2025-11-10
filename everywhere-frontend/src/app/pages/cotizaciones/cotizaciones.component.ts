@@ -2490,8 +2490,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       await this.cotizacionService.deleteByIdCotizacion(id).toPromise();
       await this.loadCotizaciones();
       this.showSuccess('Cotización eliminada exitosamente.');
-    } catch (error) {
-      this.showError('Error al eliminar la cotización. Por favor, inténtelo de nuevo.');
+    } catch (error: any) {
+      // Capturar el mensaje del backend si existe (RFC 7807 Problem Details format)
+      const errorMessage = error?.error?.detail ||    // RFC 7807 format (detail)
+                          error?.error?.message ||     // Custom format (message)
+                          error?.message ||             // Error object message
+                          'Error al eliminar la cotización. Por favor, inténtelo de nuevo.';
+      this.showError(errorMessage);
     } finally {
       this.isLoading = false;
     }
