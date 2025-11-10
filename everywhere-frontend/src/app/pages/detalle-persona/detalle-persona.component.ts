@@ -714,7 +714,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       const viajeroData: ViajeroRequest = {
         fechaNacimiento: formValue.fechaNacimiento,
         nacionalidad: formValue.nacionalidad,
-        residencia: formValue.residencia
+        residencia: formValue.residencia,
+        personaId: this.personaId
       };
 
       if (this.personaNatural?.viajero) {
@@ -1089,7 +1090,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     const viajeroRequest: ViajeroRequest = {
       fechaNacimiento: undefined, // Se puede actualizar después
       nacionalidad: 'Peruana', // Valor por defecto
-      residencia: 'Perú' // Valor por defecto
+      residencia: 'Perú', // Valor por defecto
+      personaId: this.personaId!
     };
 
     const subscription = this.viajeroService.save(viajeroRequest)

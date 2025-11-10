@@ -655,26 +655,66 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Extraer viajeros únicos de los detalles de liquidación
   private extraerViajerosDeDetalles(): void {
+    console.log('📦 === EXTRAYENDO VIAJEROS DE DETALLES ===');
+
     if (!this.liquidacion?.detalles) {
+      console.log('❌ No hay liquidación o detalles');
       this.viajeros = [];
       return;
     }
 
+    console.log('📊 Total detalles en liquidación:', this.liquidacion.detalles.length);
+    console.log('📋 Detalles:', this.liquidacion.detalles);
+
     // Extraer viajeros únicos que no sean null/undefined
     const viajerosMap = new Map<number, ViajeroConPersonaNatural>();
 
-    this.liquidacion.detalles.forEach(detalle => {
+    this.liquidacion.detalles.forEach((detalle, idx) => {
+      console.log(`  Detalle ${idx}:`, detalle);
       if (detalle.viajero && detalle.viajero.id) {
+        console.log(`    ✅ Viajero encontrado: ID ${detalle.viajero.id}`, detalle.viajero);
         viajerosMap.set(detalle.viajero.id, detalle.viajero);
+      } else {
+        console.log(`    ❌ Sin viajero o sin ID`);
       }
     });
 
     this.viajeros = Array.from(viajerosMap.values());
+    console.log('✨ Total de viajeros únicos extraídos:', this.viajeros.length);
+    console.log('📝 Viajeros:', this.viajeros);
 
-    // Inicializar los valores de búsqueda después de extraer los viajeros
-    setTimeout(() => {
-      this.initializeAllViajeroSearchValues();
-    }, 100);
+    // Si no hay viajeros en los detalles, cargar TODOS los viajeros disponibles
+    if (this.viajeros.length === 0) {
+      console.log('📥 No hay viajeros en detalles. Cargando todos los viajeros disponibles...');
+      this.viajeroService.findAll().subscribe({
+        next: (viajeros: ViajeroConPersonaNatural[]) => {
+          console.log('✅ Viajeros cargados del backend:', viajeros.length);
+          this.viajeros = viajeros;
+          console.log('📝 Viajeros disponibles:', this.viajeros);
+
+          // Inicializar búsqueda con los viajeros cargados
+          setTimeout(() => {
+            console.log('⏱️ Inicializando valores de búsqueda después de 100ms');
+            this.initializeAllViajeroSearchValues();
+          }, 100);
+        },
+        error: (error: any) => {
+          console.error('❌ Error al cargar viajeros:', error);
+          // Inicializar búsqueda incluso en error
+          setTimeout(() => {
+            this.initializeAllViajeroSearchValues();
+          }, 100);
+        }
+      });
+    } else {
+      // Si hay viajeros en detalles, inicializar búsqueda normalmente
+      setTimeout(() => {
+        console.log('⏱️ Inicializando valores de búsqueda después de 100ms');
+        this.initializeAllViajeroSearchValues();
+      }, 100);
+    }
+
+    console.log('📦 === FIN EXTRACCIÓN ===\n');
   }
 
   // Métodos para manejar observaciones múltiples
@@ -1436,6 +1476,12 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Manejar la búsqueda de viajeros
   onViajeroSearch(index: string, searchTerm: string): void {
+    console.log('🔍 === BÚSQUEDA DE VIAJEROS INICIADA ===');
+    console.log('📍 Index:', index);
+    console.log('🔎 Término de búsqueda:', searchTerm);
+    console.log('📊 Total de viajeros disponibles:', this.viajeros.length);
+    console.log('📋 Viajeros:', this.viajeros);
+
     this.viajeroSearchTerms[index] = searchTerm;
 
     // Asegurar que el dropdown esté abierto
@@ -1443,22 +1489,39 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     if (!searchTerm.trim()) {
       // Si no hay término de búsqueda, mostrar todos
+      console.log('✅ Sin término - mostrando todos los viajeros');
       this.viajerosFiltrados[index] = [...this.viajeros];
     } else {
       // Filtrar viajeros que contengan el término de búsqueda (nombres o apellidos)
+      console.log('🔄 Filtrando viajeros...');
       this.viajerosFiltrados[index] = this.viajeros.filter(viajero => {
-        if (!viajero.personaNatural) return false;
+        console.log('  ✓ Viajero evaluando:', viajero);
+        if (!viajero.personaNatural) {
+          console.log('    ❌ Sin personaNatural');
+          return false;
+        }
         const nombreCompleto = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno} ${viajero.personaNatural.apellidosMaterno || ''}`.toLowerCase();
-        return nombreCompleto.includes(searchTerm.toLowerCase());
+        const coincide = nombreCompleto.includes(searchTerm.toLowerCase());
+        console.log(`    📝 Nombre: "${nombreCompleto}"`);
+        console.log(`    🎯 ¿Coincide?: ${coincide}`);
+        return coincide;
       });
     }
+
+    console.log('✨ Resultados filtrados:', this.viajerosFiltrados[index]);
+    console.log('🔍 === FIN BÚSQUEDA ===\n');
   }
 
   // Seleccionar un viajero
   onViajeroSelect(index: string, viajero: ViajeroConPersonaNatural): void {
+    console.log('✅ === VIAJERO SELECCIONADO ===');
+    console.log('📍 Index:', index);
+    console.log('👤 Viajero seleccionado:', viajero);
+
     // Actualizar el término de búsqueda con el nombre seleccionado
     if (viajero.personaNatural) {
       this.viajeroSearchTerms[index] = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno}`;
+      console.log('📝 Término actualizado:', this.viajeroSearchTerms[index]);
     }
 
     // Cerrar dropdown
@@ -1468,15 +1531,19 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (index.startsWith('detalle-original-')) {
       // Es un detalle original
       const detalleIndex = parseInt(index.replace('detalle-original-', ''));
+      console.log('🟦 Es detalle ORIGINAL, índice:', detalleIndex);
       this.onDetalleOriginalChange(detalleIndex, 'viajeroId', viajero.id);
     } else if (index.startsWith('detalle-fijo-')) {
       // Es un detalle fijo
       const fijoIndex = parseInt(index.replace('detalle-fijo-', ''));
+      console.log('🟩 Es detalle FIJO, índice:', fijoIndex);
       this.onProductoChange(fijoIndex, 'viajeroId', viajero.id);
     } else if (index === 'nuevo') {
       // Es el formulario de nuevo detalle
+      console.log('🟨 Es detalle NUEVO');
       this.detalleForm.patchValue({ viajeroId: viajero.id });
     }
+    console.log('✅ === FIN SELECCIÓN ===\n');
   }  // Abrir dropdown de viajeros
   openViajeroDropdown(index: string): void {
     this.initViajeroSearch(index);
@@ -1525,24 +1592,42 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Inicializar todos los valores de búsqueda de viajeros para detalles existentes
   initializeAllViajeroSearchValues(): void {
+    console.log('🔧 === INICIALIZANDO VALORES DE BÚSQUEDA ===');
+    console.log('📊 Total de viajeros disponibles:', this.viajeros.length);
+
     // Inicializar para detalles originales
     if (this.liquidacion?.detalles) {
+      console.log('📍 Inicializando detalles ORIGINALES:', this.liquidacion.detalles.length);
       this.liquidacion.detalles.forEach((detalle, index) => {
+        console.log(`  Detalle original ${index}:`, detalle);
         if (detalle.viajero) {
+          console.log(`    ✅ Inicializando búsqueda para detalle-original-${index}`);
           this.initViajeroSearchValue(`detalle-original-${index}`, detalle.viajero);
+        } else {
+          console.log(`    ❌ Sin viajero`);
         }
       });
     }
 
     // Inicializar para detalles fijos
+    console.log('📍 Inicializando detalles FIJOS:', this.detallesFijos.length);
     this.detallesFijos.forEach((detalle, index) => {
+      console.log(`  Detalle fijo ${index}:`, detalle);
       if (detalle.viajeroId) {
+        console.log(`    🔍 Buscando viajero con ID: ${detalle.viajeroId}`);
         const viajero = this.viajeros.find(v => v.id === detalle.viajeroId);
         if (viajero) {
+          console.log(`    ✅ Viajero encontrado, inicializando búsqueda para detalle-fijo-${index}`);
           this.initViajeroSearchValue(`detalle-fijo-${index}`, viajero);
+        } else {
+          console.log(`    ❌ Viajero NO encontrado en lista de viajeros`);
         }
+      } else {
+        console.log(`    ⚠️ Sin viajeroId`);
       }
     });
+
+    console.log('🔧 === FIN INICIALIZACIÓN ===\n');
   }
 
   // Reinicializar valores de búsqueda después de restaurar estado temporal
