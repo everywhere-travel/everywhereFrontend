@@ -185,8 +185,7 @@
           </div>
           <h3 class="text-xl font-bold text-gray-900 mb-3">No se encontraron productos</h3>
           <p class="text-gray-600 text-center max-w-md mb-6">
-            {{ searchTerm ? 'No hay productos que coincidan con tu búsqueda.' : 'Aún no has creado ningún producto.
-            ¡Comienza creando tu primer producto!' }}
+            {{ searchTerm ? 'No hay productos que coincidan con tu búsqueda.' : 'Aún no has creado ningún producto. ¡Comienza creando tu primer producto!' }}
           </p>
           <button (click)="abrirModalCrear()"
             class="bg-everywhere-primary hover:bg-everywhere-secondary text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl">
@@ -556,6 +555,21 @@
     <!-- Form Content -->
     <form [formGroup]="productoForm" (ngSubmit)="guardarProducto()" class="p-8 space-y-6">
 
+      <!-- Tipo -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-3">
+          <i class="fas fa-tag mr-2 text-red-600"></i>Tipo de Producto
+        </label>
+        <div class="relative">
+          <input type="text" formControlName="tipo"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+            placeholder="Ej: PKT, TKL, HOTEL...">
+          <div class="absolute inset-y-0 right-0 flex items-center justify-center px-3 pointer-events-none">
+            <i class="fas fa-edit text-gray-400"></i>
+          </div>
+        </div>
+      </div>
+
       <!-- Descripción -->
       <div>
         <label class="block text-sm font-bold text-gray-700 mb-3">
@@ -570,21 +584,6 @@
             <span *ngIf="productoForm.get('descripcion')?.errors?.['required']">
               La descripción es obligatoria
             </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tipo -->
-      <div>
-        <label class="block text-sm font-bold text-gray-700 mb-3">
-          <i class="fas fa-tag mr-2 text-red-600"></i>Tipo de Producto
-        </label>
-        <div class="relative">
-          <input type="text" formControlName="tipo"
-            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
-            placeholder="Ej: Transporte, Hospedaje, Tour, etc.">
-          <div class="absolute inset-y-0 right-0 flex items-center justify-center px-3 pointer-events-none">
-            <i class="fas fa-edit text-gray-400"></i>
           </div>
         </div>
       </div>

@@ -1,6 +1,3 @@
-/* Estilos para el componente Forma de Pago */
-
-/* Estilos para los avatares de formas de pago */
 .forma-avatar {
   background: linear-gradient(135deg, #ef4444, #dc2626);
   box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3), 0 2px 4px -1px rgba(220, 38, 38, 0.2);

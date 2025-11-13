@@ -125,7 +125,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       children: [
         {
           id: 'categorias-persona',
-          title: 'Categorias de Persona',
+          title: 'Categorias de Clientes',
           icon: 'fas fa-users',
           route: '/categorias-persona',
           moduleKey: 'CATEGORIA_PERSONAS'

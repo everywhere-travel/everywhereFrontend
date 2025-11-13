@@ -171,7 +171,7 @@
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-3">
                   <i class="fas fa-database text-red-600"></i>
-                  <h2 class="text-xl font-bold text-gray-900">Lista de Categorias</h2>
+                  <h2 class="text-xl font-bold text-gray-900">Lista de Categorias de Clientes</h2>
                 </div>
               </div>
 
@@ -238,7 +238,7 @@
                     </label>
                   </th>
                   <th
-                    class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                    class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
                     (click)="sortBy('nombre')" [class.bg-everywhere-primary/5]="sortColumn === 'nombre'">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2">
@@ -255,17 +255,17 @@
                     </div>
                   </th>
                   <th
-                    class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                    class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
                     (click)="sortBy('descripcion')" [class.bg-everywhere-primary/5]="sortColumn === 'descripcion'">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2">
                         <i class="fas fa-rectangle-list text-gray-500"></i>
-                        <span>description</span>
+                        <span>Descripción</span>
                       </div>
                     </div>
                   </th>
                   <th
-                    class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                    class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
                     (click)="sortBy('creado')" [class.bg-everywhere-primary/5]="sortColumn === 'creado'">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2">
@@ -282,7 +282,7 @@
                     </div>
                   </th>
                   <th
-                    class="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+                    class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
                     (click)="sortBy('actualizado')" [class.bg-everywhere-primary/5]="sortColumn === 'actualizado'">
                     <div class="flex items-center justify-between">
                       <div class="flex items-center gap-2">
@@ -298,10 +298,12 @@
                       </div>
                     </div>
                   </th>
-                  <th class="px-6 py-4 text-right text-xs font-bold text-gray-600 uppercase tracking-wider">
-                    <div class="flex items-center justify-end gap-2">
-                      <i class="fas fa-cogs text-gray-500"></i>
-                      <span>Acciones</span>
+                  <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group">
+                    <div class="flex items-center justify-center">
+                      <div class="flex items-center gap-2">
+                        <i class="fas fa-cogs text-gray-500"></i>
+                        <span>Acciones</span>
+                      </div>
                     </div>
                   </th>
                 </tr>
@@ -323,15 +325,8 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center gap-4">
-                      <div class="flex-shrink-0">
-                        <div
-                          class="h-12 w-12 rounded-xl bg-gradient-to-br from-everywhere-primary to-everywhere-secondary flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                          <i class="fas fa-truck text-white text-lg"></i>
-                        </div>
-                      </div>
                       <div class="flex-1 min-w-0">
                         <div class="text-base font-bold text-gray-900 truncate">{{ categoria.nombre }}</div>
-                        <div class="text-sm text-gray-500">ID: {{ categoria.id }}</div>
                       </div>
                     </div>
                   </td>
@@ -349,7 +344,7 @@
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center justify-center gap-2">
                       <button (click)="editarCategoriaPersona(categoria)"
-                        class="w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                        class="w-9 h-9 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
                         title="Editar categoría">
                         <i class="fas fa-edit text-sm"></i>
                       </button>

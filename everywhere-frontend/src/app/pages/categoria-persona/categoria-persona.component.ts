@@ -93,7 +93,7 @@ export class CategoriaPersonaComponent implements OnInit {
       children: [
         {
           id: 'categorias-persona',
-          title: 'Categorias de Persona',
+          title: 'Categorias de Clientes',
           icon: 'fas fa-users',
           route: '/categorias-persona',
           moduleKey: 'CATEGORIA_PERSONAS'
@@ -229,7 +229,6 @@ export class CategoriaPersonaComponent implements OnInit {
   ngOnInit(): void {
     this.initializeSidebar();
     this.loadCategoriasPersona();
-    this.calcularEstadisticas();
   }
 
   // =================================================================
@@ -642,7 +641,6 @@ export class CategoriaPersonaComponent implements OnInit {
 
   onItemsPerPageChange(): void {
     this.currentPage = 1;
-    this.calcularEstadisticas();
   }
 
   getVisiblePages(): number[] {
@@ -716,11 +714,6 @@ export class CategoriaPersonaComponent implements OnInit {
   closeAllMenus(): void {
     this.showActionMenu = null;
     this.showQuickActions = null;
-  }
-
-  // Statistics
-  calcularEstadisticas(): void {
-    // Aquí puedes agregar lógica para calcular estadísticas específicas
   }
 
   // Utility functions

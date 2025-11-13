@@ -6,6 +6,6 @@ export interface CategoriaRequest{
 export interface CategoriaResponse{
     id?: number;
     nombre?: string;
-    fechaCreacion?: Date;
-    fechaActualizacion?: Date;
+    creado?: Date;
+    actualizado?: Date;
 }
