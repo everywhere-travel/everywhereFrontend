@@ -316,13 +316,13 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       nacionalidad: [''],
       residencia: [''],
       categoriaPersonaId: [null],
-      // Documento inicial
+      // Documento inicial - TODOS LOS CAMPOS OPCIONALES
       documentoInicial: this.fb.group({
-        numero: ['', [Validators.required]],
+        numero: [''],
         fechaEmision: [''],
         fechaVencimiento: [''],
-        origen: ['', [Validators.required]],
-        documentoId: ['', [Validators.required]]
+        origen: [''],
+        documentoId: ['']
       })
     });
 
@@ -556,8 +556,22 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     return tipoObj ? tipoObj.label : tipo;
   }
 
+  // Validar solo los campos requeridos para crear PersonaNatural
+  // El documento es OPCIONAL, así que solo validamos nombres y apellidoPaterno
+  isFormularioCreacionValido(): boolean {
+    const nombresControl = this.personaNaturalForm.get('nombres');
+    const apellidoPatControl = this.personaNaturalForm.get('apellidosPaterno');
+
+    return !!(
+      nombresControl?.value && 
+      nombresControl?.valid && 
+      apellidoPatControl?.value && 
+      apellidoPatControl?.valid
+    );
+  }
+
   crearPersonaNatural(): void {
-    if (!this.personaNaturalForm.valid) {
+    if (!this.isFormularioCreacionValido()) {
       this.markFormGroupTouched(this.personaNaturalForm);
       return;
     }
@@ -565,10 +579,11 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     this.loadingService.setLoading(true);
 
     const formValue = this.personaNaturalForm.value;
+    const documentoData = formValue.documentoInicial;
 
-    // Usar el número de documento del documentoInicial para la PersonaNatural
+    // Preparar datos de PersonaNatural SIN documento (opcional)
     const personaNaturalData: PersonaNaturalRequest = {
-      documento: formValue.documentoInicial?.numero || '',
+      documento: documentoData?.numero ? documentoData.numero.trim() : '', // Opcional
       nombres: formValue.nombres,
       apellidosPaterno: formValue.apellidosPaterno,
       apellidosMaterno: formValue.apellidosMaterno,
@@ -580,16 +595,17 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       }
     };
 
-    // Obtener datos del documento si están disponibles
-    const documentoData = formValue.documentoInicial;
+    // Verificar si hay datos de documento COMPLETOS para crear detalleDocumento
+    const tieneDocumentoCompleto = documentoData?.numero && 
+                                   documentoData?.documentoId && 
+                                   documentoData?.origen;
 
     const subscription = this.personaNaturalService.save(personaNaturalData)
       .pipe(
         switchMap((personaResponse) => {
-          // Si hay datos de documento, crear el detalleDocumento
-          const documentoId = documentoData.documentoId ? parseInt(documentoData.documentoId, 10) : null;
-
-          if (documentoData.numero && documentoId && documentoData.origen) {
+          // Si hay datos de documento COMPLETOS, crear el detalleDocumento
+          if (tieneDocumentoCompleto) {
+            const documentoId = parseInt(documentoData.documentoId, 10);
             const detalleDocumento: DetalleDocumentoRequest = {
               numero: documentoData.numero.trim(),
               origen: documentoData.origen.trim(),
@@ -599,8 +615,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
               fechaVencimiento: documentoData.fechaVencimiento || undefined
             };
 
-            console.log('Creando detalleDocumento con:', detalleDocumento);
-
+            // Crear detalleDocumento
             return this.detalleDocumentoService.saveDetalle(detalleDocumento).pipe(
               tap(() => {
                 // Éxito en ambas creaciones
@@ -616,8 +631,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
               })
             );
           } else {
-            console.log('No se crea documento - datos incompletos');
-            // Solo se creó PersonaNatural sin documento
+            // PersonaNatural se creó sin documento - ESTO ES OK
             this.isCreating = false;
             this.personaId = personaResponse.id;
             this.router.navigate(['/personas/detalle', personaResponse.id], { replaceUrl: true });

@@ -268,7 +268,7 @@
               <i class="fas fa-times mr-2"></i>
               Cancelar
             </button>
-            <button type="submit" [disabled]="personaNaturalForm.invalid"
+            <button type="submit" [disabled]="!isFormularioCreacionValido()"
               class="bg-everywhere-primary text-white px-6 py-2.5 rounded-lg hover:bg-everywhere-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2">
               <i class="fas fa-save"></i>
               Crear Cliente
