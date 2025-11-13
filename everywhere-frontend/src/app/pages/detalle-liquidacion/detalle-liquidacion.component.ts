@@ -663,21 +663,44 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Extraer viajeros únicos que no sean null/undefined
     const viajerosMap = new Map<number, ViajeroConPersonaNatural>();
 
-    this.liquidacion.detalles.forEach(detalle => {
+    this.liquidacion.detalles.forEach((detalle, idx) => {
       if (detalle.viajero && detalle.viajero.id) {
         viajerosMap.set(detalle.viajero.id, detalle.viajero);
       }
     });
 
-    this.viajeros = Array.from(viajerosMap.values());
+    const viajerosDeDetalles = Array.from(viajerosMap.values());
 
-    // Inicializar los valores de búsqueda después de extraer los viajeros
-    setTimeout(() => {
-      this.initializeAllViajeroSearchValues();
-    }, 100);
-  }
+    // SIEMPRE cargar todos los viajeros disponibles del backend
+    this.viajeroService.findAll().subscribe({
+      next: (todosLosViajeros: ViajeroConPersonaNatural[]) => {
+        // Combinar: primero los de los detalles, luego el resto
+        const viajerosCombinados = new Map<number, ViajeroConPersonaNatural>();
 
-  // Métodos para manejar observaciones múltiples
+        // Agregar primero los viajeros de los detalles (si existen)
+        viajerosDeDetalles.forEach(v => viajerosCombinados.set(v.id, v));
+
+        // Luego agregar todos los del backend (esto actualizará los datos si hay cambios)
+        todosLosViajeros.forEach(v => viajerosCombinados.set(v.id, v));
+
+        this.viajeros = Array.from(viajerosCombinados.values());
+
+        // Inicializar búsqueda con los viajeros cargados
+        setTimeout(() => {
+          this.initializeAllViajeroSearchValues();
+        }, 100);
+      },
+      error: (error: any) => {
+        // Si falla, al menos usar los viajeros de los detalles
+        this.viajeros = viajerosDeDetalles;
+
+        // Inicializar búsqueda incluso en error
+        setTimeout(() => {
+          this.initializeAllViajeroSearchValues();
+        }, 100);
+      }
+    });
+  }  // Métodos para manejar observaciones múltiples
   agregarObservacion(): void {
     if (!this.nuevaObservacion?.trim() || !this.liquidacionId) {
       return;
@@ -1447,7 +1470,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     } else {
       // Filtrar viajeros que contengan el término de búsqueda (nombres o apellidos)
       this.viajerosFiltrados[index] = this.viajeros.filter(viajero => {
-        if (!viajero.personaNatural) return false;
+        if (!viajero.personaNatural) {
+          return false;
+        }
         const nombreCompleto = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno} ${viajero.personaNatural.apellidosMaterno || ''}`.toLowerCase();
         return nombreCompleto.includes(searchTerm.toLowerCase());
       });

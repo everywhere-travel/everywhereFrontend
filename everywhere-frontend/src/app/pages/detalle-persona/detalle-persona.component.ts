@@ -654,8 +654,12 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   abrirModalPersonaNatural(): void {
     if (!this.personaNatural) return;
 
+    // Remover documentoInicial si existe (solo es para creación)
+    if (this.personaNaturalForm.get('documentoInicial')) {
+      this.personaNaturalForm.removeControl('documentoInicial');
+    }
+
     this.personaNaturalForm.patchValue({
-      documento: this.personaNatural.documento || '',
       nombres: this.personaNatural.nombres || '',
       apellidosPaterno: this.personaNatural.apellidosPaterno || '',
       apellidosMaterno: this.personaNatural.apellidosMaterno || '',
@@ -710,7 +714,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       const viajeroData: ViajeroRequest = {
         fechaNacimiento: formValue.fechaNacimiento,
         nacionalidad: formValue.nacionalidad,
-        residencia: formValue.residencia
+        residencia: formValue.residencia,
+        personaId: this.personaId
       };
 
       if (this.personaNatural?.viajero) {
@@ -1085,7 +1090,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     const viajeroRequest: ViajeroRequest = {
       fechaNacimiento: undefined, // Se puede actualizar después
       nacionalidad: 'Peruana', // Valor por defecto
-      residencia: 'Perú' // Valor por defecto
+      residencia: 'Perú', // Valor por defecto
+      personaId: this.personaId!
     };
 
     const subscription = this.viajeroService.save(viajeroRequest)

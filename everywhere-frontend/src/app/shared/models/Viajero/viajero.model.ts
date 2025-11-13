@@ -5,6 +5,7 @@ export interface ViajeroRequest {
   fechaNacimiento?: string;
   nacionalidad?: string;
   residencia?: string;
+  personaId: number;
 }
 
 export interface ViajeroResponse {
