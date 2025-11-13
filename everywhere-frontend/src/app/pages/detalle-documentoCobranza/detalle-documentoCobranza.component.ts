@@ -497,9 +497,9 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
     const formValue = this.documentoForm.value;
     const updateDTO: DocumentoCobranzaUpdateDTO = {
-      fileVenta: formValue.fileVenta?.trim() || undefined,
-      costoEnvio: formValue.costoEnvio || undefined,
-      observaciones: formValue.observaciones?.trim() || undefined,
+      fileVenta: formValue.fileVenta?.trim() || '',
+      costoEnvio: formValue.costoEnvio || 0,
+      observaciones: formValue.observaciones?.trim() || '',
       detalleDocumentoId: formValue.detalleDocumentoId || undefined
     };
 
