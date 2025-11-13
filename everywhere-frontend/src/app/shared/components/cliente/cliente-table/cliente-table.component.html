@@ -610,8 +610,17 @@
 
       <!-- Navigation buttons -->
       <nav class="flex items-center gap-2" *ngIf="totalPages > 1">
+        <!-- First Page Button -->
+        <button [disabled]="currentPage === 1" (click)="goToPage(1)"
+          class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          title="Primera página">
+          <i class="fas fa-angle-double-left"></i>
+        </button>
+
+        <!-- Previous Page Button -->
         <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"
-          class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+          class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          title="Página anterior">
           <i class="fas fa-chevron-left"></i>
         </button>
 
@@ -623,9 +632,18 @@
           </button>
         </div>
 
+        <!-- Next Page Button -->
         <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)"
-          class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+          class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          title="Página siguiente">
           <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <!-- Last Page Button -->
+        <button [disabled]="currentPage === totalPages" (click)="goToPage(totalPages)"
+          class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          title="Última página">
+          <i class="fas fa-angle-double-right"></i>
         </button>
       </nav>
     </div>

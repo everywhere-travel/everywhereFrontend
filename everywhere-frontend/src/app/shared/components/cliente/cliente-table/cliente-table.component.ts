@@ -63,6 +63,8 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   Math = Math;
 
   ngOnInit(): void {
+    // Asegurar que itemsPerPage sea un número
+    this.itemsPerPage = Number(this.itemsPerPage);
     this.aplicarFiltros();
   }
 
@@ -94,6 +96,7 @@ export class ClienteTableComponent implements OnInit, OnChanges {
 
   onSearchChange(): void {
     this.currentPage = 1;
+    this.clearSelection();
     this.aplicarFiltros();
   }
 
@@ -105,6 +108,7 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   aplicarFiltroTipo(tipo: string): void {
     this.filtroTipo = tipo as 'todos' | 'natural' | 'juridica';
     this.currentPage = 1;
+    this.clearSelection();
     this.aplicarFiltros();
   }
 
@@ -191,6 +195,8 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   }
 
   refreshData(): void {
+    this.clearSelection();
+    this.currentPage = 1;
     this.refrescar.emit();
   }
 
@@ -232,13 +238,15 @@ export class ClienteTableComponent implements OnInit, OnChanges {
 
   // ===== PAGINACIÓN =====
   get paginatedClientes(): PersonaTabla[] {
-    const start = (this.currentPage - 1) * this.itemsPerPage;
-    const end = start + this.itemsPerPage;
+    const itemsPorPagina = Number(this.itemsPerPage);
+    const start = (this.currentPage - 1) * itemsPorPagina;
+    const end = start + itemsPorPagina;
     return this.clientesFiltrados.slice(start, end);
   }
 
   get totalPages(): number {
-    return Math.ceil(this.clientesFiltrados.length / this.itemsPerPage);
+    const itemsPorPagina = Number(this.itemsPerPage);
+    return Math.ceil(this.clientesFiltrados.length / itemsPorPagina);
   }
 
   get totalItems(): number {
@@ -248,11 +256,15 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
+      this.actualizarEstadoSeleccion();
     }
   }
 
   onItemsPerPageChange(): void {
+    // Asegurar que itemsPerPage sea un número
+    this.itemsPerPage = Number(this.itemsPerPage);
     this.currentPage = 1;
+    this.actualizarEstadoSeleccion();
   }
 
   getVisiblePages(): number[] {
