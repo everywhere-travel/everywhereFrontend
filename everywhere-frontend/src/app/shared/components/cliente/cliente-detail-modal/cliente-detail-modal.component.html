@@ -1,0 +1,125 @@
+<!-- Modal de Vista Rápida -->
+<div
+  class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+  *ngIf="visible && cliente"
+  (click)="onBackdropClick()">
+
+  <div
+    class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+    (click)="onModalClick($event)">
+
+    <!-- Header del Modal -->
+    <div class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white p-6 rounded-t-2xl">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
+            {{ getClientInitials() }}
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold">
+              {{ getClienteNombre() }}
+            </h2>
+            <p class="text-red-100">
+              {{ getPersonaTypeLabel() }}
+            </p>
+          </div>
+        </div>
+        <button
+          (click)="onCerrar()"
+          class="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-lg flex items-center justify-center transition-colors">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido del Modal -->
+    <div class="p-6 space-y-6">
+
+      <!-- Información Básica -->
+      <div class="bg-gray-50 rounded-xl p-4">
+        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <i class="fas fa-user text-[#D9043D]"></i>
+          Información Básica
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-1">
+            <label class="text-sm font-semibold text-gray-600">ID Cliente</label>
+            <p class="text-gray-900 font-mono">#{{ cliente.id }}</p>
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm font-semibold text-gray-600">Tipo</label>
+            <div>
+              <span
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-lg font-bold text-xs uppercase tracking-wide border-2"
+                [class.bg-green-50]="cliente.tipo === 'natural'"
+                [class.text-green-700]="cliente.tipo === 'natural'"
+                [class.border-green-200]="cliente.tipo === 'natural'"
+                [class.bg-blue-50]="cliente.tipo === 'juridica'"
+                [class.text-blue-700]="cliente.tipo === 'juridica'"
+                [class.border-blue-200]="cliente.tipo === 'juridica'">
+                <i class="fas"
+                   [class.fa-user]="cliente.tipo === 'natural'"
+                   [class.fa-building]="cliente.tipo === 'juridica'"></i>
+                {{ getPersonaTypeLabel() }}
+              </span>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <label class="text-sm font-semibold text-gray-600">
+              {{ getDocumentType() }}
+            </label>
+            <p class="text-gray-900 font-mono">{{ getDocumentValue() }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información de Contacto -->
+      <div
+        class="bg-blue-50 rounded-xl p-4"
+        *ngIf="cliente.email || cliente.telefono || cliente.direccion">
+        <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <i class="fas fa-address-book text-blue-600"></i>
+          Información de Contacto
+        </h3>
+        <div class="space-y-3">
+          <div *ngIf="cliente.email" class="flex items-center gap-3">
+            <i class="fas fa-envelope text-gray-500 w-5"></i>
+            <span class="text-gray-900">{{ cliente.email }}</span>
+          </div>
+          <div *ngIf="cliente.telefono" class="flex items-center gap-3">
+            <i class="fas fa-phone text-gray-500 w-5"></i>
+            <span class="text-gray-900">{{ cliente.telefono }}</span>
+          </div>
+          <div *ngIf="cliente.direccion" class="flex items-start gap-3">
+            <i class="fas fa-map-marker-alt text-gray-500 w-5 mt-1"></i>
+            <span class="text-gray-900">{{ cliente.direccion }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sin información de contacto -->
+      <div
+        class="bg-gray-50 rounded-xl p-4 text-center"
+        *ngIf="!cliente.email && !cliente.telefono && !cliente.direccion">
+        <i class="fas fa-info-circle text-gray-400 text-3xl mb-2"></i>
+        <p class="text-gray-600">No hay información de contacto registrada</p>
+      </div>
+
+    </div>
+
+    <!-- Acciones del Modal -->
+    <div class="flex justify-end gap-4 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+      <button
+        (click)="onCerrar()"
+        class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">
+        Cerrar
+      </button>
+      <button
+        (click)="onEditarCompleto()"
+        class="px-8 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white rounded-xl font-semibold hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+        <i class="fas fa-edit mr-2"></i>
+        Editar Cliente
+      </button>
+    </div>
+  </div>
+</div>

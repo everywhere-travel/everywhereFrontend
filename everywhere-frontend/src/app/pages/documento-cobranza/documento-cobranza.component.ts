@@ -82,41 +82,20 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   documentoForm!: FormGroup;
 
   // ===== SIDEBAR CONFIGURATION =====
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
     {
       id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        },
-        {
-          id: 'viajeros',
-          title: 'Viajeros',
-          icon: 'fas fa-passport',
-          route: '/viajero',
-          moduleKey: 'VIAJEROS'
-        },
-        {
-          id: 'viajeros-frecuentes',
-          title: 'Viajeros Frecuentes',
-          icon: 'fas fa-crown',
-          route: '/viajero-frecuente',
-          moduleKey: 'VIAJEROS'
-        }
-      ]
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
+      moduleKey: 'PERSONAS'
     },
     {
       id: 'cotizaciones',
@@ -143,9 +122,43 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       id: 'documentos-cobranza',
       title: 'Documentos de Cobranza',
       icon: 'fas fa-file-contract',
-      route: '/documentos-cobranza',
       active: true,
+      route: '/documento-cobranza',
       moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
+      id: 'categorias',
+      title: 'Gestion de Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Clientes',
+          icon: 'fas fa-users',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
+        },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
+        }
+      ]
     },
     {
       id: 'recursos',
@@ -181,32 +194,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       icon: 'fas fa-sitemap',
       children: [
         {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
           route: '/sucursales',
           moduleKey: 'SUCURSALES'
-        }
-      ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
         }
       ]
     }
@@ -353,12 +345,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       }
 
       this.documentos = await this.documentoCobranzaService.getAllDocumentos().toPromise() || [];
-      console.log('Documentos recibidos del backend:', this.documentos);
-      console.log('Primer documento estructura:', this.documentos[0]);
-      if (this.documentos[0]) {
-        console.log('Valor del total del primer documento:', this.documentos[0].total);
-        console.log('Tipo del total:', typeof this.documentos[0].total);
-      }
+
       this.filteredDocumentos = [...this.documentos];
       this.totalItems = this.documentos.length;
     } catch (error) {
@@ -740,7 +727,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
 
-  onSidebarItemClick(item: SidebarMenuItem): void {
+  onSidebarItemClick(item: ExtendedSidebarMenuItem): void {
     if (item.route) {
       this.router.navigate([item.route]);
     }
@@ -748,9 +735,20 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // ===== UTILITY METHODS =====
   getPersonaDisplayName(cotizacion: CotizacionResponse): string {
-    if (cotizacion.personas?.email) {
-      return cotizacion.personas.email;
+    // Intentar obtener el primer email de la persona
+    if (cotizacion.personas?.correos && cotizacion.personas.correos.length > 0) {
+      return cotizacion.personas.correos[0].email;
     }
+
+    // Si no hay email, intentar mostrar dirección o ID
+    if (cotizacion.personas?.direccion) {
+      return cotizacion.personas.direccion;
+    }
+
+    if (cotizacion.personas?.id) {
+      return `Cliente ID: ${cotizacion.personas.id}`;
+    }
+
     return 'Cliente no especificado';
   }
 

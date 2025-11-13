@@ -26,7 +26,7 @@ export class CategoriaService {
   }
 
   update(id: number, categoriaRequest: CategoriaRequest): Observable<CategoriaResponse> {
-    return this.http.put<CategoriaResponse>(`${this.apiUrl}/${id}`, categoriaRequest);
+    return this.http.patch<CategoriaResponse>(`${this.apiUrl}/${id}`, categoriaRequest);
   }
 
   delete(id: number): Observable<void> {

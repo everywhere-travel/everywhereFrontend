@@ -12,5 +12,5 @@ export interface PersonaJuridicaResponse {
   razonSocial?: string
   creado: string
   actualizado: string
-  persona?: PersonaResponse
+  persona: PersonaResponse
 }

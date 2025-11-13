@@ -1,14 +1,16 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { DetalleCotizacionResponse, DetalleCotizacionRequest } from '../../../shared/models/Cotizacion/detalleCotizacion.model'
+import { Observable, tap } from 'rxjs';
+import { DetalleCotizacionResponse, DetalleCotizacionRequest, DetalleCotizacionPatchRequest } from '../../../shared/models/Cotizacion/detalleCotizacion.model'
 import { environment } from '../../../../environments/environment';
+import { CacheService } from '../cache.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DetalleCotizacionService {
   private apiUrl = `${environment.baseURL}/detalles-cotizacion`;
+  private cacheService = inject(CacheService);
 
   constructor(private http: HttpClient) { }
 
@@ -25,31 +27,29 @@ export class DetalleCotizacionService {
   }
 
   createDetalleCotizacion(cotizacionId: number, detalleCotizacionRequest: DetalleCotizacionRequest): Observable<DetalleCotizacionResponse> {
-    return this.http.post<DetalleCotizacionResponse>(`${this.apiUrl}/cotizacion/${cotizacionId}`, detalleCotizacionRequest);
+    return this.http.post<DetalleCotizacionResponse>(`${this.apiUrl}/cotizacion/${cotizacionId}`, detalleCotizacionRequest).pipe(
+      tap(() => {
+        this.cacheService.invalidatePattern(`/cotizaciones/${cotizacionId}/con-detalles`);
+      })
+    );
   }
 
-  updateDetalleCotizacion(id: number, detalleCotizacionRequest: DetalleCotizacionRequest): Observable<DetalleCotizacionResponse> {
-    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${id}`, detalleCotizacionRequest);
+  updateDetalleCotizacion(id: number, patchPayload: DetalleCotizacionPatchRequest): Observable<DetalleCotizacionResponse> {
+    return this.http.patch<DetalleCotizacionResponse>(`${this.apiUrl}/${id}`, patchPayload).pipe(
+      tap((response) => {
+        if (response.cotizacion?.id) {
+          this.cacheService.invalidatePattern(`/cotizaciones/${response.cotizacion.id}/con-detalles`);
+        }
+      })
+    );
   }
 
   deleteDetalleCotizacion(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
-
-  setCotizacion(detalleId: number, cotizacionId: number): Observable<DetalleCotizacionResponse> {
-    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${detalleId}/cotizacion/${cotizacionId}`, {});
-  }
-
-  setProducto(detalleId: number, productoId: number): Observable<DetalleCotizacionResponse> {
-    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${detalleId}/producto/${productoId}`, {});
-  }
-
-  setProveedor(detalleId: number, proveedorId: number): Observable<DetalleCotizacionResponse> {
-    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${detalleId}/proveedor/${proveedorId}`, {});
-  }
-
-  setSeleccionDetalleCotizacion(detalleId: number, seleccionado: boolean): Observable<DetalleCotizacionResponse> {
-    return this.http.put<DetalleCotizacionResponse>(`${this.apiUrl}/${detalleId}/seleccionado?seleccionado=${seleccionado}`, {});
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => {
+        this.cacheService.invalidatePattern(/\/cotizaciones\/\d+\/con-detalles/);
+      })
+    );
   }
 
 }

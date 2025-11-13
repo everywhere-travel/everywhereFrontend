@@ -1,14 +1,17 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { DetalleLiquidacionRequest, DetalleLiquidacionResponse } from '../../../shared/models/Liquidacion/detalleLiquidacion.model';
+import { Observable, tap } from 'rxjs';
+import { DetalleLiquidacionRequest, DetalleLiquidacionResponse, DetalleLiquidacionSinLiquidacion } from '../../../shared/models/Liquidacion/detalleLiquidacion.model';
 import { environment} from '../../../../environments/environment';
+import { CacheService } from '../cache.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DetalleLiquidacionService {
-  private apiUrl = `${environment.baseURL}/detalles-liquidacion`; // ✅ Corregir endpoint
+  private apiUrl = `${environment.baseURL}/detalles-liquidacion`;
+  private cacheService = inject(CacheService);
+
   constructor(private http: HttpClient) {}
 
   getAllDetallesLiquidacion(): Observable<DetalleLiquidacionResponse[]> {
@@ -19,31 +22,38 @@ export class DetalleLiquidacionService {
     return this.http.get<DetalleLiquidacionResponse>(`${this.apiUrl}/${id}`);
   }
 
-  getDetallesByLiquidacionId(liquidacionId: number): Observable<DetalleLiquidacionResponse[]> {
-    return this.http.get<DetalleLiquidacionResponse[]>(`${this.apiUrl}/liquidacion/${liquidacionId}`);
+  getDetallesByLiquidacionId(liquidacionId: number): Observable<DetalleLiquidacionSinLiquidacion[]> {
+    return this.http.get<DetalleLiquidacionSinLiquidacion[]>(`${this.apiUrl}/liquidacion/${liquidacionId}`);
   }
 
   createDetalleLiquidacion(liquidacionId: number, detalleLiquidacionRequest: DetalleLiquidacionRequest): Observable<DetalleLiquidacionResponse> {
-    // El backend espera liquidacionId en el body, no en la URL
     const requestWithLiquidacionId = {
       ...detalleLiquidacionRequest,
       liquidacionId: liquidacionId
     };
-    console.log('=== DEBUG DetalleLiquidacion ===');
-    console.log('URL:', this.apiUrl);
-    console.log('liquidacionId recibido:', liquidacionId);
-    console.log('Request original:', detalleLiquidacionRequest);
-    console.log('Request final enviado:', requestWithLiquidacionId);
-    console.log('================================');
-    return this.http.post<DetalleLiquidacionResponse>(this.apiUrl, requestWithLiquidacionId);
+    return this.http.post<DetalleLiquidacionResponse>(this.apiUrl, requestWithLiquidacionId).pipe(
+      tap(() => {
+        this.cacheService.invalidatePattern(`/liquidaciones/${liquidacionId}/con-detalles`);
+      })
+    );
   }
 
   updateDetalleLiquidacion(id: number, detalleLiquidacionRequest: DetalleLiquidacionRequest): Observable<DetalleLiquidacionResponse> {
-    return this.http.put<DetalleLiquidacionResponse>(`${this.apiUrl}/${id}`, detalleLiquidacionRequest);
+    return this.http.patch<DetalleLiquidacionResponse>(`${this.apiUrl}/${id}`, detalleLiquidacionRequest).pipe(
+      tap((response) => {
+        if (response.liquidacion?.id) {
+          this.cacheService.invalidatePattern(`/liquidaciones/${response.liquidacion.id}/con-detalles`);
+        }
+      })
+    );
   }
 
   deleteDetalleLiquidacion(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => {
+        this.cacheService.invalidatePattern(/\/liquidaciones\/\d+\/con-detalles/);
+      })
+    );
   }
 
 }

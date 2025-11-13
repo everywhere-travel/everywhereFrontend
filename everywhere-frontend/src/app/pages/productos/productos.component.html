@@ -8,6 +8,35 @@
   <!-- Main Content Area -->
   <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
 
+    <!-- Messages Section -->
+    <div class="fixed top-4 right-4 z-[9999] space-y-3 max-w-md">
+      <!-- Success Message -->
+      <div *ngIf="showSuccessMessage"
+        class="bg-green-500 text-white px-8 py-5 rounded-xl shadow-2xl flex items-start gap-4 animate-fade-in border-l-4 border-green-300">
+        <i class="fas fa-check-circle text-2xl flex-shrink-0 mt-0.5"></i>
+        <div class="flex-1">
+          <p class="font-semibold text-lg">Éxito</p>
+          <p class="text-sm mt-1">{{ successMessage }}</p>
+        </div>
+        <button (click)="hideMessages()" class="hover:text-green-200 flex-shrink-0">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+
+      <!-- Error Message -->
+      <div *ngIf="showErrorMessage"
+        class="bg-red-600 text-white px-8 py-6 rounded-xl shadow-2xl flex items-start gap-4 animate-fade-in border-l-4 border-red-300">
+        <i class="fas fa-exclamation-triangle text-3xl flex-shrink-0 mt-1"></i>
+        <div class="flex-1">
+          <p class="font-semibold text-lg">Error</p>
+          <p class="text-sm mt-2 break-words whitespace-pre-wrap">{{ errorMessage }}</p>
+        </div>
+        <button (click)="hideMessages()" class="hover:text-red-200 flex-shrink-0">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+    </div>
+
     <!-- Header Section -->
     <header
       class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
@@ -156,8 +185,7 @@
           </div>
           <h3 class="text-xl font-bold text-gray-900 mb-3">No se encontraron productos</h3>
           <p class="text-gray-600 text-center max-w-md mb-6">
-            {{ searchTerm ? 'No hay productos que coincidan con tu búsqueda.' : 'Aún no has creado ningún producto.
-            ¡Comienza creando tu primer producto!' }}
+            {{ searchTerm ? 'No hay productos que coincidan con tu búsqueda.' : 'Aún no has creado ningún producto. ¡Comienza creando tu primer producto!' }}
           </p>
           <button (click)="abrirModalCrear()"
             class="bg-everywhere-primary hover:bg-everywhere-secondary text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl">
@@ -527,6 +555,21 @@
     <!-- Form Content -->
     <form [formGroup]="productoForm" (ngSubmit)="guardarProducto()" class="p-8 space-y-6">
 
+      <!-- Tipo -->
+      <div>
+        <label class="block text-sm font-bold text-gray-700 mb-3">
+          <i class="fas fa-tag mr-2 text-red-600"></i>Tipo de Producto
+        </label>
+        <div class="relative">
+          <input type="text" formControlName="tipo"
+            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
+            placeholder="Ej: PKT, TKL, HOTEL...">
+          <div class="absolute inset-y-0 right-0 flex items-center justify-center px-3 pointer-events-none">
+            <i class="fas fa-edit text-gray-400"></i>
+          </div>
+        </div>
+      </div>
+
       <!-- Descripción -->
       <div>
         <label class="block text-sm font-bold text-gray-700 mb-3">
@@ -541,21 +584,6 @@
             <span *ngIf="productoForm.get('descripcion')?.errors?.['required']">
               La descripción es obligatoria
             </span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tipo -->
-      <div>
-        <label class="block text-sm font-bold text-gray-700 mb-3">
-          <i class="fas fa-tag mr-2 text-red-600"></i>Tipo de Producto
-        </label>
-        <div class="relative">
-          <input type="text" formControlName="tipo"
-            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-200"
-            placeholder="Ej: Transporte, Hospedaje, Tour, etc.">
-          <div class="absolute inset-y-0 right-0 flex items-center justify-center px-3 pointer-events-none">
-            <i class="fas fa-edit text-gray-400"></i>
           </div>
         </div>
       </div>

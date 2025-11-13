@@ -1,6 +1,6 @@
 import { OperadorResponse } from '../Operador/operador.model'
 import { ProveedorResponse } from '../Proveedor/proveedor.model'
-import { ViajeroResponse } from '../Viajero/viajero.model'
+import { ViajeroResponse, ViajeroConPersonaNatural } from '../Viajero/viajero.model'
 import { ProductoResponse } from '../Producto/producto.model'
 import { LiquidacionResponse } from './liquidacion.model'
 
@@ -19,7 +19,7 @@ export interface DetalleLiquidacionResponse {
   actualizado?: string
 
   liquidacion?: LiquidacionResponse
-  viajero?: ViajeroResponse
+  viajero?: ViajeroConPersonaNatural
 
   producto?: ProductoResponse
   proveedor?: ProveedorResponse
@@ -57,7 +57,27 @@ export interface DetalleLiquidacionSimple{
   pagoPaxUSD?: number
   pagoPaxPEN?: number
 
-  viajero?: ViajeroResponse
+  viajero?: ViajeroConPersonaNatural
+  producto?: ProductoResponse
+  proveedor?: ProveedorResponse
+  operador?: OperadorResponse
+}
+
+export interface DetalleLiquidacionSinLiquidacion{
+  id: number
+  ticket?: string
+  costoTicket?: number
+  cargoServicio?: number
+  valorVenta?: number
+  facturaCompra?: string
+  boletaPasajero?: string
+  montoDescuento?: number
+  pagoPaxUSD?: number
+  pagoPaxPEN?: number
+  creado?: string
+  actualizado?: string
+
+  viajero?: ViajeroConPersonaNatural
   producto?: ProductoResponse
   proveedor?: ProveedorResponse
   operador?: OperadorResponse

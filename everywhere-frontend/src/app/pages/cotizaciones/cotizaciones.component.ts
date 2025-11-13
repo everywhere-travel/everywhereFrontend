@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import { Subscription, of } from 'rxjs';
+import { Subscription, of, firstValueFrom } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 import { environment } from '../../../environments/environment';
 
@@ -23,7 +23,7 @@ import { CategoriaService } from '../../core/service/Categoria/categoria.service
 
 import { personaDisplay } from '../../shared/models/Persona/persona.model';
 // Models
-import { CotizacionRequest, CotizacionResponse, CotizacionConDetallesResponseDTO } from '../../shared/models/Cotizacion/cotizacion.model';
+import { CotizacionRequest, CotizacionResponse, CotizacionConDetallesResponseDTO, CotizacionPatchRequest } from '../../shared/models/Cotizacion/cotizacion.model';
 import { DetalleCotizacionRequest, DetalleCotizacionResponse } from '../../shared/models/Cotizacion/detalleCotizacion.model';
 import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
@@ -76,7 +76,8 @@ interface GrupoHotelTemp {
 })
 export class CotizacionesComponent implements OnInit, OnDestroy {
   // ===== CACHE AND MAPPING =====
-  personasCache: { [id: number]: any } = {};
+  // Cache entries are normalized to the `personaDisplay` shape
+  personasCache: { [id: number]: personaDisplay } = {};
   personasDisplayMap: { [id: number]: string } = {};
   loadingPersonas: Set<number> = new Set(); // Para evitar cargas duplicadas
 
@@ -123,6 +124,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   cotizacionSeleccionada: CotizacionResponse | null = null;
   cotizacionCompleta: CotizacionConDetallesResponseDTO | null = null;
   cotizacionEditandoId: number | null = null;
+  cotizacionOriginal: CotizacionResponse | null = null; // Para comparar cambios en PATCH
 
   selectedItems: number[] = [];
   allSelected: boolean = false;
@@ -139,41 +141,20 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // ===== TEMPLATE UTILITIES =====
   Math = Math;
   // ===== SIDEBAR CONFIGURATION =====
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
     {
       id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        },
-        {
-          id: 'viajeros',
-          title: 'Viajeros',
-          icon: 'fas fa-passport',
-          route: '/viajero',
-          moduleKey: 'VIAJEROS'
-        },
-        {
-          id: 'viajeros-frecuentes',
-          title: 'Viajeros Frecuentes',
-          icon: 'fas fa-crown',
-          route: '/viajero-frecuente',
-          moduleKey: 'VIAJEROS'
-        }
-      ]
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
+      moduleKey: 'PERSONAS'
     },
     {
       id: 'cotizaciones',
@@ -203,6 +184,40 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       icon: 'fas fa-file-contract',
       route: '/documentos-cobranza',
       moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
+      id: 'categorias',
+      title: 'Gestion de Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Clientes',
+          icon: 'fas fa-users',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
+        },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
+        }
+      ]
     },
     {
       id: 'recursos',
@@ -238,32 +253,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       icon: 'fas fa-sitemap',
       children: [
         {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
           route: '/sucursales',
           moduleKey: 'SUCURSALES'
-        }
-      ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
         }
       ]
     }
@@ -281,7 +275,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // ===== DATA ARRAYS =====
   cotizaciones: CotizacionResponse[] = [];
-  personas: any[] = [];
+  // personas holds raw API responses (natural or juridica)
+  personas: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
   formasPago: FormaPagoResponse[] = [];
   estadosCotizacion: EstadoCotizacionResponse[] = [];
   sucursales: SucursalResponse[] = [];
@@ -300,10 +295,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   cotizacionesFiltradas: CotizacionConDetallesResponseDTO[] = [];
 
   // ===== CLIENT SELECTION =====
-  personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
-  todosLosClientes: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
+  personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
+  todosLosClientes: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
   buscandoClientes = false;
-  clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | null = null;
+  clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay | null = null;
 
   // ===== CATEGORY MANAGEMENT =====
   creandoCategoria = false;
@@ -416,6 +411,53 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // this.setupClienteSearch(); // Movido a loadInitialData
   }
 
+  /**
+   * Relaja los validadores de cotizacionForm para modo EDICIÓN
+   * Permite actualizar solo los campos que cambien (PATCH)
+   */
+  private relaxCotizacionFormValidators(): void {
+    const fieldsToRelax = [
+      'personaId',
+      'fechaEmision',
+      'fechaVencimiento',
+      'moneda',
+      'cantAdultos',
+      'cantNinos'
+    ];
+
+    fieldsToRelax.forEach(fieldName => {
+      const control = this.cotizacionForm.get(fieldName);
+      if (control) {
+        control.clearAsyncValidators();
+        control.setValidators([Validators.nullValidator]);
+        control.updateValueAndValidity({ emitEvent: false });
+      }
+    });
+  }
+
+  /**
+   * Restaura validadores estrictos para modo CREACIÓN
+   */
+  private strictCotizacionFormValidators(): void {
+    // Re-crear el formulario con validadores originales
+    this.cotizacionForm = this.fb.group({
+      codigoCotizacion: [{ value: '', disabled: true }],
+      personaId: ['', [Validators.required]],
+      fechaEmision: ['', [Validators.required]],
+      fechaVencimiento: ['', [Validators.required]],
+      estadoCotizacionId: [''],
+      sucursalId: [''],
+      origenDestino: [''],
+      fechaSalida: [''],
+      fechaRegreso: [''],
+      formaPagoId: [''],
+      cantAdultos: [1, [Validators.min(1)]],
+      cantNinos: [0, [Validators.min(0)]],
+      moneda: ['USD', [Validators.required]],
+      observacion: ['']
+    });
+  }
+
   private setupClienteSearch(): void {
     // Asegurar que tenemos la lista completa de clientes
     if (this.personas.length > 0) {
@@ -511,23 +553,38 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       // Poblar cache usando ENFOQUE HÍBRIDO (tabla padre SI existe, sino tabla hija)
       this.personas.forEach(persona => {
         // Intentar usar ID de tabla padre PRIMERO, si no existe usar tabla hija
-        const personaId = persona.persona?.id || persona.id;
+  const personaId = persona.persona?.id || persona.id; // persona.id exists on both responses
 
-        if (personaId) {
+        if (!personaId) return;
+
+        // Normalizar según tipo
+        if ('ruc' in persona) {
+          // Persona jurídica
+          const pj = persona as PersonaJuridicaResponse;
           this.personasCache[personaId] = {
             id: personaId,
-            identificador: persona.ruc || persona.documento || persona.cedula || '',
-            nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
-            tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
+            identificador: pj.ruc || '',
+            nombre: pj.razonSocial || 'Sin nombre',
+            tipo: 'JURIDICA'
           };
-          const cached = this.personasCache[personaId];
+        } else {
+          // Persona natural
+          const pn = persona as PersonaNaturalResponse;
+          const apellidos = `${pn.apellidosPaterno || ''} ${pn.apellidosMaterno || ''}`.trim();
+          this.personasCache[personaId] = {
+            id: personaId,
+            identificador: pn.documento || '',
+            nombre: `${pn.nombres || ''} ${apellidos}`.trim() || 'Sin nombre',
+            tipo: 'NATURAL'
+          };
+        }
 
-          // Mejorar el formato del display para asegurar que se muestre el documento
-          if (cached.identificador) {
-            this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
-          } else {
-            this.personasDisplayMap[personaId] = cached.nombre;
-          }
+        const cached = this.personasCache[personaId];
+        // Mejorar el formato del display para asegurar que se muestre el documento
+        if (cached.identificador) {
+          this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+        } else {
+          this.personasDisplayMap[personaId] = cached.nombre;
         }
       });
 
@@ -712,6 +769,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       }
 
       this.resetForm(); // Prepara el formulario y la lista de clientes
+      this.strictCotizacionFormValidators(); // Aplicar validadores estrictos para creación
       this.editandoCotizacion = false;
       this.cotizacionEditandoId = null;
       this.setupDatesForNew();
@@ -739,8 +797,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       }
 
       this.resetForm(); // Limpia el estado del formulario anterior
+      this.relaxCotizacionFormValidators(); // Relajar validadores para edición (PATCH)
       this.editandoCotizacion = true;
       this.cotizacionEditandoId = cotizacion.id;
+      this.cotizacionOriginal = cotizacion; // Guardar datos originales para comparar PATCH
 
       // MEJORA: Usar getCotizacionConDetalles para obtener datos completos
       await this.loadCotizacionCompleta(cotizacion.id);
@@ -820,6 +880,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.editandoCotizacion = false;
     this.cotizacionEditandoId = null;
     this.cotizacionCompleta = null;
+    this.cotizacionOriginal = null; // Limpiar datos originales
     this.resetForm();
   }
 
@@ -1103,7 +1164,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadClienteForEdit(personaId: number): Promise<void> {
     try {
-      const persona = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
+      const persona = await firstValueFrom(this.personaService.findPersonaNaturalOrJuridicaById(personaId));
+      console.debug('[cotizaciones] loadClienteForEdit -> persona fetched for id:', personaId, persona);
       if (persona) {
         this.clienteSeleccionado = persona;
 
@@ -1226,10 +1288,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   // Función para calcular el total en tiempo real del formulario de detalle
+  // Total = (cantidad × precioUnitario) + comision
   calcularTotalDetalle(): number {
     const cantidad = this.detalleForm.get('cantidad')?.value || 0;
     const precioUnitario = this.detalleForm.get('precioHistorico')?.value || 0;
-    return cantidad * precioUnitario;
+    const comision = this.detalleForm.get('comision')?.value || 0;
+    return (cantidad * precioUnitario) + comision;
   }
 
   // Detalle cotización methods (Productos Fijos)
@@ -1287,7 +1351,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       comision,
       cantidad,
       unidad,
-      total: (precioHistorico * cantidad) + comision,
+      total: (precioHistorico + comision) * cantidad, // Correcto: (precio + comisión) * cantidad
       isTemporary: true,
       seleccionado: true     // PRODUCTOS FIJOS siempre seleccionados
     };
@@ -1351,7 +1415,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   recalcularTotalDetalle(index: number): void {
     if (index >= 0 && index < this.detallesFijos.length) {
       const detalle = this.detallesFijos[index];
-      detalle.total = (detalle.precioHistorico * detalle.cantidad) + detalle.comision;
+      detalle.total = (detalle.precioHistorico + detalle.comision) * detalle.cantidad;
     }
   }
 
@@ -1398,7 +1462,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const grupo = this.gruposHoteles[groupIndex];
       if (detailIndex >= 0 && detailIndex < grupo.detalles.length) {
         const detalle = grupo.detalles[detailIndex];
-        detalle.total = (detalle.precioHistorico * detalle.cantidad) + (detalle.comision || 0);
+        detalle.total = (detalle.precioHistorico + (detalle.comision || 0)) * detalle.cantidad;
       }
     }
   }
@@ -1746,9 +1810,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
 
 
-      // Usar método individual para cada detalle (ya que sabemos que funciona)
+      // Actualizar cada detalle con PATCH para cambiar solo el campo 'seleccionado'
       for (const seleccion of selecciones) {
-        await this.detalleCotizacionService.setSeleccionDetalleCotizacion(seleccion.detalleId, seleccion.seleccionado).toPromise();
+        await this.detalleCotizacionService.updateDetalleCotizacion(seleccion.detalleId, { seleccionado: seleccion.seleccionado }).toPromise();
       }
 
       const detallesSeleccionados = selecciones.filter(s => s.seleccionado).length;
@@ -2018,7 +2082,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const producto = this.productos.find(p => p.id === Number(formValue.productoId));
     const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
     const precioHistorico = formValue.precioHistorico || 0;
-    const comision = 0; // Siempre 0 para grupo hotel
+    const comision = formValue.comision || 0; // Leer comisión del formulario
     const cantidad = formValue.cantidad || 1;
     const unidad = formValue.unidad || 1;
 
@@ -2031,17 +2095,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       comision,
       cantidad,
       unidad,
-      total: precioHistorico + comision,
+      total: (precioHistorico + comision) * cantidad, // Calcular correctamente: (precio + comisión) * cantidad
       isTemporary: true,
       seleccionado: false     // Inicializar como no seleccionado
     };
 
     grupo.detalles.push(nuevoDetalle);
-    grupo.total = grupo.detalles.reduce((sum, d) => sum + d.total, 0);
+    grupo.total = grupo.detalles.reduce((sum, d) => sum + ((d.precioHistorico + d.comision) * d.cantidad), 0);
     this.detalleForm.reset({
       cantidad: 1,
       unidad: 1,
-      precioHistorico: 0
+      precioHistorico: 0,
+      comision: 0 // Resetear comisión también
     });
   }
 
@@ -2094,75 +2159,156 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     try {
-      const formValue = this.cotizacionForm.value; // Prepare cotización request
-      const cotizacionRequest: CotizacionRequest = {
-        cantAdultos: formValue.cantAdultos,
-        cantNinos: formValue.cantNinos,
-        fechaVencimiento: formValue.fechaVencimiento,
-        origenDestino: formValue.origenDestino,
-        fechaSalida: formValue.fechaSalida,
-        fechaRegreso: formValue.fechaRegreso,
-        moneda: formValue.moneda,
-        observacion: formValue.observacion || ''
-      };
-
+      const formValue = this.cotizacionForm.value;
       let cotizacionResponse: CotizacionResponse;
-      if (this.editandoCotizacion && this.cotizacionEditandoId) {
 
-        // Update existing cotización
-        const updateResult = await this.cotizacionService.updateCotizacion(this.cotizacionEditandoId, cotizacionRequest).toPromise();
+      if (this.editandoCotizacion && this.cotizacionEditandoId) {
+        // ===== UPDATE con PATCH (actualización parcial) =====
+        const patchPayload = this.buildPatchPayload(formValue);
+
+        // Incluir relaciones (ids) en el PATCH si están presentes o cambiaron
+        const relationFields: (keyof CotizacionPatchRequest)[] = [
+          'counterId',
+          'formaPagoId',
+          'estadoCotizacionId',
+          'sucursalId',
+          'carpetaId'
+        ];
+
+        relationFields.forEach(field => {
+          const val = (formValue as any)[field as string];
+          const originalVal = this.cotizacionOriginal ? (this.cotizacionOriginal as any)[field as string] : undefined;
+          if (val !== undefined && val !== null && val !== '' && val !== originalVal) {
+            (patchPayload as any)[field] = val;
+          }
+        });
+
+        // Si hay cambios, enviar PATCH; si no, mostrar mensaje
+        if (Object.keys(patchPayload).length === 0) {
+          this.showSuccess('No hay cambios que guardar.');
+          this.isLoading = false;
+          return;
+        }
+
+        // Sanitizar fechas y formatos antes de enviar
+        const sanitized = this.sanitizePatchPayload(patchPayload);
+
+        const updateResult = await this.cotizacionService
+          .updateCotizacion(this.cotizacionEditandoId, sanitized)
+          .toPromise();
+
         if (!updateResult) throw new Error('Failed to update cotización');
         cotizacionResponse = updateResult;
 
-        // Set relationships
-        await this.setRelacionesCotizacion(cotizacionResponse.id, formValue);
         // Handle deleted detalles
         await this.eliminarDetallesEliminados();
+
+        this.showSuccess('Cotización actualizada exitosamente!');
       } else {
-        // Create new cotización
-        const createResult = await this.cotizacionService.createCotizacion(cotizacionRequest).toPromise();
+        // ===== CREATE con POST (creación completa) =====
+        const cotizacionRequest: CotizacionRequest = {
+          cantAdultos: formValue.cantAdultos,
+          cantNinos: formValue.cantNinos,
+          fechaVencimiento: formValue.fechaVencimiento,
+          origenDestino: formValue.origenDestino,
+          fechaSalida: formValue.fechaSalida,
+          fechaRegreso: formValue.fechaRegreso,
+          moneda: formValue.moneda,
+          observacion: formValue.observacion || '',
+          // Incluir relaciones en el create si vienen del formulario
+          counterId: formValue.counterId,
+          formaPagoId: formValue.formaPagoId,
+          estadoCotizacionId: formValue.estadoCotizacionId,
+          sucursalId: formValue.sucursalId,
+          carpetaId: formValue.carpetaId
+        };
+
+  let createResult: CotizacionResponse | undefined = undefined;
+        if (formValue.personaId) {
+          // Si se seleccionó una persona, usar el endpoint que crea la cotización vinculada a la persona
+          createResult = await this.cotizacionService.createCotizacionWithPersona(formValue.personaId, cotizacionRequest).toPromise();
+        } else {
+          createResult = await this.cotizacionService.createCotizacion(cotizacionRequest).toPromise();
+        }
         if (!createResult) throw new Error('Failed to create cotización');
         cotizacionResponse = createResult;
-        // Set relationships
-        await this.setRelacionesCotizacion(cotizacionResponse.id, formValue);
+
+  // Ya incluimos las relaciones en el payload de creación (si vienen)
+
+        this.showSuccess('Cotización creada exitosamente!');
       }
+
       // Create/update detalles
       await this.procesarDetalles(cotizacionResponse.id);
-
-      // Show success message
-      const successMessage = this.editandoCotizacion
-        ? 'Cotización actualizada exitosamente!'
-        : 'Cotización creada exitosamente!';
-      this.showSuccess(successMessage);
 
       // Reload data and close form
       await this.loadCotizaciones();
       this.cerrarFormulario();
     } catch (error) {
-
+      console.error('Error al guardar cotización:', error);
       this.showError('Error al guardar la cotización. Por favor, verifique los datos e intente nuevamente.');
     } finally {
       this.isLoading = false;
     }
   }
 
-  private async setRelacionesCotizacion(cotizacionId: number, formValue: any): Promise<void> {
-    // Ejecutar secuencialmente para evitar conflictos con IDs
-    if (formValue.personaId)
-      await this.cotizacionService.setPersona(cotizacionId, formValue.personaId).toPromise();
+  /**
+   * Construye un payload PATCH con solo los campos que han cambiado
+   * Compara el formulario actual con los datos originales de la cotización
+   */
+  private buildPatchPayload(formValue: any): CotizacionPatchRequest {
+    const patch: CotizacionPatchRequest = {};
 
-    if (formValue.formaPagoId)
-      await this.cotizacionService.setFormaPago(cotizacionId, formValue.formaPagoId).toPromise();
+    if (!this.cotizacionOriginal) {
+      return patch;
+    }
 
-    if (formValue.estadoCotizacionId)
-      await this.cotizacionService.setEstadoCotizacion(cotizacionId, formValue.estadoCotizacionId).toPromise();
+    // Campos a comparar para el PATCH
+    const fieldsToCheck: (keyof CotizacionRequest)[] = [
+      'cantAdultos',
+      'cantNinos',
+      'origenDestino',
+      'fechaSalida',
+      'fechaRegreso',
+      'moneda',
+      'observacion',
+      'fechaVencimiento'
+    ];
 
-    if (formValue.sucursalId)
-      await this.cotizacionService.setSucursal(cotizacionId, formValue.sucursalId).toPromise();
+    fieldsToCheck.forEach(field => {
+      const newValue = formValue[field];
+      const originalValue = this.cotizacionOriginal![field as keyof CotizacionResponse];
 
-    // NOTA: El grupo seleccionado se maneja a través de las selecciones de detalles
-    // No hay endpoint específico para guardar grupoSeleccionadoId en la cotización
+      // Si el valor cambió, agregarlo al patch
+      if (newValue !== undefined && newValue !== null && newValue !== originalValue) {
+        patch[field] = newValue;
+      }
+    });
+
+    return patch;
   }
+
+  /**
+   * Sanitiza el payload PATCH para asegurar que las fechas estén en formato ISO
+   */
+  private sanitizePatchPayload(patch: CotizacionPatchRequest): CotizacionPatchRequest {
+    const sanitized: CotizacionPatchRequest = {};
+
+    Object.keys(patch).forEach(key => {
+      let value: any = patch[key as keyof CotizacionPatchRequest];
+
+      // Convertir Date objects a string ISO
+      if (value instanceof Date) {
+        value = (value as Date).toISOString().split('T')[0]; // YYYY-MM-DD
+      }
+
+      sanitized[key as keyof CotizacionPatchRequest] = value;
+    });
+
+    return sanitized;
+  }
+
+  // Relaciones ahora se envían como parte del payload de creación/actualización (PATCH/POST)
 
   private async eliminarDetallesEliminados(): Promise<void> {
     const deletePromises = this.deletedDetalleIds.map(id =>
@@ -2223,11 +2369,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       proveedorId = nuevoProveedor?.id;
     }
 
+    const productoId = detalle.producto?.id;
     const request: DetalleCotizacionRequest = {
       cantidad: detalle.cantidad || 1,                   // Default 1
       unidad: detalle.unidad || 1,                       // Default 1
       descripcion: detalle.descripcion || '',            // Default empty
-      categoria: categoria,                              // Cambio: categoriaId → categoria
+      categoria: categoria,                              // Mantener para compatibilidad local
+      categoriaId: categoria,                            // Enviar categoriaId al backend
+      productoId: productoId,                            // Enviar productoId si existe
+      proveedorId: proveedorId,                          // Enviar proveedorId si existe
       comision: detalle.comision || 0,                   // Default 0
       precioHistorico: detalle.precioHistorico || 0,     // Default 0
       seleccionado: detalle.seleccionado || false        // Campo de selección
@@ -2240,13 +2390,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     const detalleCreado = await this.detalleCotizacionService.createDetalleCotizacion(cotizacionId, request).toPromise();
 
-    if (detalleCreado && detalle.producto) {
-      await this.detalleCotizacionService.setProducto(detalleCreado.id, detalle.producto.id).toPromise();
-    }
+    // NOTA: Los endpoints setProducto() y setProveedor() no existen en el backend actual.
+    // El producto y proveedor deben incluirse en el payload al crear el detalle.
+    // Si necesitas usar esos endpoints, debes implementarlos en el backend primero.
 
-    if (detalleCreado && proveedorId) {
-      await this.detalleCotizacionService.setProveedor(detalleCreado.id, proveedorId).toPromise();
-    }
+    // if (detalleCreado && detalle.producto) {
+    //   await this.detalleCotizacionService.setProducto(detalleCreado.id, detalle.producto.id).toPromise();
+    // }
+
+    // if (detalleCreado && proveedorId) {
+    //   await this.detalleCotizacionService.setProveedor(detalleCreado.id, proveedorId).toPromise();
+    // }
   }
 
   private async actualizarDetalle(detalle: DetalleCotizacionTemp): Promise<void> {
@@ -2259,11 +2413,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     } else {
       categoriaId = detalle.categoria as number;
     }
+    const productoId = detalle.producto?.id;
+    const proveedorId = detalle.proveedor?.id;
+
     const request: DetalleCotizacionRequest = {
       cantidad: detalle.cantidad || 1,
       unidad: (detalle.unidad !== undefined && detalle.unidad !== null) ? detalle.unidad : 0,
       descripcion: detalle.descripcion || '',
       categoria: categoriaId,
+      categoriaId: categoriaId,
+      productoId: productoId,
+      proveedorId: proveedorId,
       comision: detalle.comision || 0,
       precioHistorico: detalle.precioHistorico || 0,
       seleccionado: detalle.seleccionado || false        // Campo de selección
@@ -2330,8 +2490,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       await this.cotizacionService.deleteByIdCotizacion(id).toPromise();
       await this.loadCotizaciones();
       this.showSuccess('Cotización eliminada exitosamente.');
-    } catch (error) {
-      this.showError('Error al eliminar la cotización. Por favor, inténtelo de nuevo.');
+    } catch (error: any) {
+      // Capturar el mensaje del backend si existe (RFC 7807 Problem Details format)
+      const errorMessage = error?.error?.detail ||    // RFC 7807 format (detail)
+                          error?.error?.message ||     // Custom format (message)
+                          error?.message ||             // Error object message
+                          'Error al eliminar la cotización. Por favor, inténtelo de nuevo.';
+      this.showError(errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -2401,23 +2566,49 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Agrega una persona al cache
+   * Agrega una persona al cache (acepta respuesta natural/juridica o `personaDisplay` normalizado)
    */
-  private addPersonaToCache(persona: any): void {
-    if (!persona.id) return;
+  private addPersonaToCache(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): void {
+    console.debug('[cotizaciones] addPersonaToCache -> persona:', persona);
+    if (!persona || !persona.id) return;
 
-    this.personasCache[persona.id] = {
-      id: persona.id,
-      identificador: persona.ruc || persona.documento || persona.cedula || '',
-      nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
-      tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
-    };
+    // Si ya es un personaDisplay normalizado, usarlo tal cual
+    if ('tipo' in persona && 'nombre' in persona) {
+      this.personasCache[persona.id] = persona;
+    } else if ('ruc' in persona) {
+      // Persona jurídica
+      const pj = persona as PersonaJuridicaResponse;
+      this.personasCache[persona.id] = {
+        id: persona.id,
+        identificador: pj.ruc || '',
+        nombre: pj.razonSocial || 'Sin nombre',
+        tipo: 'JURIDICA'
+      };
+    } else {
+      // Persona natural
+      const pn = persona as PersonaNaturalResponse;
+      const apellidosCache = `${pn.apellidosPaterno || ''} ${pn.apellidosMaterno || ''}`.trim();
+      this.personasCache[persona.id] = {
+        id: persona.id,
+        identificador: pn.documento || '',
+        nombre: `${pn.nombres || ''} ${apellidosCache}`.trim() || 'Sin nombre',
+        tipo: 'NATURAL'
+      };
+    }
 
+    // Registrar la representación para el map de display
     const cached = this.personasCache[persona.id];
     if (cached.identificador) {
       this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
     } else {
       this.personasDisplayMap[persona.id] = cached.nombre;
+    }
+
+    // Si la entidad tiene una relación `persona` (tabla padre) y su id difiere, duplicar la entrada
+    if ('persona' in (persona as any) && (persona as any).persona?.id && (persona as any).persona.id !== persona.id) {
+      const parentId = (persona as any).persona.id as number;
+      this.personasCache[parentId] = { ...this.personasCache[persona.id], id: parentId };
+      this.personasDisplayMap[parentId] = this.personasDisplayMap[persona.id];
     }
   }
 
@@ -2433,9 +2624,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.loadingPersonas.add(personaId);
 
     // Cargar persona de forma asíncrona
-    this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise()
+    firstValueFrom(this.personaService.findPersonaNaturalOrJuridicaById(personaId))
       .then(persona => {
         if (persona) {
+          console.debug('[cotizaciones] loadMissingPersona -> loaded:', personaId, persona);
           this.todosLosClientes.push(persona);
           this.addPersonaToCache(persona);
           // Forzar actualización de la vista
@@ -2548,7 +2740,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // CLIENT SEARCH METHODS (SIMPLIFIED)
   // ============================================
 
-  private async buscarClientesEnTiempoReal(searchTerm: string): Promise<(PersonaNaturalResponse | PersonaJuridicaResponse)[]> {
+  private async buscarClientesEnTiempoReal(searchTerm: string): Promise<(PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[]> {
     if (!searchTerm || searchTerm.length < 1) {
       // Si no hay término de búsqueda, mostrar todos los clientes (primeros 20)
       return this.todosLosClientes.slice(0, 20);
@@ -2556,25 +2748,25 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     try {
       const term = searchTerm.toLowerCase();
-      const resultados: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
+      const resultados: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
 
       // Filtrar todos los clientes cargados
       const clientesFiltrados = this.todosLosClientes.filter(persona => {
-        if ('nombres' in persona && 'apellidos' in persona) {
-          // Persona Natural
-          const nombres = (persona.nombres || '').toLowerCase();
-          const apellidos = (persona.apellidos || '').toLowerCase();
-          const documento = (persona.documento || '').toLowerCase();
-          const nombreCompleto = `${nombres} ${apellidos}`.trim();
+        if ('nombres' in persona && ('apellidos' in persona || 'apellidosPaterno' in persona || 'apellidosMaterno' in persona)) {
+            // Persona Natural (soporta apellidosPaterno/apellidosMaterno)
+            const nombres = ((persona as any).nombres || '').toString().toLowerCase();
+            const apellidos = ((persona as any).apellidosPaterno || (persona as any).apellidos || (persona as any).apellidosMaterno || '').toString().toLowerCase();
+            const documento = ((persona as any).documento || '').toString().toLowerCase();
+            const nombreCompleto = `${nombres} ${apellidos}`.trim();
 
-          return nombres.includes(term) ||
-            apellidos.includes(term) ||
-            documento.includes(term) ||
-            nombreCompleto.includes(term);
-        } else if ('razonSocial' in persona) {
+            return nombres.includes(term) ||
+              apellidos.includes(term) ||
+              documento.includes(term) ||
+              nombreCompleto.includes(term);
+          } else if ('razonSocial' in persona) {
           // Persona Jurídica
-          const razonSocial = (persona.razonSocial || '').toLowerCase();
-          const ruc = (persona.ruc || '').toLowerCase();
+          const razonSocial = ((persona as any).razonSocial || '').toString().toLowerCase();
+          const ruc = ((persona as any).ruc || '').toString().toLowerCase();
 
           return razonSocial.includes(term) || ruc.includes(term);
         }
@@ -2618,29 +2810,48 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.clearClienteSearch();
   }
 
-  seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse): void {
-    // Usar el FK de la tabla persona base si existe, si no el id propio
-    const personaId = typeof (persona as any).persona === 'object'
-      ? (persona as any).persona.id
-      : (persona as any).persona || persona.id;
+  seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): void {
+    // Obtener el ID del cliente para el formulario
+    let personaId: number;
+
+    // Si es personaDisplay (tipo unificado)
+    if ('tipo' in persona && 'identificador' in persona) {
+      personaId = persona.id;
+    } else {
+      // Para tipos originales, usar el FK de la tabla persona base si existe, si no el id propio
+      personaId = typeof (persona as any).persona === 'object'
+        ? (persona as any).persona.id
+        : (persona as any).persona || persona.id;
+    }
 
     this.clienteSeleccionado = persona;
     this.cotizacionForm.patchValue({ personaId: personaId });
     this.clearClienteSearch();
   }
 
-  getClienteType(persona: any): string {
+  getClienteType(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
     if (!persona) return 'Cliente';
+
     // Si es personaDisplay (nuevo modelo unificado)
-    if ('tipo' in persona) return persona.tipo === 'JURIDICA' ? 'Persona Jurídica' : 'Persona Natural';
+    if ('tipo' in persona && 'identificador' in persona) {
+      const tipo = persona.tipo.toUpperCase();
+      return tipo === 'JURIDICA' ? 'Persona Jurídica' : 'Persona Natural';
+    }
+
     // Compatibilidad con modelos antiguos
     if ('ruc' in persona && persona.ruc) return 'Persona Jurídica';
 
     return 'Persona Natural';
   }
 
-  getClienteDocumento(persona: any): string {
+  getClienteDocumento(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
     if (!persona) return '';
+
+    // Si es personaDisplay (nuevo modelo unificado)
+    if ('tipo' in persona && 'identificador' in persona) {
+      return persona.identificador || '';
+    }
+
     // Si es persona jurídica, devolver RUC
     if ('ruc' in persona && persona.ruc) return persona.ruc;
     // Si es persona natural, devolver documento
@@ -2649,10 +2860,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  hasDocumento(persona: any): boolean {
+  hasDocumento(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): boolean {
     if (!persona) return false;
 
-    return ('documento' in persona && persona.documento) || ('ruc' in persona && persona.ruc);
+    // Si es personaDisplay (nuevo modelo unificado)
+    if ('tipo' in persona && 'identificador' in persona) {
+      return !!persona.identificador;
+    }
+
+    return !!('documento' in persona && persona.documento) || !!('ruc' in persona && persona.ruc);
   }
 
   getSelectedClienteName(): string {
@@ -2660,9 +2876,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     return this.getClienteDisplayName(this.clienteSeleccionado);
   }
 
-  getClienteDisplayName(persona: any): string {
+  getClienteDisplayName(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
     // Soporta personaDisplay, PersonaNaturalResponse y PersonaJuridicaResponse
     if (!persona) return 'Cliente';
+
     // Si es personaDisplay (nuevo modelo unificado)
     if ('tipo' in persona && 'identificador' in persona && 'nombre' in persona) {
       if (persona.tipo === 'JURIDICA') {
@@ -2671,16 +2888,21 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         return `DNI: ${persona.identificador} - ${persona.nombre}`;
       }
     }
-    // Compatibilidad con modelos antiguos
-    if ('nombres' in persona && 'apellidos' in persona) {
-      const doc = persona.documento ? ` - ${persona.documento}` : '';
-      return `${persona.nombres || ''} ${persona.apellidos || ''}${doc}`.trim();
+
+    // Compatibilidad con modelos antiguos (soporta apellidosPaterno/apellidosMaterno)
+    if ('nombres' in persona && ('apellidos' in persona || 'apellidosPaterno' in persona || 'apellidosMaterno' in persona)) {
+      const doc = (persona as any).documento ? ` - ${(persona as any).documento}` : '';
+      const apellidos = ((persona as any).apellidosPaterno || (persona as any).apellidos || (persona as any).apellidosMaterno || '').trim();
+      const nombreCompleto = `${(persona as any).nombres || ''} ${apellidos}`.trim();
+      return `${nombreCompleto}${doc}`.trim();
     }
+
     if ('razonSocial' in persona) {
-      const ruc = persona.ruc ? ` - RUC: ${persona.ruc}` : '';
-      return `${persona.razonSocial || 'Empresa'}${ruc}`.trim();
+      const ruc = (persona as any).ruc ? ` - RUC: ${(persona as any).ruc}` : '';
+      return `${(persona as any).razonSocial || 'Empresa'}${ruc}`.trim();
     }
-    return 'Cliente';
+
+    return 'ClienteABc';
   }
 
   // Métodos para estadísticas en el header

@@ -28,6 +28,7 @@ export interface LiquidacionResponse {
   producto?: ProductoResponse
   formaPago?: FormaPagoResponse
   carpeta?: CarpetaResponse
+  observacionesLiquidacion?: ObservacionLiquidacionSimple[]
 }
 
 export interface LiquidacionConDetallesResponse {

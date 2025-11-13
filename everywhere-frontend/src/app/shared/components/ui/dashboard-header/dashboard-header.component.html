@@ -1,6 +1,13 @@
 <header class="dashboard-header">
   <div class="header-brand">
     <div class="logo-section">
+      <div class="login-branding">
+        <div class="branding-content">
+          <img src="/Frame.svg" alt="Everywhere Travel Logo"
+            style="width: 20%; height: auto; max-width: 20%; object-fit: contain; margin-bottom: 0.1rem;">
+        </div>
+      </div>
+      <!--
       <img [src]="data.logoSrc" [alt]="data.title.main + ' ' + data.title.secondary" class="header-logo">
       <div class="brand-text">
         <h1>
@@ -8,12 +15,12 @@
           <span class="travel-text">{{ data.title.secondary }}</span>
         </h1>
         <span class="dashboard-subtitle">{{ data.subtitle }}</span>
-      </div>
+      </div>-->
     </div>
   </div>
-  
+
   <div class="header-actions">
-    <button class="refresh-btn" (click)="onRefreshClick()" [disabled]="data.isLoading">
+    <!--<button class="refresh-btn" (click)="onRefreshClick()" [disabled]="data.isLoading">
       <svg [class.spinning]="data.isLoading" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M4 4V10H10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M20 20V14H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -21,8 +28,8 @@
         <path d="M10 20A8 8 0 0 1 4 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       Actualizar
-    </button>
-    
+    </button>-->
+
     <app-user-avatar [user]="data.userData" [showInfo]="true" (logoutClicked)="onLogout()"></app-user-avatar>
   </div>
 </header>

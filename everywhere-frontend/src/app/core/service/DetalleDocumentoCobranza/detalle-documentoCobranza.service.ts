@@ -1,47 +1,59 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import {
   DetalleDocumentoCobranzaRequestDTO,
   DetalleDocumentoCobranzaResponseDTO
 } from '../../../shared/models/DocumetnoCobranza/detalleDocumentoCobranza.model';
 import { environment } from '../../../../environments/environment';
+import { CacheService } from '../cache.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DetalleDocumentoCobranzaService {
   private apiUrl = `${environment.baseURL}/detalle-documento-cobranza`;
+  private cacheService = inject(CacheService);
 
   constructor(private http: HttpClient) { }
 
-  // Obtener todos los detalles
   getAllDetalles(): Observable<DetalleDocumentoCobranzaResponseDTO[]> {
     return this.http.get<DetalleDocumentoCobranzaResponseDTO[]>(this.apiUrl);
   }
 
-  // Obtener detalle por ID
   getDetalleById(id: number): Observable<DetalleDocumentoCobranzaResponseDTO> {
     return this.http.get<DetalleDocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`);
   }
 
-  // Obtener detalles por documento cobranza ID
   getDetallesByDocumentoCobranza(documentoId: number): Observable<DetalleDocumentoCobranzaResponseDTO[]> {
     return this.http.get<DetalleDocumentoCobranzaResponseDTO[]>(`${this.apiUrl}/documento-cobranza/${documentoId}`);
   }
 
-  // Crear nuevo detalle
   createDetalle(dto: DetalleDocumentoCobranzaRequestDTO): Observable<DetalleDocumentoCobranzaResponseDTO> {
-    return this.http.post<DetalleDocumentoCobranzaResponseDTO>(this.apiUrl, dto);
+    return this.http.post<DetalleDocumentoCobranzaResponseDTO>(this.apiUrl, dto).pipe(
+      tap((response) => {
+        if (response.documentoCobranzaId) {
+          this.cacheService.invalidatePattern(`/documentos-cobranza/${response.documentoCobranzaId}`);
+        }
+      })
+    );
   }
 
-  // Actualizar detalle existente
   updateDetalle(id: number, dto: DetalleDocumentoCobranzaRequestDTO): Observable<DetalleDocumentoCobranzaResponseDTO> {
-    return this.http.put<DetalleDocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`, dto);
+    return this.http.put<DetalleDocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`, dto).pipe(
+      tap((response) => {
+        if (response.documentoCobranzaId) {
+          this.cacheService.invalidatePattern(`/documentos-cobranza/${response.documentoCobranzaId}`);
+        }
+      })
+    );
   }
-
-  // Eliminar detalle
+  
   deleteDetalle(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => {
+        this.cacheService.invalidateModule('documentos-cobranza');
+      })
+    );
   }
 }

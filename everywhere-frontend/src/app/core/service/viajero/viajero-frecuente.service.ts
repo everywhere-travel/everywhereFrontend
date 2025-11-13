@@ -13,45 +13,31 @@ export class ViajeroFrecuenteService {
 
   constructor() { }
 
-  /**
-   * Crea un viajero frecuente asociándolo a un viajero existente
-   */
   crear(viajeroId: number, viajeroFrecuenteRequest: ViajeroFrecuenteRequest): Observable<ViajeroFrecuenteResponse> {
     return this.http.post<ViajeroFrecuenteResponse>(`${this.baseURL}/${viajeroId}`, viajeroFrecuenteRequest);
   }
 
-  /**
-   * Busca un viajero frecuente por ID
-   */
+  findAll(): Observable<ViajeroFrecuenteResponse[]> {
+    return this.http.get<ViajeroFrecuenteResponse[]>(this.baseURL);
+  }
+
   buscarPorId(id: number): Observable<ViajeroFrecuenteResponse> {
     return this.http.get<ViajeroFrecuenteResponse>(`${this.baseURL}/${id}`);
   }
 
-  /**
-   * Lista todos los viajeros frecuentes de un viajero
-   */
   listarPorViajero(viajeroId: number): Observable<ViajeroFrecuenteResponse[]> {
     return this.http.get<ViajeroFrecuenteResponse[]>(`${this.baseURL}/viajero/${viajeroId}`);
   }
 
-  /**
-   * Busca todos los viajeros frecuentes por ID de viajero
-   */
-  buscarPorViajeroId(viajeroId: number): Observable<ViajeroFrecuenteResponse[]> {
-    return this.http.get<ViajeroFrecuenteResponse[]>(`${this.baseURL}/search/${viajeroId}`);
-  }
-
-  /**
-   * Actualiza un viajero frecuente
-   */
   actualizar(id: number, viajeroFrecuenteRequest: ViajeroFrecuenteRequest): Observable<ViajeroFrecuenteResponse> {
-    return this.http.put<ViajeroFrecuenteResponse>(`${this.baseURL}/${id}`, viajeroFrecuenteRequest);
+    return this.http.patch<ViajeroFrecuenteResponse>(`${this.baseURL}/${id}`, viajeroFrecuenteRequest);
   }
 
-  /**
-   * Elimina un viajero frecuente
-   */
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseURL}/${id}`);
+  }
+
+  buscarPorViajeroId(viajeroId: number): Observable<ViajeroFrecuenteResponse[]> {
+    return this.http.get<ViajeroFrecuenteResponse[]>(`${this.baseURL}/search/${viajeroId}`);
   }
 }

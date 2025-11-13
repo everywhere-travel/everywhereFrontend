@@ -3,16 +3,14 @@ import { authGuard } from './core/guards/auth/auth.guard';
 import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { PersonasComponent } from './pages/personas/personas.component';
-import { Viajero } from './pages/viajero/viajero';
-import { ViajeroFrecuente } from './pages/viajero-frecuente/viajero-frecuente';
 import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.component';
 import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
 import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.component';
 import { ProductosComponent } from './pages/productos/productos.component';
 import { ProveedorComponent } from './pages/proveedor/proveedor.component';
 import { OperadoresComponent } from './pages/operadores/operadores.component';
-import { ReportesComponent } from './pages/reportes/reportes.component';
-import { EstadisticaComponent } from './pages/estadistica/estadistica.component';
+import { CategoriaPersonaComponent } from './pages/categoria-persona/categoria-persona.component';
+import { EstadoCotizacionComponent } from './pages/estado-cotizacion/estado-cotizacion.component';
 
 
 export const routes: Routes = [
@@ -35,15 +33,15 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'viajero',
+    path: 'personas/detalle/:id',
     loadComponent: () =>
-      import('./pages/viajero/viajero').then(m => m.Viajero),
+      import('./pages/detalle-persona/detalle-persona.component').then(m => m.DetallePersonaComponent),
     canActivate: [authGuard]
   },
   {
-    path: 'viajero-frecuente',
+    path: 'juridico/detalle/:id',
     loadComponent: () =>
-      import('./pages/viajero-frecuente/viajero-frecuente').then(m => m.ViajeroFrecuente),
+      import('./pages/detalle-juridico/detalle-juridico.component').then(m => m.DetalleJuridicoComponent),
     canActivate: [authGuard]
   },
   {
@@ -95,19 +93,35 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'estado-cotizacion',
+    component: EstadoCotizacionComponent,
+    canActivate: [authGuard]
+  },
+  {
+    path: 'formas-pago',
+    loadComponent: () =>
+      import('./pages/forma-pago/forma-pago.component').then(m => m.FormaPagoComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'categorias',
+    loadComponent: () =>
+      import('./pages/categorias/categorias.component').then(m => m.CategoriasComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'proveedores',
     component: ProveedorComponent,
     canActivate: [authGuard]
   },
   {
-    path: 'operadores',
-    component: OperadoresComponent,
+    path: 'categorias-persona',
+    component: CategoriaPersonaComponent,
     canActivate: [authGuard]
   },
   {
-    path: 'reportes',
-    loadComponent: () =>
-      import('./pages/reportes/reportes.component').then(m => m.ReportesComponent),
+    path: 'operadores',
+    component: OperadoresComponent,
     canActivate: [authGuard]
   },
   {

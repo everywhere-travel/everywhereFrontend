@@ -40,41 +40,20 @@ export class ProveedorComponent implements OnInit {
 
   // Sidebar Configuration
   sidebarCollapsed = false;
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
     {
       id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        },
-        {
-          id: 'viajeros',
-          title: 'Viajeros',
-          icon: 'fas fa-passport',
-          route: '/viajero',
-          moduleKey: 'VIAJEROS'
-        },
-        {
-          id: 'viajeros-frecuentes',
-          title: 'Viajeros Frecuentes',
-          icon: 'fas fa-crown',
-          route: '/viajero-frecuente',
-          moduleKey: 'VIAJEROS'
-        }
-      ]
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
+      moduleKey: 'PERSONAS'
     },
     {
       id: 'cotizaciones',
@@ -101,13 +80,48 @@ export class ProveedorComponent implements OnInit {
       id: 'documentos-cobranza',
       title: 'Documentos de Cobranza',
       icon: 'fas fa-file-contract',
-      route: '/documento-cobranza',
+      route: '/documentos-cobranza',
       moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
+      id: 'categorias',
+      title: 'Gestion de Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Clientes',
+          icon: 'fas fa-users',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
+        },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
+        }
+      ]
     },
     {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
+      active: true,
       children: [
         {
           id: 'productos',
@@ -120,7 +134,6 @@ export class ProveedorComponent implements OnInit {
           id: 'proveedores',
           title: 'Proveedores',
           icon: 'fas fa-truck',
-          active: true,
           route: '/proveedores',
           moduleKey: 'PROVEEDORES'
         },
@@ -139,32 +152,11 @@ export class ProveedorComponent implements OnInit {
       icon: 'fas fa-sitemap',
       children: [
         {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
           route: '/sucursales',
           moduleKey: 'SUCURSALES'
-        }
-      ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
         }
       ]
     }
@@ -192,6 +184,12 @@ export class ProveedorComponent implements OnInit {
   // Error modal data
   errorModalData: ErrorModalData | null = null;
   backendErrorData: BackendErrorResponse | null = null;
+
+  // Alert messages
+  errorMessage: string = '';
+  successMessage: string = '';
+  showErrorMessage: boolean = false;
+  showSuccessMessage: boolean = false;
 
   searchTerm = '';
   currentView: 'table' | 'cards' | 'list' = 'table';
@@ -373,13 +371,18 @@ export class ProveedorComponent implements OnInit {
 
       this.proveedorService.createProveedor(proveedorRequest).subscribe({
         next: (response) => {
+          this.showSuccess('Proveedor creado correctamente');
           this.loadProveedores();
           this.cerrarModal();
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al crear proveedor:', error);
           this.loading = false;
+          const errorMessage = error?.error?.detail ||
+                              error?.error?.message ||
+                              error?.message ||
+                              'Error al crear proveedor';
+          this.showError(errorMessage);
         }
       });
     }
@@ -392,13 +395,18 @@ export class ProveedorComponent implements OnInit {
 
       this.proveedorService.updateProveedor(this.proveedorSeleccionado.id, proveedorRequest).subscribe({
         next: (response) => {
+          this.showSuccess('Proveedor actualizado correctamente');
           this.loadProveedores();
           this.cerrarModal();
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al actualizar proveedor:', error);
           this.loading = false;
+          const errorMessage = error?.error?.detail ||
+                              error?.error?.message ||
+                              error?.message ||
+                              'Error al actualizar proveedor';
+          this.showError(errorMessage);
         }
       });
     }
@@ -448,20 +456,19 @@ export class ProveedorComponent implements OnInit {
     this.proveedorService.deleteByIdProveedor(id).subscribe({
       next: () => {
         this.cerrarModalEliminar();
+        this.showSuccess('Proveedor eliminado correctamente');
         this.loadProveedores();
       },
       error: (error) => {
         this.loading = false;
         this.cerrarModalEliminar();
 
-        // Usar el servicio de manejo de errores
-        const { modalData, backendError } = this.errorHandler.handleHttpError(error, 'eliminar proveedor');
-
-        this.errorModalData = modalData;
-        this.backendErrorData = backendError || null;
-        this.mostrarModalError = true;
-
-        console.error('Error al eliminar proveedor:', error);
+        // Capturar error con RFC 7807 priority: detail > message > fallback
+        const errorMessage = error?.error?.detail ||
+                            error?.error?.message ||
+                            error?.message ||
+                            'Error al eliminar proveedor';
+        this.showError(errorMessage);
       }
     });
   }
@@ -757,5 +764,28 @@ export class ProveedorComponent implements OnInit {
 
   trackByProveedorId(index: number, item: ProveedorTabla): number {
     return item.id;
+  }
+
+  private showError(message: string): void {
+    this.errorMessage = message;
+    this.showErrorMessage = true;
+    this.showSuccessMessage = false;
+    setTimeout(() => {
+      this.showErrorMessage = false;
+    }, 5000);
+  }
+
+  private showSuccess(message: string): void {
+    this.successMessage = message;
+    this.showSuccessMessage = true;
+    this.showErrorMessage = false;
+    setTimeout(() => {
+      this.showSuccessMessage = false;
+    }, 3000);
+  }
+
+  public hideMessages(): void {
+    this.showErrorMessage = false;
+    this.showSuccessMessage = false;
   }
 }

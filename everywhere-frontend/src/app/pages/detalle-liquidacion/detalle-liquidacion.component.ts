@@ -37,7 +37,7 @@ interface ObservacionConEdicion extends ObservacionLiquidacionResponse {
 }
 import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { OperadorResponse } from '../../shared/models/Operador/operador.model';
-import { ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
+import { ViajeroResponse, ViajeroConPersonaNatural } from '../../shared/models/Viajero/viajero.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -92,10 +92,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   formasPago: FormaPagoResponse[] = [];
   proveedores: ProveedorResponse[] = [];
   operadores: OperadorResponse[] = [];
-  viajeros: ViajeroResponse[] = [];
+  viajeros: ViajeroConPersonaNatural[] = [];
 
   // Search/Filter state for dropdowns
-  viajerosFiltrados: { [index: string]: ViajeroResponse[] } = {};
+  viajerosFiltrados: { [index: string]: ViajeroConPersonaNatural[] } = {};
   viajeroSearchTerms: { [index: string]: string } = {};
   viajeroDropdownsOpen: { [index: string]: boolean } = {};
 
@@ -127,41 +127,20 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   detallesEliminados: number[] = [];
 
   // Sidebar Configuration
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
     {
       id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        },
-        {
-          id: 'viajeros',
-          title: 'Viajeros',
-          icon: 'fas fa-passport',
-          route: '/viajero',
-          moduleKey: 'VIAJEROS'
-        },
-        {
-          id: 'viajeros-frecuentes',
-          title: 'Viajeros Frecuentes',
-          icon: 'fas fa-crown',
-          route: '/viajero-frecuente',
-          moduleKey: 'VIAJEROS'
-        }
-      ]
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
+      moduleKey: 'PERSONAS'
     },
     {
       id: 'cotizaciones',
@@ -193,6 +172,40 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       moduleKey: 'DOCUMENTOS_COBRANZA'
     },
     {
+      id: 'categorias',
+      title: 'Gestion de Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Clientes',
+          icon: 'fas fa-users',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
+        },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
+        }
+      ]
+    },
+    {
       id: 'recursos',
       title: 'Recursos',
       icon: 'fas fa-box',
@@ -216,7 +229,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           title: 'Operadores',
           icon: 'fas fa-headset',
           route: '/operadores',
-          moduleKey: 'OPERADORES'
+          moduleKey: 'OPERADOR'
         }
       ]
     },
@@ -226,13 +239,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       icon: 'fas fa-sitemap',
       children: [
         {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
@@ -240,23 +246,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           moduleKey: 'SUCURSALES'
         }
       ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
-        }
-      ]
     }
   ];
-
   private subscriptions = new Subscription();
 
   constructor() {
@@ -533,6 +524,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           // Cargar observaciones de la liquidación
           this.cargarObservacionesLiquidacion(liquidacion.id);
 
+          // Extraer viajeros únicos de los detalles
+          this.extraerViajerosDeDetalles();
+
           // Cargar información del cliente si existe cotización
           if (liquidacion?.cotizacion?.personas?.id) {
             this.loadClienteInfo(liquidacion.cotizacion.personas.id);
@@ -589,27 +583,27 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         this.operadores = operadores;
       });
 
-    // Cargar viajeros
-    const viajerosSubscription = this.viajeroService.findAll()
-      .pipe(
-        catchError(() => {
-          return of([]);
-        })
-      )
-      .subscribe((viajeros: ViajeroResponse[]) => {
-        this.viajeros = viajeros;
+    // No cargar viajeros desde servicio separado, se obtienen de los detalles
+    // const viajerosSubscription = this.viajeroService.findAll()
+    //   .pipe(
+    //     catchError(() => {
+    //       return of([]);
+    //     })
+    //   )
+    //   .subscribe((viajeros: ViajeroResponse[]) => {
+    //     this.viajeros = viajeros;
 
-        // Inicializar los valores de búsqueda después de cargar los viajeros
-        setTimeout(() => {
-          this.initializeAllViajeroSearchValues();
-        }, 100);
-      });
+    //     // Inicializar los valores de búsqueda después de cargar los viajeros
+    //     setTimeout(() => {
+    //       this.initializeAllViajeroSearchValues();
+    //     }, 100);
+    //   });
 
     this.subscriptions.add(productosSubscription);
     this.subscriptions.add(formasPagoSubscription);
     this.subscriptions.add(proveedoresSubscription);
     this.subscriptions.add(operadoresSubscription);
-    this.subscriptions.add(viajerosSubscription);
+    // this.subscriptions.add(viajerosSubscription); // Comentado porque ya no se usa
   }
 
   // Navigation methods
@@ -659,7 +653,54 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     this.subscriptions.add(subscription);
   }
 
-  // Métodos para manejar observaciones múltiples
+  // Extraer viajeros únicos de los detalles de liquidación
+  private extraerViajerosDeDetalles(): void {
+    if (!this.liquidacion?.detalles) {
+      this.viajeros = [];
+      return;
+    }
+
+    // Extraer viajeros únicos que no sean null/undefined
+    const viajerosMap = new Map<number, ViajeroConPersonaNatural>();
+
+    this.liquidacion.detalles.forEach((detalle, idx) => {
+      if (detalle.viajero && detalle.viajero.id) {
+        viajerosMap.set(detalle.viajero.id, detalle.viajero);
+      }
+    });
+
+    const viajerosDeDetalles = Array.from(viajerosMap.values());
+
+    // SIEMPRE cargar todos los viajeros disponibles del backend
+    this.viajeroService.findAll().subscribe({
+      next: (todosLosViajeros: ViajeroConPersonaNatural[]) => {
+        // Combinar: primero los de los detalles, luego el resto
+        const viajerosCombinados = new Map<number, ViajeroConPersonaNatural>();
+
+        // Agregar primero los viajeros de los detalles (si existen)
+        viajerosDeDetalles.forEach(v => viajerosCombinados.set(v.id, v));
+
+        // Luego agregar todos los del backend (esto actualizará los datos si hay cambios)
+        todosLosViajeros.forEach(v => viajerosCombinados.set(v.id, v));
+
+        this.viajeros = Array.from(viajerosCombinados.values());
+
+        // Inicializar búsqueda con los viajeros cargados
+        setTimeout(() => {
+          this.initializeAllViajeroSearchValues();
+        }, 100);
+      },
+      error: (error: any) => {
+        // Si falla, al menos usar los viajeros de los detalles
+        this.viajeros = viajerosDeDetalles;
+
+        // Inicializar búsqueda incluso en error
+        setTimeout(() => {
+          this.initializeAllViajeroSearchValues();
+        }, 100);
+      }
+    });
+  }  // Métodos para manejar observaciones múltiples
   agregarObservacion(): void {
     if (!this.nuevaObservacion?.trim() || !this.liquidacionId) {
       return;
@@ -1320,8 +1361,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (!viajeroId) return 'Sin viajero';
 
     const viajero = this.viajeros.find(v => v.id === viajeroId);
-    if (viajero) {
-      return `${viajero.nombres} ${viajero.apellidoPaterno}`;
+    if (viajero && viajero.personaNatural) {
+      return `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno}`;
     }
 
     return 'Viajero no encontrado';
@@ -1412,7 +1453,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   // Obtener los viajeros filtrados para un índice
-  getViajerosFiltrados(index: string): ViajeroResponse[] {
+  getViajerosFiltrados(index: string): ViajeroConPersonaNatural[] {
     return this.viajerosFiltrados[index] || [];
   }
 
@@ -1429,16 +1470,21 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     } else {
       // Filtrar viajeros que contengan el término de búsqueda (nombres o apellidos)
       this.viajerosFiltrados[index] = this.viajeros.filter(viajero => {
-        const nombreCompleto = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno || ''}`.toLowerCase();
+        if (!viajero.personaNatural) {
+          return false;
+        }
+        const nombreCompleto = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno} ${viajero.personaNatural.apellidosMaterno || ''}`.toLowerCase();
         return nombreCompleto.includes(searchTerm.toLowerCase());
       });
     }
   }
 
   // Seleccionar un viajero
-  onViajeroSelect(index: string, viajero: ViajeroResponse): void {
+  onViajeroSelect(index: string, viajero: ViajeroConPersonaNatural): void {
     // Actualizar el término de búsqueda con el nombre seleccionado
-    this.viajeroSearchTerms[index] = `${viajero.nombres} ${viajero.apellidoPaterno}`;
+    if (viajero.personaNatural) {
+      this.viajeroSearchTerms[index] = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno}`;
+    }
 
     // Cerrar dropdown
     this.viajeroDropdownsOpen[index] = false;
@@ -1465,7 +1511,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (currentSearchTerm.trim()) {
       // Filtrar basado en el término actual
       this.viajerosFiltrados[index] = this.viajeros.filter(viajero => {
-        const nombreCompleto = `${viajero.nombres} ${viajero.apellidoPaterno} ${viajero.apellidoMaterno || ''}`.toLowerCase();
+        if (!viajero.personaNatural) return false;
+        const nombreCompleto = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno} ${viajero.personaNatural.apellidosMaterno || ''}`.toLowerCase();
         return nombreCompleto.includes(currentSearchTerm.toLowerCase());
       });
     } else {
@@ -1496,8 +1543,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Inicializar el valor de búsqueda con el viajero ya seleccionado
   initViajeroSearchValue(index: string, viajero: any): void {
-    if (viajero && viajero.nombres) {
-      this.viajeroSearchTerms[index] = `${viajero.nombres} ${viajero.apellidoPaterno}`;
+    if (viajero && viajero.personaNatural && viajero.personaNatural.nombres) {
+      this.viajeroSearchTerms[index] = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno}`;
     }
   }
 

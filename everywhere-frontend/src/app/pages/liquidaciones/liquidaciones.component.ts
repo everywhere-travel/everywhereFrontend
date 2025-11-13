@@ -1,11 +1,10 @@
-import { Component, OnInit, OnDestroy, inject, importProvidersFrom } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { Subscription, of } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
-import { environment } from '../../../environments/environment';
 
 // Services
 import { LiquidacionService } from '../../core/service/Liquidacion/liquidacion.service';
@@ -22,12 +21,10 @@ import { ProveedorService } from '../../core/service/Proveedor/proveedor.service
 import { OperadorService } from '../../core/service/Operador/operador.service';
 import { ViajeroService } from '../../core/service/viajero/viajero.service';
 
-import { personaDisplay } from '../../shared/models/Persona/persona.model';
 // Models
 import { LiquidacionRequest, LiquidacionResponse, LiquidacionConDetallesResponse } from '../../shared/models/Liquidacion/liquidacion.model';
 import { DetalleLiquidacionRequest, DetalleLiquidacionResponse } from '../../shared/models/Liquidacion/detalleLiquidacion.model';
 import { CotizacionResponse, CotizacionConDetallesResponseDTO } from '../../shared/models/Cotizacion/cotizacion.model';
-import { DetalleCotizacionResponse } from '../../shared/models/Cotizacion/detalleCotizacion.model';
 
 import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
@@ -35,7 +32,7 @@ import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { OperadorResponse } from '../../shared/models/Operador/operador.model';
-import { ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
+import { ViajeroConPersonaNatural, ViajeroResponse } from '../../shared/models/Viajero/viajero.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -53,7 +50,7 @@ interface DetalleLiquidacionTemp {
   proveedor?: ProveedorResponse | null;
   producto?: ProductoResponse;
   operador?: OperadorResponse;
-  viajero?: ViajeroResponse;
+  viajero?: ViajeroConPersonaNatural;
   ticket?: string;
   costoTicket?: number;
   cargoServicio?: number;
@@ -142,41 +139,20 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   // ===== TEMPLATE UTILITIES =====
   Math = Math;
   // ===== SIDEBAR CONFIGURATION =====
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
     {
       id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        },
-        {
-          id: 'viajeros',
-          title: 'Viajeros',
-          icon: 'fas fa-passport',
-          route: '/viajero',
-          moduleKey: 'VIAJEROS'
-        },
-        {
-          id: 'viajeros-frecuentes',
-          title: 'Viajeros Frecuentes',
-          icon: 'fas fa-crown',
-          route: '/viajero-frecuente',
-          moduleKey: 'VIAJEROS'
-        }
-      ]
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
+      moduleKey: 'PERSONAS'
     },
     {
       id: 'cotizaciones',
@@ -189,8 +165,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       id: 'liquidaciones',
       title: 'Liquidaciones',
       icon: 'fas fa-credit-card',
-      route: '/liquidaciones',
       active: true,
+      route: '/liquidaciones',
       moduleKey: 'LIQUIDACIONES'
     },
     {
@@ -206,6 +182,40 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       icon: 'fas fa-file-contract',
       route: '/documentos-cobranza',
       moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
+      id: 'categorias',
+      title: 'Gestion de Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Clientes',
+          icon: 'fas fa-users',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
+        },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
+        }
+      ]
     },
     {
       id: 'recursos',
@@ -241,32 +251,11 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       icon: 'fas fa-sitemap',
       children: [
         {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
           route: '/sucursales',
           moduleKey: 'SUCURSALES'
-        }
-      ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
         }
       ]
     }
@@ -391,14 +380,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       pagoPaxPEN: [0, [Validators.min(0)]]
     });
 
-    // Subscribe to search changes
     this.searchForm.get('searchTerm')?.valueChanges.subscribe(term => {
       this.searchTerm = term;
       this.filterLiquidaciones();
     });
-
-    // Setup real-time client search DESPUÉS de cargar datos iniciales
-    // this.setupClienteSearch(); // Movido a loadInitialData
   }
 
   private setupClienteSearch(): void {
@@ -476,13 +461,9 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   private async loadPersonas(): Promise<void> {
     try {
-      // Cargar personas naturales
       const personasNaturales = await this.personaNaturalService.findAll().toPromise() || [];
-      // Cargar personas jurídicas
       const personasJuridicas = await this.personaJuridicaService.findAll().toPromise() || [];
-      // Combinar ambas listas
       this.personas = [...personasNaturales, ...personasJuridicas];
-      // Almacenar todos los clientes para el filtrado inicial
       this.todosLosClientes = [...this.personas];
       this.personasEncontradas = [...this.todosLosClientes];
 
@@ -495,11 +476,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
           this.personasCache[personaId] = {
             id: personaId,
             identificador: persona.ruc || persona.documento || persona.cedula || '',
-            nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidos || ''}`.trim() || 'Sin nombre',
+            nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidosPaterno || ''} ${persona.apellidosMaterno || ''}`.trim() || 'Sin nombre',
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
           const cached = this.personasCache[personaId];
-          // Mejorar el formato del display para asegurar que se muestre el documento
           if (cached.identificador) {
             this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
           } else {
@@ -694,21 +674,19 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   async mostrarFormularioEditarOld(liquidacion: LiquidacionResponse): Promise<void> {
     try {
-      this.isLoading = true; // Inicia la carga
+      this.isLoading = true;
 
-      // Asegura que los datos base (clientes) estén disponibles
       if (this.todosLosClientes.length === 0) {
         await this.loadPersonas();
       }
 
-      this.resetForm(); // Limpia el estado del formulario anterior
+      this.resetForm();
       this.editandoLiquidacion = true;
       this.liquidacionEditandoId = liquidacion.id;
 
-      // Cargar los datos de la liquidación en el formulario
       await this.populateLiquidacionForm(liquidacion);
 
-      this.mostrarFormulario = true; // Muestra el modal con los datos ya cargados
+      this.mostrarFormulario = true;
 
     } catch (error) {
       this.showError('Error al cargar el formulario de edición');
@@ -734,7 +712,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   private resetForm(): void {
-    // Reset liquidacion form
     this.liquidacionForm.reset({
       numero: '',
       cotizacionId: '',
@@ -746,18 +723,14 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       observaciones: ''
     });
 
-    // Limpieza de los detalles de la liquidación
     this.detalles = [];
     this.deletedDetalleIds = [];
 
-    // Reseteo de la selección de cliente
     this.clienteSeleccionado = null;
     this.buscandoClientes = false;
 
-    // LA LÍNEA CLAVE (que ya tenías): Rellena la lista de clientes para que se muestre
     this.personasEncontradas = [...this.todosLosClientes];
 
-    // Limpia el campo de búsqueda visualmente
     this.clienteSearchControl.setValue('', { emitEvent: false });
   }
 
@@ -774,7 +747,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         formaPagoId: liquidacion.formaPago?.id || ''
       });
 
-      // Cargar detalles de liquidación si existen
       if (liquidacion.id) {
         await this.loadDetallesLiquidacion(liquidacion.id);
       }
@@ -840,14 +812,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     if (formValue.proveedorId) {
       const proveedorId = Number(formValue.proveedorId);
       proveedor = this.proveedores.find(p => p.id === proveedorId) || null;
-    } else if (formValue.nuevoProveedor?.trim()) {
-      // This would create a new proveedor, for now we'll simulate it
-      proveedor = {
-        id: 0, // temporary ID
-        nombre: formValue.nuevoProveedor.trim(),
-        creado: new Date().toISOString(),
-        actualizado: new Date().toISOString()
-      } as ProveedorResponse;
     }
 
     let producto = null;
@@ -880,16 +844,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       total: (precioHistorico * cantidad) + comision,
       isTemporary: true
     };
-
-    // Mensaje de éxito
     this.successMessage = 'Producto agregado correctamente';
     setTimeout(() => this.successMessage = '', 3000);
-
   }
 
-
-
-  // Cancelar proceso de eliminación
   cancelarEliminacion(): void {
     this.presionandoEliminar = false;
     this.tiempoPresionado = 0;
@@ -905,7 +863,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   completarEliminacion(): void {
     if (this.liquidacionAEliminar) {
       const cotizacion = this.liquidacionAEliminar;
-      this.cancelarEliminacion(); // Limpiar estado
+      this.cancelarEliminacion();
     }
   }
 
@@ -914,7 +872,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     return Math.min((this.tiempoPresionado / 3000) * 100, 100);
   }
 
-  // Función para acceder a Math en el template
   getMath() {
     return Math;
   }
@@ -971,7 +928,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     return new Date(dateString).toLocaleString('es-ES');
   }
 
-
   updateSelectionState(): void {
     const totalItems = this.filteredLiquidaciones.length;
     const selectedCount = this.selectedItems.length;
@@ -989,10 +945,16 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     this.totalLiquidaciones = this.liquidaciones.length;
   }
 
-
   get totalPages(): number {
     const itemsPerPageNum = Number(this.itemsPerPage);
     return Math.ceil(this.totalItems / itemsPerPageNum);
+  }
+
+  get paginatedLiquidaciones(): LiquidacionResponse[] {
+    const itemsPerPageNum = Number(this.itemsPerPage);
+    const startIndex = (this.currentPage - 1) * itemsPerPageNum;
+    const endIndex = startIndex + itemsPerPageNum;
+    return this.filteredLiquidaciones.slice(startIndex, endIndex);
   }
 
   onItemsPerPageChange(): void {
@@ -1077,9 +1039,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   mostrarModalVerLiquidacion(liquidacion: LiquidacionResponse): void {
-    // Navegar al componente de detalle para ver la liquidación
     this.router.navigate(['/liquidaciones/detalle', liquidacion.id]);
-  }  async mostrarModalVerLiquidacionOld(liquidacion: LiquidacionResponse): Promise<void> {
+  }
+
+  async mostrarModalVerLiquidacionOld(liquidacion: LiquidacionResponse): Promise<void> {
     this.liquidacionSeleccionada = liquidacion;
     this.isLoading = true;
 
@@ -1094,15 +1057,21 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     } finally {
       this.isLoading = false;
     }
-  }  private async eliminarLiquidacionDirectamente(id: number): Promise<void> {
+  }
+
+  private async eliminarLiquidacionDirectamente(id: number): Promise<void> {
     this.isLoading = true;
 
     try {
       await this.liquidacionService.deleteLiquidacion(id).toPromise();
       this.showSuccess('Liquidación eliminada exitosamente');
       await this.loadLiquidaciones();
-    } catch (error) {
-      this.showError('Error al eliminar la liquidación');
+    } catch (error: any) {
+      const errorMessage = error?.error?.detail ||    // RFC 7807 format
+                          error?.error?.message ||     // Custom format
+                          error?.message ||             // Error object
+                          'Error al eliminar la liquidación';
+      this.showError(errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -1114,12 +1083,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.markFormGroupTouched(this.liquidacionForm);
       return;
     }
-
     this.isLoading = true;
 
     try {
       const formValue = this.liquidacionForm.value;
-
       // Preparar el request de liquidación
       const liquidacionRequest: LiquidacionRequest = {
         numero: formValue.numero || '',
@@ -1149,18 +1116,19 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         await this.procesarDetallesLiquidacion(liquidacionResponse.id);
       }
 
-      // Mostrar mensaje de éxito
       const successMessage = this.editandoLiquidacion
         ? 'Liquidación actualizada exitosamente!'
         : 'Liquidación creada exitosamente!';
       this.showSuccess(successMessage);
 
-      // Recargar datos y cerrar formulario
       await this.loadLiquidaciones();
       this.cerrarFormulario();
-    } catch (error) {
-
-      this.showError('Error al guardar la liquidación. Por favor, verifique los datos e intente nuevamente.');
+    } catch (error: any) {
+      const errorMessage = error?.error?.detail ||    // RFC 7807 format
+                          error?.error?.message ||     // Custom format
+                          error?.message ||             // Error object
+                          'Error al guardar la liquidación. Por favor, verifique los datos e intente nuevamente.';
+      this.showError(errorMessage);
     } finally {
       this.isLoading = false;
     }
@@ -1168,25 +1136,18 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   private async procesarDetallesLiquidacion(liquidacionId: number): Promise<void> {
     try {
-      // Eliminar detalles marcados para eliminación
       const deletePromises = this.deletedDetalleIds.map(id =>
-        this.detalleLiquidacionService.deleteDetalleLiquidacion(id).toPromise()
-      );
+        this.detalleLiquidacionService.deleteDetalleLiquidacion(id).toPromise());
       await Promise.all(deletePromises);
       this.deletedDetalleIds = [];
 
-      // Procesar detalles (crear nuevos o actualizar existentes)
       for (const detalle of this.detalles) {
-        if (detalle.isTemporary) {
-          // Crear nuevo detalle
+        if (detalle.isTemporary)
           await this.crearDetalleLiquidacion(liquidacionId, detalle);
-        } else if (detalle.id) {
-          // Actualizar detalle existente si es necesario
+        else if (detalle.id)
           await this.actualizarDetalleLiquidacion(detalle);
-        }
       }
     } catch (error) {
-
       throw error;
     }
   }
@@ -1208,10 +1169,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         pagoPaxUSD: detalle.pagoPaxUSD || 0,
         pagoPaxPEN: detalle.pagoPaxPEN || 0
       };
-
-              await this.detalleLiquidacionService.createDetalleLiquidacion(liquidacionId, detalleRequest).toPromise();
+      await this.detalleLiquidacionService.createDetalleLiquidacion(liquidacionId, detalleRequest).toPromise();
     } catch (error) {
-
       throw error;
     }
   }
@@ -1235,19 +1194,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         operadorId: detalle.operador?.id || undefined,
         ticket: detalle.ticket || ''
       };
-
       await this.detalleLiquidacionService.updateDetalleLiquidacion(detalle.id, detalleRequest).toPromise();
     } catch (error) {
-
       throw error;
     }
   }
 
   // ===== COTIZACIONES METHODS =====
-
-  /**
-   * Carga todas las cotizaciones disponibles
-   */
   async loadCotizaciones(): Promise<void> {
     try {
       this.cotizaciones = await this.cotizacionService.getCotizacionSinLiquidacion().toPromise() || [];
@@ -1260,9 +1213,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Filtra las cotizaciones según el término de búsqueda
-   */
   filtrarCotizaciones(): void {
     const term = this.searchCotizacion.toLowerCase().trim();
 
@@ -1270,24 +1220,18 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.cotizacionesFiltradas = [...this.cotizaciones];
       return;
     }
-
     this.cotizacionesFiltradas = this.cotizaciones.filter(cotizacion =>
       cotizacion.codigoCotizacion?.toLowerCase().includes(term) ||
       cotizacion.origenDestino?.toLowerCase().includes(term)
     );
   }
 
-  /**
-   * Selecciona una cotización y crea la liquidación
-   */
   async seleccionarCotizacion(cotizacion: CotizacionResponse): Promise<void> {
     try {
       this.isLoading = true;
       this.cotizacionSeleccionada = cotizacion;
 
-      // Crear liquidación basada en la cotización seleccionada
       await this.crearLiquidacionDesdeCotizacion(cotizacion);
-
     } catch (error) {
       this.showError('Error al procesar la cotización seleccionada: ' + (error as any)?.message || 'Error desconocido');
     } finally {
@@ -1295,61 +1239,42 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Crea una liquidación basada en una cotización
-   */
   async crearLiquidacionDesdeCotizacion(cotizacion: CotizacionResponse): Promise<void> {
     try {
-      // Obtener detalles completos de la cotización
       const cotizacionCompleta = await this.cotizacionService.getCotizacionConDetalles(cotizacion.id).toPromise();
 
-      if (!cotizacionCompleta) {
-        throw new Error('No se pudieron cargar los detalles de la cotización');
-      }
+      if (!cotizacionCompleta) throw new Error('No se pudieron cargar los detalles de la cotización');
 
-      // Mapear datos de cotización a liquidación según el mapeo especificado
+      // Mapear datos de cotización a liquidación
       const liquidacionRequest: LiquidacionRequest = {
-        cotizacionId: cotizacion.id, // ✅ Agregar cotizacionId requerido por el backend
+        cotizacionId: cotizacion.id,
         fechaCompra: cotizacion.fechaEmision ? this.formatDateForInput(new Date(cotizacion.fechaEmision)) : undefined,
         destino: cotizacion.origenDestino,
-        numeroPasajeros: (cotizacion.cantAdultos || 0) + (cotizacion.cantNinos || 0)
-      };
+        numeroPasajeros: (cotizacion.cantAdultos || 0) + (cotizacion.cantNinos || 0),
+        formaPagoId: cotizacion.formaPago?.id   };
 
       // Crear la liquidación
       const nuevaLiquidacion = await this.liquidacionService.createLiquidacionConCotizacion(cotizacion.id, liquidacionRequest).toPromise();
 
-      if (!nuevaLiquidacion) {
-        throw new Error('Error al crear la liquidación');
-      }
+      if (!nuevaLiquidacion) throw new Error('Error al crear la liquidación');
 
-      // Crear detalles de liquidación desde detalles de cotización seleccionados
       await this.crearDetallesLiquidacion(nuevaLiquidacion.id, cotizacionCompleta);
 
-      // Cerrar modal de cotizaciones y abrir formulario de edición
       this.mostrarModalCotizaciones = false;
       this.cotizacionSeleccionada = null;
 
-      // Recargar lista de liquidaciones
       await this.loadLiquidaciones();
-
-      // Abrir formulario de edición de la liquidación recién creada
       await this.mostrarFormularioEditar(nuevaLiquidacion);
 
       this.showSuccess('Liquidación creada exitosamente desde la cotización');
-
     } catch (error) {
       this.showError('Error al crear la liquidación desde la cotización: ' + (error as any)?.message || 'Error desconocido');
       throw error;
     }
   }
 
-  /**
-   * Crea detalles de liquidación desde detalles de cotización seleccionados
-   */
   async crearDetallesLiquidacion(liquidacionId: number, cotizacionCompleta: CotizacionConDetallesResponseDTO): Promise<void> {
-    if (!cotizacionCompleta.detalles || cotizacionCompleta.detalles.length === 0) {
-      return;
-    }
+    if (!cotizacionCompleta.detalles || cotizacionCompleta.detalles.length === 0) return;
 
     // Filtrar solo los detalles que están seleccionados (seleccionado = true)
     const detallesSeleccionados = cotizacionCompleta.detalles.filter((detalle: any) => detalle.seleccionado === true);
@@ -1368,6 +1293,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         // Construir request con campos disponibles (ahora son opcionales en backend)
         const detalleRequest: DetalleLiquidacionRequest = {
           costoTicket: detalleCot.precioHistorico || 0,
+          cargoServicio: detalleCot.comision || 0,
 
           // Campos opcionales - solo agregar si están disponibles
           ...(detalleCot.producto?.id && { productoId: detalleCot.producto.id }),
@@ -1375,7 +1301,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
           // Campos básicos con valores por defecto
           ticket: '',
-          cargoServicio: 0,
           valorVenta: 0,
           facturaCompra: '',
           boletaPasajero: '',
@@ -1384,15 +1309,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
           pagoPaxPEN: 0
         };
 
-        console.log('=== DEBUG Componente ===');
-        console.log('liquidacionId:', liquidacionId);
-        console.log('detalleCot original:', detalleCot);
-        console.log('detalleRequest construido:', detalleRequest);
-        console.log('========================');
-
         try {
           const detalleCreado = await this.detalleLiquidacionService.createDetalleLiquidacion(liquidacionId, detalleRequest).toPromise();
-          console.log('Detalle creado exitosamente:', detalleCreado);
         } catch (error) {
           console.error('Error creando detalle:', error);
           throw error;
@@ -1401,9 +1319,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Cancela la selección de cotización
-   */
   cancelarSeleccionCotizacion(): void {
     this.mostrarModalCotizaciones = false;
     this.cotizacionSeleccionada = null;
@@ -1423,29 +1338,23 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       return [];
     }
 
-    // Si el usuario tiene permisos de ALL_MODULES, mostrar todo
     if (currentUser.permissions['ALL_MODULES']) {
       return items;
     }
 
     return items.filter(item => {
-      // Si tiene moduleKey, verificar permisos directos
       if (item.moduleKey) {
         return currentUser.permissions[item.moduleKey] && currentUser.permissions[item.moduleKey].length > 0;
       }
 
-      // Si no tiene moduleKey pero tiene children, verificar si algún hijo tiene permisos
       if (item.children && item.children.length > 0) {
         const filteredChildren = this.filterSidebarItems(item.children);
         if (filteredChildren.length > 0) {
-          // Actualizar el item con solo los children filtrados
           item.children = filteredChildren;
           return true;
         }
         return false;
       }
-
-      // Si no tiene moduleKey ni children, mostrar por defecto (como Dashboard)
       return true;
     });
   }

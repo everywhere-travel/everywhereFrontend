@@ -458,8 +458,8 @@
                       <div *ngFor="let viajero of getViajerosFiltrados('detalle-original-' + i)"
                            (mousedown)="onViajeroSelect('detalle-original-' + i, viajero)"
                            class="px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0">
-                        <div class="font-medium text-gray-900">{{ viajero.nombres }} {{ viajero.apellidoPaterno }}</div>
-                        <div *ngIf="viajero.apellidoMaterno" class="text-xs text-gray-500">{{ viajero.apellidoMaterno }}</div>
+                        <div class="font-medium text-gray-900">{{ viajero.personaNatural?.nombres || 'N/A' }} {{ viajero.personaNatural?.apellidosPaterno || '' }}</div>
+                        <div *ngIf="viajero.personaNatural?.apellidosMaterno" class="text-xs text-gray-500">{{ viajero.personaNatural?.apellidosMaterno }}</div>
                       </div>
                       <div *ngIf="getViajerosFiltrados('detalle-original-' + i).length === 0"
                            class="px-3 py-2 text-sm text-gray-500 text-center">
@@ -681,8 +681,8 @@
                       <div *ngFor="let viajero of getViajerosFiltrados('detalle-fijo-' + i)"
                            (mousedown)="onViajeroSelect('detalle-fijo-' + i, viajero)"
                            class="px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0">
-                        <div class="font-medium text-gray-900">{{ viajero.nombres }} {{ viajero.apellidoPaterno }}</div>
-                        <div *ngIf="viajero.apellidoMaterno" class="text-xs text-gray-500">{{ viajero.apellidoMaterno }}</div>
+                        <div class="font-medium text-gray-900">{{ viajero.personaNatural?.nombres || 'N/A' }} {{ viajero.personaNatural?.apellidosPaterno || '' }}</div>
+                        <div *ngIf="viajero.personaNatural?.apellidosMaterno" class="text-xs text-gray-500">{{ viajero.personaNatural?.apellidosMaterno }}</div>
                       </div>
                       <div *ngIf="getViajerosFiltrados('detalle-fijo-' + i).length === 0"
                            class="px-3 py-2 text-sm text-gray-500 text-center">
@@ -832,8 +832,8 @@
                       <div *ngFor="let viajero of getViajerosFiltrados('nuevo')"
                            (mousedown)="onViajeroSelect('nuevo', viajero)"
                            class="px-3 py-2 hover:bg-purple-50 cursor-pointer text-sm border-b border-gray-100 last:border-b-0">
-                        <div class="font-medium text-gray-900">{{ viajero.nombres }} {{ viajero.apellidoPaterno }}</div>
-                        <div *ngIf="viajero.apellidoMaterno" class="text-xs text-gray-500">{{ viajero.apellidoMaterno }}</div>
+                        <div class="font-medium text-gray-900">{{ viajero.personaNatural?.nombres || 'N/A' }} {{ viajero.personaNatural?.apellidosPaterno || '' }}</div>
+                        <div *ngIf="viajero.personaNatural?.apellidosMaterno" class="text-xs text-gray-500">{{ viajero.personaNatural?.apellidosMaterno }}</div>
                       </div>
                       <div *ngIf="getViajerosFiltrados('nuevo').length === 0"
                            class="px-3 py-2 text-sm text-gray-500 text-center">

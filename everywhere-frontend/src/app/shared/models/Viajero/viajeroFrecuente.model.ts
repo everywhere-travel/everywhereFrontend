@@ -1,4 +1,4 @@
-import { ViajeroRequest,ViajeroResponse } from './viajero.model';
+import { ViajeroResponse } from './viajero.model';
 
 export interface ViajeroFrecuenteRequest {
   areolinea: string;

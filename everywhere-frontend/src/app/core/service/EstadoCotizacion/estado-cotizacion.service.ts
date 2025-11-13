@@ -18,7 +18,7 @@ export class EstadoCotizacionService {
   }
 
   updateEstadoCotizacion(id: number, request: EstadoCotizacionRequest): Observable<EstadoCotizacionResponse> {
-    return this.http.put<EstadoCotizacionResponse>(`${this.apiUrl}/${id}`, request);
+    return this.http.patch<EstadoCotizacionResponse>(`${this.apiUrl}/${id}`, request);
   }
 
   getByIdEstadoCotizacion(id: number): Observable<EstadoCotizacionResponse> {

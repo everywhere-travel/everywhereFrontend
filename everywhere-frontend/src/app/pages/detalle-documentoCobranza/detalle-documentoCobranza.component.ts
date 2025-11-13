@@ -14,7 +14,7 @@ import { LoadingService } from '../../core/service/loading.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
 
 // Models
-import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
+import { DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import {
   DetalleDocumentoCobranzaRequestDTO,
   DetalleDocumentoCobranzaResponseDTO
@@ -23,6 +23,9 @@ import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/detalle-documento.service';
+import { DetalleDocumentoResponse } from '../../shared/models/Documento/detalleDocumento.model';
+import { PersonaNaturalService } from '../../core/service';
 
 // Extender la interfaz para agregar moduleKey
 interface ExtendedSidebarMenuItem extends SidebarMenuItem {
@@ -44,6 +47,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private documentoCobranzaService = inject(DocumentoCobranzaService);
   private detalleDocumentoCobranzaService = inject(DetalleDocumentoCobranzaService);
+  private detalleDocumentoService = inject(DetalleDocumentoService);
   private productoService = inject(ProductoService);
   private loadingService = inject(LoadingService);
   private fb = inject(FormBuilder);
@@ -52,6 +56,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   documento: DocumentoCobranzaResponseDTO | null = null;
   documentoId: number | null = null;
   detalles: DetalleDocumentoCobranzaResponseDTO[] = [];
+  detallesDocumento: DetalleDocumentoResponse[] = [];
   productos: ProductoResponse[] = [];
 
   // Forms
@@ -69,41 +74,20 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   editingDetalleId: number | null = null;
 
   // Sidebar Configuration
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
+  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
     {
       id: 'dashboard',
       title: 'Dashboard',
       icon: 'fas fa-chart-pie',
       route: '/dashboard'
     },
+
     {
       id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        },
-        {
-          id: 'viajeros',
-          title: 'Viajeros',
-          icon: 'fas fa-passport',
-          route: '/viajero',
-          moduleKey: 'VIAJEROS'
-        },
-        {
-          id: 'viajeros-frecuentes',
-          title: 'Viajeros Frecuentes',
-          icon: 'fas fa-crown',
-          route: '/viajero-frecuente',
-          moduleKey: 'VIAJEROS'
-        }
-      ]
+      title: 'Clientes',
+      icon: 'fas fa-address-book',
+      route: '/personas',
+      moduleKey: 'PERSONAS'
     },
     {
       id: 'cotizaciones',
@@ -130,9 +114,43 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       id: 'documentos-cobranza',
       title: 'Documentos de Cobranza',
       icon: 'fas fa-file-contract',
-      route: '/documentos-cobranza',
       active: true,
+      route: '/documentos-cobranza',
       moduleKey: 'DOCUMENTOS_COBRANZA'
+    },
+    {
+      id: 'categorias',
+      title: 'Gestion de Categorias',
+      icon: 'fas fa-box',
+      children: [
+        {
+          id: 'categorias-persona',
+          title: 'Categorias de Clientes',
+          icon: 'fas fa-users',
+          route: '/categorias-persona',
+          moduleKey: 'CATEGORIA_PERSONAS'
+        },
+        {
+          id: 'categorias-producto',
+          title: 'Categorias de Producto',
+          icon: 'fas fa-list',
+          route: '/categorias',
+        },
+        {
+          id: 'estado-cotizacion',
+          title: 'Estado de Cotización',
+          icon: 'fas fa-clipboard-check',
+          route: '/estado-cotizacion',
+          moduleKey: 'COTIZACIONES'
+        },
+        {
+          id: 'forma-pago',
+          title: 'Forma de Pago',
+          icon: 'fas fa-credit-card',
+          route: '/formas-pago',
+          moduleKey: 'FORMA_PAGO'
+        }
+      ]
     },
     {
       id: 'recursos',
@@ -168,13 +186,6 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       icon: 'fas fa-sitemap',
       children: [
         {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
           id: 'sucursales',
           title: 'Sucursales',
           icon: 'fas fa-building',
@@ -182,23 +193,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
           moduleKey: 'SUCURSALES'
         }
       ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
-        }
-      ]
     }
   ];
-
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   private subscriptions = new Subscription();
@@ -215,7 +211,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.documentoForm = this.fb.group({
       fileVenta: ['', [Validators.maxLength(100)]],
       costoEnvio: [0, [Validators.min(0)]],
-      observaciones: ['', [Validators.maxLength(500)]]
+      observaciones: ['', [Validators.maxLength(500)]],
+      detalleDocumentoId: [null]
     });
   }
 
@@ -323,7 +320,6 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private loadDocumento(id: number): void {
     this.isLoading = true;
     this.error = null;
-
     this.loadingService.setLoading(true);
 
     const subscription = this.documentoCobranzaService.getDocumentoById(id)
@@ -341,7 +337,27 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       .subscribe(documento => {
         if (documento) {
           this.documento = documento;
+          this.loadDetallesDocumento();
         }
+      });
+
+    this.subscriptions.add(subscription);
+  }
+
+  private loadDetallesDocumento(): void {
+    if (!this.documento?.personaId) {
+      return;
+    }
+
+    const subscription = this.detalleDocumentoService.findByPersonaId(this.documento.personaId)
+      .pipe(
+        catchError(error => {
+          console.error('❌ Error al cargar detalles de documento:', error);
+          return of([]);
+        })
+      )
+      .subscribe(detallesDoc => {
+        this.detallesDocumento = detallesDoc;
       });
 
     this.subscriptions.add(subscription);
@@ -481,9 +497,10 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
     const formValue = this.documentoForm.value;
     const updateDTO: DocumentoCobranzaUpdateDTO = {
-      fileVenta: formValue.fileVenta?.trim() || undefined,
-      costoEnvio: formValue.costoEnvio || undefined,
-      observaciones: formValue.observaciones?.trim() || undefined
+      fileVenta: formValue.fileVenta?.trim() || '',
+      costoEnvio: formValue.costoEnvio || 0,
+      observaciones: formValue.observaciones?.trim() || '',
+      detalleDocumentoId: formValue.detalleDocumentoId || undefined
     };
 
     this.isLoading = true;
@@ -580,9 +597,11 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   calcularTotal(): number {
-    return this.detalles.reduce((total, detalle) => {
+    const totalDetalles = this.detalles.reduce((total, detalle) => {
       return total + ((detalle.cantidad || 0) * (detalle.precio || 0));
     }, 0);
+    const costoEnvio = this.documento?.costoEnvio || 0;
+    return totalDetalles + costoEnvio;
   }
 
   hideMessages(): void {
@@ -603,5 +622,17 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   trackByDetalle(index: number, detalle: DetalleDocumentoCobranzaResponseDTO): number {
     return detalle.id || index;
+  }
+
+  // ============ HELPER METHODS =============
+  getDetalleDocumentoInfo(id: number): DetalleDocumentoResponse | undefined {
+    return this.detallesDocumento.find(d => d.id === id);
+  }
+
+  onDetalleDocumentoChange(event: any): void {
+    const detalleId = event.target.value;
+    if (detalleId) {
+      const detalle = this.getDetalleDocumentoInfo(Number(detalleId));
+    }
   }
 }
