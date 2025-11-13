@@ -132,10 +132,6 @@ export class CacheService {
       });
 
       keysToDelete.forEach(key => this.cache.delete(key));
-
-      if (keysToDelete.length > 0) {
-        console.log(`[CacheService] Limpieza periódica: ${keysToDelete.length} entradas expiradas eliminadas`);
-      }
     }, 5 * 60 * 1000); // 5 minutos
   }
 

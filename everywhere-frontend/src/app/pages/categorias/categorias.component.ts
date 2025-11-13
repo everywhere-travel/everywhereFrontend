@@ -91,7 +91,7 @@ export class CategoriasComponent implements OnInit {
       children: [
         {
           id: 'categorias-persona',
-          title: 'Categorias de Persona',
+          title: 'Categorias de Clientes',
           icon: 'fas fa-users',
           route: '/categorias-persona',
           moduleKey: 'CATEGORIA_PERSONAS'
@@ -200,6 +200,7 @@ export class CategoriasComponent implements OnInit {
   currentPage = 1;
   itemsPerPage = 10;
   totalItems = 0;
+  itemsPerPageOptions = [5, 10, 25, 50];
 
   // Estadísticas
   totalCategorias = 0;
@@ -416,8 +417,8 @@ export class CategoriasComponent implements OnInit {
         this.categoriasTabla = this.categorias.map(c => ({
           id: c.id,
           nombre: c.nombre,
-          creado: c.fechaCreacion ? new Date(c.fechaCreacion).toISOString() : undefined,
-          actualizado: c.fechaActualizacion ? new Date(c.fechaActualizacion).toISOString() : undefined
+          creado: c.creado ? new Date(c.creado).toISOString() : undefined,
+          actualizado: c.actualizado ? new Date(c.actualizado).toISOString() : undefined
         }));
 
         this.applyFilters();
@@ -467,6 +468,31 @@ export class CategoriasComponent implements OnInit {
       pages.push(i);
     }
     return pages;
+  }
+
+  changePage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  onItemsPerPageChange(): void {
+    this.currentPage = 1;
+  }
+
+  getVisiblePages(): number[] {
+    const totalPages = this.totalPages;
+    const currentPage = this.currentPage;
+    const visiblePages: number[] = [];
+
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, currentPage + 2);
+
+    for (let i = startPage; i <= endPage; i++) {
+      visiblePages.push(i);
+    }
+
+    return visiblePages;
   }
 
   // =================================================================
@@ -571,6 +597,10 @@ export class CategoriasComponent implements OnInit {
   // =================================================================
   // HELPERS
   // =================================================================
+
+  refreshData(): void {
+    this.loadCategorias();
+  }
 
   formatDate(d?: string | Date | undefined): string {
     if (!d) return '-';

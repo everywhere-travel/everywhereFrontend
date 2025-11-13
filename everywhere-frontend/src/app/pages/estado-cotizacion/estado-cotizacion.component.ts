@@ -92,7 +92,7 @@ export class EstadoCotizacionComponent implements OnInit {
       children: [
         {
           id: 'categorias-persona',
-          title: 'Categorias de Persona',
+          title: 'Categorias de Clientes',
           icon: 'fas fa-users',
           route: '/categorias-persona',
           moduleKey: 'CATEGORIA_PERSONAS'
@@ -772,7 +772,7 @@ export class EstadoCotizacionComponent implements OnInit {
     this.errorAlertMessage = message;
     this.showErrorAlert = true;
     this.showSuccessAlert = false;
-    
+
     setTimeout(() => {
       this.showErrorAlert = false;
     }, 5000);
@@ -782,7 +782,7 @@ export class EstadoCotizacionComponent implements OnInit {
     this.successAlertMessage = message;
     this.showSuccessAlert = true;
     this.showErrorAlert = false;
-    
+
     setTimeout(() => {
       this.showSuccessAlert = false;
     }, 3000);

@@ -9,66 +9,61 @@
   <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
 
     <!-- Header Section Documentos con estilo de Productos -->
-<header class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
-  <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12"></div>
-
-  <div class="max-w-full mx-auto px-6 py-6 relative z-10">
-    <button (click)="onToggleSidebar()"
-      class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
-      <i class="fas fa-bars text-xl"></i>
-    </button>
-
-    <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
-      <div class="flex-1">
-        <div class="flex items-center gap-4 mb-4">
-          <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-            <i class="fas fa-file-alt text-2xl"></i>
-          </div>
-          <div>
-            <h1 class="text-4xl font-bold">Gestión de Documentos</h1>
-            <p class="text-xl opacity-90 mt-2">Administra y organiza todos los tipos de documentos del sistema</p>
-          </div>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!loading">
-          <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
-            <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
-              <i class="fas fa-file-alt text-white text-xl"></i>
-            </div>
-            <div>
-              <div class="text-2xl font-bold">{{ totalDocumentos }}</div>
-              <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
-                Documento{{ totalDocumentos === 1 ? '' : 's' }} Total{{ totalDocumentos === 1 ? '' : 'es' }}
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
-            <div class="w-14 h-14 bg-everywhere-secondary rounded-xl flex items-center justify-center">
-              <i class="fas fa-tags text-white text-xl"></i>
-            </div>
-            <div>
-              <div class="text-2xl font-bold">{{ getUniqueTypesCount() }}</div>
-              <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
-                Tipo{{ getUniqueTypesCount() === 1 ? '' : 's' }} Diferente{{ getUniqueTypesCount() === 1 ? '' : 's' }}
-              </div>
-            </div>
-          </div>
-        </div>
+    <header
+      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
       </div>
 
-      <div class="z-10">
-        <button (click)="abrirModalCrear()" [disabled]="loading"
-          class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
-          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-          <i class="fas fa-plus text-lg"></i>
-          <span>Nuevo Tipo</span>
+      <div class="max-w-full mx-auto px-6 py-6 relative z-10">
+        <!-- Mobile Menu Button -->
+        <button (click)="onToggleSidebar()"
+          class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+          <i class="fas fa-bars text-xl"></i>
         </button>
+
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+          <!-- Header Info -->
+          <div class="flex-1">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-file-alt text-2xl"></i>
+              </div>
+              <div>
+                <h1 class="text-4xl font-bold">Gestión de Documentos</h1>
+                <p class="text-xl opacity-90 mt-2">Administra y organiza todos los tipos de documentos del sistema</p>
+              </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!loading">
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
+                  <i class="fas fa-file-alt text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ totalDocumentos }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Documento{{ totalDocumentos === 1 ? '' : 's' }} Total{{ totalDocumentos === 1 ? '' : 'es' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="z-10">
+            <button (click)="abrirModalCrear()" [disabled]="loading"
+              class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+              </div>
+              <i class="fas fa-plus text-lg"></i>
+              <span>Nuevo Tipo</span>
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</header>
+    </header>
 
 
     <!-- Main Content -->
@@ -79,7 +74,7 @@
         <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
           <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
+              <div class="w-10 h-10 bg-everywhere-primary rounded-xl flex items-center justify-center">
                 <i class="fas fa-search text-white"></i>
               </div>
               <div>
@@ -148,8 +143,7 @@
           </div>
           <h3 class="text-xl font-bold text-gray-900 mb-3">No se encontraron tipos de documentos</h3>
           <p class="text-gray-600 text-center max-w-md mb-6">
-            {{ searchTerm ? 'No hay tipos de documentos que coincidan con tu búsqueda.' : 'Aún no has creado ningún tipo de documento.
-            ¡Comienza creando tu primer tipo!' }}
+            {{ searchTerm ? 'No hay tipos de documentos que coincidan con tu búsqueda.' : 'Aún no has creado ningún tipo de documento. ¡Comienza creando tu primer tipo!' }}
           </p>
           <button (click)="abrirModalCrear()"
             class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl">
@@ -308,12 +302,11 @@
                   <!-- Checkbox -->
                   <td class="p-5 text-center">
                     <label class="relative inline-block cursor-pointer">
-                      <input type="checkbox" [checked]="isSelected(documento.id)" (change)="toggleSelection(documento.id)"
-                        class="absolute opacity-0 w-0 h-0">
+                      <input type="checkbox" [checked]="isSelected(documento.id)"
+                        (change)="toggleSelection(documento.id)" class="absolute opacity-0 w-0 h-0">
                       <span
                         class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
-                        [class.bg-red-600]="isSelected(documento.id)"
-                        [class.border-red-600]="isSelected(documento.id)">
+                        [class.bg-red-600]="isSelected(documento.id)" [class.border-red-600]="isSelected(documento.id)">
                         <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(documento.id)"></i>
                       </span>
                     </label>
@@ -348,12 +341,12 @@
                         <i class="fas fa-edit text-sm"></i>
                       </button>
                       <button (click)="onCardAction(documento)"
-  [ngClass]="documento.estado
+                        [ngClass]="documento.estado
     ? 'w-9 h-9 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105'
     : 'w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105'"
-  [title]="documento.estado ? 'Desactivar documento' : 'Activar documento'">
-  <i [ngClass]="documento.estado ? 'fas fa-ban text-sm' : 'fas fa-check text-sm'"></i>
-</button>
+                        [title]="documento.estado ? 'Desactivar documento' : 'Activar documento'">
+                        <i [ngClass]="documento.estado ? 'fas fa-ban text-sm' : 'fas fa-check text-sm'"></i>
+                      </button>
 
                     </div>
                   </td>
@@ -374,8 +367,7 @@
                   class="absolute opacity-0 w-0 h-0">
                 <span
                   class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500 hover:shadow-lg hover:shadow-red-100"
-                  [class.bg-red-600]="isSelected(documento.id)"
-                  [class.border-red-600]="isSelected(documento.id)">
+                  [class.bg-red-600]="isSelected(documento.id)" [class.border-red-600]="isSelected(documento.id)">
                   <i class="fas fa-check text-white text-xs" [class.hidden]="!isSelected(documento.id)"></i>
                 </span>
               </label>
@@ -405,7 +397,8 @@
         <!-- List View -->
         <div *ngIf="currentView === 'list'"
           class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden divide-y divide-gray-200">
-          <div *ngFor="let documento of paginatedDocumentos" class="p-6 hover:bg-gray-50 transition-colors duration-200">
+          <div *ngFor="let documento of paginatedDocumentos"
+            class="p-6 hover:bg-gray-50 transition-colors duration-200">
             <div class="flex items-center justify-between">
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-4 mb-2">
@@ -583,7 +576,8 @@
       <div class="text-center mb-6">
         <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
           [class]="accionConfirmacion === 'activar' ? 'bg-green-100' : 'bg-red-100'">
-          <i [class]="accionConfirmacion === 'activar' ? 'fas fa-check text-green-600 text-2xl' : 'fas fa-times text-red-600 text-2xl'"></i>
+          <i
+            [class]="accionConfirmacion === 'activar' ? 'fas fa-check text-green-600 text-2xl' : 'fas fa-times text-red-600 text-2xl'"></i>
         </div>
 
         <h3 class="text-xl font-bold text-gray-900 mb-4">
@@ -592,8 +586,8 @@
 
         <p class="text-gray-600 mb-6">
           {{ accionConfirmacion === 'activar'
-            ? 'El documento estará disponible para uso en el sistema.'
-            : 'El documento no estará disponible para uso en el sistema.' }}
+          ? 'El documento estará disponible para uso en el sistema.'
+          : 'El documento no estará disponible para uso en el sistema.' }}
         </p>
       </div>
 
