@@ -40,7 +40,7 @@ export class DetalleDocumentoCobranzaService {
   }
 
   updateDetalle(id: number, dto: DetalleDocumentoCobranzaRequestDTO): Observable<DetalleDocumentoCobranzaResponseDTO> {
-    return this.http.put<DetalleDocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`, dto).pipe(
+    return this.http.patch<DetalleDocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`, dto).pipe(
       tap((response) => {
         if (response.documentoCobranzaId) {
           this.cacheService.invalidatePattern(`/documentos-cobranza/${response.documentoCobranzaId}`);
