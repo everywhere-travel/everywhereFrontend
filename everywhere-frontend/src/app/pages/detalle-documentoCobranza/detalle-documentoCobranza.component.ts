@@ -203,7 +203,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   constructor() {
     this.detalleForm = this.fb.group({
       cantidad: [1, [Validators.required, Validators.min(1)]],
-      descripcion: ['', [Validators.required, Validators.maxLength(255)]],
+      descripcion: [''],
       precio: [0, [Validators.required, Validators.min(0)]],
       productoId: [null]
     });
@@ -314,7 +314,6 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
     this.documentoId = Number(idParam);
     this.loadDocumento(this.documentoId);
-    this.loadDetalles(this.documentoId);
   }
 
   private loadDocumento(id: number): void {
@@ -338,6 +337,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
         if (documento) {
           this.documento = documento;
           this.loadDetallesDocumento();
+          // Cargar detalles del documento de cobranza
+          this.loadDetalles(id);
         }
       });
 
