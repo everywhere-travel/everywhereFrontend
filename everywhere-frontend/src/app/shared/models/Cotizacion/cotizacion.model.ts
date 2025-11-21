@@ -31,8 +31,8 @@ export type CotizacionPatchRequest = Partial<CotizacionRequest>
 export interface CotizacionResponse {
   id: number
   codigoCotizacion: string
-  cantAdultos: number
-  cantNinos: number
+  cantAdultos?: number
+  cantNinos?: number
   fechaEmision: string
   fechaVencimiento: string
   actualizado: string
@@ -54,8 +54,8 @@ export interface CotizacionResponse {
 export interface CotizacionConDetallesResponseDTO {
   id: number
   codigoCotizacion: string
-  cantAdultos: number
-  cantNinos: number
+  cantAdultos?: number
+  cantNinos?: number
   fechaEmision: string
   fechaVencimiento: string
   actualizado: string

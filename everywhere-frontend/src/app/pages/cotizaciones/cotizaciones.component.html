@@ -357,9 +357,6 @@
                     <div class="text-sm font-medium text-gray-900">
                       {{ getPersonaDisplayName(cotizacion.personas?.id || 0) }}
                     </div>
-                    <div class="text-sm text-gray-500">
-                      {{ getPersonaDocumento(cotizacion.personas?.id || 0) }}
-                    </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-900">
@@ -368,22 +365,22 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-900">
-                      {{ formatDate(cotizacion.fechaSalida) }}
+                      <span class="text-gray-500 text-xs">Salida:</span> {{ formatDate(cotizacion.fechaSalida) }}
                     </div>
                     <div class="text-sm text-gray-500">
-                      {{ formatDate(cotizacion.fechaRegreso) }}
+                      <span class="text-gray-500 text-xs">Regreso:</span> {{ formatDate(cotizacion.fechaRegreso) }}
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm text-gray-900">
                       <span class="inline-flex items-center">
                         <i class="fas fa-user mr-1"></i>
-                        {{ cotizacion.cantAdultos || 0 }}
+                        {{ cotizacion.cantAdultos || 1 }}
                       </span>
                       <span *ngIf="cotizacion.cantNinos && cotizacion.cantNinos > 0"
                         class="ml-2 inline-flex items-center">
                         <i class="fas fa-child mr-1"></i>
-                        {{ cotizacion.cantNinos }}
+                        {{ cotizacion.cantNinos || 0 }}
                       </span>
                     </div>
                   </td>
@@ -515,8 +512,8 @@
                     Fechas:
                   </span>
                   <div class="text-sm text-gray-900 font-medium text-right">
-                    <div>{{ formatDate(cotizacion.fechaSalida) }}</div>
-                    <div class="text-gray-500">{{ formatDate(cotizacion.fechaRegreso) }}</div>
+                    <div><span class="text-gray-500 text-xs">Salida:</span> {{ formatDate(cotizacion.fechaSalida) }}</div>
+                    <div><span class="text-gray-500 text-xs">Regreso:</span> {{ formatDate(cotizacion.fechaRegreso) }}</div>
                   </div>
                 </div>
 
@@ -528,11 +525,11 @@
                   <div class="text-sm text-gray-900 font-medium">
                     <span class="inline-flex items-center mr-2">
                       <i class="fas fa-user mr-1"></i>
-                      {{ cotizacion.cantAdultos || 0 }}
+                      {{ cotizacion.cantAdultos || 1 }}
                     </span>
                     <span *ngIf="cotizacion.cantNinos && cotizacion.cantNinos > 0" class="inline-flex items-center">
                       <i class="fas fa-child mr-1"></i>
-                      {{ cotizacion.cantNinos }}
+                      {{ cotizacion.cantNinos || 0 }}
                     </span>
                   </div>
                 </div>
@@ -615,8 +612,8 @@
 
                 <!-- Pasajeros -->
                 <span class="text-gray-600 text-sm min-w-0 flex-shrink-0">
-                  {{ cotizacion.cantAdultos || 0 }}A
-                  <span *ngIf="cotizacion.cantNinos && cotizacion.cantNinos > 0">+ {{ cotizacion.cantNinos }}N</span>
+                  {{ cotizacion.cantAdultos || 1 }}A
+                  <span *ngIf="cotizacion.cantNinos && cotizacion.cantNinos > 0">+ {{ cotizacion.cantNinos || 0 }}N</span>
                 </span>
 
                 <!-- Estado -->
@@ -1689,7 +1686,7 @@
                       </div>
 
                       <!-- New product form row -->
-                      <div class="p-3 bg-gray-50/50" [formGroup]="detalleForm">
+                      <div class="p-3 bg-gray-50/50" [formGroup]="detalleGrupoForm">
                         <div class="grid gap-3 items-end"
                           style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                           <!-- Proveedor -->
@@ -1707,7 +1704,7 @@
                           <div>
                             <select formControlName="productoId"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                              [class.border-red-300]="isFieldInvalid(detalleForm, 'productoId')">
+                              [class.border-red-300]="isFieldInvalid(detalleGrupoForm, 'productoId')">
                               <option value="">Seleccionar</option>
                               <option *ngFor="let producto of productos" [value]="producto.id">
                                 {{ producto.tipo }}
@@ -1719,7 +1716,7 @@
                           <div>
                             <input type="number" formControlName="cantidad" min="1" placeholder="1"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                              [class.border-red-300]="isFieldInvalid(detalleForm, 'cantidad')" />
+                              [class.border-red-300]="isFieldInvalid(detalleGrupoForm, 'cantidad')" />
                           </div>
 
                           <!-- Descripción -->
@@ -1733,7 +1730,7 @@
                             <input type="number" formControlName="precioHistorico" step="0.01" min="0"
                               placeholder="0.00"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
-                              [class.border-red-300]="isFieldInvalid(detalleForm, 'precioHistorico')" />
+                              [class.border-red-300]="isFieldInvalid(detalleGrupoForm, 'precioHistorico')" />
                           </div>
 
                           <!-- Comisión -->
@@ -1745,7 +1742,7 @@
 
                           <!-- Total -->
                           <div>
-                            <input type="text" [value]="calcularTotalDetalle() | currency : 'USD' : 'symbol' : '1.2-2'"
+                            <input type="text" [value]="calcularTotalDetalleGrupo() | currency : 'USD' : 'symbol' : '1.2-2'"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-medium text-gray-700 text-center"
                               readonly />
                           </div>
@@ -2036,7 +2033,7 @@
                   </label>
                   <div class="relative">
                     <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 pr-8 text-sm">
-                      {{ cotizacionCompleta.cantAdultos || 0 }}
+                      {{ cotizacionCompleta.cantAdultos || 1 }}
                     </div>
                     <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                       <i class="fas fa-user text-gray-400 text-xs"></i>

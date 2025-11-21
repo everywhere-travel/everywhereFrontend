@@ -1349,11 +1349,34 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   getClienteInfo(): string {
-
     if (this.liquidacion?.cotizacion?.personas?.id) {
-      return this.getPersonaDisplayName(this.liquidacion.cotizacion.personas.id);
+      return this.getClienteNombreSolo(this.liquidacion.cotizacion.personas.id);
     }
     return 'Sin cliente asignado';
+  }
+
+  /**
+   * Obtiene solo el nombre del cliente sin documento
+   */
+  getClienteNombreSolo(personaId: number): string {
+    if (!personaId || personaId === 0) {
+      return 'Sin cliente';
+    }
+
+    // Buscar en cache
+    const persona = this.personasCache[personaId];
+    if (persona && persona.nombre) {
+      // Limpiar cualquier texto "null" que pueda existir en el nombre
+      const nombreLimpio = persona.nombre
+        .split(' ')
+        .filter((parte: string) => parte && parte !== 'null' && parte !== 'undefined')
+        .join(' ')
+        .trim();
+      
+      return nombreLimpio || 'Sin nombre';
+    }
+
+    return 'Cliente no encontrado';
   }
 
   // Método auxiliar para obtener el nombre del viajero por ID
