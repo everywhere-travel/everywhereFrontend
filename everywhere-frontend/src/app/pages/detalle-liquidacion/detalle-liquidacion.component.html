@@ -305,57 +305,7 @@
               </div>
             </div>
           </div>
-        </form>
-
-        <!-- Resumen de Totales -->
-        <div class="bg-white rounded-xl shadow-lg mb-8 overflow-hidden">
-          <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b">
-            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <i class="fas fa-calculator text-everywhere-primary"></i>
-              Resumen de Totales
-            </h2>
-          </div>
-
-          <div class="p-6">
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
-              <div class="bg-blue-50 rounded-lg p-4 text-center border border-blue-200">
-                <div class="text-sm text-blue-600 mb-1">Costo Tickets</div>
-                <div class="text-xl font-bold text-blue-800">
-                  {{ totalCostoTickets | currency:'USD':'symbol':'1.2-2' }}
-                </div>
-              </div>
-
-              <div class="bg-indigo-50 rounded-lg p-4 text-center border border-indigo-200">
-                <div class="text-sm text-indigo-600 mb-1">Cargo Servicio</div>
-                <div class="text-xl font-bold text-indigo-800">
-                  {{ totalCargoServicio | currency:'USD':'symbol':'1.2-2' }}
-                </div>
-              </div>
-
-              <div class="bg-green-50 rounded-lg p-4 text-center border border-green-200">
-                <div class="text-sm text-green-600 mb-1">Valor Venta</div>
-                <div class="text-xl font-bold text-green-800">
-                  {{ totalValorVenta | currency:'USD':'symbol':'1.2-2' }}
-                </div>
-              </div>
-
-              <div class="bg-purple-50 rounded-lg p-4 text-center border border-purple-200">
-                <div class="text-sm text-purple-600 mb-1">Total Boletas</div>
-                <div class="text-xl font-bold text-purple-800">
-                  {{ totalBoletaPasajero | currency:'USD':'symbol':'1.2-2' }}
-                </div>
-              </div>
-
-              <div class="bg-red-50 rounded-lg p-4 text-center border border-red-200">
-                <div class="text-sm text-red-600 mb-1">Descuentos</div>
-                <div class="text-xl font-bold text-red-800">
-                  {{ totalMontoDescuento | currency:'USD':'symbol':'1.2-2' }}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
+        </form> 
 
         <!-- Tabla de Detalles -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -609,7 +559,7 @@
                     </button>
                   </div>
                 </div>
-                <div class="my-2"></div>
+                <div class="my-2 border-b border-gray-300"></div>
               </div>
 
               <!-- Detalles Fijos (solo en modo edición) -->
@@ -744,7 +694,7 @@
                     </button>
                   </div>
                 </div>
-                <div class="my-2"></div>
+                <div class="my-2 border-b border-gray-300"></div>
               </div>
               </ng-container>
 
@@ -863,6 +813,60 @@
                   </div>
                 </div>
               </div>
+
+              <!-- Footer de Totales -->
+              <div class="mt-6 pt-4 border-t-2 border-gray-300">
+                <div class="grid gap-4 items-center min-w-[1400px]"
+                     [style.grid-template-columns]="modoEdicion ? '1fr 0.2fr 0.3fr 200px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px' : '1fr 0.2fr 0.3fr 200px 80px 90px 90px 90px 80px 80px 80px 80px 80px'">
+                  
+                  <!-- Espaciado para columnas sin totales (Cliente, Producto, Proveedor, Ticket, Operador) -->
+                  <div class="col-span-5 flex justify-end items-center pr-4">
+                    <span class="text-base font-bold text-gray-800">TOTALES:</span>
+                  </div>
+
+                  <!-- Costo Ticket -->
+                  <div class="text-right font-bold text-sm text-blue-800 bg-blue-50 px-2 py-2 rounded">
+                    {{ totalCostoTickets | currency:'USD':'symbol':'1.2-2' }}
+                  </div>
+
+                  <!-- Cargo Servicio -->
+                  <div class="text-right font-bold text-sm text-indigo-800 bg-indigo-50 px-2 py-2 rounded">
+                    {{ totalCargoServicio | currency:'USD':'symbol':'1.2-2' }}
+                  </div>
+
+                  <!-- Valor Venta -->
+                  <div class="text-right font-bold text-sm text-green-800 bg-green-50 px-2 py-2 rounded">
+                    {{ totalValorVenta | currency:'USD':'symbol':'1.2-2' }}
+                  </div>
+
+                  <!-- Factura (vacío) -->
+                  <div></div>
+
+                  <!-- Boleta -->
+                  <div class="text-right font-bold text-sm text-purple-800 bg-purple-50 px-2 py-2 rounded">
+                    {{ totalBoletaPasajero | currency:'USD':'symbol':'1.2-2' }}
+                  </div>
+
+                  <!-- Descuento -->
+                  <div class="text-right font-bold text-sm text-red-800 bg-red-50 px-2 py-2 rounded">
+                    {{ totalMontoDescuento | currency:'USD':'symbol':'1.2-2' }}
+                  </div>
+
+                  <!-- Pago USD -->
+                  <div class="text-right font-bold text-sm text-cyan-800 bg-cyan-50 px-2 py-2 rounded">
+                    {{ totalPagoPaxUSD | currency:'USD':'symbol':'1.2-2' }}
+                  </div>
+
+                  <!-- Pago PEN -->
+                  <div class="text-right font-bold text-sm text-teal-800 bg-teal-50 px-2 py-2 rounded">
+                    {{ totalPagoPaxPEN | currency:'PEN':'symbol':'1.2-2' }}
+                  </div>
+
+                  <!-- Espacio para acciones en modo edición -->
+                  <div *ngIf="modoEdicion"></div>
+                </div>
+              </div>
+            </div>
             </div>
           </div>
         </div>
