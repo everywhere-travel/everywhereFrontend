@@ -19,7 +19,6 @@ import { ObservacionLiquidacionService } from '../../core/service/ObservacionLiq
 import { ProveedorService } from '../../core/service/Proveedor/proveedor.service';
 import { OperadorService } from '../../core/service/Operador/operador.service';
 import { ViajeroService } from '../../core/service/viajero/viajero.service';
-import { PagoPaxService } from '../../core/service/PagoPax/pago-pax.service';
 
 // Models
 import { LiquidacionConDetallesResponse, LiquidacionRequest } from '../../shared/models/Liquidacion/liquidacion.model';
@@ -30,27 +29,12 @@ import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatur
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model';
-import { PagoPaxRequest, PagoPaxResponse } from '../../shared/models/PagoPax/pagoPax.model.ts';
 
 // Interfaz extendida para observaciones con propiedades de edición
 interface ObservacionConEdicion extends ObservacionLiquidacionResponse {
   editando?: boolean;
   descripcionTemp?: string;
 }
-
-// Interfaz para pagos PAX temporales (antes de guardar en BD)
-interface PagoPaxTemp {
-  id?: number; // Si tiene id, ya existe en BD; si no, es nuevo
-  monto: number;
-  moneda: string;
-  detalle?: string;
-  formaPagoId?: number;
-  formaPago?: FormaPagoResponse;
-  creado?: string;
-  actualizado?: string;
-  isTemporary?: boolean; // true si es nuevo y no está en BD
-}
-
 import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { OperadorResponse } from '../../shared/models/Operador/operador.model';
 import { ViajeroResponse, ViajeroConPersonaNatural } from '../../shared/models/Viajero/viajero.model';
@@ -99,7 +83,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private proveedorService = inject(ProveedorService);
   private operadorService = inject(OperadorService);
   private viajeroService = inject(ViajeroService);
-  private pagoPaxService = inject(PagoPaxService);
   private fb = inject(FormBuilder);
 
   // Data
@@ -142,16 +125,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Array para rastrear IDs de detalles eliminados que deben ser eliminados de la BD
   detallesEliminados: number[] = [];
-
-  // ===== PAGOS PAX =====
-  pagosPax: PagoPaxTemp[] = [];
-  pagosPaxEliminados: number[] = []; // IDs de pagos PAX a eliminar al guardar
-  pagoPaxForm: FormGroup;
-  mostrandoFormularioPagoPax = false;
-  pagoPaxEditandoIndex: number | null = null; // Índice del pago que se está editando
-
-  // Control de guardado
-  private cambiosGuardados = false;
 
   // Sidebar Configuration
   private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
@@ -299,15 +272,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       valorVenta: [0],
       facturaCompra: [''],
       boletaPasajero: [''],
-      montoDescuento: [0]
-    });
-
-    // Formulario para agregar pagos PAX (USD por defecto, pero permite PEN)
-    this.pagoPaxForm = this.fb.group({
-      monto: [0],
-      moneda: ['USD'], // USD por defecto
-      detalle: [''],
-      formaPagoId: [null]
+      montoDescuento: [0],
+      pagoPaxUSD: [0],
+      pagoPaxPEN: [0]
     });
 
     // Suscribirse a cambios en costoTicket y valorVenta para calcular automáticamente cargoServicio
@@ -327,10 +294,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Si no se guardaron cambios, limpiar el estado temporal
-    if (!this.cambiosGuardados) {
-      this.limpiarEstadoTemporal();
-    }
+    this.guardarEstadoTemporal();
     this.subscriptions.unsubscribe();
   }
 
@@ -349,10 +313,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       liquidacionForm: this.liquidacionForm.value,
       detalleForm: this.detalleForm.value,
       detallesFijos: this.detallesFijos,
-      detallesOriginales: this.liquidacion?.detalles || [], // Guardar detalles originales
-      detallesEliminados: this.detallesEliminados, // Guardar detalles eliminados
-      pagosPax: this.pagosPax, // Guardar pagos PAX
-      pagosPaxEliminados: this.pagosPaxEliminados, // Guardar pagos PAX eliminados
+      detallesOriginales: this.liquidacion?.detalles || [], // AGREGAR: Guardar detalles originales
+      detallesEliminados: this.detallesEliminados, // AGREGAR: Guardar detalles eliminados
       viajeroSearchTerms: this.viajeroSearchTerms,
       timestamp: new Date().getTime()
     };
@@ -412,6 +374,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
             detalleOriginal.facturaCompra = detalleEstado.facturaCompra || '';
             detalleOriginal.boletaPasajero = detalleEstado.boletaPasajero || '';
             detalleOriginal.montoDescuento = detalleEstado.montoDescuento || 0;
+            detalleOriginal.pagoPaxUSD = detalleEstado.pagoPaxUSD || 0;
+            detalleOriginal.pagoPaxPEN = detalleEstado.pagoPaxPEN || 0;
 
             // Restaurar relaciones si están presentes
             if (detalleEstado.viajero) {
@@ -435,16 +399,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         this.detallesEliminados = estado.detallesEliminados;
       }
 
-      // Restaurar pagos PAX
-      if (estado.pagosPax) {
-        this.pagosPax = estado.pagosPax;
-      }
-
-      // Restaurar pagos PAX eliminados
-      if (estado.pagosPaxEliminados) {
-        this.pagosPaxEliminados = estado.pagosPaxEliminados;
-      }
-
       if (estado.viajeroSearchTerms) {
         this.viajeroSearchTerms = estado.viajeroSearchTerms;
       }
@@ -466,13 +420,11 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private limpiarEstadoTemporal(): void {
     try {
       sessionStorage.removeItem(this.getEstadoTemporalKey());
-      // Limpiar arrays de eliminados
+      // También limpiar el array de detalles eliminados
       this.detallesEliminados = [];
-      this.pagosPaxEliminados = [];
-      // Limpiar arrays temporales
-      this.detallesFijos = [];
       // Limpiar observación temporal
       this.nuevaObservacion = '';
+      this.observaciones = [];
     } catch (error) {
       console.warn('Error al limpiar estado temporal:', error);
     }
@@ -516,9 +468,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Verificar si viene en modo edición
     const modoParam = this.route.snapshot.queryParamMap.get('modo');
     this.modoEdicion = modoParam === 'editar';
-
-    // Resetear el estado de guardado al cargar una nueva liquidación
-    this.cambiosGuardados = false;
 
     this.liquidacionId = Number(idParam);
     this.loadLiquidacion(this.liquidacionId);
@@ -574,9 +523,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
           // Cargar observaciones de la liquidación
           this.cargarObservacionesLiquidacion(liquidacion.id);
-
-          // Cargar pagos PAX de la liquidación
-          this.loadPagosPax(liquidacion.id);
 
           // Extraer viajeros únicos de los detalles
           this.extraerViajerosDeDetalles();
@@ -670,11 +616,23 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       // Cambiar a modo edición sin navegación adicional
       this.modoEdicion = true;
 
-      // Esperar un momento para asegurar que los datos estén listos
+      // Inicializar los valores de búsqueda de viajeros para que aparezcan en los inputs
       setTimeout(() => {
-        // Inicializar los valores de búsqueda de viajeros para todos los detalles
-        this.initializeAllViajeroSearchValues();
-      }, 150);
+        console.log('🔍 Intentando inicializar valores de búsqueda');
+        console.log('Viajeros cargados:', this.viajeros.length);
+        console.log('Detalles:', this.liquidacion?.detalles?.length);
+
+        if (this.viajeros.length > 0) {
+          this.initializeAllViajeroSearchValues();
+          console.log('✅ Términos inicializados:', this.viajeroSearchTerms);
+        } else {
+          console.warn('⚠️ Viajeros no cargados, reintentando...');
+          setTimeout(() => {
+            this.initializeAllViajeroSearchValues();
+            console.log('✅ Segundo intento, términos:', this.viajeroSearchTerms);
+          }, 500);
+        }
+      }, 200);
 
       // Actualizar la URL para reflejar el modo edición
       this.router.navigate([], {
@@ -856,180 +814,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     delete observacion.descripcionTemp;
   }
 
-  // ===== MÉTODOS PARA PAGOS PAX =====
-
-  /**
-   * Cargar pagos PAX de la liquidación
-   */
-  private loadPagosPax(liquidacionId: number): void {
-    const subscription = this.pagoPaxService.findByLiquidacionId(liquidacionId)
-      .pipe(
-        catchError(error => {
-          console.error('Error al cargar pagos PAX:', error);
-          return of([]);
-        })
-      )
-      .subscribe(pagosPax => {
-        // Convertir PagoPaxResponse a PagoPaxTemp
-        this.pagosPax = (pagosPax || []).map(pago => ({
-          id: pago.id,
-          monto: pago.monto,
-          moneda: pago.moneda || 'USD',
-          detalle: pago.detalle,
-          formaPagoId: pago.formaPago?.id,
-          formaPago: pago.formaPago,
-          creado: pago.creado,
-          actualizado: pago.actualizado,
-          isTemporary: false
-        }));
-      });
-
-    this.subscriptions.add(subscription);
-  }
-
-  /**
-   * Mostrar formulario para agregar pago PAX (USD por defecto)
-   */
-  mostrarFormularioPagoPax(): void {
-    this.mostrandoFormularioPagoPax = true;
-    this.pagoPaxEditandoIndex = null;
-    this.pagoPaxForm.reset({
-      monto: 0,
-      moneda: 'USD', // USD por defecto
-      detalle: '',
-      formaPagoId: null
-    });
-  }
-
-  /**
-   * Agregar un nuevo pago PAX temporalmente (se guardará al guardar la liquidación)
-   */
-  agregarPagoPax(): void {
-    if (this.pagoPaxForm.invalid) {
-      return;
-    }
-
-    const formaPagoId = this.pagoPaxForm.value.formaPagoId;
-    const formaPago = formaPagoId ? this.formasPago.find(fp => fp.id === formaPagoId) : undefined;
-
-    const nuevoPagoPax: PagoPaxTemp = {
-      monto: this.pagoPaxForm.value.monto,
-      moneda: this.pagoPaxForm.value.moneda || 'USD',
-      detalle: this.pagoPaxForm.value.detalle,
-      formaPagoId: formaPagoId,
-      formaPago: formaPago,
-      isTemporary: true // Marca como temporal (no guardado en BD)
-    };
-
-    this.pagosPax.push(nuevoPagoPax);
-    this.cerrarFormularioPagoPax();
-
-    // Autoguardar estado temporal
-    this.guardarEstadoTemporal();
-  }
-
-  /**
-   * Editar un pago PAX existente (modificación temporal)
-   */
-  editarPagoPax(index: number): void {
-    const pago = this.pagosPax[index];
-    if (!pago) return;
-
-    this.mostrandoFormularioPagoPax = true;
-    this.pagoPaxEditandoIndex = index;
-    this.pagoPaxForm.patchValue({
-      monto: pago.monto,
-      moneda: pago.moneda || 'USD',
-      detalle: pago.detalle || '',
-      formaPagoId: pago.formaPagoId || null
-    });
-  }
-
-  /**
-   * Guardar cambios en un pago PAX editado (modificación temporal)
-   */
-  guardarEdicionPagoPax(): void {
-    if (this.pagoPaxEditandoIndex === null || this.pagoPaxForm.invalid) {
-      return;
-    }
-
-    const formaPagoId = this.pagoPaxForm.value.formaPagoId;
-    const formaPago = formaPagoId ? this.formasPago.find(fp => fp.id === formaPagoId) : undefined;
-
-    // Actualizar el pago en el array local
-    this.pagosPax[this.pagoPaxEditandoIndex] = {
-      ...this.pagosPax[this.pagoPaxEditandoIndex],
-      monto: this.pagoPaxForm.value.monto,
-      moneda: this.pagoPaxForm.value.moneda || 'USD',
-      detalle: this.pagoPaxForm.value.detalle,
-      formaPagoId: formaPagoId,
-      formaPago: formaPago
-    };
-
-    this.cerrarFormularioPagoPax();
-
-    // Autoguardar estado temporal
-    this.guardarEstadoTemporal();
-  }
-
-  /**
-   * Eliminar un pago PAX (marcado para eliminar al guardar)
-   */
-  eliminarPagoPax(index: number): void {
-    const pago = this.pagosPax[index];
-    if (!pago) return;
-
-    // Si tiene ID, agregarlo a la lista de eliminados
-    if (pago.id) {
-      this.pagosPaxEliminados.push(pago.id);
-    }
-
-    // Eliminar del array local
-    this.pagosPax.splice(index, 1);
-
-    // Autoguardar estado temporal
-    this.guardarEstadoTemporal();
-  }
-
-  /**
-   * Cerrar formulario de pago PAX
-   */
-  cerrarFormularioPagoPax(): void {
-    this.mostrandoFormularioPagoPax = false;
-    this.pagoPaxEditandoIndex = null;
-    this.pagoPaxForm.reset({
-      monto: 0,
-      moneda: 'USD', // USD por defecto
-      detalle: '',
-      formaPagoId: null
-    });
-  }
-
-  /**
-   * Calcular total de pagos PAX por moneda
-   */
-  getTotalPagosPaxPorMoneda(moneda: string): number {
-    return this.pagosPax
-      .filter(p => p.moneda === moneda)
-      .reduce((sum, p) => sum + p.monto, 0);
-  }
-
-  /**
-   * Calcular total general de pagos PAX (todos juntos)
-   */
-  getTotalPagosPax(): number {
-    return this.pagosPax.reduce((sum, p) => sum + p.monto, 0);
-  }
-
-  /**
-   * Obtener nombre de forma de pago
-   */
-  getFormaPagoNombre(formaPagoId: number | undefined): string {
-    if (!formaPagoId) return 'Sin especificar';
-    const formaPago = this.formasPago.find(fp => fp.id === formaPagoId);
-    return formaPago?.descripcion || 'Desconocida';
-  }
-
   // Form methods
   private initializeForm(): void {
     // Cargar datos del servidor primero
@@ -1122,6 +906,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
                   facturaCompra: detalle.facturaCompra || '',
                   boletaPasajero: detalle.boletaPasajero || '',
                   montoDescuento: detalle.montoDescuento || 0,
+                  pagoPaxUSD: detalle.pagoPaxUSD || 0,
+                  pagoPaxPEN: detalle.pagoPaxPEN || 0,
                   liquidacionId: this.liquidacionId!
                 };
 
@@ -1160,16 +946,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
             }
           });
 
-          // 3. Procesar pagos PAX (crear, actualizar, eliminar)
-          this.procesarPagosPax(this.liquidacionId!).then(() => {
-            // Marcar que los cambios fueron guardados
-            this.cambiosGuardados = true;
-            // Finalizar guardado
-            this.limpiarEstadoTemporal();
-            this.recargarDatos();
-          }).catch(error => {
-            console.error('Error al procesar pagos PAX:', error);
-          });
+          // 3. Finalizar guardado (las observaciones se manejan por separado)
+          this.limpiarEstadoTemporal();
+          this.recargarDatos();
         }),
         catchError(error => {
           console.error('Error al guardar la liquidación:', error);
@@ -1184,49 +963,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       .subscribe();
 
     this.subscriptions.add(saveSubscription);
-  }
-
-  /**
-   * Procesar pagos PAX: crear nuevos, actualizar existentes, eliminar marcados
-   */
-  private async procesarPagosPax(liquidacionId: number): Promise<void> {
-    try {
-      // 1. Eliminar pagos marcados para eliminación
-      if (this.pagosPaxEliminados.length > 0) {
-        const deletePromises = this.pagosPaxEliminados.map(id =>
-          this.pagoPaxService.delete(id).toPromise()
-        );
-        await Promise.all(deletePromises);
-        this.pagosPaxEliminados = [];
-      }
-
-      // 2. Procesar cada pago PAX (crear o actualizar)
-      for (const pago of this.pagosPax) {
-        const pagoPaxRequest: PagoPaxRequest = {
-          monto: pago.monto,
-          moneda: pago.moneda,
-          detalle: pago.detalle,
-          liquidacionId: liquidacionId,
-          formaPagoId: pago.formaPagoId!
-        };
-
-        if (pago.id && !pago.isTemporary) {
-          // Actualizar existente
-          await this.pagoPaxService.update(pago.id, pagoPaxRequest).toPromise();
-        } else {
-          // Crear nuevo
-          const response = await this.pagoPaxService.create(pagoPaxRequest).toPromise();
-          // Actualizar el pago con el ID recibido
-          if (response) {
-            pago.id = response.id;
-            pago.isTemporary = false;
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error al procesar pagos PAX:', error);
-      throw error;
-    }
   }
 
   recargarDatos(): void {
@@ -1257,7 +993,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       valorVenta: Number(formValue.valorVenta) || 0,
       facturaCompra: formValue.facturaCompra || '',
       boletaPasajero: formValue.boletaPasajero || '',
-      montoDescuento: Number(formValue.montoDescuento) || 0
+      montoDescuento: Number(formValue.montoDescuento) || 0,
+      pagoPaxUSD: Number(formValue.pagoPaxUSD) || 0,
+      pagoPaxPEN: Number(formValue.pagoPaxPEN) || 0
     };
 
     this.detallesFijos.push(nuevoDetalle); // Agregar al final de la lista
@@ -1267,7 +1005,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (nuevoDetalle.viajeroId) {
       // Usar setTimeout para permitir que Angular detecte los cambios primero
       setTimeout(() => {
-        this.initViajeroSearchValue(`detalle-fijo-${nuevoIndice}`, nuevoDetalle.viajeroId!);
+        const viajero = this.viajeros.find(v => v.id === nuevoDetalle.viajeroId);
+        if (viajero) {
+          this.initViajeroSearchValue(`detalle-fijo-${nuevoIndice}`, viajero);
+        }
       }, 10);
     }
 
@@ -1425,6 +1166,12 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         case 'montoDescuento':
           detalle.montoDescuento = value ? Number(value) : 0;
           break;
+        case 'pagoPaxUSD':
+          detalle.pagoPaxUSD = value ? Number(value) : 0;
+          break;
+        case 'pagoPaxPEN':
+          detalle.pagoPaxPEN = value ? Number(value) : 0;
+          break;
         default:
           console.warn('Campo no reconocido:', field);
           break;
@@ -1503,6 +1250,12 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         case 'montoDescuento':
           detalle.montoDescuento = value ? Number(value) : 0;
           break;
+        case 'pagoPaxUSD':
+          detalle.pagoPaxUSD = value ? Number(value) : 0;
+          break;
+        case 'pagoPaxPEN':
+          detalle.pagoPaxPEN = value ? Number(value) : 0;
+          break;
         default:
           console.warn('Campo no reconocido:', field);
           break;
@@ -1536,6 +1289,18 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (!this.liquidacion?.detalles) return 0;
     return this.liquidacion.detalles.reduce((sum, detalle) =>
       sum + (detalle.montoDescuento || 0), 0);
+  }
+
+  get totalPagoPaxUSD(): number {
+    if (!this.liquidacion?.detalles) return 0;
+    return this.liquidacion.detalles.reduce((sum, detalle) =>
+      sum + (detalle.pagoPaxUSD || 0), 0);
+  }
+
+  get totalPagoPaxPEN(): number {
+    if (!this.liquidacion?.detalles) return 0;
+    return this.liquidacion.detalles.reduce((sum, detalle) =>
+      sum + (detalle.pagoPaxPEN || 0), 0);
   }
 
   get totalBoletaPasajero(): number {
@@ -1819,12 +1584,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   // Inicializar el valor de búsqueda con el viajero ya seleccionado
-  initViajeroSearchValue(index: string, viajeroId: number): void {
-    // Usar el mismo método que se usa para visualizar
-    const nombreCompleto = this.getViajeroDisplayName(viajeroId);
-
-    if (nombreCompleto && nombreCompleto !== 'Sin viajero' && nombreCompleto !== 'Viajero no encontrado') {
-      this.viajeroSearchTerms[index] = nombreCompleto;
+  initViajeroSearchValue(index: string, viajero: any): void {
+    if (viajero && viajero.personaNatural && viajero.personaNatural.nombres) {
+      this.viajeroSearchTerms[index] = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno}`;
     }
   }
 
@@ -1833,8 +1595,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Inicializar para detalles originales
     if (this.liquidacion?.detalles) {
       this.liquidacion.detalles.forEach((detalle, index) => {
-        if (detalle.viajero?.id) {
-          this.initViajeroSearchValue(`detalle-original-${index}`, detalle.viajero.id);
+        if (detalle.viajero) {
+          this.initViajeroSearchValue(`detalle-original-${index}`, detalle.viajero);
         }
       });
     }
@@ -1842,7 +1604,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Inicializar para detalles fijos
     this.detallesFijos.forEach((detalle, index) => {
       if (detalle.viajeroId) {
-        this.initViajeroSearchValue(`detalle-fijo-${index}`, detalle.viajeroId);
+        const viajero = this.viajeros.find(v => v.id === detalle.viajeroId);
+        if (viajero) {
+          this.initViajeroSearchValue(`detalle-fijo-${index}`, viajero);
+        }
       }
     });
   }
@@ -1858,8 +1623,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Inicializar para detalles originales
     if (this.liquidacion?.detalles) {
       this.liquidacion.detalles.forEach((detalle, index) => {
-        if (detalle.viajero?.id) {
-          this.initViajeroSearchValue(`detalle-original-${index}`, detalle.viajero.id);
+        if (detalle.viajero) {
+          this.initViajeroSearchValue(`detalle-original-${index}`, detalle.viajero);
         }
       });
     }
@@ -1867,14 +1632,20 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Inicializar para detalles fijos
     this.detallesFijos.forEach((detalle, index) => {
       if (detalle.viajeroId) {
-        this.initViajeroSearchValue(`detalle-fijo-${index}`, detalle.viajeroId);
+        const viajero = this.viajeros.find(v => v.id === detalle.viajeroId);
+        if (viajero) {
+          this.initViajeroSearchValue(`detalle-fijo-${index}`, viajero);
+        }
       }
     });
 
     // Inicializar para el formulario nuevo si tiene un viajero seleccionado
     const viajeroIdFormulario = this.detalleForm.get('viajeroId')?.value;
     if (viajeroIdFormulario) {
-      this.initViajeroSearchValue('nuevo', Number(viajeroIdFormulario));
+      const viajero = this.viajeros.find(v => v.id === Number(viajeroIdFormulario));
+      if (viajero) {
+        this.initViajeroSearchValue('nuevo', viajero);
+      }
     }
   }
 }
