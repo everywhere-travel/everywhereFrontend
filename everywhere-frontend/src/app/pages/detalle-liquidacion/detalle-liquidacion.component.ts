@@ -672,7 +672,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     const viajerosDeDetalles = Array.from(viajerosMap.values());
 
     // SIEMPRE cargar todos los viajeros disponibles del backend
-    this.viajeroService.findAll().subscribe({
+    this.viajeroService.findAllWithPersonaNatural().subscribe({
       next: (todosLosViajeros: ViajeroConPersonaNatural[]) => {
         // Combinar: primero los de los detalles, luego el resto
         const viajerosCombinados = new Map<number, ViajeroConPersonaNatural>();

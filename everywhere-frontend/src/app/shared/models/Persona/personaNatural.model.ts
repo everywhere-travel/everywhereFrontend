@@ -47,3 +47,17 @@ export interface PersonaNaturalSinViajero {
   persona?: PersonaResponse
   categoriaPersona?: CategoriaPersonaResponse
 }
+
+export interface PersonaNaturalSinViajeroResponse {
+  id: number
+  documento?: string
+  nombres?: string
+  apellidosPaterno?: string
+  apellidosMaterno?: string
+  sexo?: string
+  creado: string
+  actualizado: string
+  persona: PersonaResponse
+  categoriaPersona?: CategoriaPersonaResponse
+  // SIN campo viajero para evitar referencia circular
+}
