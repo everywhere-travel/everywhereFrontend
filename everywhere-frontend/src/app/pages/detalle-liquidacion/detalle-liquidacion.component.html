@@ -110,19 +110,6 @@
                 </button>
               </div>
 
-              <div *ngIf="modoEdicion" class="flex gap-3">
-                <button (click)="salirModoEdicion()"
-                        class="px-6 py-3 bg-orange-500 hover:bg-orange-600 rounded-xl transition-all flex items-center gap-2 text-white">
-                  <i class="fas fa-times"></i>
-                  <span class="hidden sm:inline">Cancelar</span>
-                </button>
-                <button (click)="guardarLiquidacion()"
-                        class="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-xl transition-all flex items-center gap-2 text-white">
-                  <i class="fas fa-save"></i>
-                  <span class="hidden sm:inline">Guardar</span>
-                </button>
-              </div>
-
               <button (click)="volverALiquidaciones()"
                       class="px-6 py-3 bg-white text-everywhere-primary rounded-xl hover:bg-gray-100 transition-colors flex items-center gap-2 font-medium">
                 <i class="fas fa-arrow-left"></i>
@@ -872,33 +859,6 @@
         </div>
       </div>
 
-      <!-- Footer con botones de acción (solo en modo edición) -->
-      <div *ngIf="modoEdicion" class="mt-8 flex flex-col sm:flex-row gap-4 justify-between items-center">
-        <div class="flex flex-col sm:flex-row gap-4">
-          <button type="button"
-                  class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"
-                  (click)="agregarProducto()">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Agregar Producto
-          </button>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-4">
-          <button type="button"
-                  class="px-6 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
-                  (click)="cancelar()">
-            Cancelar
-          </button>
-          <button type="button"
-                  class="px-6 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors"
-                  (click)="guardar()">
-            Guardar
-          </button>
-        </div>
-      </div>
-
       <!-- ===== SECCIÓN DE PAGOS PAX ===== -->
       <div class="bg-white rounded-xl shadow-lg mt-8 overflow-hidden">
         <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-200">
@@ -1067,6 +1027,22 @@
             </div>
             <p class="text-gray-600 font-medium">No hay pagos PAX registrados</p>
             <p class="text-gray-500 text-sm">Los pagos aparecerán aquí cuando se agreguen</p>
+          </div>
+        </div>
+
+        <!-- Botones de Acción (solo en modo edición) -->
+        <div *ngIf="modoEdicion" class="px-6 pb-6">
+          <div class="flex flex-col sm:flex-row gap-3 justify-end border-t border-gray-200 pt-4">
+            <button (click)="salirModoEdicion()"
+                    class="px-8 py-3 bg-orange-500 hover:bg-orange-600 rounded-xl transition-all flex items-center justify-center gap-2 text-white font-medium shadow-lg hover:shadow-xl">
+              <i class="fas fa-times"></i>
+              <span>Cancelar</span>
+            </button>
+            <button (click)="guardarLiquidacion()"
+                    class="px-8 py-3 bg-green-500 hover:bg-green-600 rounded-xl transition-all flex items-center justify-center gap-2 text-white font-medium shadow-lg hover:shadow-xl">
+              <i class="fas fa-save"></i>
+              <span>Guardar Liquidación</span>
+            </button>
           </div>
         </div>
       </div>
