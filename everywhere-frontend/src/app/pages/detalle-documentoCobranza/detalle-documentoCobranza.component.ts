@@ -519,7 +519,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
         if (response) {
           this.success = 'Documento actualizado correctamente';
           this.documento = response;
-          this.cancelarEdicionDocumento();
+          this.salirModoEdicion();
         }
       });
 
@@ -562,6 +562,14 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   irAEditarDocumento(): void {
     this.modoEdicion = true;
+    // Populate form with current document data
+    if (this.documento) {
+      this.documentoForm.patchValue({
+        fileVenta: this.documento.fileVenta || '',
+        costoEnvio: this.documento.costoEnvio || 0,
+        observaciones: this.documento.observaciones || ''
+      });
+    }
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { modo: 'editar' },
@@ -573,6 +581,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.modoEdicion = false;
     this.showDetalleForm = false;
     this.showDocumentoForm = false;
+    this.documentoForm.reset();
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { modo: null },
@@ -626,6 +635,14 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ============ HELPER METHODS =============
+  getDetalleDocumentoDisplay(): string {
+    const detalleDocId = (this.documento as any)?.detalleDocumentoId;
+    if (!detalleDocId) return 'Sin detalle de documento';
+    const detalle = this.detallesDocumento.find(d => d.id === detalleDocId);
+    if (!detalle) return 'Sin detalle de documento';
+    return `${detalle.numero} - ${detalle.documento?.tipo || 'N/A'}`;
+  }
+
   getDetalleDocumentoInfo(id: number): DetalleDocumentoResponse | undefined {
     return this.detallesDocumento.find(d => d.id === id);
   }
