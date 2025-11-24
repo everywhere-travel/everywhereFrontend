@@ -13,8 +13,6 @@ export interface DetalleLiquidacionResponse {
   facturaCompra?: string
   boletaPasajero?: string
   montoDescuento?: number
-  pagoPaxUSD?: number
-  pagoPaxPEN?: number
   creado?: string
   actualizado?: string
 
@@ -35,8 +33,6 @@ export interface DetalleLiquidacionRequest {
   facturaCompra?: string
   boletaPasajero?: string
   montoDescuento?: number
-  pagoPaxUSD?: number
-  pagoPaxPEN?: number
 
   // Campos opcionales - se pueden asignar después en edición
   viajeroId?: number    // Opcional

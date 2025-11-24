@@ -19,6 +19,7 @@ import { ObservacionLiquidacionService } from '../../core/service/ObservacionLiq
 import { ProveedorService } from '../../core/service/Proveedor/proveedor.service';
 import { OperadorService } from '../../core/service/Operador/operador.service';
 import { ViajeroService } from '../../core/service/viajero/viajero.service';
+import { PagoPaxService } from '../../core/service/PagoPax/pago-pax.service';
 
 // Models
 import { LiquidacionConDetallesResponse, LiquidacionRequest } from '../../shared/models/Liquidacion/liquidacion.model';
@@ -29,6 +30,7 @@ import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatur
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model';
+import { PagoPaxRequest, PagoPaxResponse } from '../../shared/models/PagoPax/pagoPax.model.ts';
 
 // Interfaz extendida para observaciones con propiedades de edición
 interface ObservacionConEdicion extends ObservacionLiquidacionResponse {
@@ -83,6 +85,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private proveedorService = inject(ProveedorService);
   private operadorService = inject(OperadorService);
   private viajeroService = inject(ViajeroService);
+  private pagoPaxService = inject(PagoPaxService);
   private fb = inject(FormBuilder);
 
   // Data
@@ -125,6 +128,12 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Array para rastrear IDs de detalles eliminados que deben ser eliminados de la BD
   detallesEliminados: number[] = [];
+
+  // ===== PAGOS PAX =====
+  pagosPax: PagoPaxResponse[] = [];
+  pagoPaxForm: FormGroup;
+  mostrandoFormularioPagoPax = false;
+  pagoPaxEditando: PagoPaxResponse | null = null;
 
   // Sidebar Configuration
   private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
@@ -272,9 +281,15 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       valorVenta: [0],
       facturaCompra: [''],
       boletaPasajero: [''],
-      montoDescuento: [0],
-      pagoPaxUSD: [0],
-      pagoPaxPEN: [0]
+      montoDescuento: [0]
+    });
+
+    // Formulario para agregar pagos PAX (USD por defecto, pero permite PEN)
+    this.pagoPaxForm = this.fb.group({
+      monto: [0],
+      moneda: ['USD'], // USD por defecto
+      detalle: [''],
+      formaPagoId: [null]
     });
 
     // Suscribirse a cambios en costoTicket y valorVenta para calcular automáticamente cargoServicio
@@ -523,6 +538,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
           // Cargar observaciones de la liquidación
           this.cargarObservacionesLiquidacion(liquidacion.id);
+
+          // Cargar pagos PAX de la liquidación
+          this.loadPagosPax(liquidacion.id);
 
           // Extraer viajeros únicos de los detalles
           this.extraerViajerosDeDetalles();
@@ -795,6 +813,184 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     delete observacion.descripcionTemp;
   }
 
+  // ===== MÉTODOS PARA PAGOS PAX =====
+
+  /**
+   * Cargar pagos PAX de la liquidación
+   */
+  private loadPagosPax(liquidacionId: number): void {
+    const subscription = this.pagoPaxService.findByLiquidacionId(liquidacionId)
+      .pipe(
+        catchError(error => {
+          console.error('Error al cargar pagos PAX:', error);
+          return of([]);
+        })
+      )
+      .subscribe(pagosPax => {
+        this.pagosPax = pagosPax || [];
+      });
+
+    this.subscriptions.add(subscription);
+  }
+
+  /**
+   * Mostrar formulario para agregar pago PAX (USD por defecto)
+   */
+  mostrarFormularioPagoPax(): void {
+    this.mostrandoFormularioPagoPax = true;
+    this.pagoPaxEditando = null;
+    this.pagoPaxForm.reset({
+      monto: 0,
+      moneda: 'USD', // USD por defecto
+      detalle: '',
+      formaPagoId: null
+    });
+  }
+
+  /**
+   * Agregar un nuevo pago PAX (USD o PEN)
+   */
+  agregarPagoPax(): void {
+    if (!this.liquidacionId || this.pagoPaxForm.invalid) {
+      return;
+    }
+
+    const pagoPaxRequest: PagoPaxRequest = {
+      monto: this.pagoPaxForm.value.monto,
+      moneda: this.pagoPaxForm.value.moneda || 'USD', // USD por defecto
+      detalle: this.pagoPaxForm.value.detalle,
+      liquidacionId: this.liquidacionId,
+      formaPagoId: this.pagoPaxForm.value.formaPagoId
+    };
+
+    const subscription = this.pagoPaxService.create(pagoPaxRequest)
+      .pipe(
+        catchError(error => {
+          console.error('Error al crear pago PAX:', error);
+          return of(null);
+        })
+      )
+      .subscribe(response => {
+        if (response) {
+          this.pagosPax.push(response);
+          this.cerrarFormularioPagoPax();
+        }
+      });
+
+    this.subscriptions.add(subscription);
+  }
+
+  /**
+   * Editar un pago PAX existente (USD o PEN)
+   */
+  editarPagoPax(pago: PagoPaxResponse): void {
+    this.mostrandoFormularioPagoPax = true;
+    this.pagoPaxEditando = pago;
+    this.pagoPaxForm.patchValue({
+      monto: pago.monto,
+      moneda: pago.moneda || 'USD',
+      detalle: pago.detalle || '',
+      formaPagoId: pago.formaPago?.id || null
+    });
+  }
+
+  /**
+   * Guardar cambios en un pago PAX editado (USD o PEN)
+   */
+  guardarEdicionPagoPax(): void {
+    if (!this.pagoPaxEditando || !this.liquidacionId || this.pagoPaxForm.invalid) {
+      return;
+    }
+
+    const pagoPaxRequest: PagoPaxRequest = {
+      monto: this.pagoPaxForm.value.monto,
+      moneda: this.pagoPaxForm.value.moneda || 'USD', // USD por defecto
+      liquidacionId: this.liquidacionId,
+      detalle: this.pagoPaxForm.value.detalle,
+      formaPagoId: this.pagoPaxForm.value.formaPagoId
+    };
+
+    const subscription = this.pagoPaxService.update(this.pagoPaxEditando.id, pagoPaxRequest)
+      .pipe(
+        catchError(error => {
+          console.error('Error al actualizar pago PAX:', error);
+          return of(null);
+        })
+      )
+      .subscribe(response => {
+        if (response) {
+          const index = this.pagosPax.findIndex(p => p.id === this.pagoPaxEditando!.id);
+          if (index !== -1) {
+            this.pagosPax[index] = response;
+          }
+          this.cerrarFormularioPagoPax();
+        }
+      });
+
+    this.subscriptions.add(subscription);
+  }
+
+  /**
+   * Eliminar un pago PAX
+   */
+  eliminarPagoPax(pago: PagoPaxResponse): void {
+    if (!confirm('¿Está seguro de eliminar este pago PAX?')) {
+      return;
+    }
+
+    const subscription = this.pagoPaxService.delete(pago.id)
+      .pipe(
+        catchError(error => {
+          console.error('Error al eliminar pago PAX:', error);
+          return of(null);
+        })
+      )
+      .subscribe(() => {
+        this.pagosPax = this.pagosPax.filter(p => p.id !== pago.id);
+      });
+
+    this.subscriptions.add(subscription);
+  }
+
+  /**
+   * Cerrar formulario de pago PAX
+   */
+  cerrarFormularioPagoPax(): void {
+    this.mostrandoFormularioPagoPax = false;
+    this.pagoPaxEditando = null;
+    this.pagoPaxForm.reset({
+      monto: 0,
+      moneda: 'USD', // USD por defecto
+      detalle: '',
+      formaPagoId: null
+    });
+  }
+
+  /**
+   * Calcular total de pagos PAX por moneda
+   */
+  getTotalPagosPaxPorMoneda(moneda: string): number {
+    return this.pagosPax
+      .filter(p => p.moneda === moneda)
+      .reduce((sum, p) => sum + p.monto, 0);
+  }
+
+  /**
+   * Calcular total general de pagos PAX (todos juntos)
+   */
+  getTotalPagosPax(): number {
+    return this.pagosPax.reduce((sum, p) => sum + p.monto, 0);
+  }
+
+  /**
+   * Obtener nombre de forma de pago
+   */
+  getFormaPagoNombre(formaPagoId: number | undefined): string {
+    if (!formaPagoId) return 'Sin especificar';
+    const formaPago = this.formasPago.find(fp => fp.id === formaPagoId);
+    return formaPago?.descripcion || 'Desconocida';
+  }
+
   // Form methods
   private initializeForm(): void {
     // Cargar datos del servidor primero
@@ -887,8 +1083,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
                   facturaCompra: detalle.facturaCompra || '',
                   boletaPasajero: detalle.boletaPasajero || '',
                   montoDescuento: detalle.montoDescuento || 0,
-                  pagoPaxUSD: detalle.pagoPaxUSD || 0,
-                  pagoPaxPEN: detalle.pagoPaxPEN || 0,
                   liquidacionId: this.liquidacionId!
                 };
 
@@ -974,9 +1168,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       valorVenta: Number(formValue.valorVenta) || 0,
       facturaCompra: formValue.facturaCompra || '',
       boletaPasajero: formValue.boletaPasajero || '',
-      montoDescuento: Number(formValue.montoDescuento) || 0,
-      pagoPaxUSD: Number(formValue.pagoPaxUSD) || 0,
-      pagoPaxPEN: Number(formValue.pagoPaxPEN) || 0
+      montoDescuento: Number(formValue.montoDescuento) || 0
     };
 
     this.detallesFijos.push(nuevoDetalle); // Agregar al final de la lista
@@ -1147,12 +1339,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         case 'montoDescuento':
           detalle.montoDescuento = value ? Number(value) : 0;
           break;
-        case 'pagoPaxUSD':
-          detalle.pagoPaxUSD = value ? Number(value) : 0;
-          break;
-        case 'pagoPaxPEN':
-          detalle.pagoPaxPEN = value ? Number(value) : 0;
-          break;
         default:
           console.warn('Campo no reconocido:', field);
           break;
@@ -1231,12 +1417,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         case 'montoDescuento':
           detalle.montoDescuento = value ? Number(value) : 0;
           break;
-        case 'pagoPaxUSD':
-          detalle.pagoPaxUSD = value ? Number(value) : 0;
-          break;
-        case 'pagoPaxPEN':
-          detalle.pagoPaxPEN = value ? Number(value) : 0;
-          break;
         default:
           console.warn('Campo no reconocido:', field);
           break;
@@ -1270,18 +1450,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (!this.liquidacion?.detalles) return 0;
     return this.liquidacion.detalles.reduce((sum, detalle) =>
       sum + (detalle.montoDescuento || 0), 0);
-  }
-
-  get totalPagoPaxUSD(): number {
-    if (!this.liquidacion?.detalles) return 0;
-    return this.liquidacion.detalles.reduce((sum, detalle) =>
-      sum + (detalle.pagoPaxUSD || 0), 0);
-  }
-
-  get totalPagoPaxPEN(): number {
-    if (!this.liquidacion?.detalles) return 0;
-    return this.liquidacion.detalles.reduce((sum, detalle) =>
-      sum + (detalle.pagoPaxPEN || 0), 0);
   }
 
   get totalBoletaPasajero(): number {
