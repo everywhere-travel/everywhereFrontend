@@ -669,6 +669,14 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (this.liquidacionId) {
       // Cambiar a modo edición sin navegación adicional
       this.modoEdicion = true;
+
+      // Esperar un momento para asegurar que los datos estén listos
+      setTimeout(() => {
+        // Inicializar los valores de búsqueda de viajeros para todos los detalles
+        this.initializeAllViajeroSearchValues();
+        console.log('Valores de búsqueda inicializados:', this.viajeroSearchTerms);
+      }, 150);
+
       // Actualizar la URL para reflejar el modo edición
       this.router.navigate([], {
         relativeTo: this.route,
@@ -916,7 +924,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     this.pagosPax.push(nuevoPagoPax);
     this.cerrarFormularioPagoPax();
-    
+
     // Autoguardar estado temporal
     this.guardarEstadoTemporal();
   }
@@ -960,7 +968,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     };
 
     this.cerrarFormularioPagoPax();
-    
+
     // Autoguardar estado temporal
     this.guardarEstadoTemporal();
   }
@@ -979,7 +987,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     // Eliminar del array local
     this.pagosPax.splice(index, 1);
-    
+
     // Autoguardar estado temporal
     this.guardarEstadoTemporal();
   }
@@ -1260,10 +1268,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (nuevoDetalle.viajeroId) {
       // Usar setTimeout para permitir que Angular detecte los cambios primero
       setTimeout(() => {
-        const viajero = this.viajeros.find(v => v.id === nuevoDetalle.viajeroId);
-        if (viajero) {
-          this.initViajeroSearchValue(`detalle-fijo-${nuevoIndice}`, viajero);
-        }
+        this.initViajeroSearchValue(`detalle-fijo-${nuevoIndice}`, nuevoDetalle.viajeroId!);
       }, 10);
     }
 
@@ -1622,7 +1627,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         .filter((parte: string) => parte && parte !== 'null' && parte !== 'undefined')
         .join(' ')
         .trim();
-      
+
       return nombreLimpio || 'Sin nombre';
     }
 
@@ -1815,19 +1820,35 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   // Inicializar el valor de búsqueda con el viajero ya seleccionado
-  initViajeroSearchValue(index: string, viajero: any): void {
-    if (viajero && viajero.personaNatural && viajero.personaNatural.nombres) {
-      this.viajeroSearchTerms[index] = `${viajero.personaNatural.nombres} ${viajero.personaNatural.apellidosPaterno}`;
+  initViajeroSearchValue(index: string, viajeroId: number): void {
+    console.log(`📝 initViajeroSearchValue - index: ${index}, viajeroId: ${viajeroId}`);
+
+    // Usar el mismo método que se usa para visualizar
+    const nombreCompleto = this.getViajeroDisplayName(viajeroId);
+
+    if (nombreCompleto && nombreCompleto !== 'Sin viajero' && nombreCompleto !== 'Viajero no encontrado') {
+      this.viajeroSearchTerms[index] = nombreCompleto;
+      console.log(`✅ Valor asignado: "${nombreCompleto}"`);
+    } else {
+      console.log(`❌ No se pudo asignar valor - ${nombreCompleto}`);
     }
   }
 
   // Inicializar todos los valores de búsqueda de viajeros para detalles existentes
   initializeAllViajeroSearchValues(): void {
+    console.log('🔍 Inicializando valores de búsqueda de viajeros...');
+    console.log('Viajeros disponibles:', this.viajeros);
+    console.log('Detalles:', this.liquidacion?.detalles);
+
     // Inicializar para detalles originales
     if (this.liquidacion?.detalles) {
       this.liquidacion.detalles.forEach((detalle, index) => {
-        if (detalle.viajero) {
-          this.initViajeroSearchValue(`detalle-original-${index}`, detalle.viajero);
+        console.log(`Detalle ${index}:`, detalle);
+        console.log(`Viajero del detalle ${index} (ID):`, detalle.viajero?.id);
+
+        if (detalle.viajero?.id) {
+          this.initViajeroSearchValue(`detalle-original-${index}`, detalle.viajero.id);
+          console.log(`✅ Inicializado detalle-original-${index}:`, this.viajeroSearchTerms[`detalle-original-${index}`]);
         }
       });
     }
@@ -1835,10 +1856,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Inicializar para detalles fijos
     this.detallesFijos.forEach((detalle, index) => {
       if (detalle.viajeroId) {
-        const viajero = this.viajeros.find(v => v.id === detalle.viajeroId);
-        if (viajero) {
-          this.initViajeroSearchValue(`detalle-fijo-${index}`, viajero);
-        }
+        this.initViajeroSearchValue(`detalle-fijo-${index}`, detalle.viajeroId);
+        console.log(`✅ Inicializado detalle-fijo-${index}:`, this.viajeroSearchTerms[`detalle-fijo-${index}`]);
       }
     });
   }
@@ -1854,8 +1873,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Inicializar para detalles originales
     if (this.liquidacion?.detalles) {
       this.liquidacion.detalles.forEach((detalle, index) => {
-        if (detalle.viajero) {
-          this.initViajeroSearchValue(`detalle-original-${index}`, detalle.viajero);
+        if (detalle.viajero?.id) {
+          this.initViajeroSearchValue(`detalle-original-${index}`, detalle.viajero.id);
         }
       });
     }
@@ -1863,20 +1882,14 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Inicializar para detalles fijos
     this.detallesFijos.forEach((detalle, index) => {
       if (detalle.viajeroId) {
-        const viajero = this.viajeros.find(v => v.id === detalle.viajeroId);
-        if (viajero) {
-          this.initViajeroSearchValue(`detalle-fijo-${index}`, viajero);
-        }
+        this.initViajeroSearchValue(`detalle-fijo-${index}`, detalle.viajeroId);
       }
     });
 
     // Inicializar para el formulario nuevo si tiene un viajero seleccionado
     const viajeroIdFormulario = this.detalleForm.get('viajeroId')?.value;
     if (viajeroIdFormulario) {
-      const viajero = this.viajeros.find(v => v.id === Number(viajeroIdFormulario));
-      if (viajero) {
-        this.initViajeroSearchValue('nuevo', viajero);
-      }
+      this.initViajeroSearchValue('nuevo', Number(viajeroIdFormulario));
     }
   }
 }
