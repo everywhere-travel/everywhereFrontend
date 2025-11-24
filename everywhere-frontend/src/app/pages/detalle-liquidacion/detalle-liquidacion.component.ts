@@ -1056,10 +1056,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Verificar si todos los datos necesarios están cargados
     const verificarDatos = () => {
       const datosListos = this.viajeros.length > 0 &&
-                         this.productos.length > 0 &&
-                         this.proveedores.length > 0 &&
-                         this.operadores.length > 0 &&
-                         this.formasPago.length > 0;
+        this.productos.length > 0 &&
+        this.proveedores.length > 0 &&
+        this.operadores.length > 0 &&
+        this.formasPago.length > 0;
 
       if (datosListos) {
         // Todos los datos están listos, intentar cargar estado temporal
@@ -1439,7 +1439,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   onDetalleOriginalChange(index: number, field: string, value: any): void {
 
     if (this.liquidacion && this.liquidacion.detalles &&
-        index >= 0 && index < this.liquidacion.detalles.length) {
+      index >= 0 && index < this.liquidacion.detalles.length) {
       const detalle = this.liquidacion.detalles[index];
 
       switch (field) {
