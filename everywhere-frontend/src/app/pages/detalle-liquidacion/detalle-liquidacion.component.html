@@ -308,6 +308,23 @@
         </form>
 
 
+              <div class="bg-purple-50 rounded-lg p-4 text-center border border-purple-200">
+                <div class="text-sm text-purple-600 mb-1">Total Boletas</div>
+                <div class="text-xl font-bold text-purple-800">
+                  {{ totalBoletaPasajero | currency:'USD':'symbol':'1.2-2' }}
+                </div>
+              </div>
+
+              <div class="bg-red-50 rounded-lg p-4 text-center border border-red-200">
+                <div class="text-sm text-red-600 mb-1">Descuentos</div>
+                <div class="text-xl font-bold text-red-800">
+                  {{ totalMontoDescuento | currency:'USD':'symbol':'1.2-2' }}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
 
         <!-- Tabla de Detalles -->
         <div class="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -323,8 +340,8 @@
               <!-- Formulario para agregar/editar detalles -->
               <div class="bg-gray-50 rounded-xl p-6 min-w-max">
               <div>
-                <div class="grid gap-4 items-end min-w-[1400px]"
-                     [style.grid-template-columns]="modoEdicion ? '1fr 0.2fr 0.3fr 200px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px' : '1fr 0.2fr 0.3fr 200px 80px 90px 90px 90px 80px 80px 80px 80px 80px'">
+                <div class="grid gap-4 items-end min-w-[1200px]"
+                     [style.grid-template-columns]="modoEdicion ? '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 70px' : '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px'">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
                   </div>
@@ -358,12 +375,6 @@
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Descuento</label>
                   </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Pago PAX USD</label>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Pago PAX PEN</label>
-                  </div>
                   <div *ngIf="modoEdicion" class="text-center">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Acciones</label>
                   </div>
@@ -372,8 +383,8 @@
 
               <!-- Detalles Originales -->
               <div *ngFor="let detalle of liquidacion.detalles; let i = index" class="mb-3">
-                <div class="grid gap-4 items-end min-w-[1400px]"
-                    [style.grid-template-columns]="modoEdicion ? '1fr 0.2fr 0.3fr 200px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px' : '1fr 0.2fr 0.3fr 200px 80px 90px 90px 90px 80px 80px 80px 80px 80px'">
+                <div class="grid gap-4 items-end min-w-[1200px]"
+                     [style.grid-template-columns]="modoEdicion ? '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 70px' : '2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px'">
                   <!-- Cliente (Viajero) - Búsqueda Filtrable -->
                   <div class="relative">
                     <!-- En modo edición: input editable -->
@@ -559,34 +570,6 @@
                     </div>
                   </div>
 
-                  <!-- Pago Pax USD -->
-                  <div>
-                    <!-- En modo edición: input editable -->
-                    <input *ngIf="modoEdicion" type="number" [value]="detalle.pagoPaxUSD"
-                           (input)="onDetalleOriginalChange(i, 'pagoPaxUSD', $any($event.target).value)"
-                           step="0.01" min="0" placeholder="0.00"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-
-                    <!-- En modo vista: texto readonly -->
-                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
-                      <span class="text-xs font-medium text-gray-900">{{ detalle.pagoPaxUSD || '0.00' }}</span>
-                    </div>
-                  </div>
-
-                  <!-- Pago Pax PEN -->
-                  <div>
-                    <!-- En modo edición: input editable -->
-                    <input *ngIf="modoEdicion" type="number" [value]="detalle.pagoPaxPEN"
-                           (input)="onDetalleOriginalChange(i, 'pagoPaxPEN', $any($event.target).value)"
-                           step="0.01" min="0" placeholder="0.00"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-
-                    <!-- En modo vista: texto readonly -->
-                    <div *ngIf="!modoEdicion" class="p-2 bg-gray-50 rounded-lg border border-gray-200/50 text-right">
-                      <span class="text-xs font-medium text-gray-900">{{ detalle.pagoPaxPEN || '0.00' }}</span>
-                    </div>
-                  </div>
-
                   <!-- Acciones (solo en modo edición) -->
                   <div *ngIf="modoEdicion" class="text-center">
                     <button type="button" (click)="eliminarDetalleOriginal(i)"
@@ -601,8 +584,8 @@
               <!-- Detalles Fijos (solo en modo edición) -->
               <ng-container *ngIf="modoEdicion">
                 <div *ngFor="let detalle of detallesFijos; let i = index" class="mb-3">
-                <div class="grid gap-4 items-end min-w-[1400px]"
-                     style="grid-template-columns: 1fr 0.2fr 0.3fr 200px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
+                <div class="grid gap-4 items-end min-w-[1200px]"
+                     style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 70px;">
                   <!-- Cliente (Viajero) - Búsqueda Filtrable -->
                   <div class="relative">
                     <input type="text"
@@ -722,22 +705,6 @@
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
                   </div>
 
-                  <!-- Pago Pax USD -->
-                  <div>
-                    <input type="number" [value]="detalle.pagoPaxUSD"
-                           (input)="onProductoChange(i, 'pagoPaxUSD', $any($event.target).value)"
-                           step="0.01" min="0" placeholder="0.00"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                  </div>
-
-                  <!-- Pago Pax PEN -->
-                  <div>
-                    <input type="number" [value]="detalle.pagoPaxPEN"
-                           (input)="onProductoChange(i, 'pagoPaxPEN', $any($event.target).value)"
-                           step="0.01" min="0" placeholder="0.00"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                  </div>
-
                   <!-- Acciones -->
                   <div class="text-center">
                     <button type="button" (click)="eliminarDetalleFijo(i)"
@@ -752,8 +719,8 @@
 
               <!-- Formulario para agregar nuevo detalle (solo en modo edición) -->
               <div *ngIf="modoEdicion" [formGroup]="detalleForm">
-                <div class="grid gap-4 items-end min-w-[1400px]"
-                     style="grid-template-columns: 1fr 0.2fr 0.3fr 200px 80px 90px 90px 90px 80px 80px 80px 80px 80px 70px;">
+                <div class="grid gap-4 items-end min-w-[1200px]"
+                     style="grid-template-columns: 2fr 1.2fr 1.2fr 80px 80px 90px 90px 90px 80px 80px 80px 70px;">
                   <!-- Cliente (Viajero) - Búsqueda Filtrable -->
                   <div class="relative">
                     <input type="text"
@@ -856,18 +823,6 @@
                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
                   </div>
 
-                  <!-- Pago Pax USD -->
-                  <div>
-                    <input type="number" formControlName="pagoPaxUSD" step="0.01" min="0" placeholder="0.00"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                  </div>
-
-                  <!-- Pago Pax PEN -->
-                  <div>
-                    <input type="number" formControlName="pagoPaxPEN" step="0.01" min="0" placeholder="0.00"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
-                  </div>
-
                   <!-- Botón Agregar -->
                   <div class="text-center">
                     <button type="button" (click)="agregarDetalleFijo()"
@@ -960,6 +915,178 @@
                   (click)="guardar()">
             Guardar
           </button>
+        </div>
+      </div>
+
+      <!-- ===== SECCIÓN DE PAGOS PAX ===== -->
+      <div class="bg-white rounded-xl shadow-lg mt-8 overflow-hidden">
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-200">
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-money-bill-wave text-green-600"></i>
+              Detalle de Pagos PAX
+            </h2>
+            <button *ngIf="modoEdicion" (click)="mostrarFormularioPagoPax()"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2">
+              <i class="fas fa-plus"></i>
+              Agregar Pago
+            </button>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <!-- Resumen de totales por moneda -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-blue-600 font-medium">Total Pagos USD</p>
+                  <p class="text-2xl font-bold text-blue-900">
+                    {{ getTotalPagosPaxPorMoneda('USD') | currency:'USD':'symbol':'1.2-2' }}
+                  </p>
+                </div>
+                <i class="fas fa-dollar-sign text-3xl text-blue-300"></i>
+              </div>
+            </div>
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-purple-600 font-medium">Total Pagos PEN</p>
+                  <p class="text-2xl font-bold text-purple-900">
+                    S/ {{ getTotalPagosPaxPorMoneda('PEN') | number:'1.2-2' }}
+                  </p>
+                </div>
+                <i class="fas fa-coins text-3xl text-purple-300"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formulario para agregar/editar pago PAX -->
+          <div *ngIf="mostrandoFormularioPagoPax" class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-gray-800">
+                {{ pagoPaxEditandoIndex !== null ? 'Editar Pago PAX' : 'Nuevo Pago PAX' }}
+              </h3>
+              <button (click)="cerrarFormularioPagoPax()"
+                      class="text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+              </button>
+            </div>
+
+            <form [formGroup]="pagoPaxForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- Monto -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Monto <span class="text-red-500">*</span>
+                </label>
+                <input type="number" formControlName="monto" step="0.01" min="0" placeholder="0.00"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+              </div>
+
+              <!-- Moneda -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Moneda <span class="text-red-500">*</span>
+                </label>
+                <select formControlName="moneda"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  <option value="USD">Dólares (USD)</option>
+                  <option value="PEN">Soles (PEN)</option>
+                </select>
+              </div>
+
+              <!-- Forma de Pago -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Forma de Pago <span class="text-red-500">*</span>
+                </label>
+                <select formControlName="formaPagoId"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                  <option value="">Seleccione una forma de pago</option>
+                  <option *ngFor="let formaPago of formasPago" [value]="formaPago.id">
+                    {{ formaPago.descripcion }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Detalle -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Detalle
+                </label>
+                <input type="text" formControlName="detalle" placeholder="Descripción del pago"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+              </div>
+
+              <!-- Botones -->
+              <div class="col-span-full flex justify-end gap-3 mt-4">
+                <button type="button" (click)="cerrarFormularioPagoPax()"
+                        class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                  Cancelar
+                </button>
+                <button type="button"
+                        (click)="pagoPaxEditandoIndex !== null ? guardarEdicionPagoPax() : agregarPagoPax()"
+                        [disabled]="pagoPaxForm.invalid"
+                        class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                  <i class="fas fa-save mr-2"></i>
+                  {{ pagoPaxEditandoIndex !== null ? 'Actualizar' : 'Agregar' }}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Lista de pagos PAX -->
+          <div *ngIf="pagosPax.length > 0" class="space-y-3">
+            <div *ngFor="let pago of pagosPax; let i = index"
+                 class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <span [class]="pago.moneda === 'USD' ?
+                                   'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800' :
+                                   'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800'">
+                      <i class="fas fa-circle text-xs mr-1"></i>
+                      {{ pago.moneda }}
+                    </span>
+                    <span class="text-lg font-bold text-gray-900">
+                      {{ pago.moneda === 'USD' ? (pago.monto | currency:'USD':'symbol':'1.2-2') : ('S/ ' + (pago.monto | number:'1.2-2')) }}
+                    </span>
+                  </div>
+                  <div class="text-sm text-gray-600 space-y-1">
+                    <p><strong>Forma de Pago:</strong> {{ getFormaPagoNombre(pago.formaPago?.id) }}</p>
+                    <p *ngIf="pago.detalle"><strong>Detalle:</strong> {{ pago.detalle }}</p>
+                    <p class="text-xs text-gray-400">
+                      <i class="far fa-calendar mr-1"></i>
+                      {{ pago.creado | date:'dd/MM/yyyy HH:mm' }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Botones de acción (solo en modo edición) -->
+                <div *ngIf="modoEdicion" class="flex gap-2 ml-4">
+                  <button (click)="editarPagoPax(i)"
+                          class="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Editar pago">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button (click)="eliminarPagoPax(i)"
+                          class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Eliminar pago">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mensaje cuando no hay pagos PAX -->
+          <div *ngIf="pagosPax.length === 0" class="text-center py-8">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-money-bill-wave text-gray-400 text-2xl"></i>
+            </div>
+            <p class="text-gray-600 font-medium">No hay pagos PAX registrados</p>
+            <p class="text-gray-500 text-sm">Los pagos aparecerán aquí cuando se agreguen</p>
+          </div>
         </div>
       </div>
 
