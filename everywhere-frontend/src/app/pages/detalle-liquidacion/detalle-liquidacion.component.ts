@@ -615,6 +615,25 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (this.liquidacionId) {
       // Cambiar a modo edición sin navegación adicional
       this.modoEdicion = true;
+
+      // Inicializar los valores de búsqueda de viajeros para que aparezcan en los inputs
+      setTimeout(() => {
+        console.log('🔍 Intentando inicializar valores de búsqueda');
+        console.log('Viajeros cargados:', this.viajeros.length);
+        console.log('Detalles:', this.liquidacion?.detalles?.length);
+
+        if (this.viajeros.length > 0) {
+          this.initializeAllViajeroSearchValues();
+          console.log('✅ Términos inicializados:', this.viajeroSearchTerms);
+        } else {
+          console.warn('⚠️ Viajeros no cargados, reintentando...');
+          setTimeout(() => {
+            this.initializeAllViajeroSearchValues();
+            console.log('✅ Segundo intento, términos:', this.viajeroSearchTerms);
+          }, 500);
+        }
+      }, 200);
+
       // Actualizar la URL para reflejar el modo edición
       this.router.navigate([], {
         relativeTo: this.route,
@@ -821,10 +840,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Verificar si todos los datos necesarios están cargados
     const verificarDatos = () => {
       const datosListos = this.viajeros.length > 0 &&
-                         this.productos.length > 0 &&
-                         this.proveedores.length > 0 &&
-                         this.operadores.length > 0 &&
-                         this.formasPago.length > 0;
+        this.productos.length > 0 &&
+        this.proveedores.length > 0 &&
+        this.operadores.length > 0 &&
+        this.formasPago.length > 0;
 
       if (datosListos) {
         // Todos los datos están listos, intentar cargar estado temporal
@@ -1167,7 +1186,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   onDetalleOriginalChange(index: number, field: string, value: any): void {
 
     if (this.liquidacion && this.liquidacion.detalles &&
-        index >= 0 && index < this.liquidacion.detalles.length) {
+      index >= 0 && index < this.liquidacion.detalles.length) {
       const detalle = this.liquidacion.detalles[index];
 
       switch (field) {
@@ -1372,7 +1391,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         .filter((parte: string) => parte && parte !== 'null' && parte !== 'undefined')
         .join(' ')
         .trim();
-      
+
       return nombreLimpio || 'Sin nombre';
     }
 
