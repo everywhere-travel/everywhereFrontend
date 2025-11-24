@@ -674,7 +674,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       setTimeout(() => {
         // Inicializar los valores de búsqueda de viajeros para todos los detalles
         this.initializeAllViajeroSearchValues();
-        console.log('Valores de búsqueda inicializados:', this.viajeroSearchTerms);
       }, 150);
 
       // Actualizar la URL para reflejar el modo edición
@@ -1821,34 +1820,21 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Inicializar el valor de búsqueda con el viajero ya seleccionado
   initViajeroSearchValue(index: string, viajeroId: number): void {
-    console.log(`📝 initViajeroSearchValue - index: ${index}, viajeroId: ${viajeroId}`);
-
     // Usar el mismo método que se usa para visualizar
     const nombreCompleto = this.getViajeroDisplayName(viajeroId);
 
     if (nombreCompleto && nombreCompleto !== 'Sin viajero' && nombreCompleto !== 'Viajero no encontrado') {
       this.viajeroSearchTerms[index] = nombreCompleto;
-      console.log(`✅ Valor asignado: "${nombreCompleto}"`);
-    } else {
-      console.log(`❌ No se pudo asignar valor - ${nombreCompleto}`);
     }
   }
 
   // Inicializar todos los valores de búsqueda de viajeros para detalles existentes
   initializeAllViajeroSearchValues(): void {
-    console.log('🔍 Inicializando valores de búsqueda de viajeros...');
-    console.log('Viajeros disponibles:', this.viajeros);
-    console.log('Detalles:', this.liquidacion?.detalles);
-
     // Inicializar para detalles originales
     if (this.liquidacion?.detalles) {
       this.liquidacion.detalles.forEach((detalle, index) => {
-        console.log(`Detalle ${index}:`, detalle);
-        console.log(`Viajero del detalle ${index} (ID):`, detalle.viajero?.id);
-
         if (detalle.viajero?.id) {
           this.initViajeroSearchValue(`detalle-original-${index}`, detalle.viajero.id);
-          console.log(`✅ Inicializado detalle-original-${index}:`, this.viajeroSearchTerms[`detalle-original-${index}`]);
         }
       });
     }
@@ -1857,7 +1843,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     this.detallesFijos.forEach((detalle, index) => {
       if (detalle.viajeroId) {
         this.initViajeroSearchValue(`detalle-fijo-${index}`, detalle.viajeroId);
-        console.log(`✅ Inicializado detalle-fijo-${index}:`, this.viajeroSearchTerms[`detalle-fijo-${index}`]);
       }
     });
   }
