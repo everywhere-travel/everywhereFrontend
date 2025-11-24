@@ -672,9 +672,16 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
       // Esperar un momento para asegurar que los datos estén listos
       setTimeout(() => {
+        if (this.viajeros.length > 0) {
+          this.initializeAllViajeroSearchValues(); 
+        } else { 
+          setTimeout(() => {
+            this.initializeAllViajeroSearchValues(); 
+          }, 500);
+        }
         // Inicializar los valores de búsqueda de viajeros para todos los detalles
         this.initializeAllViajeroSearchValues();
-      }, 150);
+      }, 200);
 
       // Actualizar la URL para reflejar el modo edición
       this.router.navigate([], {
@@ -1536,6 +1543,18 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (!this.liquidacion?.detalles) return 0;
     return this.liquidacion.detalles.reduce((sum, detalle) =>
       sum + (detalle.montoDescuento || 0), 0);
+  }  
+
+  get totalPagoPaxUSD(): number {
+    if (!this.liquidacion?.detalles) return 0;
+    return this.liquidacion.detalles.reduce((sum, detalle) =>
+      sum + (detalle.pagoPaxUSD || 0), 0);
+  }
+
+  get totalPagoPaxPEN(): number {
+    if (!this.liquidacion?.detalles) return 0;
+    return this.liquidacion.detalles.reduce((sum, detalle) =>
+      sum + (detalle.pagoPaxPEN || 0), 0);
   }
 
   get totalBoletaPasajero(): number {
@@ -1569,7 +1588,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       this.detalleForm.get('cargoServicio')?.setValue(cargoServicio, { emitEvent: false });
     }
   }
-
+  
   // Persona display methods
   loadClienteInfo(personaId: number): void {
     if (!personaId || this.personasCache[personaId]) {
