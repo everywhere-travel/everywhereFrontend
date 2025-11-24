@@ -37,6 +37,20 @@ interface ObservacionConEdicion extends ObservacionLiquidacionResponse {
   editando?: boolean;
   descripcionTemp?: string;
 }
+
+// Interfaz para pagos PAX temporales (antes de guardar en BD)
+interface PagoPaxTemp {
+  id?: number; // Si tiene id, ya existe en BD; si no, es nuevo
+  monto: number;
+  moneda: string;
+  detalle?: string;
+  formaPagoId?: number;
+  formaPago?: FormaPagoResponse;
+  creado?: string;
+  actualizado?: string;
+  isTemporary?: boolean; // true si es nuevo y no está en BD
+}
+
 import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { OperadorResponse } from '../../shared/models/Operador/operador.model';
 import { ViajeroResponse, ViajeroConPersonaNatural } from '../../shared/models/Viajero/viajero.model';
@@ -130,10 +144,14 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   detallesEliminados: number[] = [];
 
   // ===== PAGOS PAX =====
-  pagosPax: PagoPaxResponse[] = [];
+  pagosPax: PagoPaxTemp[] = [];
+  pagosPaxEliminados: number[] = []; // IDs de pagos PAX a eliminar al guardar
   pagoPaxForm: FormGroup;
   mostrandoFormularioPagoPax = false;
-  pagoPaxEditando: PagoPaxResponse | null = null;
+  pagoPaxEditandoIndex: number | null = null; // Índice del pago que se está editando
+
+  // Control de guardado
+  private cambiosGuardados = false;
 
   // Sidebar Configuration
   private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
@@ -309,7 +327,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.guardarEstadoTemporal();
+    // Si no se guardaron cambios, limpiar el estado temporal
+    if (!this.cambiosGuardados) {
+      this.limpiarEstadoTemporal();
+    }
     this.subscriptions.unsubscribe();
   }
 
@@ -328,8 +349,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       liquidacionForm: this.liquidacionForm.value,
       detalleForm: this.detalleForm.value,
       detallesFijos: this.detallesFijos,
-      detallesOriginales: this.liquidacion?.detalles || [], // AGREGAR: Guardar detalles originales
-      detallesEliminados: this.detallesEliminados, // AGREGAR: Guardar detalles eliminados
+      detallesOriginales: this.liquidacion?.detalles || [], // Guardar detalles originales
+      detallesEliminados: this.detallesEliminados, // Guardar detalles eliminados
+      pagosPax: this.pagosPax, // Guardar pagos PAX
+      pagosPaxEliminados: this.pagosPaxEliminados, // Guardar pagos PAX eliminados
       viajeroSearchTerms: this.viajeroSearchTerms,
       timestamp: new Date().getTime()
     };
@@ -389,8 +412,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
             detalleOriginal.facturaCompra = detalleEstado.facturaCompra || '';
             detalleOriginal.boletaPasajero = detalleEstado.boletaPasajero || '';
             detalleOriginal.montoDescuento = detalleEstado.montoDescuento || 0;
-            detalleOriginal.pagoPaxUSD = detalleEstado.pagoPaxUSD || 0;
-            detalleOriginal.pagoPaxPEN = detalleEstado.pagoPaxPEN || 0;
 
             // Restaurar relaciones si están presentes
             if (detalleEstado.viajero) {
@@ -414,6 +435,16 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         this.detallesEliminados = estado.detallesEliminados;
       }
 
+      // Restaurar pagos PAX
+      if (estado.pagosPax) {
+        this.pagosPax = estado.pagosPax;
+      }
+
+      // Restaurar pagos PAX eliminados
+      if (estado.pagosPaxEliminados) {
+        this.pagosPaxEliminados = estado.pagosPaxEliminados;
+      }
+
       if (estado.viajeroSearchTerms) {
         this.viajeroSearchTerms = estado.viajeroSearchTerms;
       }
@@ -435,11 +466,13 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private limpiarEstadoTemporal(): void {
     try {
       sessionStorage.removeItem(this.getEstadoTemporalKey());
-      // También limpiar el array de detalles eliminados
+      // Limpiar arrays de eliminados
       this.detallesEliminados = [];
+      this.pagosPaxEliminados = [];
+      // Limpiar arrays temporales
+      this.detallesFijos = [];
       // Limpiar observación temporal
       this.nuevaObservacion = '';
-      this.observaciones = [];
     } catch (error) {
       console.warn('Error al limpiar estado temporal:', error);
     }
@@ -483,6 +516,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Verificar si viene en modo edición
     const modoParam = this.route.snapshot.queryParamMap.get('modo');
     this.modoEdicion = modoParam === 'editar';
+
+    // Resetear el estado de guardado al cargar una nueva liquidación
+    this.cambiosGuardados = false;
 
     this.liquidacionId = Number(idParam);
     this.loadLiquidacion(this.liquidacionId);
@@ -827,7 +863,18 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe(pagosPax => {
-        this.pagosPax = pagosPax || [];
+        // Convertir PagoPaxResponse a PagoPaxTemp
+        this.pagosPax = (pagosPax || []).map(pago => ({
+          id: pago.id,
+          monto: pago.monto,
+          moneda: pago.moneda || 'USD',
+          detalle: pago.detalle,
+          formaPagoId: pago.formaPago?.id,
+          formaPago: pago.formaPago,
+          creado: pago.creado,
+          actualizado: pago.actualizado,
+          isTemporary: false
+        }));
       });
 
     this.subscriptions.add(subscription);
@@ -838,7 +885,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
    */
   mostrarFormularioPagoPax(): void {
     this.mostrandoFormularioPagoPax = true;
-    this.pagoPaxEditando = null;
+    this.pagoPaxEditandoIndex = null;
     this.pagoPaxForm.reset({
       monto: 0,
       moneda: 'USD', // USD por defecto
@@ -848,108 +895,93 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Agregar un nuevo pago PAX (USD o PEN)
+   * Agregar un nuevo pago PAX temporalmente (se guardará al guardar la liquidación)
    */
   agregarPagoPax(): void {
-    if (!this.liquidacionId || this.pagoPaxForm.invalid) {
+    if (this.pagoPaxForm.invalid) {
       return;
     }
 
-    const pagoPaxRequest: PagoPaxRequest = {
+    const formaPagoId = this.pagoPaxForm.value.formaPagoId;
+    const formaPago = formaPagoId ? this.formasPago.find(fp => fp.id === formaPagoId) : undefined;
+
+    const nuevoPagoPax: PagoPaxTemp = {
       monto: this.pagoPaxForm.value.monto,
-      moneda: this.pagoPaxForm.value.moneda || 'USD', // USD por defecto
+      moneda: this.pagoPaxForm.value.moneda || 'USD',
       detalle: this.pagoPaxForm.value.detalle,
-      liquidacionId: this.liquidacionId,
-      formaPagoId: this.pagoPaxForm.value.formaPagoId
+      formaPagoId: formaPagoId,
+      formaPago: formaPago,
+      isTemporary: true // Marca como temporal (no guardado en BD)
     };
 
-    const subscription = this.pagoPaxService.create(pagoPaxRequest)
-      .pipe(
-        catchError(error => {
-          console.error('Error al crear pago PAX:', error);
-          return of(null);
-        })
-      )
-      .subscribe(response => {
-        if (response) {
-          this.pagosPax.push(response);
-          this.cerrarFormularioPagoPax();
-        }
-      });
-
-    this.subscriptions.add(subscription);
+    this.pagosPax.push(nuevoPagoPax);
+    this.cerrarFormularioPagoPax();
+    
+    // Autoguardar estado temporal
+    this.guardarEstadoTemporal();
   }
 
   /**
-   * Editar un pago PAX existente (USD o PEN)
+   * Editar un pago PAX existente (modificación temporal)
    */
-  editarPagoPax(pago: PagoPaxResponse): void {
+  editarPagoPax(index: number): void {
+    const pago = this.pagosPax[index];
+    if (!pago) return;
+
     this.mostrandoFormularioPagoPax = true;
-    this.pagoPaxEditando = pago;
+    this.pagoPaxEditandoIndex = index;
     this.pagoPaxForm.patchValue({
       monto: pago.monto,
       moneda: pago.moneda || 'USD',
       detalle: pago.detalle || '',
-      formaPagoId: pago.formaPago?.id || null
+      formaPagoId: pago.formaPagoId || null
     });
   }
 
   /**
-   * Guardar cambios en un pago PAX editado (USD o PEN)
+   * Guardar cambios en un pago PAX editado (modificación temporal)
    */
   guardarEdicionPagoPax(): void {
-    if (!this.pagoPaxEditando || !this.liquidacionId || this.pagoPaxForm.invalid) {
+    if (this.pagoPaxEditandoIndex === null || this.pagoPaxForm.invalid) {
       return;
     }
 
-    const pagoPaxRequest: PagoPaxRequest = {
+    const formaPagoId = this.pagoPaxForm.value.formaPagoId;
+    const formaPago = formaPagoId ? this.formasPago.find(fp => fp.id === formaPagoId) : undefined;
+
+    // Actualizar el pago en el array local
+    this.pagosPax[this.pagoPaxEditandoIndex] = {
+      ...this.pagosPax[this.pagoPaxEditandoIndex],
       monto: this.pagoPaxForm.value.monto,
-      moneda: this.pagoPaxForm.value.moneda || 'USD', // USD por defecto
-      liquidacionId: this.liquidacionId,
+      moneda: this.pagoPaxForm.value.moneda || 'USD',
       detalle: this.pagoPaxForm.value.detalle,
-      formaPagoId: this.pagoPaxForm.value.formaPagoId
+      formaPagoId: formaPagoId,
+      formaPago: formaPago
     };
 
-    const subscription = this.pagoPaxService.update(this.pagoPaxEditando.id, pagoPaxRequest)
-      .pipe(
-        catchError(error => {
-          console.error('Error al actualizar pago PAX:', error);
-          return of(null);
-        })
-      )
-      .subscribe(response => {
-        if (response) {
-          const index = this.pagosPax.findIndex(p => p.id === this.pagoPaxEditando!.id);
-          if (index !== -1) {
-            this.pagosPax[index] = response;
-          }
-          this.cerrarFormularioPagoPax();
-        }
-      });
-
-    this.subscriptions.add(subscription);
+    this.cerrarFormularioPagoPax();
+    
+    // Autoguardar estado temporal
+    this.guardarEstadoTemporal();
   }
 
   /**
-   * Eliminar un pago PAX
+   * Eliminar un pago PAX (marcado para eliminar al guardar)
    */
-  eliminarPagoPax(pago: PagoPaxResponse): void {
-    if (!confirm('¿Está seguro de eliminar este pago PAX?')) {
-      return;
+  eliminarPagoPax(index: number): void {
+    const pago = this.pagosPax[index];
+    if (!pago) return;
+
+    // Si tiene ID, agregarlo a la lista de eliminados
+    if (pago.id) {
+      this.pagosPaxEliminados.push(pago.id);
     }
 
-    const subscription = this.pagoPaxService.delete(pago.id)
-      .pipe(
-        catchError(error => {
-          console.error('Error al eliminar pago PAX:', error);
-          return of(null);
-        })
-      )
-      .subscribe(() => {
-        this.pagosPax = this.pagosPax.filter(p => p.id !== pago.id);
-      });
-
-    this.subscriptions.add(subscription);
+    // Eliminar del array local
+    this.pagosPax.splice(index, 1);
+    
+    // Autoguardar estado temporal
+    this.guardarEstadoTemporal();
   }
 
   /**
@@ -957,7 +989,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
    */
   cerrarFormularioPagoPax(): void {
     this.mostrandoFormularioPagoPax = false;
-    this.pagoPaxEditando = null;
+    this.pagoPaxEditandoIndex = null;
     this.pagoPaxForm.reset({
       monto: 0,
       moneda: 'USD', // USD por defecto
@@ -1121,9 +1153,16 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
             }
           });
 
-          // 3. Finalizar guardado (las observaciones se manejan por separado)
-          this.limpiarEstadoTemporal();
-          this.recargarDatos();
+          // 3. Procesar pagos PAX (crear, actualizar, eliminar)
+          this.procesarPagosPax(this.liquidacionId!).then(() => {
+            // Marcar que los cambios fueron guardados
+            this.cambiosGuardados = true;
+            // Finalizar guardado
+            this.limpiarEstadoTemporal();
+            this.recargarDatos();
+          }).catch(error => {
+            console.error('Error al procesar pagos PAX:', error);
+          });
         }),
         catchError(error => {
           console.error('Error al guardar la liquidación:', error);
@@ -1138,6 +1177,49 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       .subscribe();
 
     this.subscriptions.add(saveSubscription);
+  }
+
+  /**
+   * Procesar pagos PAX: crear nuevos, actualizar existentes, eliminar marcados
+   */
+  private async procesarPagosPax(liquidacionId: number): Promise<void> {
+    try {
+      // 1. Eliminar pagos marcados para eliminación
+      if (this.pagosPaxEliminados.length > 0) {
+        const deletePromises = this.pagosPaxEliminados.map(id =>
+          this.pagoPaxService.delete(id).toPromise()
+        );
+        await Promise.all(deletePromises);
+        this.pagosPaxEliminados = [];
+      }
+
+      // 2. Procesar cada pago PAX (crear o actualizar)
+      for (const pago of this.pagosPax) {
+        const pagoPaxRequest: PagoPaxRequest = {
+          monto: pago.monto,
+          moneda: pago.moneda,
+          detalle: pago.detalle,
+          liquidacionId: liquidacionId,
+          formaPagoId: pago.formaPagoId!
+        };
+
+        if (pago.id && !pago.isTemporary) {
+          // Actualizar existente
+          await this.pagoPaxService.update(pago.id, pagoPaxRequest).toPromise();
+        } else {
+          // Crear nuevo
+          const response = await this.pagoPaxService.create(pagoPaxRequest).toPromise();
+          // Actualizar el pago con el ID recibido
+          if (response) {
+            pago.id = response.id;
+            pago.isTemporary = false;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error al procesar pagos PAX:', error);
+      throw error;
+    }
   }
 
   recargarDatos(): void {

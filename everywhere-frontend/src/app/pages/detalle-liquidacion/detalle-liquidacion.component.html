@@ -942,7 +942,7 @@
           <div *ngIf="mostrandoFormularioPagoPax" class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
             <div class="flex justify-between items-center mb-4">
               <h3 class="text-lg font-semibold text-gray-800">
-                {{ pagoPaxEditando ? 'Editar Pago PAX' : 'Nuevo Pago PAX' }}
+                {{ pagoPaxEditandoIndex !== null ? 'Editar Pago PAX' : 'Nuevo Pago PAX' }}
               </h3>
               <button (click)="cerrarFormularioPagoPax()" 
                       class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -1002,11 +1002,11 @@
                   Cancelar
                 </button>
                 <button type="button" 
-                        (click)="pagoPaxEditando ? guardarEdicionPagoPax() : agregarPagoPax()"
+                        (click)="pagoPaxEditandoIndex !== null ? guardarEdicionPagoPax() : agregarPagoPax()"
                         [disabled]="pagoPaxForm.invalid"
                         class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
                   <i class="fas fa-save mr-2"></i>
-                  {{ pagoPaxEditando ? 'Actualizar' : 'Agregar' }}
+                  {{ pagoPaxEditandoIndex !== null ? 'Actualizar' : 'Agregar' }}
                 </button>
               </div>
             </form>
@@ -1041,12 +1041,12 @@
 
                 <!-- Botones de acción (solo en modo edición) -->
                 <div *ngIf="modoEdicion" class="flex gap-2 ml-4">
-                  <button (click)="editarPagoPax(pago)"
+                  <button (click)="editarPagoPax(i)"
                           class="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Editar pago">
                     <i class="fas fa-edit"></i>
                   </button>
-                  <button (click)="eliminarPagoPax(pago)"
+                  <button (click)="eliminarPagoPax(i)"
                           class="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Eliminar pago">
                     <i class="fas fa-trash-alt"></i>
