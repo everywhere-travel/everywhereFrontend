@@ -218,17 +218,17 @@
                 </div>
               </div>
 
-              <!-- País de Origen -->
+              <!-- País de emisión -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  País de Origen *
+                  País de emisión *
                 </label>
                 <input type="text" formControlName="origen" placeholder="Ej: Perú"
                   class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
                   [class.border-red-500]="personaNaturalForm.get('documentoInicial.origen')?.invalid && personaNaturalForm.get('documentoInicial.origen')?.touched">
                 <div *ngIf="personaNaturalForm.get('documentoInicial.origen')?.invalid && personaNaturalForm.get('documentoInicial.origen')?.touched"
                   class="mt-1 text-sm text-red-600">
-                  El país de origen es requerido
+                  El país de emisión es requerido
                 </div>
               </div>
 
@@ -339,23 +339,23 @@
                   <div class="space-y-3">
                     <div class="flex justify-between">
                       <span class="text-gray-600">Nombres:</span>
-                      <span class="font-semibold">{{ personaNatural?.nombres || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.nombres || 'No especificado' }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-600">Apellido Paterno:</span>
-                      <span class="font-semibold">{{ personaNatural?.apellidosPaterno || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.apellidosPaterno || 'No especificado' }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-600">Apellido Materno:</span>
-                      <span class="font-semibold">{{ personaNatural?.apellidosMaterno || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.apellidosMaterno || 'No especificado' }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-600">Documento:</span>
-                      <span class="font-semibold">{{ personaNatural?.documento || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.documento || 'No especificado' }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-600">Sexo:</span>
-                      <span class="font-semibold">{{ personaNatural?.sexo || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.sexo || 'No seleccionado' }}</span>
                     </div>
                   </div>
                 </div>
@@ -369,15 +369,15 @@
                   <div class="space-y-3">
                     <div class="flex justify-between">
                       <span class="text-gray-600">Fecha de Nacimiento:</span>
-                      <span class="font-semibold">{{ personaNatural?.viajero?.fechaNacimiento || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.viajero?.fechaNacimiento || 'No especificado' }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-600">Nacionalidad:</span>
-                      <span class="font-semibold">{{ personaNatural?.viajero?.nacionalidad || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.viajero?.nacionalidad || 'No especificado' }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-600">Residencia:</span>
-                      <span class="font-semibold">{{ personaNatural?.viajero?.residencia || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.viajero?.residencia || 'No especificado' }}</span>
                     </div>
                   </div>
                 </div>
@@ -391,15 +391,15 @@
                   <div class="space-y-3">
                     <div class="flex justify-between">
                       <span class="text-gray-600">Dirección:</span>
-                      <span class="font-semibold">{{ personaNatural?.persona?.direccion || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.persona?.direccion || 'No especificado' }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-600">Observaciones:</span>
-                      <span class="font-semibold">{{ personaNatural?.persona?.observacion || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.persona?.observacion || 'No especificado' }}</span>
                     </div>
                     <div class="flex justify-between">
                       <span class="text-gray-600">Categoria de cliente:</span>
-                      <span class="font-semibold">{{ personaNatural?.categoriaPersona?.nombre || 'N/A' }}</span>
+                      <span class="font-semibold">{{ personaNatural?.categoriaPersona?.nombre || 'No especificado' }}</span>
                     </div>
                   </div>
                 </div>
@@ -477,10 +477,10 @@
                       <span>
                         <i class="fas fa-clock mr-1"></i>
                         {{ empresa.creado | date: 'dd/MM/yyyy' }}
-                      </span>
+                      </span><!--
                       <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
                         Activo
-                      </span>
+                      </span>-->
                     </div>
                   </div>
                 </div>
@@ -659,11 +659,11 @@
                         <span>
                           <i class="fas fa-clock mr-1"></i>
                           {{ correo.creado | date: 'dd/MM/yyyy' }}
-                        </span>
+                        </span><!--
                         <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
                           <i class="fas fa-check-circle mr-1"></i>
                           Activo
-                        </span>
+                        </span>-->
                       </div>
                     </div>
                   </div>
@@ -820,11 +820,11 @@
                       <span>
                         <i class="fas fa-clock mr-1"></i>
                         {{ viajero.creado | date: 'dd/MM/yyyy' }}
-                      </span>
+                      </span><!--
                       <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
                         <i class="fas fa-check-circle mr-1"></i>
                         Activo
-                      </span>
+                      </span>-->
                     </div>
                   </div>
                 </div>
@@ -1123,14 +1123,6 @@
             class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent">
         </div>
 
-        <!-- Vista previa -->
-        <div *ngIf="telefonoForm.get('numero')?.value" class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p class="text-sm text-gray-600 mb-1">Vista previa:</p>
-          <p class="font-bold text-gray-900">
-            {{ telefonoForm.get('codigoPais')?.value }} {{ telefonoForm.get('numero')?.value }}
-          </p>
-        </div>
-
         <!-- Botones -->
         <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
           <button type="button" (click)="cerrarModalTelefono()"
@@ -1353,7 +1345,7 @@
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">
             <i class="fas fa-globe mr-1"></i>
-            País de Origen *
+            País de emisión *
           </label>
           <input type="text" formControlName="origen" placeholder="Ejemplo: Perú"
             class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
@@ -1439,13 +1431,13 @@
           </div>
         </div>
 
-        <!-- Información adicional -->
+        <!-- Información adicional
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-2">
           <i class="fas fa-info-circle text-blue-600 mt-0.5"></i>
           <p class="text-sm text-blue-800">
             Ingrese el código de viajero frecuente proporcionado por la aerolínea.
           </p>
-        </div>
+        </div>-->
 
         <!-- Botones -->
         <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">

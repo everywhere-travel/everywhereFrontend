@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { CotizacionConDetallesResponseDTO, CotizacionRequest, CotizacionResponse, CotizacionPatchRequest } from '../../../shared/models/Cotizacion/cotizacion.model';
 import { environment } from '../../../../environments/environment';
 import { CacheService } from '../cache.service';
+import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
 
 @Injectable({
   providedIn: 'root'
@@ -60,7 +61,11 @@ export class CotizacionService {
     );
   }
 
-  getCotizacionSinLiquidacion(): Observable<CotizacionResponse[]> {
-    return this.http.get<CotizacionResponse[]>(`${this.apiUrl}/sin-liquidacion`);
+  getCotizacionSinLiquidacion(bypassCache: boolean = false): Observable<CotizacionResponse[]> {
+    const options = bypassCache ? {
+      context: new HttpContext().set(BYPASS_CACHE, true)
+    } : {};
+
+    return this.http.get<CotizacionResponse[]>(`${this.apiUrl}/sin-liquidacion`, options);
   }
 }

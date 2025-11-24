@@ -4,7 +4,6 @@ import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { PersonasComponent } from './pages/personas/personas.component';
 import { CotizacionesComponent } from './pages/cotizaciones/cotizaciones.component';
-import { CotizacionDetailComponent } from './pages/cotizaciones/cotizacion-detail/cotizacion-detail.component';
 import { LiquidacionesComponent } from './pages/liquidaciones/liquidaciones.component';
 import { ProductosComponent } from './pages/productos/productos.component';
 import { ProveedorComponent } from './pages/proveedor/proveedor.component';
@@ -60,18 +59,6 @@ export const routes: Routes = [
     path: 'sucursales',
     loadComponent: () =>
       import('./pages/sucursales/sucursales.component').then(m => m.SucursalesComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'cotizaciones/detail',
-    loadComponent: () =>
-      import('./pages/cotizaciones/cotizacion-detail/cotizacion-detail.component').then(m => m.CotizacionDetailComponent),
-    canActivate: [authGuard]
-  },
-  {
-    path: 'cotizaciones/detail/:id',
-    loadComponent: () =>
-      import('./pages/cotizaciones/cotizacion-detail/cotizacion-detail.component').then(m => m.CotizacionDetailComponent),
     canActivate: [authGuard]
   },
   {

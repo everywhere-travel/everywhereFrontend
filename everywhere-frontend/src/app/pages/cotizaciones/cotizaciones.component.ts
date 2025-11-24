@@ -269,6 +269,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
   cotizacionForm!: FormGroup;
   detalleForm!: FormGroup;
+  detalleGrupoForm!: FormGroup; // Formulario separado para grupos de hoteles
   grupoHotelForm!: FormGroup;
   nuevaCategoriaForm!: FormGroup;
   clienteSearchControl: FormControl = new FormControl('');
@@ -386,6 +387,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Detalle form para productos fijos
     this.detalleForm = this.fb.group({
+      proveedorId: [''],
+      nuevoProveedor: [''],
+      productoId: ['', [Validators.required]],
+      descripcion: [''],
+      precioHistorico: [0, [Validators.required, Validators.min(0)]],
+      comision: [0, [Validators.min(0)]],
+      cantidad: [1, [Validators.required, Validators.min(1)]],
+      unidad: [1, [Validators.required, Validators.min(1)]]
+    });
+
+    // Detalle form para grupos de hoteles (SEPARADO)
+    this.detalleGrupoForm = this.fb.group({
       proveedorId: [''],
       nuevoProveedor: [''],
       productoId: ['', [Validators.required]],
@@ -1169,9 +1182,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       if (persona) {
         this.clienteSeleccionado = persona;
 
-        // Actualizar el personasDisplayMap para la tabla
-        const displayName = this.getClienteDisplayName(persona);
-        this.personasDisplayMap[personaId] = displayName;
+        // NO actualizar personasDisplayMap aquí - ya fue llenado en loadPersonas()
+        // Si actualizamos aquí con el formato completo (DNI: xxx - Nombre),
+        // contaminaremos la tabla que solo debe mostrar el nombre
+
+        // Solo agregar al cache si no existe (sin sobrescribir el formato)
+        if (!this.personasCache[personaId]) {
+          this.addPersonaToCache(persona);
+        }
 
         return;
       }
@@ -1287,13 +1305,22 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Función para calcular el total en tiempo real del formulario de detalle
-  // Total = (cantidad × precioUnitario) + comision
+  // Función para calcular el total en tiempo real del formulario de detalle (PRODUCTOS FIJOS)
+  // Total = (precioUnitario + comision) × cantidad
   calcularTotalDetalle(): number {
     const cantidad = this.detalleForm.get('cantidad')?.value || 0;
     const precioUnitario = this.detalleForm.get('precioHistorico')?.value || 0;
     const comision = this.detalleForm.get('comision')?.value || 0;
-    return (cantidad * precioUnitario) + comision;
+    return (precioUnitario + comision) * cantidad;
+  }
+
+  // Función para calcular el total en tiempo real del formulario de grupos de hoteles
+  // Total = (precioUnitario + comision) × cantidad
+  calcularTotalDetalleGrupo(): number {
+    const cantidad = this.detalleGrupoForm.get('cantidad')?.value || 0;
+    const precioUnitario = this.detalleGrupoForm.get('precioHistorico')?.value || 0;
+    const comision = this.detalleGrupoForm.get('comision')?.value || 0;
+    return (precioUnitario + comision) * cantidad;
   }
 
   // Detalle cotización methods (Productos Fijos)
@@ -1356,7 +1383,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       seleccionado: true     // PRODUCTOS FIJOS siempre seleccionados
     };
 
-    this.detallesFijos.unshift(nuevoDetalle); // Agregar al inicio de la lista
+    this.detallesFijos.push(nuevoDetalle); // Agregar al final de la lista
 
     // Limpiar TODOS los campos del formulario después de agregar
     this.detalleForm.patchValue({
@@ -2055,13 +2082,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   agregarDetalleAGrupo(grupoIndex: number): void {
-    if (this.detalleForm.invalid) {
-      this.markFormGroupTouched(this.detalleForm);
+    if (this.detalleGrupoForm.invalid) {
+      this.markFormGroupTouched(this.detalleGrupoForm);
       return;
     }
 
     const grupo = this.gruposHoteles[grupoIndex];
-    const formValue = this.detalleForm.value;
+    const formValue = this.detalleGrupoForm.value;
 
     let proveedor: ProveedorResponse | null = null;
     if (formValue.proveedorId) {
@@ -2102,7 +2129,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     grupo.detalles.push(nuevoDetalle);
     grupo.total = grupo.detalles.reduce((sum, d) => sum + ((d.precioHistorico + d.comision) * d.cantidad), 0);
-    this.detalleForm.reset({
+    this.detalleGrupoForm.reset({
       cantidad: 1,
       unidad: 1,
       precioHistorico: 0,
@@ -2159,7 +2186,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     try {
-      const formValue = this.cotizacionForm.value;
+      const formValue = this.cotizacionForm.getRawValue();
       let cotizacionResponse: CotizacionResponse;
 
       if (this.editandoCotizacion && this.cotizacionEditandoId) {
@@ -2207,13 +2234,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       } else {
         // ===== CREATE con POST (creación completa) =====
         const cotizacionRequest: CotizacionRequest = {
-          cantAdultos: formValue.cantAdultos,
-          cantNinos: formValue.cantNinos,
+          cantAdultos: formValue.cantAdultos ?? 1,
+          cantNinos: formValue.cantNinos ?? 0,
           fechaVencimiento: formValue.fechaVencimiento,
           origenDestino: formValue.origenDestino,
           fechaSalida: formValue.fechaSalida,
           fechaRegreso: formValue.fechaRegreso,
-          moneda: formValue.moneda,
+          moneda: formValue.moneda ?? 'USD',
           observacion: formValue.observacion || '',
           // Incluir relaciones en el create si vienen del formulario
           counterId: formValue.counterId,
@@ -2263,10 +2290,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return patch;
     }
 
+    // Aplicar defaults a los valores del formulario ANTES de comparar
+    const cantAdultos = formValue.cantAdultos ?? 1;
+    const cantNinos = formValue.cantNinos ?? 0;
+
     // Campos a comparar para el PATCH
     const fieldsToCheck: (keyof CotizacionRequest)[] = [
-      'cantAdultos',
-      'cantNinos',
       'origenDestino',
       'fechaSalida',
       'fechaRegreso',
@@ -2275,6 +2304,16 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       'fechaVencimiento'
     ];
 
+    // Manejar cantAdultos y cantNinos juntos - si alguno cambia, incluir ambos
+    const originalAdultos = this.cotizacionOriginal.cantAdultos ?? 1;
+    const originalNinos = this.cotizacionOriginal.cantNinos ?? 0;
+
+    if (cantAdultos !== originalAdultos || cantNinos !== originalNinos) {
+      patch.cantAdultos = cantAdultos;
+      patch.cantNinos = cantNinos;
+    }
+
+    // Comparar resto de campos
     fieldsToCheck.forEach(field => {
       const newValue = formValue[field];
       const originalValue = this.cotizacionOriginal![field as keyof CotizacionResponse];
@@ -2587,22 +2626,28 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     } else {
       // Persona natural
       const pn = persona as PersonaNaturalResponse;
-      const apellidosCache = `${pn.apellidosPaterno || ''} ${pn.apellidosMaterno || ''}`.trim();
+
+      // Filtrar valores null/undefined y construir nombre limpio
+      // IMPORTANTE: Convertir a string y limpiar valores null/undefined
+      const nombres = pn.nombres != null ? String(pn.nombres).trim() : '';
+      const apellidoPaterno = pn.apellidosPaterno != null ? String(pn.apellidosPaterno).trim() : '';
+      const apellidoMaterno = pn.apellidosMaterno != null ? String(pn.apellidosMaterno).trim() : '';
+
+      const partesNombre = [nombres, apellidoPaterno, apellidoMaterno]
+        .filter(parte => parte && parte !== 'null' && parte !== 'undefined');
+
       this.personasCache[persona.id] = {
         id: persona.id,
         identificador: pn.documento || '',
-        nombre: `${pn.nombres || ''} ${apellidosCache}`.trim() || 'Sin nombre',
+        nombre: partesNombre.join(' ').trim() || 'Sin nombre',
         tipo: 'NATURAL'
       };
     }
 
-    // Registrar la representación para el map de display
+    // Registrar SOLO EL NOMBRE para el map de display (usado en la tabla)
+    // El formato completo (DNI: xxx - Nombre) solo debe usarse en el buscador de clientes
     const cached = this.personasCache[persona.id];
-    if (cached.identificador) {
-      this.personasDisplayMap[persona.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
-    } else {
-      this.personasDisplayMap[persona.id] = cached.nombre;
-    }
+    this.personasDisplayMap[persona.id] = cached.nombre;
 
     // Si la entidad tiene una relación `persona` (tabla padre) y su id difiere, duplicar la entrada
     if ('persona' in (persona as any) && (persona as any).persona?.id && (persona as any).persona.id !== persona.id) {
@@ -2873,9 +2918,56 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   getSelectedClienteName(): string {
     if (!this.clienteSeleccionado) return '';
-    return this.getClienteDisplayName(this.clienteSeleccionado);
+    // Usar método que devuelve SOLO EL NOMBRE, sin formato de documento
+    return this.getClienteNombreSolo(this.clienteSeleccionado);
   }
 
+  /**
+   * Devuelve SOLO el nombre del cliente, sin documento ni RUC
+   * Se usa en la tarjeta de cliente seleccionado
+   */
+  getClienteNombreSolo(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
+    if (!persona) return 'Cliente';
+    // Si es personaDisplay (modelo unificado)
+    if ('tipo' in persona && 'nombre' in persona) {
+      // LIMPIAR el nombre si contiene "null" como texto
+      const nombreLimpio = persona.nombre
+        .split(' ')
+        .filter(parte => parte && parte !== 'null' && parte !== 'undefined')
+        .join(' ')
+        .trim();
+      return nombreLimpio || 'Sin nombre';
+    }
+
+    // Si es PersonaNaturalResponse
+    if ('nombres' in persona) {
+      const pn = persona as any;
+
+      const nombres = pn.nombres || '';
+      const apellidoPaterno = pn.apellidosPaterno || pn.apellidoPaterno || '';
+      const apellidoMaterno = pn.apellidosMaterno || pn.apellidoMaterno || '';
+
+      // Construir nombre completo solo con valores que existan y no sean 'null' como string
+      const partes = [nombres, apellidoPaterno, apellidoMaterno]
+        .map(parte => String(parte || '').trim())
+        .filter(parte => parte && parte !== 'null' && parte !== 'undefined');
+
+      const resultado = partes.join(' ').trim() || 'Sin nombre';
+      return resultado;
+    }
+
+    // Si es PersonaJuridicaResponse
+    if ('razonSocial' in persona) {
+      return (persona as any).razonSocial || 'Empresa';
+    }
+
+    return 'Cliente';
+  }
+
+  /**
+   * Devuelve el nombre del cliente CON el formato completo (DNI/RUC: xxx - Nombre)
+   * Se usa en el BUSCADOR de clientes
+   */
   getClienteDisplayName(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
     // Soporta personaDisplay, PersonaNaturalResponse y PersonaJuridicaResponse
     if (!persona) return 'Cliente';
@@ -2891,10 +2983,20 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Compatibilidad con modelos antiguos (soporta apellidosPaterno/apellidosMaterno)
     if ('nombres' in persona && ('apellidos' in persona || 'apellidosPaterno' in persona || 'apellidosMaterno' in persona)) {
-      const doc = (persona as any).documento ? ` - ${(persona as any).documento}` : '';
-      const apellidos = ((persona as any).apellidosPaterno || (persona as any).apellidos || (persona as any).apellidosMaterno || '').trim();
-      const nombreCompleto = `${(persona as any).nombres || ''} ${apellidos}`.trim();
-      return `${nombreCompleto}${doc}`.trim();
+      const nombres = (persona as any).nombres || '';
+      const apellidoPaterno = (persona as any).apellidosPaterno || '';
+      const apellidoMaterno = (persona as any).apellidosMaterno || '';
+      const doc = (persona as any).documento || '';
+
+      // Filtrar valores null/undefined al construir el nombre
+      const partesNombre = [nombres, apellidoPaterno, apellidoMaterno].filter(parte => parte && parte !== 'null');
+      const nombreCompleto = partesNombre.join(' ').trim();
+
+      // Retornar con formato de documento si existe
+      if (doc && doc !== 'null') {
+        return `DNI: ${doc} - ${nombreCompleto}`;
+      }
+      return nombreCompleto || 'Sin nombre';
     }
 
     if ('razonSocial' in persona) {
