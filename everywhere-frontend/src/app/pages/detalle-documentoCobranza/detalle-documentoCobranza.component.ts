@@ -56,6 +56,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   documento: DocumentoCobranzaResponseDTO | null = null;
   documentoId: number | null = null;
   detalles: DetalleDocumentoCobranzaResponseDTO[] = [];
+  detallesFijos: DetalleDocumentoCobranzaResponseDTO[] = []; // Detalles temporales para agregar en modo edición
   detallesDocumento: DetalleDocumentoResponse[] = [];
   productos: ProductoResponse[] = [];
 
@@ -651,6 +652,161 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     const detalleId = event.target.value;
     if (detalleId) {
       const detalle = this.getDetalleDocumentoInfo(Number(detalleId));
+    }
+  }
+
+  // ============ INLINE EDITING METHODS =============
+
+  /**
+   * Actualiza un campo de un detalle original (ya existente en BD)
+   */
+  onDetalleOriginalChange(index: number, field: string, value: any): void {
+    if (index >= 0 && index < this.detalles.length) {
+      const detalle = this.detalles[index];
+      (detalle as any)[field] = value;
+    }
+  }
+
+  /**
+   * Elimina un detalle original del array (marca para eliminación)
+   */
+  eliminarDetalleOriginal(index: number): void {
+    if (index >= 0 && index < this.detalles.length) {
+      if (confirm('¿Está seguro de eliminar este detalle?')) {
+        this.detalles.splice(index, 1);
+      }
+    }
+  }
+
+  /**
+   * Actualiza un campo de un detalle fijo (temporal, no guardado aún)
+   */
+  onDetalleFijoChange(index: number, field: string, value: any): void {
+    if (index >= 0 && index < this.detallesFijos.length) {
+      const detalle = this.detallesFijos[index];
+      (detalle as any)[field] = value;
+    }
+  }
+
+  /**
+   * Elimina un detalle fijo del array temporal
+   */
+  eliminarDetalleFijo(index: number): void {
+    if (index >= 0 && index < this.detallesFijos.length) {
+      this.detallesFijos.splice(index, 1);
+    }
+  }
+
+  /**
+   * Agrega un nuevo detalle al array de detalles fijos desde el formulario
+   */
+  agregarDetalleFijo(): void {
+    if (!this.detalleForm.valid) {
+      Object.keys(this.detalleForm.controls).forEach(key => {
+        this.detalleForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    const formValue = this.detalleForm.value;
+    const nuevoDetalle: DetalleDocumentoCobranzaResponseDTO = {
+      cantidad: formValue.cantidad || 1,
+      descripcion: formValue.descripcion || '',
+      precio: formValue.precio || 0,
+      productoId: formValue.productoId || undefined,
+      documentoCobranzaId: this.documentoId || undefined
+    };
+
+    this.detallesFijos.push(nuevoDetalle);
+
+    // Reset form
+    this.detalleForm.reset({
+      cantidad: 1,
+      descripcion: '',
+      precio: 0,
+      productoId: null
+    });
+  }
+
+  /**
+   * Guarda todos los cambios: detalles modificados, nuevos detalles fijos y documento
+   */
+  async guardarCambios(): Promise<void> {
+    if (!this.documentoId) {
+      this.error = 'No se puede guardar sin un ID de documento';
+      return;
+    }
+
+    this.isLoading = true;
+    this.loadingService.setLoading(true);
+
+    try {
+      // 1. Guardar documento si hay cambios
+      if (this.documentoForm.dirty) {
+        await this.guardarDocumentoAsync();
+      }
+
+      // 2. Actualizar detalles existentes
+      for (const detalle of this.detalles) {
+        if (detalle.id) {
+          const updateDTO: DetalleDocumentoCobranzaRequestDTO = {
+            cantidad: detalle.cantidad,
+            descripcion: detalle.descripcion || '',
+            precio: detalle.precio,
+            productoId: detalle.productoId || 0,
+            documentoCobranzaId: this.documentoId
+          };
+
+          await this.detalleDocumentoCobranzaService.updateDetalle(detalle.id, updateDTO).toPromise();
+        }
+      }
+
+      // 3. Crear nuevos detalles fijos
+      for (const detalleFijo of this.detallesFijos) {
+        const createDTO: DetalleDocumentoCobranzaRequestDTO = {
+          cantidad: detalleFijo.cantidad,
+          descripcion: detalleFijo.descripcion || '',
+          precio: detalleFijo.precio,
+          productoId: detalleFijo.productoId || 0,
+          documentoCobranzaId: this.documentoId
+        };
+
+        await this.detalleDocumentoCobranzaService.createDetalle(createDTO).toPromise();
+      }
+
+      this.success = 'Cambios guardados correctamente';
+      this.detallesFijos = []; // Limpiar detalles temporales
+      this.recargarDetalles();
+      this.salirModoEdicion();
+
+    } catch (error) {
+      console.error('Error al guardar cambios:', error);
+      this.error = 'Error al guardar los cambios';
+    } finally {
+      this.isLoading = false;
+      this.loadingService.setLoading(false);
+    }
+  }
+
+  /**
+   * Versión async del guardar documento
+   */
+  private async guardarDocumentoAsync(): Promise<void> {
+    if (!this.documentoForm.valid || !this.documentoId) {
+      return;
+    }
+
+    const formValue = this.documentoForm.value;
+    const updateDTO: DocumentoCobranzaUpdateDTO = {
+      fileVenta: formValue.fileVenta?.trim() || '',
+      costoEnvio: formValue.costoEnvio || 0,
+      observaciones: formValue.observaciones?.trim() || '',
+      detalleDocumentoId: formValue.detalleDocumentoId || undefined
+    };
+
+    const response = await this.documentoCobranzaService.updateDocumento(this.documentoId, updateDTO).toPromise();
+    if (response) {
+      this.documento = response;
     }
   }
 }
