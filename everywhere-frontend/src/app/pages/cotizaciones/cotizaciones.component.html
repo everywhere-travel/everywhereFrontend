@@ -512,8 +512,10 @@
                     Fechas:
                   </span>
                   <div class="text-sm text-gray-900 font-medium text-right">
-                    <div><span class="text-gray-500 text-xs">Salida:</span> {{ formatDate(cotizacion.fechaSalida) }}</div>
-                    <div><span class="text-gray-500 text-xs">Regreso:</span> {{ formatDate(cotizacion.fechaRegreso) }}</div>
+                    <div><span class="text-gray-500 text-xs">Salida:</span> {{ formatDate(cotizacion.fechaSalida) }}
+                    </div>
+                    <div><span class="text-gray-500 text-xs">Regreso:</span> {{ formatDate(cotizacion.fechaRegreso) }}
+                    </div>
                   </div>
                 </div>
 
@@ -613,7 +615,8 @@
                 <!-- Pasajeros -->
                 <span class="text-gray-600 text-sm min-w-0 flex-shrink-0">
                   {{ cotizacion.cantAdultos || 1 }}A
-                  <span *ngIf="cotizacion.cantNinos && cotizacion.cantNinos > 0">+ {{ cotizacion.cantNinos || 0 }}N</span>
+                  <span *ngIf="cotizacion.cantNinos && cotizacion.cantNinos > 0">+ {{ cotizacion.cantNinos || 0
+                    }}N</span>
                 </span>
 
                 <!-- Estado -->
@@ -626,17 +629,20 @@
               <!-- Acciones -->
               <div class="flex items-center gap-2 ml-4">
                 <button (click)="mostrarModalVerCotizacion(cotizacion)"
-                  class="p-2 bg-green-50 text-green-700 hover:bg-green-100 rounded transition-colors duration-200" title="Ver detalles">
+                  class="p-2 bg-green-50 text-green-700 hover:bg-green-100 rounded transition-colors duration-200"
+                  title="Ver detalles">
                   <i class="fas fa-eye text-sm"></i>
                 </button>
                 <button (click)="mostrarFormularioEditar(cotizacion)"
-                  class="p-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors duration-200" title="Editar">
+                  class="p-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors duration-200"
+                  title="Editar">
                   <i class="fas fa-edit text-sm"></i>
                 </button>
                 <button (mousedown)="iniciarEliminacion(cotizacion)" (mouseup)="cancelarEliminacion()"
                   (mouseleave)="cancelarEliminacion()" (touchstart)="iniciarEliminacion(cotizacion)"
                   (touchend)="cancelarEliminacion()"
-                  class="p-2 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors duration-200" [class.bg-red-600]="
+                  class="p-2 bg-red-50 text-red-700 hover:bg-red-100 rounded transition-colors duration-200"
+                  [class.bg-red-600]="
                     presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id
                   " [class.text-white]="
                     presionandoEliminar && cotizacionAEliminar?.id === cotizacion.id
@@ -1528,9 +1534,7 @@
                     <div class="flex items-center gap-3">
                       <!-- Botón de selección única del grupo -->
                       <div class="flex items-center">
-                        <button
-                          type="button"
-                          (click)="seleccionarGrupoUnico(gi)"
+                        <button type="button" (click)="seleccionarGrupoUnico(gi)"
                           class="relative w-6 h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-everywhere-primary focus:ring-offset-1"
                           [class]="isGrupoSeleccionado(gi)
                             ? 'bg-everywhere-primary border-everywhere-primary shadow-lg'
@@ -1539,14 +1543,12 @@
                           [id]="'grupo-' + gi">
 
                           <!-- Círculo interno cuando está seleccionado -->
-                          <div
-                            *ngIf="isGrupoSeleccionado(gi)"
+                          <div *ngIf="isGrupoSeleccionado(gi)"
                             class="absolute inset-1 bg-white rounded-full animate-in zoom-in duration-200">
                           </div>
 
                           <!-- Icono de check cuando está seleccionado -->
-                          <i
-                            *ngIf="isGrupoSeleccionado(gi)"
+                          <i *ngIf="isGrupoSeleccionado(gi)"
                             class="fas fa-check absolute inset-0 flex items-center justify-center text-everywhere-primary text-xs">
                           </i>
                         </button>
@@ -1556,8 +1558,7 @@
                       <h4 class="font-medium text-gray-900">Grupo {{ grupo.categoria.nombre }}</h4>
 
                       <!-- Indicador de selección -->
-                      <span
-                        *ngIf="isGrupoSeleccionado(gi)"
+                      <span *ngIf="isGrupoSeleccionado(gi)"
                         class="text-xs bg-green-500 text-white px-3 py-1 rounded-full font-medium shadow-sm animate-in slide-in-from-right duration-300">
                         <i class="fas fa-check-circle mr-1"></i>
                         Grupo Seleccionado
@@ -1606,8 +1607,7 @@
                       </div>
 
                       <!-- Existing products as editable rows -->
-                      <div *ngFor="let detalle of grupo.detalles; let di = index"
-                        class="p-3 last:border-b-0">
+                      <div *ngFor="let detalle of grupo.detalles; let di = index" class="p-3 last:border-b-0">
                         <div class="grid gap-3 items-center"
                           style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                           <!-- Proveedor -->
@@ -1639,7 +1639,8 @@
                           <!-- Cantidad -->
                           <div>
                             <input type="number" [value]="detalle.cantidad"
-                              (input)="onGrupoProductoChange(gi, di, 'cantidad', $any($event.target).value); recalcularTotalDetalleGrupo(gi, di)" min="1"
+                              (input)="onGrupoProductoChange(gi, di, 'cantidad', $any($event.target).value); recalcularTotalDetalleGrupo(gi, di)"
+                              min="1"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
                           </div>
 
@@ -1735,14 +1736,14 @@
 
                           <!-- Comisión -->
                           <div>
-                            <input type="number" formControlName="comision" step="0.01" min="0"
-                              placeholder="0.00"
+                            <input type="number" formControlName="comision" step="0.01" min="0" placeholder="0.00"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
                           </div>
 
                           <!-- Total -->
                           <div>
-                            <input type="text" [value]="calcularTotalDetalleGrupo() | currency : 'USD' : 'symbol' : '1.2-2'"
+                            <input type="text"
+                              [value]="calcularTotalDetalleGrupo() | currency : 'USD' : 'symbol' : '1.2-2'"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-medium text-gray-700 text-center"
                               readonly />
                           </div>
@@ -1756,8 +1757,6 @@
                           </div>
                         </div>
                       </div>
-
-
                     </div>
                   </div>
                 </div>
@@ -1864,8 +1863,7 @@
             {{ cotizacionCompleta.codigoCotizacion }} - {{ formatDate(cotizacionCompleta.fechaEmision) }}
           </p>
         </div>
-        <button (click)="cerrarModalVer()"
-          class="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200">
+        <button (click)="cerrarModalVer()" class="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200">
           <i class="fas fa-times text-xl"></i>
         </button>
       </div>
@@ -1878,7 +1876,8 @@
       <div class="mb-6">
         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
           <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
+            <div
+              class="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3">
               <i class="fas fa-info-circle text-white text-sm"></i>
             </div>
             Información Básica
@@ -1945,9 +1944,11 @@
       <div class="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Sección Cliente -->
         <div>
-          <div class="bg-gradient-to-r from-[#D9043D]/5 to-[#BF4968]/5 rounded-2xl p-6 border border-everywhere-primary/10 h-full flex flex-col">
+          <div
+            class="bg-gradient-to-r from-[#D9043D]/5 to-[#BF4968]/5 rounded-2xl p-6 border border-everywhere-primary/10 h-full flex flex-col">
             <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-              <div class="w-8 h-8 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-xl flex items-center justify-center mr-3">
+              <div
+                class="w-8 h-8 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-xl flex items-center justify-center mr-3">
                 <i class="fas fa-user text-white text-sm"></i>
               </div>
               Información del Cliente
@@ -1963,12 +1964,6 @@
                   <p class="font-semibold text-gray-900 text-base">
                     {{ getPersonaDisplayName(cotizacionCompleta.personas?.id || 0) }}
                   </p>
-                  <div class="space-y-1 mt-2">
-                    <p class="text-sm text-gray-500 flex items-center">
-                      <i class="fas fa-credit-card mr-2"></i>
-                      Forma de Pago: {{ cotizacionCompleta.formaPago?.descripcion || 'No especificada' }}
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -1977,9 +1972,11 @@
 
         <!-- Información del Paquete -->
         <div>
-          <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 h-full flex flex-col">
+          <div
+            class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200 h-full flex flex-col">
             <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-              <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3">
+              <div
+                class="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center mr-3">
                 <i class="fas fa-map-marked-alt text-white text-sm"></i>
               </div>
               Información del Paquete
@@ -1992,7 +1989,8 @@
                   Origen - Destino
                 </label>
                 <div class="relative">
-                  <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 pr-10 text-sm">
+                  <div
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 pr-10 text-sm">
                     {{ cotizacionCompleta.origenDestino || 'No especificado' }}
                   </div>
                   <div class="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -2009,7 +2007,7 @@
                     Fecha de Salida
                   </label>
                   <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm">
-                    {{ formatDate(cotizacionCompleta.fechaSalida) }}
+                    {{ formatDate(cotizacionCompleta.fechaSalida) || 'No especifica'}}
                   </div>
                 </div>
 
@@ -2019,7 +2017,7 @@
                     Fecha de Regreso
                   </label>
                   <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm">
-                    {{ formatDate(cotizacionCompleta.fechaRegreso) }}
+                    {{ formatDate(cotizacionCompleta.fechaRegreso) || 'No especifica' }}
                   </div>
                 </div>
               </div>
@@ -2032,7 +2030,8 @@
                     Cantidad de Adultos
                   </label>
                   <div class="relative">
-                    <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 pr-8 text-sm">
+                    <div
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 pr-8 text-sm">
                       {{ cotizacionCompleta.cantAdultos || 1 }}
                     </div>
                     <div class="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -2047,7 +2046,8 @@
                     Cantidad de Niños
                   </label>
                   <div class="relative">
-                    <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 pr-8 text-sm">
+                    <div
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 pr-8 text-sm">
                       {{ cotizacionCompleta.cantNinos || 0 }}
                     </div>
                     <div class="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -2057,13 +2057,23 @@
                 </div>
               </div>
 
-              <!-- Moneda -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Moneda
-                </label>
-                <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm">
-                  {{ cotizacionCompleta.moneda || 'USD' }}
+              <div class="grid grid-cols-2 gap-3">
+                <!-- Moneda -->
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Moneda
+                  </label>
+                  <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm">
+                    {{ cotizacionCompleta.moneda || 'USD' }}
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Forma de Pago
+                  </label>
+                  <div class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm">
+                    {{ cotizacionCompleta.formaPago?.descripcion || 'No especificada' }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -2075,7 +2085,8 @@
       <div class="mb-6" *ngIf="hasProductosFijos()">
         <div class="bg-gradient-to-r from-purple-50 to-violet-50 rounded-2xl p-6 border border-purple-200">
           <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-            <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mr-3">
+            <div
+              class="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mr-3">
               <i class="fas fa-boxes text-white text-sm"></i>
             </div>
             Productos
@@ -2085,7 +2096,7 @@
           <div class="bg-white rounded-xl border border-purple-100 overflow-hidden">
             <!-- Header -->
             <div class="grid gap-3 items-center p-3 border-b border-gray-100 bg-gray-50"
-              style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px;">
+              style="grid-template-columns: 0.6fr 0.6fr 80px 2.3fr 100px 100px 100px;">
               <div class="text-sm font-medium text-gray-700">Proveedor</div>
               <div class="text-sm font-medium text-gray-700">Producto</div>
               <div class="text-sm font-medium text-gray-700">Cantidad</div>
@@ -2097,8 +2108,7 @@
 
             <!-- Productos -->
             <div *ngFor="let detalle of getDetallesByCategoria(1)" class="p-3 border-b border-gray-100 last:border-b-0">
-              <div class="grid gap-3 items-center"
-                style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px;">
+              <div class="grid gap-3 items-center" style="grid-template-columns: 0.6fr 0.6fr 80px 2.3fr 100px 100px 100px;">
                 <!-- Proveedor -->
                 <div class="text-sm text-gray-900">
                   {{ detalle.proveedor?.nombre || 'Sin proveedor' }}
@@ -2112,7 +2122,7 @@
                   {{ detalle.cantidad || 1 }}
                 </div>
                 <!-- Descripción -->
-                <div class="text-sm text-gray-900 truncate" [title]="detalle.descripcion">
+                <div class="text-sm text-gray-900 break-all" [title]="detalle.descripcion">
                   {{ detalle.descripcion || 'Sin descripción' }}
                 </div>
                 <!-- Precio Unitario -->
@@ -2125,7 +2135,8 @@
                 </div>
                 <!-- Total -->
                 <div class="text-sm font-semibold text-purple-600 text-right">
-                  ${{ ((detalle.precioHistorico || 0) + (detalle.comision || 0)) * (detalle.cantidad || 1) | number:'1.2-2' }}
+                  ${{ ((detalle.precioHistorico || 0) + (detalle.comision || 0)) * (detalle.cantidad || 1) |
+                  number:'1.2-2' }}
                 </div>
               </div>
             </div>
@@ -2137,7 +2148,8 @@
       <div class="mb-6" *ngIf="hasCategoriasNoFijas()">
         <div class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-200">
           <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-            <div class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mr-3">
+            <div
+              class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mr-3">
               <i class="fas fa-hotel text-white text-sm"></i>
             </div>
             Grupos de Hoteles
@@ -2151,22 +2163,18 @@
                 <div class="flex items-center gap-3">
                   <!-- Indicador visual de selección (solo visual, no clickeable) -->
                   <div class="flex items-center">
-                    <div
-                      class="relative w-6 h-6 rounded-full border-2 transition-all duration-200"
-                      [class]="isGrupoSeleccionadoEnVisualizacion(gi)
+                    <div class="relative w-6 h-6 rounded-full border-2 transition-all duration-200" [class]="isGrupoSeleccionadoEnVisualizacion(gi)
                         ? 'bg-everywhere-primary border-everywhere-primary shadow-lg'
                         : 'bg-white border-gray-300'"
                       [title]="isGrupoSeleccionadoEnVisualizacion(gi) ? 'Grupo seleccionado en esta cotización' : 'Grupo no seleccionado'">
 
                       <!-- Círculo interno cuando está seleccionado -->
-                      <div
-                        *ngIf="isGrupoSeleccionadoEnVisualizacion(gi)"
+                      <div *ngIf="isGrupoSeleccionadoEnVisualizacion(gi)"
                         class="absolute inset-1 bg-white rounded-full">
                       </div>
 
                       <!-- Icono de check cuando está seleccionado -->
-                      <i
-                        *ngIf="isGrupoSeleccionadoEnVisualizacion(gi)"
+                      <i *ngIf="isGrupoSeleccionadoEnVisualizacion(gi)"
                         class="fas fa-check absolute inset-0 flex items-center justify-center text-everywhere-primary text-xs">
                       </i>
                     </div>
@@ -2178,8 +2186,7 @@
                   </h4>
 
                   <!-- Indicador de selección -->
-                  <span
-                    *ngIf="isGrupoSeleccionadoEnVisualizacion(gi)"
+                  <span *ngIf="isGrupoSeleccionadoEnVisualizacion(gi)"
                     class="text-xs bg-green-500 text-white px-3 py-1 rounded-full font-medium shadow-sm">
                     <i class="fas fa-check-circle mr-1"></i>
                     Grupo Seleccionado
@@ -2216,25 +2223,14 @@
                     <div class="text-sm text-gray-900">
                       {{ detalle.producto?.tipo || 'Sin producto' }}
                     </div>
-                    <!-- Cantidad -->
-                    <div class="text-sm text-gray-900 text-center">
-                      {{ detalle.cantidad || 1 }}
-                    </div>
-                    <!-- Descripción -->
-                    <div class="text-sm text-gray-900 truncate" [title]="detalle.descripcion">
-                      {{ detalle.descripcion || 'Sin descripción' }}
-                    </div>
-                    <!-- Precio USD -->
-                    <div class="text-sm text-gray-900 text-right">
-                      ${{ (detalle.precioHistorico || 0) | number:'1.2-2' }}
-                    </div>
                     <!-- Comisión -->
                     <div class="text-sm text-gray-900 text-right">
                       ${{ (detalle.comision || 0) | number:'1.2-2' }}
                     </div>
                     <!-- Total -->
                     <div class="text-sm font-semibold text-orange-600 text-right">
-                      ${{ ((detalle.precioHistorico || 0) + (detalle.comision || 0)) * (detalle.cantidad || 1) | number:'1.2-2' }}
+                      ${{ ((detalle.precioHistorico || 0) + (detalle.comision || 0)) * (detalle.cantidad || 1) |
+                      number:'1.2-2' }}
                     </div>
                   </div>
                 </div>
@@ -2248,7 +2244,8 @@
       <div class="mb-6">
         <div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-200">
           <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
-            <div class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
+            <div
+              class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
               <i class="fas fa-calculator text-white text-sm"></i>
             </div>
             Resumen de Cotización
@@ -2274,7 +2271,8 @@
               </div>
 
               <!-- Total General -->
-              <div class="flex justify-between items-center py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg px-4 border border-emerald-200">
+              <div
+                class="flex justify-between items-center py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg px-4 border border-emerald-200">
                 <span class="font-semibold text-gray-900 text-lg">Cotización más económica:</span>
                 <span class="font-bold text-emerald-600 text-2xl">
                   ${{ getTotalCotizacionCompleta() | number:'1.2-2' }} {{ cotizacionCompleta.moneda || 'USD' }}
@@ -2289,7 +2287,8 @@
       <div class="mb-6" *ngIf="cotizacionCompleta.observacion">
         <div class="bg-gradient-to-r from-slate-50 to-gray-50 rounded-2xl p-6 border border-slate-200">
           <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <div class="w-8 h-8 bg-gradient-to-r from-slate-500 to-gray-600 rounded-xl flex items-center justify-center mr-3">
+            <div
+              class="w-8 h-8 bg-gradient-to-r from-slate-500 to-gray-600 rounded-xl flex items-center justify-center mr-3">
               <i class="fas fa-sticky-note text-white text-sm"></i>
             </div>
             Observaciones

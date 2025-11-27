@@ -1,4 +1,4 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+﻿<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
   <!-- Sidebar Component -->
   <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
     (toggleSidebar)="onToggleSidebar()">
@@ -144,22 +144,18 @@
                 <span class="hidden sm:inline">Actualizar</span>
               </button>
 
-              <button *ngIf="!modoEdicion && !showDocumentoForm" (click)="mostrarFormularioEditarDocumento()"
-                class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-colors flex items-center gap-2">
-                <i class="fas fa-file-edit"></i>
-                <span class="hidden sm:inline">Editar</span> Documento
-              </button>
+              <div *ngIf="!modoEdicion">
+                <button (click)="irAEditarDocumento()"
+                  class="px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2">
+                  <i class="fas fa-edit"></i>
+                  <span class="hidden sm:inline">Editar</span>
+                </button>
+              </div>
 
-              <button *ngIf="!modoEdicion" (click)="irAEditarDocumento()"
-                class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 rounded-xl font-medium transition-colors flex items-center gap-2">
-                <i class="fas fa-edit"></i>
-                Editar Detalles
-              </button>
-
-              <button *ngIf="modoEdicion" (click)="salirModoEdicion()"
-                class="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-xl font-medium transition-colors flex items-center gap-2">
-                <i class="fas fa-times"></i>
-                Salir de Edición
+              <button (click)="volverADocumentos()"
+                class="px-6 py-3 bg-white text-everywhere-primary rounded-xl hover:bg-gray-100 transition-colors flex items-center gap-2 font-medium">
+                <i class="fas fa-arrow-left"></i>
+                <span class="hidden sm:inline">Volver</span>
               </button>
             </div>
           </div>
@@ -167,301 +163,329 @@
       </header>
 
       <!-- Main Content -->
-      <main class="max-w-full mx-auto px-6 py-8">
+      <main class="px-4 py-8 max-w-full overflow-x-hidden">
 
-        <!-- Action Bar -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8" *ngIf="modoEdicion">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h2 class="text-xl font-semibold text-gray-900">Gestionar Detalles</h2>
-              <p class="text-gray-600">Agregue, edite o elimine detalles del documento de cobranza</p>
-            </div>
-            <button (click)="mostrarFormularioNuevoDetalle()"
-              class="px-6 py-3 bg-everywhere-primary hover:bg-everywhere-secondary text-white rounded-xl font-medium transition-colors flex items-center gap-2">
-              <i class="fas fa-plus"></i>
-              Agregar Detalle
-            </button>
-          </div>
-        </div>
-
-        <!-- Detalle Form Modal -->
-        <div *ngIf="showDetalleForm"
-          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+        <!-- Información del Documento -Formulario Inline -->
+        <form [formGroup]="documentoForm" (ngSubmit)="guardarDocumento()">
+          <div
+            class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 mb-6 overflow-hidden">
             <div class="p-6">
-              <!-- Form Header -->
-              <div class="flex items-center justify-between border-b pb-4 mb-6">
-                <h3 class="text-xl font-bold text-gray-900">
-                  {{ editingDetalleId ? 'Editar Detalle' : 'Nuevo Detalle' }}
-                </h3>
-                <button (click)="cancelarEdicion()" class="text-gray-400 hover:text-gray-600">
-                  <i class="fas fa-times text-xl"></i>
-                </button>
-              </div>
-
-              <!-- Form -->
-              <form [formGroup]="detalleForm" (ngSubmit)="guardarDetalle()" class="space-y-6">
-
-                <!-- Producto -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Producto
-                  </label>
-                  <select formControlName="productoId"
-                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent">
-                    <option value="">Seleccionar producto</option>
-                    <option *ngFor="let producto of productos" [value]="producto.id">
-                      {{ producto.tipo }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- Cantidad -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Cantidad <span class="text-red-500">*</span>
-                  </label>
-                  <input type="number" formControlName="cantidad" min="1"
-                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                    placeholder="Ingrese la cantidad">
-                  <div *ngIf="detalleForm.get('cantidad')?.invalid && detalleForm.get('cantidad')?.touched"
-                    class="text-red-500 text-sm mt-1">
-                    La cantidad es requerida y debe ser mayor a 0
+              <!-- Encabezado -->
+              <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-contract text-white text-sm"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-semibold text-gray-900">Información del Documento</h3>
+                    <p class="text-xs text-gray-500">Datos principales del documento de cobranza</p>
                   </div>
                 </div>
-
-                <!-- Descripción -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Descripción
-                  </label>
-                  <textarea formControlName="descripcion" rows="3"
-                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                    placeholder="Descripción del detalle"></textarea>
+                <div class="flex items-center gap-2">
+                  <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span class="text-xs text-gray-500">{{ modoEdicion ? 'Editando' : 'Vista' }}</span>
                 </div>
-
-                <!-- Precio -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Precio <span class="text-red-500">*</span>
-                  </label>
-                  <input type="number" formControlName="precio" min="0" step="0.01"
-                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                    placeholder="0.00">
-                  <div *ngIf="detalleForm.get('precio')?.invalid && detalleForm.get('precio')?.touched"
-                    class="text-red-500 text-sm mt-1">
-                    El precio es requerido y debe ser mayor o igual a 0
-                  </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="flex justify-end gap-3 pt-6 border-t">
-                  <button type="button" (click)="cancelarEdicion()"
-                    class="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors">
-                    Cancelar
-                  </button>
-                  <button type="submit" [disabled]="!detalleForm.valid || isLoading"
-                    class="px-6 py-3 bg-everywhere-primary hover:bg-everywhere-secondary text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                    <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
-                    {{ editingDetalleId ? 'Actualizar' : 'Crear' }} Detalle
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <!-- Documento Form Modal -->
-        <div *ngIf="showDocumentoForm"
-          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
-            <div class="p-6">
-              <!-- Form Header -->
-              <div class="flex items-center justify-between border-b pb-4 mb-6">
-                <h3 class="text-xl font-bold text-gray-900">
-                  <i class="fas fa-edit mr-2 text-everywhere-primary"></i>
-                  Editar Documento
-                </h3>
-                <button (click)="cancelarEdicionDocumento()" class="text-gray-400 hover:text-gray-600">
-                  <i class="fas fa-times text-xl"></i>
-                </button>
               </div>
 
-              <!-- Form -->
-              <form [formGroup]="documentoForm" (ngSubmit)="guardarDocumento()" class="space-y-6">
-
+              <!-- Grid de Campos -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <!-- File Venta -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    File de Venta
-                  </label>
-                  <input type="text" formControlName="fileVenta"
-                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                    placeholder="Ingrese el file de venta">
+                <div class="group">
+                  <label class="block text-xs font-medium text-gray-600 mb-3">File de Venta</label>
+                  <div *ngIf="!modoEdicion"
+                    class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                    <div class="w-6 h-6 bg-blue-100 rounded-md flex items-center justify-center">
+                      <i class="fas fa-file-alt text-blue-600 text-xs"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">{{ documento.fileVenta || 'Sin file' }}</span>
+                  </div>
+                  <div *ngIf="modoEdicion" class="relative">
+                    <input type="text" formControlName="fileVenta"
+                      class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                  </div>
                 </div>
 
-                <!-- Costo de Envío -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Costo de Envío
-                  </label>
-                  <input type="number" formControlName="costoEnvio" min="0" step="0.01"
-                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                    placeholder="0.00">
-                </div>
-
-                <!-- Detalle de Documento -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Detalle de Documento
-                  </label>
-                  <select formControlName="detalleDocumentoId"
-                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent">
-                    <option [value]="null">Seleccionar detalle</option>
-                    <option *ngFor="let det of detallesDocumento" [value]="det.id">
-                      {{ det.numero }} - {{ det.documento.tipo }} - {{ det.personaNatural.nombres }} {{
-                      det.personaNatural.apellidosPaterno }}
-                    </option>
-                  </select>
+                <!-- Costo Envío -->
+                <div class="group">
+                  <label class="block text-xs font-medium text-gray-600 mb-3">Costo de Envío</label>
+                  <div *ngIf="!modoEdicion"
+                    class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                    <div class="w-6 h-6 bg-green-100 rounded-md flex items-center justify-center">
+                      <i class="fas fa-dollar-sign text-green-600 text-xs"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">{{ documento.moneda || 'S/' }} {{
+                      documento.costoEnvio | number:'1.2-2' }}</span>
+                  </div>
+                  <div *ngIf="modoEdicion" class="relative">
+                    <input type="number" formControlName="costoEnvio" step="0.01"
+                      class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                  </div>
                 </div>
 
                 <!-- Observaciones -->
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Observaciones
-                  </label>
-                  <textarea formControlName="observaciones" rows="4"
-                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                    placeholder="Ingrese observaciones sobre el documento"></textarea>
-                </div>
-
-                <!-- Current Values Info -->
-                <div class="bg-gray-50 rounded-xl p-4">
-                  <h4 class="text-sm font-medium text-gray-700 mb-2">Valores Actuales:</h4>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span class="text-gray-600">File Actual:</span>
-                      <span class="font-medium text-gray-900 ml-2">{{ documento.fileVenta || 'Sin file' }}</span>
+                <div class="group md:col-span-1">
+                  <label class="block text-xs font-medium text-gray-600 mb-3">Observaciones</label>
+                  <div *ngIf="!modoEdicion"
+                    class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                    <div class="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center">
+                      <i class="fas fa-sticky-note text-purple-600 text-xs"></i>
                     </div>
-                    <div>
-                      <span class="text-gray-600">Costo Actual:</span>
-                      <span class="font-medium text-gray-900 ml-2">{{ documento.moneda || 'S/' }} {{
-                        documento.costoEnvio || 0 | number:'1.2-2' }}</span>
-                    </div>
+                    <span class="text-sm font-medium text-gray-900">{{ documento.observaciones || 'Sin observaciones'
+                      }}</span>
                   </div>
-                  <div class="mt-2">
-                    <span class="text-gray-600">Observaciones:</span>
-                    <p class="font-medium text-gray-900 mt-1">{{ documento.observaciones || 'Sin observaciones' }}</p>
+                  <div *ngIf="modoEdicion" class="relative md:col-span-1">
+                    <textarea formControlName="observaciones" rows="1"
+                      class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"></textarea>
                   </div>
                 </div>
+              </div>
 
-                <!-- Form Actions -->
-                <div class="flex justify-end gap-3 pt-6 border-t">
-                  <button type="button" (click)="cancelarEdicionDocumento()"
-                    class="px-6 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium transition-colors">
-                    Cancelar
-                  </button>
-                  <button type="submit" [disabled]="isLoading"
-                    class="px-6 py-3 bg-everywhere-primary hover:bg-everywhere-secondary text-white rounded-xl font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+              <!-- Save Buttons (solo en modo edición) -->
+              <div *ngIf="modoEdicion" class="mt-6 flex gap-3 justify-end border-t pt-4">
+                <button type="button" (click)="salirModoEdicion()"
+                  class="px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">
+                  Cancelar
+                </button>
+                <button type="submit" [disabled]="isLoading"
+                  class="px-6 py-2 bg-everywhere-primary hover:bg-everywhere-secondary text-white rounded-lg font-medium transition-colors disabled:opacity-50">
+                  <i *ngIf="isLoading" class="fas fa-spinner fa-spin mr-2"></i>
+                  Guardar Documento
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Tabla de Detalles - Inline Editing -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div class="w-full">
+            <div class="p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                  <div
+                    class="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mr-3">
+                    <i class="fas fa-list-alt text-white text-sm"></i>
+                  </div>
+                  Detalles del Documento
+                </h3>
+                <div *ngIf="modoEdicion" class="flex gap-3">
+                  <button (click)="guardarCambios()" [disabled]="isLoading"
+                    class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2">
                     <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
                     <i *ngIf="!isLoading" class="fas fa-save"></i>
                     Guardar Cambios
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <!-- Detalles Table -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div class="p-6 border-b border-gray-100">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h2 class="text-xl font-semibold text-gray-900">Detalles del Documento</h2>
-                <p class="text-gray-600">{{ detalles.length }} detalle(s) registrado(s)</p>
               </div>
-              <div class="text-right">
-                <div class="text-sm text-gray-600">Total Calculado:</div>
-                <div class="text-2xl font-bold text-everywhere-primary">
-                  {{ documento.moneda || 'S/' }} {{ calcularTotal() | number:'1.2-2' }}
+
+              <!-- Tabla de Detalles -->
+              <div class="bg-gray-50 rounded-xl p-6">
+                <!-- Header Row -->
+                <div class="grid gap-4 items-end mb-2"
+                  [style.grid-template-columns]="modoEdicion ? 'minmax(120px, 2fr) minmax(150px, 3fr) minmax(80px, 100px) minmax(100px, 120px) minmax(100px, 120px) 70px' : 'minmax(120px, 2fr) minmax(150px, 3fr) minmax(80px, 100px) minmax(100px, 120px) minmax(100px, 120px)'">
+                  <div><label class="block text-sm font-medium text-gray-700 mb-1">Producto</label></div>
+                  <div><label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label></div>
+                  <div><label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label></div>
+                  <div><label class="block text-sm font-medium text-gray-700 mb-1">Precio Unit.</label></div>
+                  <div><label class="block text-sm font-medium text-gray-700 mb-1">Total</label></div>
+                  <div *ngIf="modoEdicion" class="text-center"><label
+                      class="block text-sm font-medium text-gray-700 mb-1">Acciones</label></div>
+                </div>
+
+                <!-- Detalles Originales -->
+                <div *ngFor="let detalle of detalles; let i = index" class="mb-3">
+                  <div class="grid gap-4 items-end"
+                    [style.grid-template-columns]="modoEdicion ? 'minmax(120px, 2fr) minmax(150px, 3fr) minmax(80px, 100px) minmax(100px, 120px) minmax(100px, 120px) 70px' : 'minmax(120px, 2fr) minmax(150px, 3fr) minmax(80px, 100px) minmax(100px, 120px) minmax(100px, 120px)'">
+                    <!-- Producto -->
+                    <div>
+                      <select *ngIf="modoEdicion" [ngModel]="detalle.productoId"
+                        (ngModelChange)="onDetalleOriginalChange(i, 'productoId', $event)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                        <option value="">Seleccionar</option>
+                        <option *ngFor="let producto of productos" [value]="producto.id">{{ producto.tipo }}</option>
+                      </select>
+                      <div *ngIf="!modoEdicion" class="px-3 py-2 bg-white rounded-lg border border-gray-200/50">
+                        <span class="text-xs font-medium text-gray-900 block truncate">{{
+                          getProductoNombre(detalle.productoId) }}</span>
+                      </div>
+                    </div>
+                    <!-- Descripción -->
+                    <div>
+                      <textarea *ngIf="modoEdicion" [value]="detalle.descripcion"
+                        (input)="onDetalleOriginalChange(i, 'descripcion', $any($event.target).value)"
+                        placeholder="Descripción" rows="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-none"></textarea>
+                      <div *ngIf="!modoEdicion" class="px-3 py-2 bg-white rounded-lg border border-gray-200/50">
+                        <span class="text-xs font-medium text-gray-900 break-words">{{ detalle.descripcion || 'Sin descripción' }}</span>
+                      </div>
+                    </div>
+                    <!-- Cantidad -->
+                    <div>
+                      <input *ngIf="modoEdicion" type="number" [value]="detalle.cantidad"
+                        (input)="onDetalleOriginalChange(i, 'cantidad', $any($event.target).value)" min="1"
+                        placeholder="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                      <div *ngIf="!modoEdicion"
+                        class="px-3 py-2 bg-white rounded-lg border border-gray-200/50 text-center">
+                        <span class="text-xs font-medium text-gray-900">{{ detalle.cantidad }}</span>
+                      </div>
+                    </div>
+                    <!-- Precio -->
+                    <div>
+                      <input *ngIf="modoEdicion" type="number" [value]="detalle.precio"
+                        (input)="onDetalleOriginalChange(i, 'precio', $any($event.target).value)" step="0.01" min="0"
+                        placeholder="0.00"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                      <div *ngIf="!modoEdicion"
+                        class="px-3 py-2 bg-white rounded-lg border border-gray-200/50 text-right">
+                        <span class="text-xs font-medium text-gray-900">{{ documento.moneda || 'S/' }} {{ detalle.precio | number:'1.2-2' }}</span>
+                      </div>
+                    </div>
+                    <!-- Total -->
+                    <div class="px-3 py-2 bg-blue-50 rounded-lg border border-blue-200/50 text-right">
+                      <span class="text-xs font-bold text-blue-900">{{ documento.moneda || 'S/' }} {{ ((detalle.cantidad
+                        || 0) * (detalle.precio || 0)) | number:'1.2-2' }}</span>
+                    </div>
+                    <!-- Acciones -->
+                    <div *ngIf="modoEdicion" class="text-center">
+                      <button type="button" (click)="eliminarDetalleOriginal(i)"
+                        class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors duration-200">
+                        <i class="fas fa-trash text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="my-2 border-b border-gray-300"></div>
+                </div>
+
+                <!-- Detalles Fijos (solo en modo edición) -->
+                <ng-container *ngIf="modoEdicion">
+                  <div *ngFor="let detalle of detallesFijos; let i = index" class="mb-3">
+                    <div class="grid gap-4 items-end"
+                      style="grid-template-columns: minmax(120px, 2fr) minmax(150px, 3fr) minmax(80px, 100px) minmax(100px, 120px) minmax(100px, 120px) 70px;">
+                      <!-- Producto -->
+                      <div>
+                        <select [ngModel]="detalle.productoId"
+                          (ngModelChange)="onDetalleFijoChange(i, 'productoId', $event)"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                          <option value="">Seleccionar</option>
+                          <option *ngFor="let producto of productos" [value]="producto.id">{{ producto.tipo }}</option>
+                        </select>
+                      </div>
+                      <!-- Descripción -->
+                      <div>
+                        <textarea [value]="detalle.descripcion"
+                          (input)="onDetalleFijoChange(i, 'descripcion', $any($event.target).value)"
+                          placeholder="Descripción" rows="1"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-none"></textarea>
+                      </div>
+                      <!-- Cantidad -->
+                      <div>
+                        <input type="number" [value]="detalle.cantidad"
+                          (input)="onDetalleFijoChange(i, 'cantidad', $any($event.target).value)" min="1"
+                          placeholder="1"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                      </div>
+                      <!-- Precio -->
+                      <div>
+                        <input type="number" [value]="detalle.precio"
+                          (input)="onDetalleFijoChange(i, 'precio', $any($event.target).value)" step="0.01" min="0"
+                          placeholder="0.00"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                      </div>
+                      <!-- Total -->
+                      <div class="px-3 py-2 bg-green-50 rounded-lg border border-green-200/50 text-right">
+                        <span class="text-xs font-bold text-green-900">{{ documento.moneda || 'S/' }} {{
+                          ((detalle.cantidad || 0) * (detalle.precio || 0)) | number:'1.2-2' }}</span>
+                      </div>
+                      <!-- Acciones -->
+                      <div class="text-center">
+                        <button type="button" (click)="eliminarDetalleFijo(i)"
+                          class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors duration-200">
+                          <i class="fas fa-trash text-xs"></i>
+                        </button>
+                      </div>
+                    </div>
+                    <div class="my-2 border-b border-gray-300"></div>
+                  </div>
+                </ng-container>
+
+                <!-- Formulario para agregar nuevo detalle (solo en modo edición) -->
+                <div *ngIf="modoEdicion" [formGroup]="detalleForm">
+                  <div class="grid gap-4 items-end"
+                    style="grid-template-columns: minmax(120px, 2fr) minmax(150px, 3fr) minmax(80px, 100px) minmax(100px, 120px) minmax(100px, 120px) 70px;">
+                    <!-- Producto -->
+                    <div>
+                      <select formControlName="productoId"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                        <option value="">Seleccionar</option>
+                        <option *ngFor="let producto of productos" [value]="producto.id">{{ producto.tipo }}</option>
+                      </select>
+                    </div>
+                    <!-- Descripción -->
+                    <div>
+                      <textarea formControlName="descripcion" placeholder="Descripción" rows="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-none"></textarea>
+                    </div>
+                    <!-- Cantidad -->
+                    <div>
+                      <input type="number" formControlName="cantidad" min="1" placeholder="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    </div>
+                    <!-- Precio -->
+                    <div>
+                      <input type="number" formControlName="precio" step="0.01" min="0" placeholder="0.00"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    </div>
+                    <!-- Total Placeholder -->
+                    <div class="px-3 py-2 bg-gray-100 rounded-lg border border-gray-200/50 text-right">
+                      <span class="text-xs font-medium text-gray-500">{{ documento.moneda || 'S/' }} 0.00</span>
+                    </div>
+                    <!-- Botón Agregar -->
+                    <div class="text-center">
+                      <button type="button" (click)="agregarDetalleFijo()"
+                        class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-lg hover:from-purple-600 hover:to-violet-700 transition-all duration-200 text-sm font-medium">
+                        <i class="fas fa-plus"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Empty State -->
+                <div *ngIf="detalles.length === 0 && detallesFijos.length === 0" class="text-center py-12">
+                  <i class="fas fa-list text-4xl text-gray-300 mb-4"></i>
+                  <h3 class="text-lg font-medium text-gray-900 mb-2">No hay detalles</h3>
+                  <p class="text-gray-500">{{ modoEdicion ? 'Agregue detalles usando el formulario arriba' : 'Este
+                    documento aún no tiene detalles registrados' }}</p>
+                </div>
+              </div>
+
+              <!-- Totales Summary -->
+              <div class="mt-6 flex justify-end">
+                <div
+                  class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200/50 min-w-[300px]">
+                  <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                      <span class="text-gray-600">Subtotal Detalles:</span>
+                      <span class="font-medium text-gray-900">{{ documento.moneda || 'S/' }} {{ (calcularTotal() -
+                        (documento.costoEnvio || 0)) | number:'1.2-2' }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                      <span class="text-gray-600">Costo Envío:</span>
+                      <span class="font-medium text-gray-900">{{ documento.moneda || 'S/' }} {{ documento.costoEnvio |
+                        number:'1.2-2' }}</span>
+                    </div>
+                    <div class="border-t border-blue-300 pt-3 mt-3">
+                      <div class="flex justify-between items-center">
+                        <span class="text-base font-semibold text-gray-900">Total:</span>
+                        <span class="text-2xl font-bold text-everywhere-primary">{{ documento.moneda || 'S/' }} {{
+                          calcularTotal() | number:'1.2-2' }}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Table -->
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Producto
-                  </th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Descripción
-                  </th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cantidad
-                  </th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Precio Unit.
-                  </th>
-                  <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th *ngIf="modoEdicion"
-                    class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr *ngFor="let detalle of detalles; trackBy: trackByDetalle" class="hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {{ getProductoNombre(detalle.productoId) }}
-                  </td>
-                  <td class="px-6 py-4 text-sm text-gray-900">
-                    {{ detalle.descripcion }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ detalle.cantidad }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ documento.moneda || 'S/' }} {{ detalle.precio | number:'1.2-2' }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {{ documento.moneda || 'S/' }} {{ ((detalle.cantidad || 0) * (detalle.precio || 0)) | number:'1.2-2'
-                    }}
-                  </td>
-                  <td *ngIf="modoEdicion" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex justify-end gap-2">
-                      <button (click)="editarDetalle(detalle)"
-                        class="text-blue-600 hover:text-blue-900 p-2 rounded-lg hover:bg-blue-50 transition-colors"
-                        title="Editar detalle">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button (click)="eliminarDetalle(detalle.id!)"
-                        class="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                        title="Eliminar detalle">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Empty State -->
-          <div *ngIf="detalles.length === 0" class="text-center py-12">
-            <i class="fas fa-list text-4xl text-gray-300 mb-4"></i>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">No hay detalles</h3>
-            <p class="text-gray-500 mb-4">Este documento aún no tiene detalles registrados</p>
-            <button *ngIf="modoEdicion" (click)="mostrarFormularioNuevoDetalle()"
-              class="px-6 py-3 bg-everywhere-primary hover:bg-everywhere-secondary text-white rounded-xl font-medium transition-colors">
-              Agregar Primer Detalle
-            </button>
           </div>
         </div>
 
