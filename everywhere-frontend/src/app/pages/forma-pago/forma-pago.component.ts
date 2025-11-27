@@ -89,6 +89,7 @@ export class FormaPagoComponent implements OnInit {
       id: 'categorias',
       title: 'Gestion de Categorias',
       icon: 'fas fa-box',
+      active: true,
       children: [
         {
           id: 'categorias-persona',

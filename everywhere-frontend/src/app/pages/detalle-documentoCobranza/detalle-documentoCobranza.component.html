@@ -317,8 +317,7 @@
                         placeholder="Descripción" rows="1"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-none"></textarea>
                       <div *ngIf="!modoEdicion" class="px-3 py-2 bg-white rounded-lg border border-gray-200/50">
-                        <span class="text-xs font-medium text-gray-900 break-words">{{ detalle.descripcion || 'Sin
-                          descripción' }}</span>
+                        <span class="text-xs font-medium text-gray-900 break-words">{{ detalle.descripcion || 'Sin descripción' }}</span>
                       </div>
                     </div>
                     <!-- Cantidad -->
@@ -340,8 +339,7 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
                       <div *ngIf="!modoEdicion"
                         class="px-3 py-2 bg-white rounded-lg border border-gray-200/50 text-right">
-                        <span class="text-xs font-medium text-gray-900">{{ documento.moneda || 'S/' }} {{ detalle.precio
-                          | number:'1.2-2' }}</span>
+                        <span class="text-xs font-medium text-gray-900">{{ documento.moneda || 'S/' }} {{ detalle.precio | number:'1.2-2' }}</span>
                       </div>
                     </div>
                     <!-- Total -->

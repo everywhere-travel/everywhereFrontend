@@ -601,9 +601,11 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== UTILITY METHODS =====
-  getProductoNombre(productoId: number | undefined): string {
+  getProductoNombre(productoId: number | string | undefined): string {
     if (!productoId) return 'Sin producto';
-    const producto = this.productos.find(p => p.id === productoId);
+    // Convertir a número para comparar
+    const id = typeof productoId === 'string' ? parseInt(productoId, 10) : productoId;
+    const producto = this.productos.find(p => p.id === id);
     return producto ? producto.tipo : 'Producto no encontrado';
   }
 
