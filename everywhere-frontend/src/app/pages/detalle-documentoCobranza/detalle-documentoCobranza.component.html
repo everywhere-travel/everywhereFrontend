@@ -166,7 +166,7 @@
       <main class="px-4 py-8 max-w-full overflow-x-hidden">
 
         <!-- Información del Documento -Formulario Inline -->
-        <form [formGroup]="documentoForm" (ngSubmit)="guardarDocumento()">
+        <form [formGroup]="documentoForm">
           <div
             class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 mb-6 overflow-hidden">
             <div class="p-6">
@@ -189,7 +189,74 @@
               </div>
 
               <!-- Grid de Campos -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Documento/Empresa del Cliente (OBLIGATORIO) -->
+                <div class="group">
+                  <label class="block text-xs font-medium text-gray-600 mb-3">
+                    Documento/Empresa sobre el cual se genera el documento <span class="text-red-500">*</span>
+                  </label>
+                  <div *ngIf="!modoEdicion"
+                    class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                    <div class="w-6 h-6 bg-blue-100 rounded-md flex items-center justify-center">
+                      <i class="fas fa-id-card text-blue-600 text-xs"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">
+                      {{ documento.personaJuridicaId ? 'RUC: ' + documento.personaJuridicaRazonSocial + ' - ' + documento.personaJuridicaRuc : getDetalleDocumentoDisplay() }}
+                    </span>
+                  </div>
+                  <div *ngIf="modoEdicion" class="relative">
+                    <select formControlName="detalleDocumentoId"
+                      class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                      <option [value]="null" disabled>Seleccionar documento o empresa</option>
+                      <!-- Documentos personales (DNI, Pasaporte, etc.) -->
+                      <optgroup label="📄 Documentos Personales del Cliente">
+                        <option *ngFor="let doc of documentosCliente" [value]="'doc_' + doc.id">
+                          {{ doc.documento.tipo }}: {{ doc.numero }}
+                        </option>
+                      </optgroup>
+                      <!-- Empresas asociadas (RUC) -->
+                      <optgroup *ngIf="personasJuridicas.length > 0" label="🏢 Empresas Asociadas al Cliente">
+                        <option *ngFor="let pj of personasJuridicas" [value]="'pj_' + pj.id">
+                          RUC: {{ pj.razonSocial }} - {{ pj.ruc }}
+                        </option>
+                      </optgroup>
+                    </select>
+                    <div *ngIf="documentoForm.get('detalleDocumentoId')?.invalid && documentoForm.get('detalleDocumentoId')?.touched"
+                      class="mt-1 text-xs text-red-500">
+                      <i class="fas fa-exclamation-circle mr-1"></i>
+                      Debes seleccionar un documento o empresa
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sucursal (OBLIGATORIO) -->
+                <div class="group">
+                  <label class="block text-xs font-medium text-gray-600 mb-3">
+                    Sucursal <span class="text-red-500">*</span>
+                  </label>
+                  <div *ngIf="!modoEdicion"
+                    class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                    <div class="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center">
+                      <i class="fas fa-building text-purple-600 text-xs"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">{{ documento.sucursalDescripcion || 'Sin sucursal' }}</span>
+                  </div>
+                  <div *ngIf="modoEdicion" class="relative">
+                    <select formControlName="sucursalId"
+                      class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                      <option [value]="null">Seleccionar sucursal</option>
+                      <option *ngFor="let sucursal of sucursales" [value]="sucursal.id">
+                        {{ sucursal.descripcion }}
+                      </option>
+                    </select>
+                    <div *ngIf="documentoForm.get('sucursalId')?.invalid && documentoForm.get('sucursalId')?.touched"
+                      class="mt-1 text-xs text-red-500">
+                      <i class="fas fa-exclamation-circle mr-1"></i>
+                      La sucursal es obligatoria
+                    </div>
+                  </div>
+                </div>
+
                 <!-- File Venta -->
                 <div class="group">
                   <label class="block text-xs font-medium text-gray-600 mb-3">File de Venta</label>
@@ -222,37 +289,25 @@
                       class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
                   </div>
                 </div>
+              </div>
 
-                <!-- Observaciones -->
-                <div class="group md:col-span-1">
-                  <label class="block text-xs font-medium text-gray-600 mb-3">Observaciones</label>
-                  <div *ngIf="!modoEdicion"
-                    class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
-                    <div class="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center">
-                      <i class="fas fa-sticky-note text-purple-600 text-xs"></i>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900">{{ documento.observaciones || 'Sin observaciones'
-                      }}</span>
+              <!-- Observaciones - FILA COMPLETA SEPARADA -->
+              <div class="mt-4">
+                <label class="block text-xs font-medium text-gray-600 mb-3">Observaciones</label>
+                <div *ngIf="!modoEdicion"
+                  class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200/50 overflow-hidden">
+                  <div class="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i class="fas fa-sticky-note text-purple-600 text-xs"></i>
                   </div>
-                  <div *ngIf="modoEdicion" class="relative md:col-span-1">
-                    <textarea formControlName="observaciones" rows="1"
-                      class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"></textarea>
-                  </div>
+                  <span class="text-sm font-medium text-gray-900 break-words whitespace-pre-wrap overflow-hidden" style="word-break: break-word; overflow-wrap: break-word;">{{ documento.observaciones || 'Sin observaciones' }}</span>
+                </div>
+                <div *ngIf="modoEdicion" class="relative">
+                  <textarea formControlName="observaciones" rows="3"
+                    class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm resize-none"
+                    style="word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap;"></textarea>
                 </div>
               </div>
 
-              <!-- Save Buttons (solo en modo edición) -->
-              <div *ngIf="modoEdicion" class="mt-6 flex gap-3 justify-end border-t pt-4">
-                <button type="button" (click)="salirModoEdicion()"
-                  class="px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">
-                  Cancelar
-                </button>
-                <button type="submit" [disabled]="isLoading"
-                  class="px-6 py-2 bg-everywhere-primary hover:bg-everywhere-secondary text-white rounded-lg font-medium transition-colors disabled:opacity-50">
-                  <i *ngIf="isLoading" class="fas fa-spinner fa-spin mr-2"></i>
-                  Guardar Documento
-                </button>
-              </div>
             </div>
           </div>
         </form>
@@ -270,11 +325,16 @@
                   Detalles del Documento
                 </h3>
                 <div *ngIf="modoEdicion" class="flex gap-3">
-                  <button (click)="guardarCambios()" [disabled]="isLoading"
+                  <button type="button" (click)="salirModoEdicion()"
+                    class="px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancelar
+                  </button>
+                  <button (click)="guardarCambios()" [disabled]="isLoading || !documentoForm.valid"
                     class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2">
                     <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
                     <i *ngIf="!isLoading" class="fas fa-save"></i>
-                    Guardar Cambios
+                    Guardar Todo
                   </button>
                 </div>
               </div>
