@@ -14,8 +14,20 @@ export class DocumentoCobranzaService {
 
   constructor(private http: HttpClient) { }
 
-  createDocumentoCobranza(cotizacionId: number, fileVenta: string, costoEnvio: number): Observable<DocumentoCobranzaDTO> {
-    const params = new HttpParams().set('cotizacionId', cotizacionId.toString()).set('fileVenta', fileVenta).set('costoEnvio', costoEnvio.toString());
+  createDocumentoCobranza(
+    cotizacionId: number,
+    personaJuridicaId?: number,
+    sucursalId?: number
+  ): Observable<DocumentoCobranzaDTO> {
+    let params = new HttpParams().set('cotizacionId', cotizacionId.toString());
+
+    if (personaJuridicaId) {
+      params = params.set('personaJuridicaId', personaJuridicaId.toString());
+    }
+    if (sucursalId) {
+      params = params.set('sucursalId', sucursalId.toString());
+    }
+
     return this.http.post<DocumentoCobranzaDTO>(this.apiUrl, null, { params }).pipe(
       tap(() => this.cacheService.invalidateModule('documentos-cobranza'))
     );

@@ -634,6 +634,145 @@
     </main>
   </div>
 
+  <!-- Modal de Opciones de Creación (Persona Jurídica y Sucursal) -->
+  <div *ngIf="mostrarFormulario && cotizacionSeleccionada" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold">Configurar Documento de Cobranza</h2>
+            <p class="text-white/80 mt-1">Cotización: {{ cotizacionSeleccionada.codigoCotizacion }}</p>
+          </div>
+          <button (click)="cerrarFormulario()"
+            class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenido -->
+      <div class="p-6 overflow-y-auto max-h-[60vh] space-y-6">
+
+        <!-- Selección de Sucursal -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-building mr-2 text-everywhere-primary"></i>
+            Sucursal <span class="text-red-500">*</span>
+          </label>
+          <div class="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-xl p-2">
+            <div *ngFor="let sucursal of sucursales"
+              (click)="seleccionarSucursal(sucursal)"
+              class="p-3 border rounded-lg cursor-pointer transition-all duration-200"
+              [class.border-everywhere-primary]="sucursalSeleccionada?.id === sucursal.id"
+              [class.bg-everywhere-primary/5]="sucursalSeleccionada?.id === sucursal.id"
+              [class.border-gray-200]="sucursalSeleccionada?.id !== sucursal.id"
+              [class.hover:border-everywhere-primary/50]="sucursalSeleccionada?.id !== sucursal.id">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-gray-900">{{ sucursal.descripcion }}</div>
+                  <div class="text-sm text-gray-600">{{ sucursal.direccion }}</div>
+                </div>
+                <i *ngIf="sucursalSeleccionada?.id === sucursal.id"
+                   class="fas fa-check-circle text-everywhere-primary text-xl"></i>
+              </div>
+            </div>
+          </div>
+          <p *ngIf="sucursales.length === 0" class="text-sm text-gray-500 mt-2 italic">
+            No hay sucursales disponibles
+          </p>
+        </div>
+
+        <!-- Selección de Persona Jurídica (Opcional) -->
+        <div *ngIf="personasJuridicas.length > 0">
+          <label class="block text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-building mr-2 text-everywhere-primary"></i>
+            Facturar a nombre de (Opcional)
+          </label>
+
+          <!-- Opción: Usar datos personales -->
+          <div (click)="usarDatosPersonales()"
+            class="p-4 border rounded-lg cursor-pointer transition-all duration-200 mb-2"
+            [class.border-everywhere-primary]="!personaJuridicaSeleccionada"
+            [class.bg-everywhere-primary/5]="!personaJuridicaSeleccionada"
+            [class.border-gray-200]="personaJuridicaSeleccionada"
+            [class.hover:border-everywhere-primary/50]="personaJuridicaSeleccionada">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-medium text-gray-900">
+                  <i class="fas fa-user mr-2"></i>
+                  Usar datos personales (DNI)
+                </div>
+                <div class="text-sm text-gray-600 mt-1">Se usará el documento de identidad de la persona natural</div>
+              </div>
+              <i *ngIf="!personaJuridicaSeleccionada"
+                 class="fas fa-check-circle text-everywhere-primary text-xl"></i>
+            </div>
+          </div>
+
+          <!-- Lista de Personas Jurídicas -->
+          <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-xl p-2">
+            <div *ngFor="let naturalJuridico of personasJuridicas"
+              (click)="seleccionarPersonaJuridica(naturalJuridico)"
+              class="p-3 border rounded-lg cursor-pointer transition-all duration-200"
+              [class.border-everywhere-primary]="personaJuridicaSeleccionada?.id === naturalJuridico.id"
+              [class.bg-everywhere-primary/5]="personaJuridicaSeleccionada?.id === naturalJuridico.id"
+              [class.border-gray-200]="personaJuridicaSeleccionada?.id !== naturalJuridico.id"
+              [class.hover:border-everywhere-primary/50]="personaJuridicaSeleccionada?.id !== naturalJuridico.id">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-gray-900">
+                    <i class="fas fa-building mr-2"></i>
+                    {{ naturalJuridico.personaJuridica.razonSocial }}
+                  </div>
+                  <div class="text-sm text-gray-600">RUC: {{ naturalJuridico.personaJuridica.ruc }}</div>
+                </div>
+                <i *ngIf="personaJuridicaSeleccionada?.id === naturalJuridico.id"
+                   class="fas fa-check-circle text-everywhere-primary text-xl"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <div class="flex gap-3">
+            <i class="fas fa-info-circle text-blue-600 mt-1"></i>
+            <div class="text-sm text-blue-900">
+              <p class="font-semibold mb-1">Información importante:</p>
+              <ul class="list-disc list-inside space-y-1">
+                <li>La sucursal es obligatoria</li>
+                <li *ngIf="personasJuridicas.length > 0">
+                  Si seleccionas una empresa, el documento mostrará su RUC y razón social
+                </li>
+                <li *ngIf="personasJuridicas.length > 0">
+                  Si no seleccionas empresa, se usará el DNI y nombre personal
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="border-t border-gray-200 p-6">
+        <div class="flex items-center justify-end gap-3">
+          <button (click)="cerrarFormulario()"
+            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+            Cancelar
+          </button>
+          <button
+            (click)="confirmarCreacionDocumento()"
+            [disabled]="!sucursalSeleccionada || isLoading"
+            class="px-6 py-3 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+            <i class="fas" [class.fa-spinner]="isLoading" [class.fa-spin]="isLoading" [class.fa-check]="!isLoading"></i>
+            <span>{{ isLoading ? 'Creando...' : 'Crear Documento' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal de Selección de Cotizaciones -->
   <div *ngIf="mostrarModalCotizaciones" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">

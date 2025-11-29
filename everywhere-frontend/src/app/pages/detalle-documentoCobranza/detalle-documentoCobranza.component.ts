@@ -12,6 +12,9 @@ import { DetalleDocumentoCobranzaService } from '../../core/service/DetalleDocum
 import { ProductoService } from '../../core/service/Producto/producto.service';
 import { LoadingService } from '../../core/service/loading.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
+import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
+import { PersonaService } from '../../core/service/persona/persona.service';
 
 // Models
 import { DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
@@ -20,6 +23,9 @@ import {
   DetalleDocumentoCobranzaResponseDTO
 } from '../../shared/models/DocumetnoCobranza/detalleDocumentoCobranza.model';
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
+import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
+import { NaturalJuridicaResponse } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
+import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -51,6 +57,9 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private productoService = inject(ProductoService);
   private loadingService = inject(LoadingService);
   private fb = inject(FormBuilder);
+  private sucursalService = inject(SucursalService);
+  private naturalJuridicoService = inject(NaturalJuridicoService);
+  private personaService = inject(PersonaService);
 
   // Data
   documento: DocumentoCobranzaResponseDTO | null = null;
@@ -59,6 +68,12 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   detallesFijos: DetalleDocumentoCobranzaResponseDTO[] = []; // Detalles temporales para agregar en modo edición
   detallesDocumento: DetalleDocumentoResponse[] = [];
   productos: ProductoResponse[] = [];
+  sucursales: SucursalResponse[] = [];
+  personasJuridicas: PersonaJuridicaResponse[] = [];
+  documentosCliente: DetalleDocumentoResponse[] = [];
+  sucursalSeleccionada: number | null = null;
+  personaJuridicaSeleccionada: number | null = null;
+  detalleDocumentoSeleccionado: number | null = null;
 
   // Forms
   detalleForm: FormGroup;
@@ -213,7 +228,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       fileVenta: ['', [Validators.maxLength(100)]],
       costoEnvio: [0, [Validators.min(0)]],
       observaciones: ['', [Validators.maxLength(500)]],
-      detalleDocumentoId: [null]
+      detalleDocumentoId: [null, [Validators.required]], // Puede contener 'doc_123' o 'pj_456'
+      sucursalId: [null, [Validators.required]]
     });
   }
 
@@ -498,11 +514,27 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     }
 
     const formValue = this.documentoForm.value;
+
+    // Separar el valor combinado del dropdown
+    let detalleDocumentoId: number | undefined = undefined;
+    let personaJuridicaId: number | undefined = undefined;
+
+    if (formValue.detalleDocumentoId) {
+      const valor = formValue.detalleDocumentoId.toString();
+      if (valor.startsWith('doc_')) {
+        detalleDocumentoId = parseInt(valor.substring(4));
+      } else if (valor.startsWith('pj_')) {
+        personaJuridicaId = parseInt(valor.substring(3));
+      }
+    }
+
     const updateDTO: DocumentoCobranzaUpdateDTO = {
       fileVenta: formValue.fileVenta?.trim() || '',
       costoEnvio: formValue.costoEnvio || 0,
       observaciones: formValue.observaciones?.trim() || '',
-      detalleDocumentoId: formValue.detalleDocumentoId || undefined
+      detalleDocumentoId: detalleDocumentoId,
+      sucursalId: formValue.sucursalId || undefined,
+      personaJuridicaId: personaJuridicaId
     };
 
     this.isLoading = true;
@@ -563,13 +595,28 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   irAEditarDocumento(): void {
     this.modoEdicion = true;
+    // Cargar opciones de sucursales, documentos del cliente y personas jurídicas
+    this.cargarOpcionesEdicion();
     // Populate form with current document data
     if (this.documento) {
+      // Determinar el valor del dropdown combinado
+      let valorCombinado = null;
+      if (this.documento.personaJuridicaId) {
+        // Si tiene PersonaJuridica, usar 'pj_ID'
+        valorCombinado = 'pj_' + this.documento.personaJuridicaId;
+      } else if (this.documento.detalleDocumentoId) {
+        // Si tiene DetalleDocumento, usar 'doc_ID'
+        valorCombinado = 'doc_' + this.documento.detalleDocumentoId;
+      }
+
       this.documentoForm.patchValue({
         fileVenta: this.documento.fileVenta || '',
         costoEnvio: this.documento.costoEnvio || 0,
-        observaciones: this.documento.observaciones || ''
+        observaciones: this.documento.observaciones || '',
+        detalleDocumentoId: valorCombinado,
+        sucursalId: this.documento.sucursalId || null
       });
+      this.sucursalSeleccionada = this.documento.sucursalId || null;
     }
     this.router.navigate([], {
       relativeTo: this.route,
@@ -635,6 +682,40 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   trackByDetalle(index: number, detalle: DetalleDocumentoCobranzaResponseDTO): number {
     return detalle.id || index;
+  }
+
+  // ============ OPCIONES DE EDICIÓN =============
+  async cargarOpcionesEdicion(): Promise<void> {
+    try {
+      // Cargar sucursales
+      this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
+
+      // Cargar documentos del cliente (DNI, Pasaporte, etc.)
+      const personaId = this.documento?.personaId;
+
+      if (personaId) {
+        try {
+          // Cargar documentos del cliente
+          this.documentosCliente = await this.detalleDocumentoService
+            .findByPersonaId(personaId)
+            .toPromise() || [];
+
+          // Cargar personas jurídicas asociadas (empresas/RUC)
+          // El backend tiene PersonaNaturalRepository.findByPersonasId(personaId)
+          // que convierte automáticamente de personas.id a persona_natural.id
+          const relaciones = await this.naturalJuridicoService
+            .findByPersonaNaturalId(personaId)
+            .toPromise() || [];
+
+          this.personasJuridicas = relaciones.map(r => r.personaJuridica);
+        } catch (error) {
+          this.documentosCliente = [];
+          this.personasJuridicas = [];
+        }
+      }
+    } catch (error) {
+      this.error = 'Error al cargar las opciones de edición';
+    }
   }
 
   // ============ HELPER METHODS =============
@@ -743,10 +824,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.loadingService.setLoading(true);
 
     try {
-      // 1. Guardar documento si hay cambios
-      if (this.documentoForm.dirty) {
-        await this.guardarDocumentoAsync();
-      }
+      await this.guardarDocumentoAsync();
 
       // 2. Actualizar detalles existentes
       for (const detalle of this.detalles) {
@@ -795,15 +873,36 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
    */
   private async guardarDocumentoAsync(): Promise<void> {
     if (!this.documentoForm.valid || !this.documentoId) {
+      console.error('Formulario inválido o sin documentoId', {
+        valid: this.documentoForm.valid,
+        documentoId: this.documentoId,
+        errors: this.documentoForm.errors
+      });
       return;
     }
 
     const formValue = this.documentoForm.value;
+
+    // Separar el valor combinado del dropdown
+    let detalleDocumentoId: number | undefined = undefined;
+    let personaJuridicaId: number | undefined = undefined;
+
+    if (formValue.detalleDocumentoId) {
+      const valor = formValue.detalleDocumentoId.toString();
+      if (valor.startsWith('doc_')) {
+        detalleDocumentoId = parseInt(valor.substring(4));
+      } else if (valor.startsWith('pj_')) {
+        personaJuridicaId = parseInt(valor.substring(3));
+      }
+    }
+
     const updateDTO: DocumentoCobranzaUpdateDTO = {
       fileVenta: formValue.fileVenta?.trim() || '',
       costoEnvio: formValue.costoEnvio || 0,
       observaciones: formValue.observaciones?.trim() || '',
-      detalleDocumentoId: formValue.detalleDocumentoId || undefined
+      detalleDocumentoId: detalleDocumentoId,
+      sucursalId: formValue.sucursalId || undefined,
+      personaJuridicaId: personaJuridicaId
     };
 
     const response = await this.documentoCobranzaService.updateDocumento(this.documentoId, updateDTO).toPromise();
