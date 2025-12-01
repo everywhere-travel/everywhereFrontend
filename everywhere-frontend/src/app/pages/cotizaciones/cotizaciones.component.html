@@ -407,6 +407,11 @@
                         title="Editar">
                         <i class="fas fa-edit"></i>
                       </button>
+                      <button (click)="descargarWord(cotizacion)"
+                        class="inline-flex items-center p-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-900 rounded-lg transition-all duration-200"
+                        title="Descargar Word">
+                        <i class="fas fa-file-word"></i>
+                      </button>
                       <!-- Botón de eliminar con presión mantenida -->
                       <button (mousedown)="iniciarEliminacion(cotizacion)" (mouseup)="cancelarEliminacion()"
                         (mouseleave)="cancelarEliminacion()" (touchstart)="iniciarEliminacion(cotizacion)"
@@ -556,6 +561,10 @@
                   class="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105">
                   <i class="fas fa-edit"></i>Editar
                 </button>
+                <button (click)="descargarWord(cotizacion)"
+                  class="flex-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105">
+                  <i class="fas fa-file-word"></i>Word
+                </button>
                 <button (mousedown)="iniciarEliminacion(cotizacion)" (mouseup)="cancelarEliminacion()"
                   (mouseleave)="cancelarEliminacion()" (touchstart)="iniciarEliminacion(cotizacion)"
                   (touchend)="cancelarEliminacion()"
@@ -637,6 +646,11 @@
                   class="p-2 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded transition-colors duration-200"
                   title="Editar">
                   <i class="fas fa-edit text-sm"></i>
+                </button>
+                <button (click)="descargarWord(cotizacion)"
+                  class="p-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded transition-colors duration-200"
+                  title="Descargar Word">
+                  <i class="fas fa-file-word text-sm"></i>
                 </button>
                 <button (mousedown)="iniciarEliminacion(cotizacion)" (mouseup)="cancelarEliminacion()"
                   (mouseleave)="cancelarEliminacion()" (touchstart)="iniciarEliminacion(cotizacion)"

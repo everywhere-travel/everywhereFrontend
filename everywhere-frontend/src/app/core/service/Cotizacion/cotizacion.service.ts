@@ -68,4 +68,26 @@ export class CotizacionService {
 
     return this.http.get<CotizacionResponse[]>(`${this.apiUrl}/sin-liquidacion`, options);
   }
+
+  generarDocx(cotizacionId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${cotizacionId}/generar-docx`, {
+      responseType: 'blob'
+    });
+  }
+
+  descargarDocx(cotizacionId: number, codigoCotizacion: string): void {
+    this.generarDocx(cotizacionId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Cotizacion_${codigoCotizacion}.docx`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error) => {
+        console.error('Error al descargar el documento:', error);
+      }
+    });
+  }
 }
