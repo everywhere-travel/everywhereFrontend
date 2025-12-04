@@ -4,8 +4,9 @@ import { Router } from '@angular/router';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/detalle-documento.service';
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
-import { ClienteDetailModalComponent } from './../../shared/components/cliente/cliente-detail-modal/cliente-detail-modal.component';
+import { ClienteDetailModalComponent, DocumentoCliente } from './../../shared/components/cliente/cliente-detail-modal/cliente-detail-modal.component';
 import { ClienteTableComponent } from './../../shared/components/cliente/cliente-table/cliente-table.component';
 import { ErrorModalComponent, ErrorModalData } from '../../shared/components/error-modal/error-modal.component';
 
@@ -27,6 +28,7 @@ export interface PersonaTabla {
   email?: string;
   telefono?: string;
   direccion?: string;
+  documentos?: DocumentoCliente[];
 }
 
 @Component({
@@ -198,6 +200,7 @@ export class PersonasComponent implements OnInit {
   constructor(
     private personaNaturalService: PersonaNaturalService,
     private personaJuridicaService: PersonaJuridicaService,
+    private detalleDocumentoService: DetalleDocumentoService,
     private router: Router,
     private authService: AuthServiceService
   ) {}
@@ -275,7 +278,27 @@ export class PersonasComponent implements OnInit {
       const personasTabla: PersonaTabla[] = [];
 
       if (naturales) {
-        naturales.forEach(natural => {
+        // Cargar documentos para cada persona natural
+        const naturalesConDocumentos = await Promise.all(
+          naturales.map(async natural => {
+            try {
+              const documentos = await this.detalleDocumentoService.findByPersonaNaturalId(natural.id).toPromise();
+              return {
+                natural,
+                documentos: documentos?.map(doc => ({
+                  numero: doc.numero || '',
+                  tipo: doc.documento?.tipo || '',
+                  origen: doc.origen || ''
+                })) || []
+              };
+            } catch (error) {
+              console.error(`Error al cargar documentos para persona ${natural.id}:`, error);
+              return { natural, documentos: [] };
+            }
+          })
+        );
+
+        naturalesConDocumentos.forEach(({ natural, documentos }) => {
           personasTabla.push({
             id: natural.id,
             tipo: 'natural',
@@ -286,7 +309,8 @@ export class PersonasComponent implements OnInit {
             documento: natural.documento || '',
             email: natural.persona?.correos?.[0]?.email,
             telefono: natural.persona?.telefonos?.[0]?.numero,
-            direccion: natural.persona?.direccion
+            direccion: natural.persona?.direccion,
+            documentos: documentos
           });
         });
       }

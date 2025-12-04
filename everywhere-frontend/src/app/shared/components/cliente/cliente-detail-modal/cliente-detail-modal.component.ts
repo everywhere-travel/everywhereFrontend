@@ -1,6 +1,12 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
+export interface DocumentoCliente {
+  numero: string;
+  tipo: string;
+  origen: string;
+}
+
 export interface PersonaTabla {
   id: number;
   tipo: 'natural' | 'juridica';
@@ -14,6 +20,7 @@ export interface PersonaTabla {
   email?: string;
   telefono?: string;
   direccion?: string;
+  documentos?: DocumentoCliente[];
 }
 
 @Component({
