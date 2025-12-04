@@ -1245,11 +1245,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   async crearLiquidacionDesdeCotizacion(cotizacion: CotizacionResponse): Promise<void> {
-    try {
-      const cotizacionCompleta = await this.cotizacionService.getCotizacionConDetalles(cotizacion.id).toPromise();
-
-      if (!cotizacionCompleta) throw new Error('No se pudieron cargar los detalles de la cotización');
-
+    try { 
       // Mapear datos de cotización a liquidación
       const liquidacionRequest: LiquidacionRequest = {
         cotizacionId: cotizacion.id,
@@ -1261,9 +1257,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       // Crear la liquidación
       const nuevaLiquidacion = await this.liquidacionService.createLiquidacionConCotizacion(cotizacion.id, liquidacionRequest).toPromise();
 
-      if (!nuevaLiquidacion) throw new Error('Error al crear la liquidación');
-
-      await this.crearDetallesLiquidacion(nuevaLiquidacion.id, cotizacionCompleta);
+      if (!nuevaLiquidacion) throw new Error('Error al crear la liquidación'); 
 
       this.mostrarModalCotizaciones = false;
       this.cotizacionSeleccionada = null;
@@ -1275,52 +1269,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     } catch (error) {
       this.showError('Error al crear la liquidación desde la cotización: ' + (error as any)?.message || 'Error desconocido');
       throw error;
-    }
-  }
-
-  async crearDetallesLiquidacion(liquidacionId: number, cotizacionCompleta: CotizacionConDetallesResponseDTO): Promise<void> {
-    if (!cotizacionCompleta.detalles || cotizacionCompleta.detalles.length === 0) return;
-
-    // Filtrar solo los detalles que están seleccionados (seleccionado = true)
-    const detallesSeleccionados = cotizacionCompleta.detalles.filter((detalle: any) => detalle.seleccionado === true);
-
-    if (detallesSeleccionados.length === 0) {
-      this.showError('No hay detalles seleccionados en la cotización');
-      return;
-    }
-
-    // Procesar cada detalle seleccionado
-    for (const detalleCot of detallesSeleccionados) {
-      const cantidad = detalleCot.cantidad || 1;
-
-      // Si cantidad > 1, crear un detalle de liquidación por cada unidad
-      for (let i = 0; i < cantidad; i++) {
-        // Construir request con campos disponibles (ahora son opcionales en backend)
-        const detalleRequest: DetalleLiquidacionRequest = {
-          costoTicket: detalleCot.precioHistorico || 0,
-          cargoServicio: detalleCot.comision || 0,
-
-          // Campos opcionales - solo agregar si están disponibles
-          ...(detalleCot.producto?.id && { productoId: detalleCot.producto.id }),
-          ...(detalleCot.proveedor?.id && { proveedorId: detalleCot.proveedor.id }),
-
-          // Campos básicos con valores por defecto
-          ticket: '',
-          valorVenta: 0,
-          facturaCompra: '',
-          boletaPasajero: '',
-          montoDescuento: 0,
-          pagoPaxUSD: 0,
-          pagoPaxPEN: 0
-        };
-
-        try {
-          const detalleCreado = await this.detalleLiquidacionService.createDetalleLiquidacion(liquidacionId, detalleRequest).toPromise();
-        } catch (error) {
-          console.error('Error creando detalle:', error);
-          throw error;
-        }
-      }
     }
   }
 
