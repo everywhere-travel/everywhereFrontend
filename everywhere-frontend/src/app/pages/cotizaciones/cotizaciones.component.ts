@@ -866,6 +866,22 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
   }
 
+  descargarWord(cotizacion: CotizacionResponse): void {
+    if (!cotizacion || !cotizacion.id) {
+      this.showError('No se puede generar el documento. Cotización inválida.');
+      return;
+    }
+
+    this.isLoading = true;
+    this.cotizacionService.descargarDocx(cotizacion.id, cotizacion.codigoCotizacion);
+
+    // Simulamos un pequeño delay para mostrar feedback al usuario
+    setTimeout(() => {
+      this.isLoading = false;
+      this.showSuccess('Documento Word generado correctamente');
+    }, 1000);
+  }
+
   // Métodos auxiliares para la visualización
   getCategoriasNoFijas(): any[] {
     return this.getCategoriasConDetalles().filter(c => c.id !== 1);
