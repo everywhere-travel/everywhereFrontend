@@ -925,11 +925,17 @@
                 </span>
               </div>
               <p class="text-gray-700 font-medium">{{ getPersonaDisplayName(cotizacion.personas?.id || 0) }}</p>
-              <p class="text-gray-600 text-sm">{{ cotizacion.observacion || 'Sin descripción' }}</p>
+              <p class="text-gray-600 text-sm">{{ cotizacion.origenDestino || 'Sin destino' }}</p>
               <div class="flex items-center gap-4 mt-2">
                 <span class="text-sm text-gray-500">
                   <i class="fas fa-calendar-alt mr-1"></i>
+                  <span class="text-gray-500 text-xs">Salida:</span>
                   {{ formatDate(cotizacion.fechaSalida) }}
+                </span>
+                <span class="text-sm text-gray-500">
+                  <i class="fas fa-calendar-alt mr-1"></i>
+                  <span class="text-gray-500 text-xs">Regreso:</span>
+                  {{ formatDate(cotizacion.fechaRegreso) }}
                 </span>
                 <span class="text-sm text-gray-500">
                   <i class="fas fa-users mr-1"></i>

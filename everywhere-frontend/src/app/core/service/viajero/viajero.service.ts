@@ -45,6 +45,11 @@ export class ViajeroService {
   deleteById(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseURL}/${id}`);
   }
+
+  findAllWithPersonaNatural(): Observable<ViajeroResponse[]> {
+    return this.http.get<ViajeroResponse[]>(`${this.baseURL}/con-persona-natural`);
+  }
+
  /*
   exportViajeros(viajeroIds: number[]): Observable<ViajeroResponse[]> {
     return this.http.post<ViajeroResponse[]>(`${this.baseURL}/export/json`, viajeroIds);

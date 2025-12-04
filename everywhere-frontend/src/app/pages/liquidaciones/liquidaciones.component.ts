@@ -920,7 +920,11 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   formatDate(dateString: string | undefined): string {
     if (!dateString) return '';
-    return new Date(dateString).toLocaleDateString('es-ES');
+    // Extraer solo la parte de la fecha (YYYY-MM-DD) y formatear manualmente
+    // para evitar problemas de zona horaria
+    const dateOnly = dateString.split('T')[0]; // "2024-11-20"
+    const [year, month, day] = dateOnly.split('-');
+    return `${day}/${month}/${year}`;
   }
 
   formatDateTime(dateString: string | undefined): string {
@@ -1203,7 +1207,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   // ===== COTIZACIONES METHODS =====
   async loadCotizaciones(): Promise<void> {
     try {
-      this.cotizaciones = await this.cotizacionService.getCotizacionSinLiquidacion().toPromise() || [];
+      // Siempre bypassear cache para obtener datos frescos de cotizaciones disponibles
+      this.cotizaciones = await this.cotizacionService.getCotizacionSinLiquidacion(true).toPromise() || [];
       this.cotizacionesFiltradas = [...this.cotizaciones];
     } catch (error) {
       console.error('Error en loadCotizaciones:', error);

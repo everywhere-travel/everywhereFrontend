@@ -12,6 +12,9 @@ import { DetalleDocumentoCobranzaService } from '../../core/service/DetalleDocum
 import { ProductoService } from '../../core/service/Producto/producto.service';
 import { LoadingService } from '../../core/service/loading.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
+import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
+import { PersonaService } from '../../core/service/persona/persona.service';
 
 // Models
 import { DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
@@ -20,6 +23,9 @@ import {
   DetalleDocumentoCobranzaResponseDTO
 } from '../../shared/models/DocumetnoCobranza/detalleDocumentoCobranza.model';
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
+import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
+import { NaturalJuridicaResponse } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
+import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -51,13 +57,23 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private productoService = inject(ProductoService);
   private loadingService = inject(LoadingService);
   private fb = inject(FormBuilder);
+  private sucursalService = inject(SucursalService);
+  private naturalJuridicoService = inject(NaturalJuridicoService);
+  private personaService = inject(PersonaService);
 
   // Data
   documento: DocumentoCobranzaResponseDTO | null = null;
   documentoId: number | null = null;
   detalles: DetalleDocumentoCobranzaResponseDTO[] = [];
+  detallesFijos: DetalleDocumentoCobranzaResponseDTO[] = []; // Detalles temporales para agregar en modo edición
   detallesDocumento: DetalleDocumentoResponse[] = [];
   productos: ProductoResponse[] = [];
+  sucursales: SucursalResponse[] = [];
+  personasJuridicas: PersonaJuridicaResponse[] = [];
+  documentosCliente: DetalleDocumentoResponse[] = [];
+  sucursalSeleccionada: number | null = null;
+  personaJuridicaSeleccionada: number | null = null;
+  detalleDocumentoSeleccionado: number | null = null;
 
   // Forms
   detalleForm: FormGroup;
@@ -212,7 +228,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       fileVenta: ['', [Validators.maxLength(100)]],
       costoEnvio: [0, [Validators.min(0)]],
       observaciones: ['', [Validators.maxLength(500)]],
-      detalleDocumentoId: [null]
+      detalleDocumentoId: [null, [Validators.required]], // Puede contener 'doc_123' o 'pj_456'
+      sucursalId: [null, [Validators.required]]
     });
   }
 
@@ -497,11 +514,27 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     }
 
     const formValue = this.documentoForm.value;
+
+    // Separar el valor combinado del dropdown
+    let detalleDocumentoId: number | undefined = undefined;
+    let personaJuridicaId: number | undefined = undefined;
+
+    if (formValue.detalleDocumentoId) {
+      const valor = formValue.detalleDocumentoId.toString();
+      if (valor.startsWith('doc_')) {
+        detalleDocumentoId = parseInt(valor.substring(4));
+      } else if (valor.startsWith('pj_')) {
+        personaJuridicaId = parseInt(valor.substring(3));
+      }
+    }
+
     const updateDTO: DocumentoCobranzaUpdateDTO = {
       fileVenta: formValue.fileVenta?.trim() || '',
       costoEnvio: formValue.costoEnvio || 0,
       observaciones: formValue.observaciones?.trim() || '',
-      detalleDocumentoId: formValue.detalleDocumentoId || undefined
+      detalleDocumentoId: detalleDocumentoId,
+      sucursalId: formValue.sucursalId || undefined,
+      personaJuridicaId: personaJuridicaId
     };
 
     this.isLoading = true;
@@ -519,7 +552,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
         if (response) {
           this.success = 'Documento actualizado correctamente';
           this.documento = response;
-          this.cancelarEdicionDocumento();
+          this.salirModoEdicion();
         }
       });
 
@@ -562,6 +595,29 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   irAEditarDocumento(): void {
     this.modoEdicion = true;
+    // Cargar opciones de sucursales, documentos del cliente y personas jurídicas
+    this.cargarOpcionesEdicion();
+    // Populate form with current document data
+    if (this.documento) {
+      // Determinar el valor del dropdown combinado
+      let valorCombinado = null;
+      if (this.documento.personaJuridicaId) {
+        // Si tiene PersonaJuridica, usar 'pj_ID'
+        valorCombinado = 'pj_' + this.documento.personaJuridicaId;
+      } else if (this.documento.detalleDocumentoId) {
+        // Si tiene DetalleDocumento, usar 'doc_ID'
+        valorCombinado = 'doc_' + this.documento.detalleDocumentoId;
+      }
+
+      this.documentoForm.patchValue({
+        fileVenta: this.documento.fileVenta || '',
+        costoEnvio: this.documento.costoEnvio || 0,
+        observaciones: this.documento.observaciones || '',
+        detalleDocumentoId: valorCombinado,
+        sucursalId: this.documento.sucursalId || null
+      });
+      this.sucursalSeleccionada = this.documento.sucursalId || null;
+    }
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { modo: 'editar' },
@@ -573,6 +629,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.modoEdicion = false;
     this.showDetalleForm = false;
     this.showDocumentoForm = false;
+    this.documentoForm.reset();
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { modo: null },
@@ -591,9 +648,11 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== UTILITY METHODS =====
-  getProductoNombre(productoId: number | undefined): string {
+  getProductoNombre(productoId: number | string | undefined): string {
     if (!productoId) return 'Sin producto';
-    const producto = this.productos.find(p => p.id === productoId);
+    // Convertir a número para comparar
+    const id = typeof productoId === 'string' ? parseInt(productoId, 10) : productoId;
+    const producto = this.productos.find(p => p.id === id);
     return producto ? producto.tipo : 'Producto no encontrado';
   }
 
@@ -625,7 +684,49 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     return detalle.id || index;
   }
 
+  // ============ OPCIONES DE EDICIÓN =============
+  async cargarOpcionesEdicion(): Promise<void> {
+    try {
+      // Cargar sucursales
+      this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
+
+      // Cargar documentos del cliente (DNI, Pasaporte, etc.)
+      const personaId = this.documento?.personaId;
+
+      if (personaId) {
+        try {
+          // Cargar documentos del cliente
+          this.documentosCliente = await this.detalleDocumentoService
+            .findByPersonaId(personaId)
+            .toPromise() || [];
+
+          // Cargar personas jurídicas asociadas (empresas/RUC)
+          // El backend tiene PersonaNaturalRepository.findByPersonasId(personaId)
+          // que convierte automáticamente de personas.id a persona_natural.id
+          const relaciones = await this.naturalJuridicoService
+            .findByPersonaNaturalId(personaId)
+            .toPromise() || [];
+
+          this.personasJuridicas = relaciones.map(r => r.personaJuridica);
+        } catch (error) {
+          this.documentosCliente = [];
+          this.personasJuridicas = [];
+        }
+      }
+    } catch (error) {
+      this.error = 'Error al cargar las opciones de edición';
+    }
+  }
+
   // ============ HELPER METHODS =============
+  getDetalleDocumentoDisplay(): string {
+    const detalleDocId = (this.documento as any)?.detalleDocumentoId;
+    if (!detalleDocId) return 'Sin detalle de documento';
+    const detalle = this.detallesDocumento.find(d => d.id === detalleDocId);
+    if (!detalle) return 'Sin detalle de documento';
+    return `${detalle.numero} - ${detalle.documento?.tipo || 'N/A'}`;
+  }
+
   getDetalleDocumentoInfo(id: number): DetalleDocumentoResponse | undefined {
     return this.detallesDocumento.find(d => d.id === id);
   }
@@ -634,6 +735,179 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     const detalleId = event.target.value;
     if (detalleId) {
       const detalle = this.getDetalleDocumentoInfo(Number(detalleId));
+    }
+  }
+
+  // ============ INLINE EDITING METHODS =============
+
+  /**
+   * Actualiza un campo de un detalle original (ya existente en BD)
+   */
+  onDetalleOriginalChange(index: number, field: string, value: any): void {
+    if (index >= 0 && index < this.detalles.length) {
+      const detalle = this.detalles[index];
+      (detalle as any)[field] = value;
+    }
+  }
+
+  /**
+   * Elimina un detalle original del array (marca para eliminación)
+   */
+  eliminarDetalleOriginal(index: number): void {
+    if (index >= 0 && index < this.detalles.length) {
+      if (confirm('¿Está seguro de eliminar este detalle?')) {
+        this.detalles.splice(index, 1);
+      }
+    }
+  }
+
+  /**
+   * Actualiza un campo de un detalle fijo (temporal, no guardado aún)
+   */
+  onDetalleFijoChange(index: number, field: string, value: any): void {
+    if (index >= 0 && index < this.detallesFijos.length) {
+      const detalle = this.detallesFijos[index];
+      (detalle as any)[field] = value;
+    }
+  }
+
+  /**
+   * Elimina un detalle fijo del array temporal
+   */
+  eliminarDetalleFijo(index: number): void {
+    if (index >= 0 && index < this.detallesFijos.length) {
+      this.detallesFijos.splice(index, 1);
+    }
+  }
+
+  /**
+   * Agrega un nuevo detalle al array de detalles fijos desde el formulario
+   */
+  agregarDetalleFijo(): void {
+    if (!this.detalleForm.valid) {
+      Object.keys(this.detalleForm.controls).forEach(key => {
+        this.detalleForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
+    const formValue = this.detalleForm.value;
+    const nuevoDetalle: DetalleDocumentoCobranzaResponseDTO = {
+      cantidad: formValue.cantidad || 1,
+      descripcion: formValue.descripcion || '',
+      precio: formValue.precio || 0,
+      productoId: formValue.productoId || undefined,
+      documentoCobranzaId: this.documentoId || undefined
+    };
+
+    this.detallesFijos.push(nuevoDetalle);
+
+    // Reset form
+    this.detalleForm.reset({
+      cantidad: 1,
+      descripcion: '',
+      precio: 0,
+      productoId: null
+    });
+  }
+
+  /**
+   * Guarda todos los cambios: detalles modificados, nuevos detalles fijos y documento
+   */
+  async guardarCambios(): Promise<void> {
+    if (!this.documentoId) {
+      this.error = 'No se puede guardar sin un ID de documento';
+      return;
+    }
+
+    this.isLoading = true;
+    this.loadingService.setLoading(true);
+
+    try {
+      await this.guardarDocumentoAsync();
+
+      // 2. Actualizar detalles existentes
+      for (const detalle of this.detalles) {
+        if (detalle.id) {
+          const updateDTO: DetalleDocumentoCobranzaRequestDTO = {
+            cantidad: detalle.cantidad,
+            descripcion: detalle.descripcion || '',
+            precio: detalle.precio,
+            productoId: detalle.productoId || 0,
+            documentoCobranzaId: this.documentoId
+          };
+
+          await this.detalleDocumentoCobranzaService.updateDetalle(detalle.id, updateDTO).toPromise();
+        }
+      }
+
+      // 3. Crear nuevos detalles fijos
+      for (const detalleFijo of this.detallesFijos) {
+        const createDTO: DetalleDocumentoCobranzaRequestDTO = {
+          cantidad: detalleFijo.cantidad,
+          descripcion: detalleFijo.descripcion || '',
+          precio: detalleFijo.precio,
+          productoId: detalleFijo.productoId || 0,
+          documentoCobranzaId: this.documentoId
+        };
+
+        await this.detalleDocumentoCobranzaService.createDetalle(createDTO).toPromise();
+      }
+
+      this.success = 'Cambios guardados correctamente';
+      this.detallesFijos = []; // Limpiar detalles temporales
+      this.recargarDetalles();
+      this.salirModoEdicion();
+
+    } catch (error) {
+      console.error('Error al guardar cambios:', error);
+      this.error = 'Error al guardar los cambios';
+    } finally {
+      this.isLoading = false;
+      this.loadingService.setLoading(false);
+    }
+  }
+
+  /**
+   * Versión async del guardar documento
+   */
+  private async guardarDocumentoAsync(): Promise<void> {
+    if (!this.documentoForm.valid || !this.documentoId) {
+      console.error('Formulario inválido o sin documentoId', {
+        valid: this.documentoForm.valid,
+        documentoId: this.documentoId,
+        errors: this.documentoForm.errors
+      });
+      return;
+    }
+
+    const formValue = this.documentoForm.value;
+
+    // Separar el valor combinado del dropdown
+    let detalleDocumentoId: number | undefined = undefined;
+    let personaJuridicaId: number | undefined = undefined;
+
+    if (formValue.detalleDocumentoId) {
+      const valor = formValue.detalleDocumentoId.toString();
+      if (valor.startsWith('doc_')) {
+        detalleDocumentoId = parseInt(valor.substring(4));
+      } else if (valor.startsWith('pj_')) {
+        personaJuridicaId = parseInt(valor.substring(3));
+      }
+    }
+
+    const updateDTO: DocumentoCobranzaUpdateDTO = {
+      fileVenta: formValue.fileVenta?.trim() || '',
+      costoEnvio: formValue.costoEnvio || 0,
+      observaciones: formValue.observaciones?.trim() || '',
+      detalleDocumentoId: detalleDocumentoId,
+      sucursalId: formValue.sucursalId || undefined,
+      personaJuridicaId: personaJuridicaId
+    };
+
+    const response = await this.documentoCobranzaService.updateDocumento(this.documentoId, updateDTO).toPromise();
+    if (response) {
+      this.documento = response;
     }
   }
 }

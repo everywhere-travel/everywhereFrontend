@@ -9,10 +9,15 @@ import { DocumentoCobranzaService } from '../../core/service/DocumentoCobranza/D
 import { PdfService } from '../../core/service/Pdf/Pdf.service';
 import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
+import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
+import { PersonaService } from '../../core/service/persona/persona.service';
 
 // Models
 import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import { CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
+import { NaturalJuridicaResponse } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
+import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -37,6 +42,9 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   private documentoCobranzaService = inject(DocumentoCobranzaService);
   private pdfService = inject(PdfService);
   private cotizacionService = inject(CotizacionService);
+  private naturalJuridicoService = inject(NaturalJuridicoService);
+  private sucursalService = inject(SucursalService);
+  private personaService = inject(PersonaService);
 
   // ===== UI STATE =====
   loading: boolean = false;
@@ -54,10 +62,15 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   filteredDocumentos: DocumentoCobranzaResponseDTO[] = [];
   cotizaciones: CotizacionResponse[] = [];
   cotizacionesFiltradas: CotizacionResponse[] = [];
+  personasJuridicas: NaturalJuridicaResponse[] = [];
+  sucursales: SucursalResponse[] = [];
 
   // ===== SELECTION STATE =====
   documentoSeleccionado: DocumentoCobranzaResponseDTO | null = null;
   cotizacionSeleccionada: CotizacionResponse | null = null;
+  personaJuridicaSeleccionada: NaturalJuridicaResponse | null = null;
+  sucursalSeleccionada: SucursalResponse | null = null;
+  personaNaturalIdActual: number | null = null;
   selectedItems: number[] = [];
   allSelected: boolean = false;
   someSelected: boolean = false;
@@ -490,6 +503,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.editandoDocumento = false;
     this.documentoSeleccionado = null;
     this.cotizacionSeleccionada = null;
+    this.personaJuridicaSeleccionada = null;
+    this.sucursalSeleccionada = null;
+    this.personaNaturalIdActual = null;
+    this.personasJuridicas = [];
+    this.sucursales = [];
     this.resetForm();
   }
 
@@ -545,7 +563,8 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   async seleccionarCotizacion(cotizacion: CotizacionResponse): Promise<void> {
     this.cotizacionSeleccionada = cotizacion;
     this.mostrarModalCotizaciones = false;
-    await this.crearDocumentoDesdeCotizacion(cotizacion);
+    // Cargar personas jurídicas y sucursales para la selección
+    await this.cargarOpcionesCreacion(cotizacion);
   }
 
   cancelarSeleccionCotizacion(): void {
@@ -570,39 +589,6 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
              personaDisplay.includes(searchTerm) ||
              origenDestino.includes(searchTerm);
     });
-  }
-
-  // ===== CRUD OPERATIONS =====
-  async crearDocumentoDesdeCotizacion(cotizacion: CotizacionResponse): Promise<void> {
-    try {
-      this.isLoading = true;
-
-      // Default values for creation
-      const fileVenta = `FILE-${cotizacion.codigoCotizacion}`;
-      const costoEnvio = 0;
-
-      this.documentoCobranzaService.createDocumentoCobranza(
-        cotizacion.id,
-        fileVenta,
-        costoEnvio
-      ).subscribe({
-        next: async (documento) => {
-          this.showSuccess('Documento de cobranza creado exitosamente');
-          await this.recargarDocumentos();
-          this.cerrarFormulario();
-        },
-        error: (error) => {
-          console.error('Error al crear documento:', error);
-          this.showError('Error al crear el documento de cobranza');
-        },
-        complete: () => {
-          this.isLoading = false;
-        }
-      });
-    } catch (error) {
-      this.isLoading = false;
-      this.showError('Error inesperado al crear el documento');
-    }
   }
 
   // ===== PDF METHODS =====
@@ -772,5 +758,88 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   trackByDocumento(index: number, documento: DocumentoCobranzaResponseDTO): string {
     return documento.numero || index.toString();
+  }
+
+  // ===== NUEVOS MÉTODOS PARA SELECCIÓN =====
+  async cargarOpcionesCreacion(cotizacion: CotizacionResponse): Promise<void> {
+    try {
+      this.isLoading = true;
+
+      // Cargar sucursales
+      this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
+
+      // Obtener personaId de la cotización (ID de tabla 'personas')
+      // El backend tiene PersonaNaturalRepository.findByPersonasId() que convierte automáticamente
+      if (cotizacion.personas?.id) {
+        try {
+          const personaId = cotizacion.personas.id;
+          this.personaNaturalIdActual = personaId;
+
+          // Cargar personas jurídicas asociadas
+          // El backend convierte internamente de personas.id a persona_natural.id
+          this.personasJuridicas = await this.naturalJuridicoService
+            .findByPersonaNaturalId(personaId)
+            .toPromise() || [];
+        } catch (error) {
+          this.personasJuridicas = [];
+          this.personaNaturalIdActual = null;
+        }
+      }
+
+      // Mostrar modal de creación
+      this.mostrarFormulario = true;
+    } catch (error) {
+      this.showError('Error al cargar las opciones de creación');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async confirmarCreacionDocumento(): Promise<void> {
+    if (!this.cotizacionSeleccionada) {
+      this.showError('No se ha seleccionado una cotización');
+      return;
+    }
+
+    try {
+      this.isLoading = true;
+
+      const personaJuridicaId = this.personaJuridicaSeleccionada?.personaJuridica?.id;
+      const sucursalId = this.sucursalSeleccionada?.id;
+
+      this.documentoCobranzaService.createDocumentoCobranza(
+        this.cotizacionSeleccionada.id,
+        personaJuridicaId,
+        sucursalId
+      ).subscribe({
+        next: async (documento) => {
+          this.showSuccess('Documento de cobranza creado exitosamente');
+          await this.recargarDocumentos();
+          this.cerrarFormulario();
+        },
+        error: (error) => {
+          const errorMsg = error.error?.message || error.message || 'Error al crear el documento de cobranza';
+          this.showError(errorMsg);
+        },
+        complete: () => {
+          this.isLoading = false;
+        }
+      });
+    } catch (error) {
+      this.isLoading = false;
+      this.showError('Error inesperado al crear el documento');
+    }
+  }
+
+  seleccionarPersonaJuridica(personaJuridica: NaturalJuridicaResponse | null): void {
+    this.personaJuridicaSeleccionada = personaJuridica;
+  }
+
+  seleccionarSucursal(sucursal: SucursalResponse | null): void {
+    this.sucursalSeleccionada = sucursal;
+  }
+
+  usarDatosPersonales(): void {
+    this.personaJuridicaSeleccionada = null;
   }
 }

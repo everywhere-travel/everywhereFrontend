@@ -44,7 +44,7 @@ export interface DocumentoCobranzaResponseDTO {
   observaciones?: string;
   fileVenta?: string;
   costoEnvio?: number;
-  moneda?: string; 
+  moneda?: string;
 
   // Información de relaciones
   cotizacionId?: number;
@@ -56,8 +56,17 @@ export interface DocumentoCobranzaResponseDTO {
   // Información básica para mostrar
   clienteNombre?: string;     // Nombre de la persona
   clienteDocumento?: string;  // DNI o RUC de la persona
+  tipoDocumentoCliente?: string; // Tipo de documento (DNI, RUC, etc.)
   sucursalDescripcion?: string;
   formaPagoDescripcion?: string;
+
+  // Información de PersonaJuridica (si fue seleccionada)
+  personaJuridicaId?: number;
+  personaJuridicaRuc?: string;
+  personaJuridicaRazonSocial?: string;
+
+  // Información de DetalleDocumento (si fue seleccionado un documento personal)
+  detalleDocumentoId?: number;
 }
 
 // DTO para actualización de documento de cobranza (equivalente a DocumentoCobranzaUpdateDTO)
@@ -66,4 +75,6 @@ export interface DocumentoCobranzaUpdateDTO {
   costoEnvio?: number;
   observaciones?: string;
   detalleDocumentoId?: number;
+  sucursalId?: number;
+  personaJuridicaId?: number;
 }

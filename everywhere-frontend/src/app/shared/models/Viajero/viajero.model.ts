@@ -1,5 +1,5 @@
 import { PersonaResponse } from "../Persona/persona.model";
-import { PersonaNaturalSinViajero } from "../Persona/personaNatural.model";
+import { PersonaNaturalSinViajero, PersonaNaturalSinViajeroResponse } from "../Persona/personaNatural.model";
 
 export interface ViajeroRequest {
   fechaNacimiento?: string;
@@ -25,4 +25,14 @@ export interface ViajeroConPersonaNatural {
   creado?: string;
   actualizado?: string;
   personaNatural?: PersonaNaturalSinViajero
+}
+
+export interface ViajeroConPersonaResponse {
+  id: number;
+  fechaNacimiento?: string;
+  nacionalidad?: string;
+  residencia?: string;
+  creado: string;
+  actualizado: string;
+  personaNatural: PersonaNaturalSinViajeroResponse;
 }
