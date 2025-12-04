@@ -466,6 +466,12 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     }
   }
 
+  editarDocumento(documento: DocumentoCobranzaResponseDTO): void {
+    if (documento?.id) {
+      this.router.navigate(['/documentos-cobranza/detalle', documento.id]);
+    }
+  }
+
   // ===== MODAL METHODS =====
   mostrarModalVerDocumento(documento: DocumentoCobranzaResponseDTO): void {
     this.documentoSeleccionado = documento;

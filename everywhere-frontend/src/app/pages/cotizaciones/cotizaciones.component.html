@@ -920,12 +920,7 @@
             {{ editandoCotizacion ? 'Editar Cotización' : 'Nueva Cotización' }}
           </h2>
           <p class="text-white/90 mt-1">
-            {{
-            editandoCotizacion
-            ? 'Modifica los datos de la cotización'
-            : 'Completa la información para crear la
-            cotización'
-            }}
+            {{ editandoCotizacion? 'Modifica los datos de la cotización' : 'Completa la información para crear la cotización'}}
           </p>
         </div>
         <button (click)="cerrarFormulario()" class="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200">
