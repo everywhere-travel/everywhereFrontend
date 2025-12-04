@@ -210,24 +210,6 @@
               </div>
             </th>
 
-            <th
-              class="p-5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-red-50 transition-colors group"
-              (click)="sortBy('documento')" [class.bg-red-50]="sortColumn === 'documento'">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <i class="fas fa-id-card text-gray-500"></i>
-                  <span>Identificación</span>
-                </div>
-                <div class="flex flex-col opacity-40 group-hover:opacity-70"
-                  [class.opacity-100]="sortColumn === 'documento'">
-                  <i class="fas fa-caret-up text-xs leading-none"
-                    [class.text-red-600]="sortColumn === 'documento' && sortDirection === 'asc'"></i>
-                  <i class="fas fa-caret-down text-xs leading-none"
-                    [class.text-red-600]="sortColumn === 'documento' && sortDirection === 'desc'"></i>
-                </div>
-              </div>
-            </th>
-
             <th class="p-5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
               <div class="flex items-center gap-2">
                 <i class="fas fa-phone text-gray-500"></i>
@@ -303,16 +285,6 @@
                     </span>
                   </div>
                 </div>
-              </div>
-            </td>
-
-            <!-- Documento -->
-            <td class="p-5">
-              <div>
-                <div class="font-bold text-gray-900 font-mono text-lg">{{ persona.documento || persona.ruc }}
-                </div>
-                <div class="text-xs text-gray-600 uppercase font-semibold tracking-wide">{{
-                  getDocumentType(persona) }}</div>
               </div>
             </td>
 
@@ -423,13 +395,6 @@
           <span>{{ getPersonaTypeLabel(persona.tipo) }}</span>
         </div>
 
-        <!-- Document -->
-        <div class="space-y-1">
-          <div class="text-xs text-gray-500 uppercase font-semibold tracking-wide">{{ getDocumentType(persona)
-            }}</div>
-          <div class="font-bold text-gray-900 font-mono text-lg">{{ persona.documento || persona.ruc }}</div>
-        </div>
-
         <!-- Contact Info -->
         <div class="space-y-2">
           <div class="flex items-center gap-2 text-sm" *ngIf="persona.email">
@@ -536,8 +501,6 @@
             </div>
             <div class="flex items-center gap-4 text-sm text-gray-600">
               <span class="font-mono font-medium">ID: #{{ persona.id }}</span>
-              <span class="font-mono font-medium">{{ getDocumentType(persona) }}: {{ persona.documento ||
-                persona.ruc }}</span>
               <span *ngIf="persona.email" class="flex items-center gap-1">
                 <i class="fas fa-envelope text-gray-400"></i>
                 {{ persona.email }}
