@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
 import {
   DetalleDocumentoCobranzaRequestDTO,
   DetalleDocumentoCobranzaResponseDTO
@@ -18,15 +19,18 @@ export class DetalleDocumentoCobranzaService {
   constructor(private http: HttpClient) { }
 
   getAllDetalles(): Observable<DetalleDocumentoCobranzaResponseDTO[]> {
-    return this.http.get<DetalleDocumentoCobranzaResponseDTO[]>(this.apiUrl);
+    const context = new HttpContext().set(BYPASS_CACHE, true);
+    return this.http.get<DetalleDocumentoCobranzaResponseDTO[]>(this.apiUrl, { context });
   }
 
   getDetalleById(id: number): Observable<DetalleDocumentoCobranzaResponseDTO> {
-    return this.http.get<DetalleDocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`);
+    const context = new HttpContext().set(BYPASS_CACHE, true);
+    return this.http.get<DetalleDocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`, { context });
   }
 
   getDetallesByDocumentoCobranza(documentoId: number): Observable<DetalleDocumentoCobranzaResponseDTO[]> {
-    return this.http.get<DetalleDocumentoCobranzaResponseDTO[]>(`${this.apiUrl}/documento-cobranza/${documentoId}`);
+    const context = new HttpContext().set(BYPASS_CACHE, true);
+    return this.http.get<DetalleDocumentoCobranzaResponseDTO[]>(`${this.apiUrl}/documento-cobranza/${documentoId}`, { context });
   }
 
   createDetalle(dto: DetalleDocumentoCobranzaRequestDTO): Observable<DetalleDocumentoCobranzaResponseDTO> {
@@ -48,7 +52,7 @@ export class DetalleDocumentoCobranzaService {
       })
     );
   }
-  
+
   deleteDetalle(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
       tap(() => {

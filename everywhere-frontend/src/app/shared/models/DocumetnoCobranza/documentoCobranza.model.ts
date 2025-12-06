@@ -77,4 +77,5 @@ export interface DocumentoCobranzaUpdateDTO {
   detalleDocumentoId?: number;
   sucursalId?: number;
   personaJuridicaId?: number;
+  formaPagoId?: number;
 }

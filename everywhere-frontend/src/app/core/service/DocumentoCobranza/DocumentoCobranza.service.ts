@@ -1,9 +1,10 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import { environment } from '../../../../environments/environment';
 import { CacheService } from '../cache.service';
+import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
 
 @Injectable({
   providedIn: 'root'
@@ -34,11 +35,13 @@ export class DocumentoCobranzaService {
   }
 
   getAllDocumentos(): Observable<DocumentoCobranzaResponseDTO[]> {
-    return this.http.get<DocumentoCobranzaResponseDTO[]>(this.apiUrl);
+    const context = new HttpContext().set(BYPASS_CACHE, true);
+    return this.http.get<DocumentoCobranzaResponseDTO[]>(this.apiUrl, { context });
   }
 
   getDocumentoById(id: number): Observable<DocumentoCobranzaResponseDTO> {
-    return this.http.get<DocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`);
+    const context = new HttpContext().set(BYPASS_CACHE, true);
+    return this.http.get<DocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`, { context });
   }
 
   getDocumentoByNumero(numero: string): Observable<DocumentoCobranzaResponseDTO> {
@@ -51,7 +54,10 @@ export class DocumentoCobranzaService {
 
   updateDocumento(id: number, updateDTO: DocumentoCobranzaUpdateDTO): Observable<DocumentoCobranzaDTO> {
     return this.http.patch<DocumentoCobranzaDTO>(`${this.apiUrl}/${id}`, updateDTO).pipe(
-      tap(() => this.cacheService.invalidateModule('documentos-cobranza'))
+      tap(() => {
+        this.cacheService.invalidatePattern(`${this.apiUrl}/${id}`);
+        this.cacheService.invalidateModule('documentos-cobranza');
+      })
     );
   }
 }
