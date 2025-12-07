@@ -13,6 +13,7 @@ import { ProductoService } from '../../core/service/Producto/producto.service';
 import { LoadingService } from '../../core/service/loading.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
+import { FormaPagoService } from '../../core/service/FormaPago/forma-pago.service';
 import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
 
@@ -26,6 +27,7 @@ import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 import { NaturalJuridicaResponse } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
+import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -60,6 +62,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private sucursalService = inject(SucursalService);
   private naturalJuridicoService = inject(NaturalJuridicoService);
   private personaService = inject(PersonaService);
+  private formaPagoService = inject(FormaPagoService);
 
   // Data
   documento: DocumentoCobranzaResponseDTO | null = null;
@@ -71,6 +74,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   sucursales: SucursalResponse[] = [];
   personasJuridicas: PersonaJuridicaResponse[] = [];
   documentosCliente: DetalleDocumentoResponse[] = [];
+  formasPago: FormaPagoResponse[] = [];
   sucursalSeleccionada: number | null = null;
   personaJuridicaSeleccionada: number | null = null;
   detalleDocumentoSeleccionado: number | null = null;
@@ -228,8 +232,9 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       fileVenta: ['', [Validators.maxLength(100)]],
       costoEnvio: [0, [Validators.min(0)]],
       observaciones: ['', [Validators.maxLength(500)]],
-      detalleDocumentoId: [null, [Validators.required]], // Puede contener 'doc_123' o 'pj_456'
-      sucursalId: [null, [Validators.required]]
+      detalleDocumentoId: [null], // Puede contener 'doc_123' o 'pj_456' - Opcional
+      sucursalId: [null], // Opcional
+      formaPagoId: [null] // Opcional
     });
   }
 
@@ -352,7 +357,11 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       )
       .subscribe(documento => {
         if (documento) {
-          this.documento = documento;
+          // Crear nueva referencia para forzar detección de cambios en Angular
+          this.documento = { ...documento };
+          console.log('📄 Documento cargado:', this.documento);
+          console.log('💳 FormaPagoId:', this.documento.formaPagoId);
+          console.log('💳 FormaPagoDescripcion:', this.documento.formaPagoDescripcion);
           this.loadDetallesDocumento();
           // Cargar detalles del documento de cobranza
           this.loadDetalles(id);
@@ -534,7 +543,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       observaciones: formValue.observaciones?.trim() || '',
       detalleDocumentoId: detalleDocumentoId,
       sucursalId: formValue.sucursalId || undefined,
-      personaJuridicaId: personaJuridicaId
+      personaJuridicaId: personaJuridicaId,
+      formaPagoId: formValue.formaPagoId || undefined
     };
 
     this.isLoading = true;
@@ -551,7 +561,10 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       .subscribe(response => {
         if (response) {
           this.success = 'Documento actualizado correctamente';
-          this.documento = response;
+          // Recargar documento completo desde el servidor para evitar caché
+          if (this.documentoId) {
+            this.loadDocumento(this.documentoId);
+          }
           this.salirModoEdicion();
         }
       });
@@ -609,14 +622,20 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
         valorCombinado = 'doc_' + this.documento.detalleDocumentoId;
       }
 
+      console.log('✏️ Entrando en modo edición, aplicando patchValue...');
+      console.log('💳 FormaPagoId a cargar:', this.documento.formaPagoId);
+
       this.documentoForm.patchValue({
         fileVenta: this.documento.fileVenta || '',
         costoEnvio: this.documento.costoEnvio || 0,
         observaciones: this.documento.observaciones || '',
         detalleDocumentoId: valorCombinado,
-        sucursalId: this.documento.sucursalId || null
+        sucursalId: this.documento.sucursalId || null,
+        formaPagoId: this.documento.formaPagoId || null
       });
       this.sucursalSeleccionada = this.documento.sucursalId || null;
+
+      console.log('✅ Valor del form después de patchValue:', this.documentoForm.get('formaPagoId')?.value);
     }
     this.router.navigate([], {
       relativeTo: this.route,
@@ -689,6 +708,9 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     try {
       // Cargar sucursales
       this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
+
+      // Cargar formas de pago
+      this.formasPago = await this.formaPagoService.getAllFormasPago().toPromise() || [];
 
       // Cargar documentos del cliente (DNI, Pasaporte, etc.)
       const personaId = this.documento?.personaId;
@@ -857,6 +879,10 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       this.success = 'Cambios guardados correctamente';
       this.detallesFijos = []; // Limpiar detalles temporales
       this.recargarDetalles();
+      // Recargar documento completo desde el servidor para evitar caché
+      if (this.documentoId) {
+        this.loadDocumento(this.documentoId);
+      }
       this.salirModoEdicion();
 
     } catch (error) {
@@ -902,7 +928,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       observaciones: formValue.observaciones?.trim() || '',
       detalleDocumentoId: detalleDocumentoId,
       sucursalId: formValue.sucursalId || undefined,
-      personaJuridicaId: personaJuridicaId
+      personaJuridicaId: personaJuridicaId,
+      formaPagoId: formValue.formaPagoId || undefined
     };
 
     const response = await this.documentoCobranzaService.updateDocumento(this.documentoId, updateDTO).toPromise();

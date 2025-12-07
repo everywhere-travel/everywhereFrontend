@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { SucursalRequest, SucursalResponse} from '../../../shared/models/Sucursal/sucursal.model';
+import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,8 @@ export class SucursalService {
   constructor(private http: HttpClient) { }
 
   findAllSucursal(): Observable<SucursalResponse[]> {
-    return this.http.get<SucursalResponse[]>(this.apiUrl);
+    const context = new HttpContext().set(BYPASS_CACHE, true);
+    return this.http.get<SucursalResponse[]>(this.apiUrl, { context });
   }
 
   findByIdSucursal(id: number): Observable<SucursalResponse> {
