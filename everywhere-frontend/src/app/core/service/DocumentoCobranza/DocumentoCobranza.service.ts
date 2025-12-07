@@ -52,8 +52,8 @@ export class DocumentoCobranzaService {
     return this.http.get<DocumentoCobranzaResponseDTO>(`${this.apiUrl}/cotizacion/${cotizacionId}`);
   }
 
-  updateDocumento(id: number, updateDTO: DocumentoCobranzaUpdateDTO): Observable<DocumentoCobranzaDTO> {
-    return this.http.patch<DocumentoCobranzaDTO>(`${this.apiUrl}/${id}`, updateDTO).pipe(
+  updateDocumento(id: number, updateDTO: DocumentoCobranzaUpdateDTO): Observable<DocumentoCobranzaResponseDTO> {
+    return this.http.patch<DocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`, updateDTO).pipe(
       tap(() => {
         this.cacheService.invalidatePattern(`${this.apiUrl}/${id}`);
         this.cacheService.invalidateModule('documentos-cobranza');
