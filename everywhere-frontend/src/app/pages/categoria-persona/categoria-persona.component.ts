@@ -8,12 +8,7 @@ import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sideb
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
-
-// Extender la interfaz para agregar moduleKey
-interface ExtendedSidebarMenuItem extends SidebarMenuItem {
-  moduleKey?: string;
-  children?: ExtendedSidebarMenuItem[];
-}
+import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 
 // Interface para la tabla
 export interface CategoriaPersonaTabla {
@@ -42,128 +37,6 @@ export class CategoriaPersonaComponent implements OnInit {
 
   // Sidebar Configuration
   sidebarCollapsed = false;
-  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      icon: 'fas fa-chart-pie',
-      route: '/dashboard'
-    },
-
-    {
-      id: 'clientes',
-      title: 'Clientes',
-      icon: 'fas fa-address-book',
-      route: '/personas',
-      moduleKey: 'PERSONAS'
-    },
-    {
-      id: 'cotizaciones',
-      title: 'Cotizaciones',
-      icon: 'fas fa-file-invoice',
-      route: '/cotizaciones',
-      moduleKey: 'COTIZACIONES'
-    },
-    {
-      id: 'liquidaciones',
-      title: 'Liquidaciones',
-      icon: 'fas fa-credit-card',
-      route: '/liquidaciones',
-      moduleKey: 'LIQUIDACIONES'
-    },
-    {
-      id: 'documentos',
-      title: 'Documentos de clientes',
-      icon: 'fas fa-file-alt',
-      route: '/documentos',
-      moduleKey: 'DOCUMENTOS'
-    },
-    {
-      id: 'documentos-cobranza',
-      title: 'Documentos de Cobranza',
-      icon: 'fas fa-file-contract',
-      route: '/documentos-cobranza',
-      moduleKey: 'DOCUMENTOS_COBRANZA'
-    },
-    {
-      id: 'categorias',
-      title: 'Gestion de Categorias',
-      icon: 'fas fa-box',
-      active: true,
-      children: [
-        {
-          id: 'categorias-persona',
-          title: 'Categorias de Clientes',
-          icon: 'fas fa-users',
-          route: '/categorias-persona',
-          moduleKey: 'CATEGORIA_PERSONAS'
-        },
-        {
-          id: 'categorias-producto',
-          title: 'Categorias de Producto',
-          icon: 'fas fa-list',
-          route: '/categorias',
-        },
-        {
-          id: 'estado-cotizacion',
-          title: 'Estado de Cotización',
-          icon: 'fas fa-clipboard-check',
-          route: '/estado-cotizacion',
-          moduleKey: 'COTIZACIONES'
-        },
-        {
-          id: 'forma-pago',
-          title: 'Forma de Pago',
-          icon: 'fas fa-credit-card',
-          route: '/formas-pago',
-          moduleKey: 'FORMA_PAGO'
-        }
-      ]
-    },
-    {
-      id: 'recursos',
-      title: 'Recursos',
-      icon: 'fas fa-box',
-      children: [
-        {
-          id: 'productos',
-          title: 'Productos',
-          icon: 'fas fa-cube',
-          route: '/productos',
-          moduleKey: 'PRODUCTOS'
-        },
-        {
-          id: 'proveedores',
-          title: 'Proveedores',
-          icon: 'fas fa-truck',
-          route: '/proveedores',
-          moduleKey: 'PROVEEDORES'
-        },
-        {
-          id: 'operadores',
-          title: 'Operadores',
-          icon: 'fas fa-headset',
-          route: '/operadores',
-          moduleKey: 'OPERADOR'
-        }
-      ]
-    },
-    {
-      id: 'organización',
-      title: 'Organización',
-      icon: 'fas fa-sitemap',
-      children: [
-        {
-          id: 'sucursales',
-          title: 'Sucursales',
-          icon: 'fas fa-building',
-          route: '/sucursales',
-          moduleKey: 'SUCURSALES'
-        }
-      ]
-    }
-  ];
-
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // Forms
@@ -220,92 +93,21 @@ export class CategoriaPersonaComponent implements OnInit {
     private categoriaPersonaService: CategoriaPersonaService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private errorHandler: ErrorHandlerService,
-    private authService: AuthServiceService
+    private errorHandler: ErrorHandlerService, 
+    private menuConfigService: MenuConfigService
   ) {
     this.initializeForms();
   }
 
   ngOnInit(): void {
-    this.initializeSidebar();
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/categorias-persona');
     this.loadCategoriasPersona();
   }
 
   // =================================================================
-  // SIDEBAR FILTERING
+  // SIDEBAR EVENTS
   // =================================================================
 
-  private initializeSidebar(): void {
-    const authData = this.authService.getUser();
-    const userPermissions = authData?.permissions || {};
-
-    // Si tiene ALL_MODULES, mostrar todos los items, sino filtrar por permisos específicos
-    if (userPermissions['ALL_MODULES']) {
-      this.sidebarMenuItems = this.allSidebarMenuItems;
-    } else {
-      this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems, userPermissions);
-    }
-  }
-
-  private filterSidebarItems(items: ExtendedSidebarMenuItem[], userPermissions: any): ExtendedSidebarMenuItem[] {
-    return items.filter(item => {
-      // Dashboard siempre visible
-      if (item.id === 'dashboard') {
-        return true;
-      }
-
-      // Items sin moduleKey (como configuración, reportes) siempre visibles
-      if (!item.moduleKey) {
-        // Si tiene children, filtrar los children
-        if (item.children) {
-          const filteredChildren = this.filterSidebarItems(item.children, userPermissions);
-          // Solo mostrar el padre si tiene al menos un hijo visible
-          if (filteredChildren.length > 0) {
-            return {
-              ...item,
-              children: filteredChildren
-            };
-          }
-          return false;
-        }
-        return true;
-      }
-
-      // Verificar si el usuario tiene permisos para este módulo
-      const hasPermission = Object.keys(userPermissions).includes(item.moduleKey);
-
-      if (hasPermission) {
-        // Si tiene children, filtrar los children también
-        if (item.children) {
-          const filteredChildren = this.filterSidebarItems(item.children, userPermissions);
-          return {
-            ...item,
-            children: filteredChildren
-          };
-        }
-        return true;
-      }
-
-      return false;
-    }).map(item => {
-      // Asegurar que los children filtrados se apliquen correctamente
-      if (item.children) {
-        return {
-          ...item,
-          children: this.filterSidebarItems(item.children, userPermissions)
-        };
-      }
-      return item;
-    }).filter(item => {
-      // Filtrar items padre que no tengan children después del filtrado
-      if (item.children) {
-        return item.children.length > 0;
-      }
-      return true;
-    });
-  }
-
-  // Sidebar methods
   onToggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
