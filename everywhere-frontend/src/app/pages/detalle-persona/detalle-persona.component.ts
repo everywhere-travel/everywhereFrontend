@@ -6,8 +6,7 @@ import { Subscription, Observable, of, forkJoin } from 'rxjs';
 import { catchError, finalize, tap, switchMap } from 'rxjs/operators';
 
 // Services
-import { LoadingService } from '../../core/service/loading.service';
-import { AuthorizationService } from '../../core/service/authorization.service';
+import { LoadingService } from '../../core/service/loading.service'; 
 import { ErrorHandlerService } from '../../core/service/error-handler.service';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
@@ -20,6 +19,7 @@ import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/det
 import { CorreoPersonaService } from '../../core/service/CorreoPersona/correo-persona.service';
 import { TelefonoPersonaService } from '../../core/service/TelefonoPersona/telefono-persona.service';
 import { CategoriaPersonaService } from '../../core/service/CategoriaPersona/categoria-persona.service';
+import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 
 // Models
 import { PersonaNaturalResponse, PersonaNaturalRequest } from '../../shared/models/Persona/personaNatural.model';
@@ -34,15 +34,9 @@ import { NaturalJuridicaResponse, NaturalJuridicaRequest } from '../../shared/mo
 import { CategoriaPersonaResponse } from '../../shared/models/CategoriaPersona/categoriaPersona.models';
 
 // Components
-import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 import { ErrorModalComponent, ErrorModalData } from '../../shared/components/error-modal/error-modal.component';
 import { ConfirmationModalComponent, ConfirmationConfig } from '../../shared/components/confirmation-modal/confirmation-modal.component';
-
-// Interfaces
-interface ExtendedSidebarMenuItem extends SidebarMenuItem {
-  moduleKey?: string;
-  children?: ExtendedSidebarMenuItem[];
-}
 
 interface CodigoPais {
   code: string;
@@ -70,8 +64,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   // Services injection
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private loadingService = inject(LoadingService);
-  private authService = inject(AuthorizationService);
+  private loadingService = inject(LoadingService); 
   private errorHandlerService = inject(ErrorHandlerService);
   private personaService = inject(PersonaService);
   private personaNaturalService = inject(PersonaNaturalService);
@@ -323,135 +316,17 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
   // Sidebar Configuration
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
-  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      icon: 'fas fa-chart-pie',
-      route: '/dashboard'
-    },
 
-    {
-      id: 'clientes',
-      title: 'Clientes',
-      icon: 'fas fa-address-book',
-      route: '/personas',
-      active: true,
-      moduleKey: 'PERSONAS'
-    },
-    {
-      id: 'cotizaciones',
-      title: 'Cotizaciones',
-      icon: 'fas fa-file-invoice',
-      route: '/cotizaciones',
-      moduleKey: 'COTIZACIONES'
-    },
-    {
-      id: 'liquidaciones',
-      title: 'Liquidaciones',
-      icon: 'fas fa-credit-card',
-      route: '/liquidaciones',
-      moduleKey: 'LIQUIDACIONES'
-    },
-    {
-      id: 'documentos',
-      title: 'Documentos de clientes',
-      icon: 'fas fa-file-alt',
-      route: '/documentos',
-      moduleKey: 'DOCUMENTOS'
-    },
-    {
-      id: 'documentos-cobranza',
-      title: 'Documentos de Cobranza',
-      icon: 'fas fa-file-contract',
-      route: '/documentos-cobranza',
-      moduleKey: 'DOCUMENTOS_COBRANZA'
-    },
-    {
-      id: 'categorias',
-      title: 'Gestion de Categorias',
-      icon: 'fas fa-box',
-      children: [
-        {
-          id: 'categorias-persona',
-          title: 'Categorias de Clientes',
-          icon: 'fas fa-users',
-          route: '/categorias-persona',
-          moduleKey: 'CATEGORIA_PERSONAS'
-        },
-        {
-          id: 'categorias-producto',
-          title: 'Categorias de Producto',
-          icon: 'fas fa-list',
-          route: '/categorias',
-        },
-        {
-          id: 'estado-cotizacion',
-          title: 'Estado de Cotización',
-          icon: 'fas fa-clipboard-check',
-          route: '/estado-cotizacion',
-          moduleKey: 'COTIZACIONES'
-        },
-        {
-          id: 'forma-pago',
-          title: 'Forma de Pago',
-          icon: 'fas fa-credit-card',
-          route: '/formas-pago',
-          moduleKey: 'FORMA_PAGO'
-        }
-      ]
-    },
-    {
-      id: 'recursos',
-      title: 'Recursos',
-      icon: 'fas fa-box',
-      children: [
-        {
-          id: 'productos',
-          title: 'Productos',
-          icon: 'fas fa-cube',
-          route: '/productos',
-          moduleKey: 'PRODUCTOS'
-        },
-        {
-          id: 'proveedores',
-          title: 'Proveedores',
-          icon: 'fas fa-truck',
-          route: '/proveedores',
-          moduleKey: 'PROVEEDORES'
-        },
-        {
-          id: 'operadores',
-          title: 'Operadores',
-          icon: 'fas fa-headset',
-          route: '/operadores',
-          moduleKey: 'OPERADOR'
-        }
-      ]
-    },
-    {
-      id: 'organización',
-      title: 'Organización',
-      icon: 'fas fa-sitemap',
-      children: [
-        {
-          id: 'sucursales',
-          title: 'Sucursales',
-          icon: 'fas fa-building',
-          route: '/sucursales',
-          moduleKey: 'SUCURSALES'
-        }
-      ]
-    }
-  ];
   private subscriptions = new Subscription();
 
-  constructor() {
+  constructor(
+    private menuConfigService: MenuConfigService
+  ) {
     this.initializeForms();
   }
 
   ngOnInit(): void {
-    this.initializeSidebar();
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/personas/detalle/:id');
     this.loadPersonaFromRoute();
   }
 
@@ -658,24 +533,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     this.setActiveTab(tab as 'info' | 'empresas' | 'contacto' | 'documentos' | 'viajeros');
   }
 
-  // Sidebar methods
-  private initializeSidebar(): void {
-    this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems);
-  }
-
-  private filterSidebarItems(items: ExtendedSidebarMenuItem[]): ExtendedSidebarMenuItem[] {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) return items;
-
-    const currentRole = this.authService.getCurrentRole();
-    if (this.authService.isAdmin() || !currentRole) return items;
-
-    return items.filter(item => {
-      if (!item.moduleKey) return true; // Filtrar por permisos según sea necesario
-      return true;
-    });
-  }
-
+  // Sidebar methods 
   onToggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
