@@ -673,10 +673,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       // Esperar un momento para asegurar que los datos estén listos
       setTimeout(() => {
         if (this.viajeros.length > 0) {
-          this.initializeAllViajeroSearchValues(); 
-        } else { 
+          this.initializeAllViajeroSearchValues();
+        } else {
           setTimeout(() => {
-            this.initializeAllViajeroSearchValues(); 
+            this.initializeAllViajeroSearchValues();
           }, 500);
         }
         // Inicializar los valores de búsqueda de viajeros para todos los detalles
@@ -1529,8 +1529,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   get totalCargoServicio(): number {
     if (!this.liquidacion?.detalles) return 0;
-    return this.liquidacion.detalles.reduce((sum, detalle) =>
+    const total = this.liquidacion.detalles.reduce((sum, detalle) =>
       sum + (detalle.cargoServicio || 0), 0);
+    return Math.round(total * 100) / 100; // Redondear a 2 decimales
   }
 
   get totalValorVenta(): number {
@@ -1543,7 +1544,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (!this.liquidacion?.detalles) return 0;
     return this.liquidacion.detalles.reduce((sum, detalle) =>
       sum + (detalle.montoDescuento || 0), 0);
-  }  
+  }
 
   get totalPagoPaxUSD(): number {
     if (!this.liquidacion?.detalles) return 0;
@@ -1560,9 +1561,28 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   get totalBoletaPasajero(): number {
     if (!this.liquidacion?.detalles) return 0;
     return this.liquidacion.detalles.reduce((sum, detalle) => {
-      // Convertir el valor de boleta a número, asumiendo que es un valor monetario
-      const boletaValue = detalle.boletaPasajero ? parseFloat(detalle.boletaPasajero.toString()) : 0;
-      return sum + (isNaN(boletaValue) ? 0 : boletaValue);
+      // Verificar si es un número puro (sin texto mezclado)
+      const boletaStr = detalle.boletaPasajero ? detalle.boletaPasajero.toString().trim() : '';
+      // Solo sumar si es un número válido completo (no contiene letras)
+      if (boletaStr && /^-?\d+\.?\d*$/.test(boletaStr)) {
+        const boletaValue = parseFloat(boletaStr);
+        return sum + (isNaN(boletaValue) ? 0 : boletaValue);
+      }
+      return sum;
+    }, 0);
+  }
+
+  get totalFacturaCompra(): number {
+    if (!this.liquidacion?.detalles) return 0;
+    return this.liquidacion.detalles.reduce((sum, detalle) => {
+      // Verificar si es un número puro (sin texto mezclado)
+      const facturaStr = detalle.facturaCompra ? detalle.facturaCompra.toString().trim() : '';
+      // Solo sumar si es un número válido completo (no contiene letras)
+      if (facturaStr && /^-?\d+\.?\d*$/.test(facturaStr)) {
+        const facturaValue = parseFloat(facturaStr);
+        return sum + (isNaN(facturaValue) ? 0 : facturaValue);
+      }
+      return sum;
     }, 0);
   }
 
@@ -1573,7 +1593,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     // Solo calcular automáticamente si ambos valores están presentes
     if (valorVenta > 0 && costoTicket >= 0) {
-      detalle.cargoServicio = valorVenta - costoTicket;
+      detalle.cargoServicio = Math.round((valorVenta - costoTicket) * 100) / 100;
     }
   }
 
@@ -1584,11 +1604,11 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     // Solo calcular automáticamente si ambos valores están presentes
     if (valorVenta > 0 && costoTicket >= 0) {
-      const cargoServicio = valorVenta - costoTicket;
+      const cargoServicio = Math.round((valorVenta - costoTicket) * 100) / 100;
       this.detalleForm.get('cargoServicio')?.setValue(cargoServicio, { emitEvent: false });
     }
   }
-  
+
   // Persona display methods
   loadClienteInfo(personaId: number): void {
     if (!personaId || this.personasCache[personaId]) {

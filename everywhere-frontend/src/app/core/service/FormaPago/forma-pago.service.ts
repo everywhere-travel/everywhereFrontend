@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { FormaPagoResponse, FormaPagoRequest} from '../../../shared/models/FormaPago/formaPago.model';
+import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +15,8 @@ export class FormaPagoService {
   }
 
   getAllFormasPago(): Observable<FormaPagoResponse[]> {
-    return this.http.get<FormaPagoResponse[]>(this.apiUrl);
+    const context = new HttpContext().set(BYPASS_CACHE, true);
+    return this.http.get<FormaPagoResponse[]>(this.apiUrl, { context });
   }
 
   getByIdFormaPago(id: number): Observable<FormaPagoResponse> {

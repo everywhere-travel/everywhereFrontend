@@ -1,7 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthServiceService } from '../../../core/service/auth/auth.service';
+import { ExchangeService } from '../../../core/service/exchange/exchange.service';
+import { Exchange } from '../../models/Exchange/exchange.model';
 
 export interface SidebarMenuItem {
   id: string;
@@ -21,7 +23,7 @@ export interface SidebarMenuItem {
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css']
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit{
   @Input() isCollapsed = false;
   @Input() menuItems: SidebarMenuItem[] = [];
   @Output() itemClick = new EventEmitter<SidebarMenuItem>();
@@ -30,10 +32,16 @@ export class SidebarComponent {
   expandedItems: Set<string> = new Set();
   showUserMenu = false;
 
+  // Exchange rate variables
+  exchangeData: Exchange | null = null;
+  isLoadingExchange = false;
+  exchangeError = false;
+
   constructor(
     private authService: AuthServiceService,
-    private router: Router
-  ) {}
+    private router: Router,
+    private exchangeService: ExchangeService
+  ) { }
 
   onItemClick(item: SidebarMenuItem): void {
     if (item.children && item.children.length > 0) {
@@ -60,29 +68,29 @@ export class SidebarComponent {
   }
 
   // Métodos para obtener información del usuario
-getCurrentUser() {
-  const authData = this.authService.getUser();
-  return {
-    name: authData?.name || 'Usuario',
-    role: authData?.role || 'USER', // <-- rol tal como viene del backend
-    displayRole: this.getRoleDisplayName(authData?.role || 'USER') // <-- rol legible
-  };
-}
+  getCurrentUser() {
+    const authData = this.authService.getUser();
+    return {
+      name: authData?.name || 'Usuario',
+      role: authData?.role || 'USER', // <-- rol tal como viene del backend
+      displayRole: this.getRoleDisplayName(authData?.role || 'USER') // <-- rol legible
+    };
+  }
 
-// Método para mapear los roles a nombres amigables
-private getRoleDisplayName(role: string): string {
-  const roleMap: { [key: string]: string } = {
-    'GERENTE': 'Gerente',
-    'VENTAS': 'Ventas',
-    'ADMINISTRAR': 'Administrar',
-    'ADMIN': 'Administrador',
-    'SISTEMAS': 'Sistemas',
-    'OPERACIONES': 'Operaciones',
-    'VENTAS_JUNIOR': 'Ventas Junior',
-    'GERENTE_ARGENTINA': 'Gerente Argentina'
-  };
-  return roleMap[role] || role; // si no está en el mapa, devuelve tal cual
-}
+  // Método para mapear los roles a nombres amigables
+  private getRoleDisplayName(role: string): string {
+    const roleMap: { [key: string]: string } = {
+      'GERENTE': 'Gerente',
+      'VENTAS': 'Ventas',
+      'ADMINISTRAR': 'Administrar',
+      'ADMIN': 'Administrador',
+      'SISTEMAS': 'Sistemas',
+      'OPERACIONES': 'Operaciones',
+      'VENTAS_JUNIOR': 'Ventas Junior',
+      'GERENTE_ARGENTINA': 'Gerente Argentina'
+    };
+    return roleMap[role] || role; // si no está en el mapa, devuelve tal cual
+  }
 
 
   getUserInitials(): string {
@@ -101,5 +109,51 @@ private getRoleDisplayName(role: string): string {
     this.authService.logout();
     this.showUserMenu = false;
     this.router.navigate(['/auth/login']);
+  }
+
+  // ========== EXCHANGE RATE METHODS ==========
+  ngOnInit(): void {
+    this.loadExchangeRateFromCache();
+  }
+  private loadExchangeRateFromCache(): void {
+    const cachedData = localStorage.getItem('exchangeRateData');
+    
+    if (cachedData) {
+      try {
+        this.exchangeData = JSON.parse(cachedData);
+        console.log('Tipo de cambio cargado desde cache');
+      } catch (error) {
+        console.error('Error al parsear cache de tipo de cambio:', error);
+        this.loadExchangeRate();
+      }
+    } else {
+      this.loadExchangeRate();
+    }
+  }
+  loadExchangeRate(): void {
+    this.isLoadingExchange = true;
+    this.exchangeError = false;
+    
+    this.exchangeService.getExchangeRates().subscribe({
+      next: (data) => {
+        this.exchangeData = data;
+        this.isLoadingExchange = false;
+        
+        try {
+          localStorage.setItem('exchangeRateData', JSON.stringify(data));
+          console.log('Tipo de cambio actualizado y guardado en cache');
+        } catch (error) {
+          console.error('Error al guardar tipo de cambio en cache:', error);
+        }
+      },
+      error: (error) => {
+        console.error('Error al cargar tipo de cambio:', error);
+        this.exchangeError = true;
+        this.isLoadingExchange = false;
+      }
+    });
+  }
+  refreshExchangeRate(): void {
+    this.loadExchangeRate();
   }
 }

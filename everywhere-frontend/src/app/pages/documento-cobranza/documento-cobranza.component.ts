@@ -1,31 +1,26 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, FormControl, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 
 // Services
 import { DocumentoCobranzaService } from '../../core/service/DocumentoCobranza/DocumentoCobranza.service';
 import { PdfService } from '../../core/service/Pdf/Pdf.service';
-import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
-import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service'; 
 import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
+import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 
 // Models
-import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
+import { DocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import { CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
 import { NaturalJuridicaResponse } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
 import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 
 // Components
-import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 
-interface ExtendedSidebarMenuItem extends SidebarMenuItem {
-  moduleKey?: string;
-  children?: ExtendedSidebarMenuItem[];
-}
 
 @Component({
   selector: 'app-documento-cobranza',
@@ -94,140 +89,18 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
   documentoForm!: FormGroup;
 
-  // ===== SIDEBAR CONFIGURATION =====
-  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      icon: 'fas fa-chart-pie',
-      route: '/dashboard'
-    },
-
-    {
-      id: 'clientes',
-      title: 'Clientes',
-      icon: 'fas fa-address-book',
-      route: '/personas',
-      moduleKey: 'PERSONAS'
-    },
-    {
-      id: 'cotizaciones',
-      title: 'Cotizaciones',
-      icon: 'fas fa-file-invoice',
-      route: '/cotizaciones',
-      moduleKey: 'COTIZACIONES'
-    },
-    {
-      id: 'liquidaciones',
-      title: 'Liquidaciones',
-      icon: 'fas fa-credit-card',
-      route: '/liquidaciones',
-      moduleKey: 'LIQUIDACIONES'
-    },
-    {
-      id: 'documentos',
-      title: 'Documentos de clientes',
-      icon: 'fas fa-file-alt',
-      route: '/documentos',
-      moduleKey: 'DOCUMENTOS'
-    },
-    {
-      id: 'documentos-cobranza',
-      title: 'Documentos de Cobranza',
-      icon: 'fas fa-file-contract',
-      active: true,
-      route: '/documento-cobranza',
-      moduleKey: 'DOCUMENTOS_COBRANZA'
-    },
-    {
-      id: 'categorias',
-      title: 'Gestion de Categorias',
-      icon: 'fas fa-box',
-      children: [
-        {
-          id: 'categorias-persona',
-          title: 'Categorias de Clientes',
-          icon: 'fas fa-users',
-          route: '/categorias-persona',
-          moduleKey: 'CATEGORIA_PERSONAS'
-        },
-        {
-          id: 'categorias-producto',
-          title: 'Categorias de Producto',
-          icon: 'fas fa-list',
-          route: '/categorias',
-        },
-        {
-          id: 'estado-cotizacion',
-          title: 'Estado de Cotización',
-          icon: 'fas fa-clipboard-check',
-          route: '/estado-cotizacion',
-          moduleKey: 'COTIZACIONES'
-        },
-        {
-          id: 'forma-pago',
-          title: 'Forma de Pago',
-          icon: 'fas fa-credit-card',
-          route: '/formas-pago',
-          moduleKey: 'FORMA_PAGO'
-        }
-      ]
-    },
-    {
-      id: 'recursos',
-      title: 'Recursos',
-      icon: 'fas fa-box',
-      children: [
-        {
-          id: 'productos',
-          title: 'Productos',
-          icon: 'fas fa-cube',
-          route: '/productos',
-          moduleKey: 'PRODUCTOS'
-        },
-        {
-          id: 'proveedores',
-          title: 'Proveedores',
-          icon: 'fas fa-truck',
-          route: '/proveedores',
-          moduleKey: 'PROVEEDORES'
-        },
-        {
-          id: 'operadores',
-          title: 'Operadores',
-          icon: 'fas fa-headset',
-          route: '/operadores',
-          moduleKey: 'OPERADOR'
-        }
-      ]
-    },
-    {
-      id: 'organización',
-      title: 'Organización',
-      icon: 'fas fa-sitemap',
-      children: [
-        {
-          id: 'sucursales',
-          title: 'Sucursales',
-          icon: 'fas fa-building',
-          route: '/sucursales',
-          moduleKey: 'SUCURSALES'
-        }
-      ]
-    }
-  ];
-
+  // ===== SIDEBAR CONFIGURATION ===== 
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // ===== TEMPLATE UTILITIES =====
   Math = Math;
 
-  constructor(private authService: AuthServiceService) {}
+  constructor(private menuConfigService: MenuConfigService) {}
 
   ngOnInit(): void {
     this.initializeForms();
     this.loadInitialData();
-    this.initializeSidebar();
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/documento-cobranza');
   }
 
   ngOnDestroy(): void {
@@ -274,66 +147,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       this.searchTerm = value;
       this.filterDocumentos();
     });
-  }
-
-  private initializeSidebar(): void {
-    this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems);
-  }
-
-  private filterSidebarItems(items: ExtendedSidebarMenuItem[]): ExtendedSidebarMenuItem[] {
-    const currentUser = this.authService.getUser();
-
-    if (!currentUser || !currentUser.permissions) {
-      return [];
-    }
-
-    const userPermissions = currentUser.permissions;
-
-    // Si el usuario tiene permisos de ALL_MODULES, mostrar todo
-    if (userPermissions['ALL_MODULES']) {
-      return items;
-    }
-
-    return items.filter(item => {
-      // Dashboard siempre visible
-      if (item.id === 'dashboard') {
-        return true;
-      }
-
-      // Items sin moduleKey (como configuración, reportes) siempre visibles
-      if (!item.moduleKey) {
-        // Si tiene children, filtrar los children
-        if (item.children) {
-          const filteredChildren = this.filterSidebarItems(item.children);
-          // Solo mostrar el padre si tiene al menos un hijo visible
-          if (filteredChildren.length > 0) {
-            item.children = filteredChildren;
-            return true;
-          }
-          return false;
-        }
-        return true;
-      }
-
-      // Verificar si el usuario tiene permisos para este módulo
-      const hasPermission = Object.keys(userPermissions).includes(item.moduleKey);
-
-      if (hasPermission) {
-        // Si tiene children, filtrar los children también
-        if (item.children) {
-          const filteredChildren = this.filterSidebarItems(item.children);
-          if (filteredChildren.length > 0) {
-            item.children = filteredChildren;
-            return true;
-          }
-          return false;
-        }
-        return true;
-      }
-
-      return false;
-    });
-  }
+  } 
 
   private async loadInitialData(): Promise<void> {
     this.loading = true;
@@ -462,6 +276,12 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ===== NAVIGATION METHODS =====
   verDetalleDocumento(documento: DocumentoCobranzaResponseDTO): void {
     if (documento.id) {
+      this.router.navigate(['/documentos-cobranza/detalle', documento.id]);
+    }
+  }
+
+  editarDocumento(documento: DocumentoCobranzaResponseDTO): void {
+    if (documento?.id) {
       this.router.navigate(['/documentos-cobranza/detalle', documento.id]);
     }
   }

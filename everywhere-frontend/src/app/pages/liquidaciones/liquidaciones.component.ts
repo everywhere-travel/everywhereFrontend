@@ -38,12 +38,7 @@ import { ViajeroConPersonaNatural, ViajeroResponse } from '../../shared/models/V
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 
 // Services
-import { AuthServiceService } from '../../core/service/auth/auth.service';
-
-interface ExtendedSidebarMenuItem extends SidebarMenuItem {
-  moduleKey?: string;
-  children?: ExtendedSidebarMenuItem[];
-}
+import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 
 interface DetalleLiquidacionTemp {
   id?: number;
@@ -139,128 +134,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   // ===== TEMPLATE UTILITIES =====
   Math = Math;
   // ===== SIDEBAR CONFIGURATION =====
-  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      icon: 'fas fa-chart-pie',
-      route: '/dashboard'
-    },
-
-    {
-      id: 'clientes',
-      title: 'Clientes',
-      icon: 'fas fa-address-book',
-      route: '/personas',
-      moduleKey: 'PERSONAS'
-    },
-    {
-      id: 'cotizaciones',
-      title: 'Cotizaciones',
-      icon: 'fas fa-file-invoice',
-      route: '/cotizaciones',
-      moduleKey: 'COTIZACIONES'
-    },
-    {
-      id: 'liquidaciones',
-      title: 'Liquidaciones',
-      icon: 'fas fa-credit-card',
-      active: true,
-      route: '/liquidaciones',
-      moduleKey: 'LIQUIDACIONES'
-    },
-    {
-      id: 'documentos',
-      title: 'Documentos de clientes',
-      icon: 'fas fa-file-alt',
-      route: '/documentos',
-      moduleKey: 'DOCUMENTOS'
-    },
-    {
-      id: 'documentos-cobranza',
-      title: 'Documentos de Cobranza',
-      icon: 'fas fa-file-contract',
-      route: '/documentos-cobranza',
-      moduleKey: 'DOCUMENTOS_COBRANZA'
-    },
-    {
-      id: 'categorias',
-      title: 'Gestion de Categorias',
-      icon: 'fas fa-box',
-      children: [
-        {
-          id: 'categorias-persona',
-          title: 'Categorias de Clientes',
-          icon: 'fas fa-users',
-          route: '/categorias-persona',
-          moduleKey: 'CATEGORIA_PERSONAS'
-        },
-        {
-          id: 'categorias-producto',
-          title: 'Categorias de Producto',
-          icon: 'fas fa-list',
-          route: '/categorias',
-        },
-        {
-          id: 'estado-cotizacion',
-          title: 'Estado de Cotización',
-          icon: 'fas fa-clipboard-check',
-          route: '/estado-cotizacion',
-          moduleKey: 'COTIZACIONES'
-        },
-        {
-          id: 'forma-pago',
-          title: 'Forma de Pago',
-          icon: 'fas fa-credit-card',
-          route: '/formas-pago',
-          moduleKey: 'FORMA_PAGO'
-        }
-      ]
-    },
-    {
-      id: 'recursos',
-      title: 'Recursos',
-      icon: 'fas fa-box',
-      children: [
-        {
-          id: 'productos',
-          title: 'Productos',
-          icon: 'fas fa-cube',
-          route: '/productos',
-          moduleKey: 'PRODUCTOS'
-        },
-        {
-          id: 'proveedores',
-          title: 'Proveedores',
-          icon: 'fas fa-truck',
-          route: '/proveedores',
-          moduleKey: 'PROVEEDORES'
-        },
-        {
-          id: 'operadores',
-          title: 'Operadores',
-          icon: 'fas fa-headset',
-          route: '/operadores',
-          moduleKey: 'OPERADOR'
-        }
-      ]
-    },
-    {
-      id: 'organización',
-      title: 'Organización',
-      icon: 'fas fa-sitemap',
-      children: [
-        {
-          id: 'sucursales',
-          title: 'Sucursales',
-          icon: 'fas fa-building',
-          route: '/sucursales',
-          moduleKey: 'SUCURSALES'
-        }
-      ]
-    }
-  ];
-
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // ===== FORMS =====
@@ -303,10 +176,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   tiempoPresionado = 0;
   intervaloPulsacion: any = null;
 
-  constructor(private authService: AuthServiceService) { }
+  constructor(private menuConfigService: MenuConfigService) { }
 
   ngOnInit(): void {
-    this.initializeSidebar();
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/liquidaciones');
     this.initializeForms();
     this.loadInitialData();
     this.setupClienteSearch();
@@ -1245,11 +1118,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   async crearLiquidacionDesdeCotizacion(cotizacion: CotizacionResponse): Promise<void> {
-    try {
-      const cotizacionCompleta = await this.cotizacionService.getCotizacionConDetalles(cotizacion.id).toPromise();
-
-      if (!cotizacionCompleta) throw new Error('No se pudieron cargar los detalles de la cotización');
-
+    try { 
       // Mapear datos de cotización a liquidación
       const liquidacionRequest: LiquidacionRequest = {
         cotizacionId: cotizacion.id,
@@ -1261,9 +1130,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       // Crear la liquidación
       const nuevaLiquidacion = await this.liquidacionService.createLiquidacionConCotizacion(cotizacion.id, liquidacionRequest).toPromise();
 
-      if (!nuevaLiquidacion) throw new Error('Error al crear la liquidación');
-
-      await this.crearDetallesLiquidacion(nuevaLiquidacion.id, cotizacionCompleta);
+      if (!nuevaLiquidacion) throw new Error('Error al crear la liquidación'); 
 
       this.mostrarModalCotizaciones = false;
       this.cotizacionSeleccionada = null;
@@ -1278,89 +1145,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     }
   }
 
-  async crearDetallesLiquidacion(liquidacionId: number, cotizacionCompleta: CotizacionConDetallesResponseDTO): Promise<void> {
-    if (!cotizacionCompleta.detalles || cotizacionCompleta.detalles.length === 0) return;
-
-    // Filtrar solo los detalles que están seleccionados (seleccionado = true)
-    const detallesSeleccionados = cotizacionCompleta.detalles.filter((detalle: any) => detalle.seleccionado === true);
-
-    if (detallesSeleccionados.length === 0) {
-      this.showError('No hay detalles seleccionados en la cotización');
-      return;
-    }
-
-    // Procesar cada detalle seleccionado
-    for (const detalleCot of detallesSeleccionados) {
-      const cantidad = detalleCot.cantidad || 1;
-
-      // Si cantidad > 1, crear un detalle de liquidación por cada unidad
-      for (let i = 0; i < cantidad; i++) {
-        // Construir request con campos disponibles (ahora son opcionales en backend)
-        const detalleRequest: DetalleLiquidacionRequest = {
-          costoTicket: detalleCot.precioHistorico || 0,
-          cargoServicio: detalleCot.comision || 0,
-
-          // Campos opcionales - solo agregar si están disponibles
-          ...(detalleCot.producto?.id && { productoId: detalleCot.producto.id }),
-          ...(detalleCot.proveedor?.id && { proveedorId: detalleCot.proveedor.id }),
-
-          // Campos básicos con valores por defecto
-          ticket: '',
-          valorVenta: 0,
-          facturaCompra: '',
-          boletaPasajero: '',
-          montoDescuento: 0,
-          pagoPaxUSD: 0,
-          pagoPaxPEN: 0
-        };
-
-        try {
-          const detalleCreado = await this.detalleLiquidacionService.createDetalleLiquidacion(liquidacionId, detalleRequest).toPromise();
-        } catch (error) {
-          console.error('Error creando detalle:', error);
-          throw error;
-        }
-      }
-    }
-  }
-
   cancelarSeleccionCotizacion(): void {
     this.mostrarModalCotizaciones = false;
     this.cotizacionSeleccionada = null;
     this.searchCotizacion = '';
     this.cotizacionesFiltradas = [];
-  }
-
-  // ===== SIDEBAR FILTERING =====
-  private initializeSidebar(): void {
-    this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems);
-  }
-
-  private filterSidebarItems(items: ExtendedSidebarMenuItem[]): ExtendedSidebarMenuItem[] {
-    const currentUser = this.authService.getUser();
-
-    if (!currentUser || !currentUser.permissions) {
-      return [];
-    }
-
-    if (currentUser.permissions['ALL_MODULES']) {
-      return items;
-    }
-
-    return items.filter(item => {
-      if (item.moduleKey) {
-        return currentUser.permissions[item.moduleKey] && currentUser.permissions[item.moduleKey].length > 0;
-      }
-
-      if (item.children && item.children.length > 0) {
-        const filteredChildren = this.filterSidebarItems(item.children);
-        if (filteredChildren.length > 0) {
-          item.children = filteredChildren;
-          return true;
-        }
-        return false;
-      }
-      return true;
-    });
   }
 }

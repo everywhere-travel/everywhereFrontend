@@ -4,14 +4,8 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { Router } from '@angular/router';
 import { CarpetaService } from '../../core/service/Carpeta/carpeta.service';
 import { CarpetaRequest, CarpetaResponse } from '../../shared/models/Carpeta/carpeta.model';
-import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
-import { AuthServiceService } from '../../core/service/auth/auth.service';
-
-// Extender la interfaz para agregar moduleKey
-interface ExtendedSidebarMenuItem extends SidebarMenuItem {
-  moduleKey?: string;
-  children?: ExtendedSidebarMenuItem[];
-}
+import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
+import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 
 // Interface para la tabla de carpetas
 export interface CarpetaTabla {
@@ -57,145 +51,8 @@ type ViewMode = 'breadcrumb' | 'tree';
 })
 export class CarpetasComponent implements OnInit {
 
-  // Sidebar Configuration
-  sidebarCollapsed = false;
-  allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      icon: 'fas fa-chart-pie',
-      route: '/dashboard'
-    },
-    {
-      id: 'clientes',
-      title: 'Gestión de Clientes',
-      icon: 'fas fa-users',
-      moduleKey: 'CLIENTES',
-      children: [
-        {
-          id: 'personas',
-          title: 'Clientes',
-          icon: 'fas fa-address-card',
-          route: '/personas',
-          moduleKey: 'PERSONAS'
-        },
-        {
-          id: 'viajeros',
-          title: 'Viajeros',
-          icon: 'fas fa-passport',
-          route: '/viajero',
-          moduleKey: 'VIAJEROS'
-        },
-        {
-          id: 'viajeros-frecuentes',
-          title: 'Viajeros Frecuentes',
-          icon: 'fas fa-crown',
-          route: '/viajero-frecuente',
-          moduleKey: 'VIAJEROS'
-        }
-      ]
-    },
-    {
-      id: 'cotizaciones',
-      title: 'Cotizaciones',
-      icon: 'fas fa-file-invoice',
-      route: '/cotizaciones',
-      moduleKey: 'COTIZACIONES'
-    },
-    {
-      id: 'liquidaciones',
-      title: 'Liquidaciones',
-      icon: 'fas fa-credit-card',
-      route: '/liquidaciones',
-      moduleKey: 'LIQUIDACIONES'
-    },
-    {
-      id: 'documentos',
-      title: 'Documentos de clientes',
-      icon: 'fas fa-file-alt',
-      route: '/documentos',
-      moduleKey: 'DOCUMENTOS'
-    },
-    {
-      id: 'documentos-cobranza',
-      title: 'Documentos de Cobranza',
-      icon: 'fas fa-file-contract',
-      route: '/documentos-cobranza',
-      moduleKey: 'DOCUMENTOS_COBRANZA'
-    },
-    {
-      id: 'recursos',
-      title: 'Recursos',
-      icon: 'fas fa-box',
-      children: [
-        {
-          id: 'productos',
-          title: 'Productos',
-          icon: 'fas fa-cube',
-          route: '/productos',
-          moduleKey: 'PRODUCTOS'
-        },
-        {
-          id: 'proveedores',
-          title: 'Proveedores',
-          icon: 'fas fa-truck',
-          route: '/proveedores',
-          moduleKey: 'PROVEEDORES'
-        },
-        {
-          id: 'formas-pago',
-          title: 'Forma De Pago',
-          icon: 'fas fa-money-bill-wave',
-          route: '/formas-pago',
-          moduleKey: 'FORMAS_PAGO'
-        },
-        {
-          id: 'operadores',
-          title: 'Operadores',
-          icon: 'fas fa-headset',
-          route: '/operadores',
-          moduleKey: 'OPERADOR'
-        }
-      ]
-    },
-    {
-      id: 'organización',
-      title: 'Organización',
-      icon: 'fas fa-sitemap',
-      children: [
-        {
-          id: 'counters',
-          title: 'Counters',
-          icon: 'fas fa-users-line',
-          route: '/counters',
-          moduleKey: 'COUNTERS'
-        },
-        {
-          id: 'sucursales',
-          title: 'Sucursales',
-          icon: 'fas fa-building',
-          route: '/sucursales',
-          moduleKey: 'SUCURSALES'
-        }
-      ]
-    },
-    {
-      id: 'archivos',
-      title: 'Gestión de Archivos',
-      icon: 'fas fa-folder',
-      active: true,
-      children: [
-        {
-          id: 'carpetas',
-          title: 'Explorador',
-          icon: 'fas fa-folder-open',
-          route: '/carpetas',
-          moduleKey: 'CARPETAS'
-        }
-      ]
-    }
-  ];
-
+  // Sidebar
+  sidebarCollapsed = false; 
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // Data - Modo tradicional
@@ -243,91 +100,20 @@ export class CarpetasComponent implements OnInit {
     private carpetaService: CarpetaService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private authService: AuthServiceService
+    private menuConfigService: MenuConfigService
   ) {
     this.initializeForms();
   }
 
   ngOnInit(): void {
-    this.initializeSidebar();
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/carpetas');
     this.inicializarVistaDual();
   }
 
   // =================================================================
-  // SIDEBAR FILTERING
+  // SIDEBAR EVENTS
   // =================================================================
 
-  private initializeSidebar(): void {
-    const authData = this.authService.getUser();
-    const userPermissions = authData?.permissions || {};
-
-    // Si tiene ALL_MODULES, mostrar todos los items, sino filtrar por permisos específicos
-    if (userPermissions['ALL_MODULES']) {
-      this.sidebarMenuItems = this.allSidebarMenuItems;
-    } else {
-      this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems, userPermissions);
-    }
-  }
-
-  private filterSidebarItems(items: ExtendedSidebarMenuItem[], userPermissions: any): ExtendedSidebarMenuItem[] {
-    return items.filter(item => {
-      // Dashboard siempre visible
-      if (item.id === 'dashboard') {
-        return true;
-      }
-
-      // Items sin moduleKey (como configuración, reportes) siempre visibles
-      if (!item.moduleKey) {
-        // Si tiene children, filtrar los children
-        if (item.children) {
-          const filteredChildren = this.filterSidebarItems(item.children, userPermissions);
-          // Solo mostrar el padre si tiene al menos un hijo visible
-          if (filteredChildren.length > 0) {
-            return {
-              ...item,
-              children: filteredChildren
-            };
-          }
-          return false;
-        }
-        return true;
-      }
-
-      // Verificar si el usuario tiene permisos para este módulo
-      const hasPermission = Object.keys(userPermissions).includes(item.moduleKey);
-
-      if (hasPermission) {
-        // Si tiene children, filtrar los children también
-        if (item.children) {
-          const filteredChildren = this.filterSidebarItems(item.children, userPermissions);
-          return {
-            ...item,
-            children: filteredChildren
-          };
-        }
-        return true;
-      }
-
-      return false;
-    }).map(item => {
-      // Asegurar que los children filtrados se apliquen correctamente
-      if (item.children) {
-        return {
-          ...item,
-          children: this.filterSidebarItems(item.children, userPermissions)
-        };
-      }
-      return item;
-    }).filter(item => {
-      // Filtrar items padre que no tengan children después del filtrado
-      if (item.children) {
-        return item.children.length > 0;
-      }
-      return true;
-    });
-  }
-
-  // Sidebar methods
   onToggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
