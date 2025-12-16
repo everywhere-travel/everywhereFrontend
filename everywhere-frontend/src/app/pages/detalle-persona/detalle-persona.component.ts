@@ -6,7 +6,7 @@ import { Subscription, Observable, of, forkJoin } from 'rxjs';
 import { catchError, finalize, tap, switchMap } from 'rxjs/operators';
 
 // Services
-import { LoadingService } from '../../core/service/loading.service'; 
+import { LoadingService } from '../../core/service/loading.service';
 import { ErrorHandlerService } from '../../core/service/error-handler.service';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
@@ -64,7 +64,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   // Services injection
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private loadingService = inject(LoadingService); 
+  private loadingService = inject(LoadingService);
   private errorHandlerService = inject(ErrorHandlerService);
   private personaService = inject(PersonaService);
   private personaNaturalService = inject(PersonaNaturalService);
@@ -569,18 +569,47 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     return tipoObj ? tipoObj.label : tipo;
   }
 
-  // Validar solo los campos requeridos para crear PersonaNatural
-  // El documento es OPCIONAL, así que solo validamos nombres y apellidoPaterno
+  // Validar formulario de creación con validación condicional para documento
   isFormularioCreacionValido(): boolean {
     const nombresControl = this.personaNaturalForm.get('nombres');
     const apellidoPatControl = this.personaNaturalForm.get('apellidosPaterno');
 
-    return !!(
+    // Validar campos básicos de persona
+    const personaValida = !!(
       nombresControl?.value &&
       nombresControl?.valid &&
       apellidoPatControl?.value &&
       apellidoPatControl?.valid
     );
+
+    if (!personaValida) {
+      return false;
+    }
+
+    // Validación condicional del documento inicial
+    const docInicial = this.personaNaturalForm.get('documentoInicial');
+    const numero = docInicial?.get('numero')?.value;
+    const origen = docInicial?.get('origen')?.value;
+    const documentoId = docInicial?.get('documentoId')?.value;
+    const fechaEmision = docInicial?.get('fechaEmision')?.value;
+    const fechaVencimiento = docInicial?.get('fechaVencimiento')?.value;
+
+    // Si el usuario llenó CUALQUIER campo del documento
+    const algunCampoLleno = numero || origen || documentoId || fechaEmision || fechaVencimiento;
+
+    if (algunCampoLleno) {
+      // Entonces numero, origen y documentoId son OBLIGATORIOS
+      const documentoValido = !!(
+        numero?.trim() &&
+        origen?.trim() &&
+        documentoId
+      );
+
+      return documentoValido;
+    }
+
+    // Si no llenó nada del documento, es válido (documento opcional)
+    return true;
   }
 
   crearPersonaNatural(): void {
@@ -1031,7 +1060,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     this.loadingService.setLoading(true);
 
     const request: NaturalJuridicaRequest = {
-      personaNaturalId: this.personaId,
+      personaNaturalId: this.personaNatural!.id,
       personasJuridicasIds: empresaIds
     };
 
@@ -1059,7 +1088,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     if (!confirm(`¿Está seguro de desasociar la empresa "${empresa.razonSocial}"?`)) return;
     this.loadingService.setLoading(true);
 
-    const subscription = this.naturalJuridicoService.deleteByPersonas(this.personaId, empresa.id)
+    const subscription = this.naturalJuridicoService.deleteByPersonas(this.personaNatural!.id, empresa.id)
       .pipe(
         tap(() => {
           this.recargarEmpresasAsociadas();
@@ -1266,7 +1295,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
     const documentoData: DetalleDocumentoRequest = {
       ...this.documentoForm.value,
-      personaNaturalId: this.personaId
+      personaNaturalId: this.personaNatural!.id
     };
 
     let operation$: Observable<DetalleDocumentoResponse>;
