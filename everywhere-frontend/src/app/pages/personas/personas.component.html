@@ -93,89 +93,84 @@
 
     <!-- Main Content -->
     <main class="max-w-full mx-auto px-6 py-6">
-      <app-cliente-table
-        [clientes]="personas"
-        [isLoading]="isLoading"
-        (verCliente)="onVerCliente($event)"
-        (editarCliente)="onEditarCliente($event)"
-        (eliminarCliente)="onEliminarCliente($event)"
-        (refrescar)="loadPersonas()"
-        (eliminarMasivo)="onEliminarMasivo($event)">
+      <app-cliente-table [clientes]="personas" [isLoading]="isLoading" (verCliente)="onVerCliente($event)"
+        (editarCliente)="onEditarCliente($event)" (eliminarCliente)="onEliminarCliente($event)"
+        (refrescar)="loadPersonas()" (eliminarMasivo)="onEliminarMasivo($event)">
       </app-cliente-table>
     </main>
   </div>
 
   <!-- Modal de Detalles -->
-  <app-cliente-detail-modal
-    [cliente]="personaDetalles"
-    [visible]="mostrarModalDetalles"
-    (cerrar)="cerrarModalDetalles()"
-    (editarCompleto)="onEditarCompleto($event)">
+  <app-cliente-detail-modal [cliente]="personaDetalles" [visible]="mostrarModalDetalles"
+    (cerrar)="cerrarModalDetalles()" (editarCompleto)="onEditarCompleto($event)">
   </app-cliente-detail-modal>
 
   <!-- Modal Selección Tipo Cliente -->
-<div *ngIf="mostrarModalSeleccionTipo"
-  class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-  (click)="cerrarModalSeleccionTipo()">
-  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full" (click)="$event.stopPropagation()">
-    <div class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white px-6 py-4 rounded-t-2xl">
-      <h3 class="text-lg font-bold flex items-center gap-2">
-        <i class="fas fa-user-plus"></i>
-        Selecciona el Tipo de Cliente
-      </h3>
-    </div>
-
-    <div class="p-6">
-      <p class="text-gray-600 mb-6">¿Qué tipo de cliente deseas crear?</p>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <!-- Opción Persona Natural -->
-        <button (click)="crearPersonaNatural()"
-          class="group relative bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 hover:border-green-500 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-          <div class="flex flex-col items-center gap-4">
-            <div class="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <i class="fas fa-user text-white text-3xl"></i>
-            </div>
-            <div class="text-center">
-              <h4 class="text-xl font-bold text-gray-900 mb-2">Persona Natural</h4>
-              <p class="text-sm text-gray-600">Cliente individual con nombre y apellidos</p>
-            </div>
-          </div>
-        </button>
-
-        <!-- Opción Persona Jurídica -->
-        <button (click)="crearPersonaJuridica()"
-          class="group relative bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 hover:border-blue-500 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-          <div class="flex flex-col items-center gap-4">
-            <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-              <i class="fas fa-building text-white text-3xl"></i>
-            </div>
-            <div class="text-center">
-              <h4 class="text-xl font-bold text-gray-900 mb-2">Persona Jurídica</h4>
-              <p class="text-sm text-gray-600">Empresa u organización con RUC</p>
-            </div>
-          </div>
-        </button>
+  <div *ngIf="mostrarModalSeleccionTipo"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+    (click)="cerrarModalSeleccionTipo()">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full" (click)="$event.stopPropagation()">
+      <div class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white px-6 py-4 rounded-t-2xl">
+        <h3 class="text-lg font-bold flex items-center gap-2">
+          <i class="fas fa-user-plus"></i>
+          Selecciona el Tipo de Cliente
+        </h3>
       </div>
 
-      <!-- Botón cancelar -->
-      <div class="mt-6 flex justify-end">
-        <button (click)="cerrarModalSeleccionTipo()"
-          class="px-6 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg font-medium transition-colors">
-          <i class="fas fa-times mr-2"></i>
-          Cancelar
-        </button>
+      <div class="p-6">
+        <p class="text-gray-600 mb-6">¿Qué tipo de cliente deseas crear?</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Opción Persona Natural -->
+          <button (click)="crearPersonaNatural()"
+            class="group relative bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 hover:border-green-500 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div class="flex flex-col items-center gap-4">
+              <div
+                class="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <i class="fas fa-user text-white text-3xl"></i>
+              </div>
+              <div class="text-center">
+                <h4 class="text-xl font-bold text-gray-900 mb-2">Persona Natural</h4>
+                <p class="text-sm text-gray-600">Cliente individual con nombre y apellidos</p>
+              </div>
+            </div>
+          </button>
+
+          <!-- Opción Persona Jurídica -->
+          <button (click)="crearPersonaJuridica()"
+            class="group relative bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 hover:border-blue-500 rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div class="flex flex-col items-center gap-4">
+              <div
+                class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <i class="fas fa-building text-white text-3xl"></i>
+              </div>
+              <div class="text-center">
+                <h4 class="text-xl font-bold text-gray-900 mb-2">Persona Jurídica</h4>
+                <p class="text-sm text-gray-600">Empresa u organización con RUC</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <!-- Botón cancelar -->
+        <div class="mt-6 flex justify-end">
+          <button (click)="cerrarModalSeleccionTipo()"
+            class="px-6 py-2.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg font-medium transition-colors">
+            <i class="fas fa-times mr-2"></i>
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
   <!-- Modal de Confirmación para Eliminación -->
-  <app-error-modal
-    [show]="showConfirmation"
-    [data]="confirmationData"
-    (close)="onCancelDelete()"
+  <app-error-modal [show]="showConfirmation" [data]="confirmationData" (close)="onCancelDelete()"
     (confirmed)="onConfirmDelete()">
+  </app-error-modal>
+
+  <!-- Modal de Error -->
+  <app-error-modal [show]="showErrorModal" [data]="errorModalData" (close)="cerrarErrorModal()">
   </app-error-modal>
 
 </div>

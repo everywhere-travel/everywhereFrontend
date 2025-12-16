@@ -71,6 +71,15 @@ export class PersonasComponent implements OnInit {
   private pendingClienteToDelete: PersonaTabla | null = null;
   private pendingIdsToDelete: number[] = [];
 
+  // Modal de error
+  showErrorModal: boolean = false;
+  errorModalData: ErrorModalData = {
+    type: 'error',
+    title: '',
+    message: '',
+    buttonText: 'Entendido'
+  };
+
   constructor(
     private personaNaturalService: PersonaNaturalService,
     private personaJuridicaService: PersonaJuridicaService,
@@ -236,6 +245,7 @@ export class PersonasComponent implements OnInit {
           next: () => this.loadPersonas(),
           error: (error) => {
             console.error('Error al eliminar persona natural:', error);
+            this.mostrarError('Error al eliminar', error);
             this.isLoading = false;
           }
         });
@@ -244,6 +254,7 @@ export class PersonasComponent implements OnInit {
           next: () => this.loadPersonas(),
           error: (error) => {
             console.error('Error al eliminar persona jurídica:', error);
+            this.mostrarError('Error al eliminar', error);
             this.isLoading = false;
           }
         });
@@ -293,6 +304,7 @@ export class PersonasComponent implements OnInit {
             },
             error: (error) => {
               console.error('Error al eliminar:', error);
+              this.mostrarError('Error al eliminar', error);
               eliminados++;
               if (eliminados === total) {
                 this.pendingIdsToDelete = [];
@@ -311,6 +323,7 @@ export class PersonasComponent implements OnInit {
             },
             error: (error) => {
               console.error('Error al eliminar:', error);
+              this.mostrarError('Error al eliminar', error);
               eliminados++;
               if (eliminados === total) {
                 this.pendingIdsToDelete = [];
@@ -337,5 +350,33 @@ export class PersonasComponent implements OnInit {
       this.router.navigate(['/juridico/detalle', cliente.id]);
     }
     this.cerrarModalDetalles();
+  }
+
+  // Manejo de errores
+  private mostrarError(title: string, error: any): void {
+    let message = 'Ha ocurrido un error inesperado.';
+
+    // Extraer mensaje del backend si existe
+    if (error?.error?.detail) {
+      message = error.error.detail;
+    } else if (error?.detail) {
+      message = error.detail;
+    } else if (error?.message) {
+      message = error.message;
+    } else if (typeof error === 'string') {
+      message = error;
+    }
+
+    this.errorModalData = {
+      type: 'error',
+      title,
+      message,
+      buttonText: 'Entendido'
+    };
+    this.showErrorModal = true;
+  }
+
+  cerrarErrorModal(): void {
+    this.showErrorModal = false;
   }
 }

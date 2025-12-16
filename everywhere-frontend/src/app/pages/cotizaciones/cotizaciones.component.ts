@@ -463,13 +463,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           };
         }
 
-        const cached = this.personasCache[personaId];
-        // Mejorar el formato del display para asegurar que se muestre el documento
-        if (cached.identificador) {
-          this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
-        } else {
+        const cached = this.personasCache[personaId]
           this.personasDisplayMap[personaId] = cached.nombre;
-        }
       });
 
     } catch (error) {
@@ -2762,18 +2757,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   getClienteType(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
-    if (!persona) return 'Cliente';
+    if (!persona) {return 'Cliente'};
 
     // Si es personaDisplay (nuevo modelo unificado)
     if ('tipo' in persona && 'identificador' in persona) {
       const tipo = persona.tipo.toUpperCase();
-      return tipo === 'JURIDICA' ? 'Persona Jurídica' : 'Persona Natural';
+      return tipo === 'JURIDICA' ? 'Empresa' : 'Cliente';
     }
 
     // Compatibilidad con modelos antiguos
-    if ('ruc' in persona && persona.ruc) return 'Persona Jurídica';
+    if ('ruc' in persona && persona.ruc) { return 'Empresa' };
 
-    return 'Persona Natural';
+    return 'Cliente';
   }
 
   getClienteDocumento(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
@@ -2857,41 +2852,27 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    */
   getClienteDisplayName(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
     // Soporta personaDisplay, PersonaNaturalResponse y PersonaJuridicaResponse
-    if (!persona) return 'Cliente';
-
-    // Si es personaDisplay (nuevo modelo unificado)
-    if ('tipo' in persona && 'identificador' in persona && 'nombre' in persona) {
-      if (persona.tipo === 'JURIDICA') {
-        return `RUC: ${persona.identificador} - ${persona.nombre}`;
-      } else {
-        return `DNI: ${persona.identificador} - ${persona.nombre}`;
-      }
+    if (!persona) {
+      return 'Cliente';
     }
-
+    // Si es personaDisplay
+    if ('tipo' in persona && 'nombre' in persona){
+      return persona.nombre;
+    }
     // Compatibilidad con modelos antiguos (soporta apellidosPaterno/apellidosMaterno)
-    if ('nombres' in persona && ('apellidos' in persona || 'apellidosPaterno' in persona || 'apellidosMaterno' in persona)) {
+    if ('nombres' in persona) {
       const nombres = (persona as any).nombres || '';
       const apellidoPaterno = (persona as any).apellidosPaterno || '';
       const apellidoMaterno = (persona as any).apellidosMaterno || '';
-      const doc = (persona as any).documento || '';
-
-      // Filtrar valores null/undefined al construir el nombre
+      
       const partesNombre = [nombres, apellidoPaterno, apellidoMaterno].filter(parte => parte && parte !== 'null');
-      const nombreCompleto = partesNombre.join(' ').trim();
-
-      // Retornar con formato de documento si existe
-      if (doc && doc !== 'null') {
-        return `DNI: ${doc} - ${nombreCompleto}`;
-      }
-      return nombreCompleto || 'Sin nombre';
+      return partesNombre.join(' ').trim() || 'Sin nombre';
     }
-
+    // Si es PersonaJuridica
     if ('razonSocial' in persona) {
-      const ruc = (persona as any).ruc ? ` - RUC: ${(persona as any).ruc}` : '';
-      return `${(persona as any).razonSocial || 'Empresa'}${ruc}`.trim();
+      return (persona as any).razonSocial || 'Empresa';
     }
-
-    return 'ClienteABc';
+    return 'Cliente';
   }
 
   // Métodos para estadísticas en el header

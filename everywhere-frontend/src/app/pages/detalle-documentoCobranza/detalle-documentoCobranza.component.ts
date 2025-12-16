@@ -21,14 +21,14 @@ import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/m
 import { DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import { DetalleDocumentoCobranzaRequestDTO, DetalleDocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/detalleDocumentoCobranza.model';
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
-import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model'; 
+import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/detalle-documento.service';
-import { DetalleDocumentoResponse } from '../../shared/models/Documento/detalleDocumento.model'; 
+import { DetalleDocumentoResponse } from '../../shared/models/Documento/detalleDocumento.model';
 
 
 @Component({
@@ -167,13 +167,15 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       .subscribe(documento => {
         if (documento) {
           // Crear nueva referencia para forzar detección de cambios en Angular
-          this.documento = { ...documento };
-          console.log('📄 Documento cargado:', this.documento);
-          console.log('💳 FormaPagoId:', this.documento.formaPagoId);
-          console.log('💳 FormaPagoDescripcion:', this.documento.formaPagoDescripcion);
+          this.documento = { ...documento }; 
           this.loadDetallesDocumento();
           // Cargar detalles del documento de cobranza
           this.loadDetalles(id);
+          
+          // Si el URL ya tiene modo=editar, entrar en modo edición
+          if (this.modoEdicion) {
+            this.enterEditMode();
+          }
         }
       });
 
@@ -187,8 +189,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
     const subscription = this.detalleDocumentoService.findByPersonaId(this.documento.personaId)
       .pipe(
-        catchError(error => {
-          console.error('❌ Error al cargar detalles de documento:', error);
+        catchError(error => { 
           return of([]);
         })
       )
@@ -202,8 +203,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private loadDetalles(documentoId: number): void {
     const subscription = this.detalleDocumentoCobranzaService.getDetallesByDocumentoCobranza(documentoId)
       .pipe(
-        catchError(error => {
-          console.error('Error al cargar detalles:', error);
+        catchError(error => { 
           return of([]);
         })
       )
@@ -416,41 +416,39 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   irAEditarDocumento(): void {
+  this.enterEditMode();
+  this.router.navigate([], {
+    relativeTo: this.route,
+    queryParams: { modo: 'editar' },
+    queryParamsHandling: 'merge'
+  });
+}
+
+  private enterEditMode(): void {
+    if (!this.documento) return;
+    
     this.modoEdicion = true;
-    // Cargar opciones de sucursales, documentos del cliente y personas jurídicas
+    
+    // Cargar opciones necesarias
     this.cargarOpcionesEdicion();
-    // Populate form with current document data
-    if (this.documento) {
-      // Determinar el valor del dropdown combinado
-      let valorCombinado = null;
-      if (this.documento.personaJuridicaId) {
-        // Si tiene PersonaJuridica, usar 'pj_ID'
-        valorCombinado = 'pj_' + this.documento.personaJuridicaId;
-      } else if (this.documento.detalleDocumentoId) {
-        // Si tiene DetalleDocumento, usar 'doc_ID'
-        valorCombinado = 'doc_' + this.documento.detalleDocumentoId;
-      }
-
-      console.log('✏️ Entrando en modo edición, aplicando patchValue...');
-      console.log('💳 FormaPagoId a cargar:', this.documento.formaPagoId);
-
-      this.documentoForm.patchValue({
-        fileVenta: this.documento.fileVenta || '',
-        costoEnvio: this.documento.costoEnvio || 0,
-        observaciones: this.documento.observaciones || '',
-        detalleDocumentoId: valorCombinado,
-        sucursalId: this.documento.sucursalId || null,
-        formaPagoId: this.documento.formaPagoId || null
-      });
-      this.sucursalSeleccionada = this.documento.sucursalId || null;
-
-      console.log('✅ Valor del form después de patchValue:', this.documentoForm.get('formaPagoId')?.value);
+    
+    // Llenar formulario con datos actuales
+    let valorCombinado = null;
+    if (this.documento.personaJuridicaId) {
+      valorCombinado = 'pj_' + this.documento.personaJuridicaId;
+    } else if (this.documento.detalleDocumentoId) {
+      valorCombinado = 'doc_' + this.documento.detalleDocumentoId;
     }
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { modo: 'editar' },
-      queryParamsHandling: 'merge'
+
+    this.documentoForm.patchValue({
+      fileVenta: this.documento.fileVenta || '',
+      costoEnvio: this.documento.costoEnvio || 0,
+      observaciones: this.documento.observaciones || '',
+      detalleDocumentoId: valorCombinado,
+      sucursalId: this.documento.sucursalId || null,
+      formaPagoId: this.documento.formaPagoId || null
     });
+    this.sucursalSeleccionada = this.documento.sucursalId || null;
   }
 
   salirModoEdicion(): void {
@@ -504,33 +502,55 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ============ OPCIONES DE EDICIÓN =============
   async cargarOpcionesEdicion(): Promise<void> {
     try {
-      // Cargar sucursales
-      this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
+      this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || []; // Cargar sucursales
+      this.formasPago = await this.formaPagoService.getAllFormasPago().toPromise() || []; // Cargar formas de pago
 
-      // Cargar formas de pago
-      this.formasPago = await this.formaPagoService.getAllFormasPago().toPromise() || [];
-
-      // Cargar documentos del cliente (DNI, Pasaporte, etc.)
-      const personaId = this.documento?.personaId;
+      const personaId = this.documento?.personaId; // Cargar documentos del cliente (DNI, Pasaporte, etc.)
 
       if (personaId) {
         try {
-          // Cargar documentos del cliente
-          this.documentosCliente = await this.detalleDocumentoService
+          this.documentosCliente = await this.detalleDocumentoService // Cargar documentos del cliente
             .findByPersonaId(personaId)
             .toPromise() || [];
 
-          // Cargar personas jurídicas asociadas (empresas/RUC)
-          // El backend tiene PersonaNaturalRepository.findByPersonasId(personaId)
-          // que convierte automáticamente de personas.id a persona_natural.id
-          const relaciones = await this.naturalJuridicoService
-            .findByPersonaNaturalId(personaId)
-            .toPromise() || [];
-
-          this.personasJuridicas = relaciones.map(r => r.personaJuridica);
-        } catch (error) {
+          if (this.documentosCliente.length > 0) {
+            // Usar el personaNaturalId del primer documento
+            const personaNaturalId = this.documentosCliente[0].personaNatural.id;
+            const relaciones = await this.naturalJuridicoService
+              .findByPersonaNaturalId(personaNaturalId)
+              .toPromise() || [];
+            this.personasJuridicas = relaciones.map(r => r.personaJuridica);
+          } else {
+            if (this.documento?.personaJuridicaId) {
+              this.personasJuridicas = [{
+                id: this.documento.personaJuridicaId,
+                ruc: this.documento.personaJuridicaRuc || '',
+                razonSocial: this.documento.personaJuridicaRazonSocial || '',
+                persona: {} as any,
+                creado: new Date().toISOString(),
+                actualizado: new Date().toISOString()
+              }];
+            } else {
+              this.personasJuridicas = [];
+            }
+          }
+        } catch (error: any) {
+          // Si falla la carga de documentos (404 para PersonaJuridica), intentar cargar PersonaJuridica
           this.documentosCliente = [];
-          this.personasJuridicas = [];
+
+          // Verificar si es PersonaJuridica y cargarla
+          if (this.documento?.personaJuridicaId) {
+            this.personasJuridicas = [{
+              id: this.documento.personaJuridicaId,
+              ruc: this.documento.personaJuridicaRuc || '',
+              razonSocial: this.documento.personaJuridicaRazonSocial || '',
+              persona: {} as any,
+              creado: new Date().toISOString(),
+              actualizado: new Date().toISOString()
+            }];
+          } else {
+            this.personasJuridicas = [];
+          }
         }
       }
     } catch (error) {
