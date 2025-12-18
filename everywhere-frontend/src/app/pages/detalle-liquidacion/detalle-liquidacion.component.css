@@ -7,7 +7,18 @@
   hyphens: auto;
   line-height: 1.3;
   font-size: 0.75rem;
+  white-space: normal;
 }
+
+/* Estilos para permitir word-wrap en inputs y selects de tabla */
+input[type="text"].table-input,
+select.table-select {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-height: 2.5rem;
+}
+
 
 .compact-table-header {
   word-wrap: break-word;
@@ -23,6 +34,14 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
 }
+
+/* Celdas de tabla con altura mínima */
+.table-cell {
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+}
+
 
 .table-container::-webkit-scrollbar {
   height: 8px;
@@ -62,6 +81,7 @@
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
@@ -86,6 +106,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -164,6 +185,7 @@
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
+
   .card-animate,
   .loading-skeleton,
   .table-row-hover {
