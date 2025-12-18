@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subscription, Observable, of } from 'rxjs';
+import { Subscription, of } from 'rxjs';
 import { catchError, finalize, tap } from 'rxjs/operators';
 
 // Services
@@ -26,11 +26,9 @@ import { LiquidacionConDetallesResponse, LiquidacionRequest } from '../../shared
 import { DetalleLiquidacionResponse, DetalleLiquidacionRequest } from '../../shared/models/Liquidacion/detalleLiquidacion.model';
 import { ObservacionLiquidacionRequest, ObservacionLiquidacionResponse } from '../../shared/models/Liquidacion/observacionLiquidacion.model';
 import { personaDisplay } from '../../shared/models/Persona/persona.model';
-import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
-import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model';
-import { PagoPaxRequest, PagoPaxResponse } from '../../shared/models/PagoPax/pagoPax.model.ts';
+import { PagoPaxRequest } from '../../shared/models/PagoPax/pagoPax.model.ts';
 
 // Interfaz extendida para observaciones con propiedades de edición
 interface ObservacionConEdicion extends ObservacionLiquidacionResponse {
@@ -152,6 +150,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Control de guardado
   private cambiosGuardados = false;
+  private saveDebounceTimer: any;
 
   // Sidebar Configuration
   private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
@@ -363,6 +362,15 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.warn('No se pudo guardar el estado temporal:', error);
     }
+  }
+
+  private guardarEstadoTemporalDebounced(): void {
+    if (this.saveDebounceTimer) {
+      clearTimeout(this.saveDebounceTimer);
+    }
+    this.saveDebounceTimer = setTimeout(() => {
+      this.guardarEstadoTemporal();
+    }, 500); // 500ms sin cambios antes de guardar
   }
 
   private cargarEstadoTemporal(): boolean {
@@ -1389,6 +1397,11 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     return detalle.id;
   }
 
+  // trackBy para detalles fijos (que son temporales y no tienen ID)
+  trackByIndex(index: number): number {
+    return index;
+  }
+
   // Método para manejar cambios en los campos de detalles fijos editables
   onProductoChange(index: number, field: string, value: any): void {
     if (index >= 0 && index < this.detallesFijos.length) {
@@ -1516,7 +1529,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       }
 
       // Autoguardar estado temporal
-      this.guardarEstadoTemporal();
+      this.guardarEstadoTemporalDebounced();
     }
   }
 
@@ -1818,7 +1831,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       // Es el formulario de nuevo detalle
       this.detalleForm.patchValue({ viajeroId: viajero.id });
     }
-  }  // Abrir dropdown de viajeros
+  }
+
+  // Abrir dropdown de viajeros
   openViajeroDropdown(index: string): void {
     this.initViajeroSearch(index);
 

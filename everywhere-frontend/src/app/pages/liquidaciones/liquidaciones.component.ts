@@ -1119,6 +1119,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   async crearLiquidacionDesdeCotizacion(cotizacion: CotizacionResponse): Promise<void> {
     try { 
+      // Cerrar modal PRIMERO
+      this.mostrarModalCotizaciones = false;
+      this.cotizacionSeleccionada = null;
+      
       // Mapear datos de cotización a liquidación
       const liquidacionRequest: LiquidacionRequest = {
         cotizacionId: cotizacion.id,
