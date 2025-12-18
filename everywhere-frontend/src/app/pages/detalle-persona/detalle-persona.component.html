@@ -358,7 +358,7 @@
                       <span class="font-semibold">{{ personaNatural?.sexo || 'No seleccionado' }}</span>
                     </div>
                   </div>
-                </div>
+                </div> 
 
                 <!-- Información de Viajero -->
                 <div class="bg-blue-50 rounded-xl p-6" *ngIf="personaNatural?.viajero">
@@ -407,6 +407,16 @@
                   </div>
                 </div>
               </div>
+              
+              <!-- Aviso informativo sobre datos de viajero -->
+              <div class="bg-amber-50 border-l-4 border-amber-400 rounded-lg p-4 flex items-start gap-3">
+                <i class="fas fa-info-circle text-amber-600 mt-0.5 flex-shrink-0"></i>
+                <div class="text-sm text-amber-900">
+                  <p class="font-semibold mb-1">Disponibilidad en Liquidaciones</p>
+                  <p>Para que este cliente aparezca en la lista de clientes al momento de crear liquidaciones, debe completar al menos <strong>un dato de viajero</strong> (nacionalidad, fecha de nacimiento o residencia).</p>
+                </div>
+              </div>
+
               <div class="flex justify-end">
                 <button (click)="abrirModalPersonaNatural()"
                   class="bg-everywhere-primary text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-everywhere-primary/90 transition-colors shadow-lg">

@@ -161,7 +161,7 @@
         <!-- Table Header -->
         <thead class="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
           <tr>
-            <th class="w-12 p-5 text-center">
+            <th class="w-12 p-4 text-center">
               <label class="relative inline-block cursor-pointer">
                 <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
                   (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0">
@@ -174,8 +174,7 @@
               </label>
             </th>
 
-            <th
-              class="p-5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+            <th class="p-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
               (click)="sortBy('tipo')" [class.bg-everywhere-primary/5]="sortColumn === 'tipo'">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -192,8 +191,7 @@
               </div>
             </th>
 
-            <th
-              class="p-5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+            <th class="p-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
               (click)="sortBy('nombre')" [class.bg-everywhere-primary/5]="sortColumn === 'nombre'">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -210,14 +208,14 @@
               </div>
             </th>
 
-            <th class="p-5 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+            <th class="p-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
               <div class="flex items-center gap-2">
                 <i class="fas fa-phone text-gray-500"></i>
                 <span>Contacto</span>
               </div>
             </th>
 
-            <th class="p-5 text-center text-xs font-bold text-gray-900 uppercase tracking-wider">
+            <th class="p-4 text-center text-xs font-bold text-gray-900 uppercase tracking-wider">
               <div class="flex items-center justify-center gap-2">
                 <i class="fas fa-cog text-gray-500"></i>
                 <span>Acciones</span>
@@ -232,7 +230,7 @@
             class="hover:bg-gray-50 transition-colors duration-200">
 
             <!-- Checkbox -->
-            <td class="p-5 text-center">
+            <td class="p-2 text-center">
               <label class="relative inline-block cursor-pointer">
                 <input type="checkbox" [checked]="isSelected(persona.id)" (change)="toggleSelection(persona.id)"
                   class="absolute opacity-0 w-0 h-0">
@@ -245,7 +243,7 @@
             </td>
 
             <!-- Tipo -->
-            <td class="p-5">
+            <td class="p-2">
               <div
                 class="flex items-center gap-3 px-4 py-2 rounded-xl font-bold text-sm uppercase tracking-wide w-fit border-2"
                 [class.bg-green-50]="persona.tipo === 'natural'" [class.text-green-700]="persona.tipo === 'natural'"
@@ -262,7 +260,7 @@
             </td>
 
             <!-- Cliente -->
-            <td class="p-5">
+            <td class="p-2">
               <div class="flex items-center gap-4">
                 <div
                   class="w-12 h-12 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
@@ -289,13 +287,13 @@
             </td>
 
             <!-- Contacto -->
-            <td class="p-5">
+            <td class="p-2">
               <div class="space-y-2">
-                <div class="flex items-center gap-2 text-sm" *ngIf="persona.email">
+                <div class="flex items-center justify-center gap-2 text-sm" *ngIf="persona.email">
                   <i class="fas fa-envelope text-gray-400 w-4"></i>
                   <span class="text-gray-900 truncate">{{ persona.email }}</span>
                 </div>
-                <div class="flex items-center gap-2 text-sm" *ngIf="persona.telefono">
+                <div class="flex items-center justify-center gap-2 text-sm" *ngIf="persona.telefono">
                   <i class="fas fa-phone text-gray-400 w-4"></i>
                   <span class="text-gray-900">{{ persona.telefono }}</span>
                 </div>
@@ -307,7 +305,7 @@
             </td>
 
             <!-- Acciones -->
-            <td class="px-6 py-4 whitespace-nowrap text-center">
+            <td class="p-2 whitespace-nowrap text-center">
               <div class="flex justify-center items-center gap-2">
                 <button (click)="onVerCliente(persona)"
                   class="w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
@@ -528,7 +526,7 @@
           <!-- Actions -->
           <div class="flex justify-center items-center gap-2">
             <button (click)="onVerCliente(persona)"
-              class="w-9 h-9 bg-blue-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+              class="w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
               title="Ver persona">
               <i class="fas fa-eye text-green-500"></i>
             </button>

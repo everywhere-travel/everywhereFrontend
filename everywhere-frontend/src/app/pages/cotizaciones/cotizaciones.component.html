@@ -2225,16 +2225,28 @@
                     <div class="text-sm text-gray-900">
                       {{ detalle.proveedor?.nombre || 'Sin proveedor' }}
                     </div>
-                    <!-- Tipo -->
+                    <!-- Producto -->
                     <div class="text-sm text-gray-900">
                       {{ detalle.producto?.tipo || 'Sin producto' }}
                     </div>
+                    <!-- Cantidad -->
+                    <div class="text-sm text-gray-900 text-center">
+                      {{ detalle.cantidad || 'Sin cantidad' }}
+                    </div>
+                    <!-- Descripcion -->
+                    <div class="text-sm text-gray-900">
+                      {{ detalle.descripcion || 'Sin descripcion' }}
+                    </div>
+                    <!-- Precio -->
+                    <div class="text-sm text-gray-900 text-center">
+                      ${{ detalle.precioHistorico || 'Sin precio' }}
+                    </div>
                     <!-- Comisión -->
-                    <div class="text-sm text-gray-900 text-right">
+                    <div class="text-sm text-gray-900 text-center">
                       ${{ (detalle.comision || 0) | number:'1.2-2' }}
                     </div>
                     <!-- Total -->
-                    <div class="text-sm font-semibold text-orange-600 text-right">
+                    <div class="text-sm font-semibold text-orange-600 text-center">
                       ${{ ((detalle.precioHistorico || 0) + (detalle.comision || 0)) * (detalle.cantidad || 1) |
                       number:'1.2-2' }}
                     </div>
