@@ -1359,9 +1359,10 @@
 
                   <!-- Descripción -->
                   <div>
-                    <input type="text" [value]="detalle.descripcion"
+                    <textarea [value]="detalle.descripcion"
                       (input)="onProductoChange(i, 'descripcion', $any($event.target).value)" placeholder="Descripción"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                      rows="1"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-y max-h-[200px] leading-tight align-middle"></textarea>
                   </div>
 
                   <!-- Precio Unitario -->
@@ -1432,8 +1433,8 @@
 
                   <!-- Descripción -->
                   <div>
-                    <input type="text" formControlName="descripcion" placeholder="Descripción del producto"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                    <textarea formControlName="descripcion" placeholder="Descripción del producto" rows="1"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-y max-h-[200px] overflow-hidden leading-tight align-middle"></textarea>
                   </div>
 
                   <!-- Precio Unitario -->
@@ -1545,8 +1546,7 @@
                           [class]="isGrupoSeleccionado(gi)
                             ? 'bg-everywhere-primary border-everywhere-primary shadow-lg'
                             : 'bg-white border-gray-300 hover:border-everywhere-primary'"
-                          [title]="isGrupoSeleccionado(gi) ? 'Grupo seleccionado - Click para deseleccionar' : 'Click para seleccionar este grupo'"
-                          [id]="'grupo-' + gi">
+                          [title]="isGrupoSeleccionado(gi) ? 'Grupo seleccionado - Click para deseleccionar' : 'Click para seleccionar este grupo'" [id]="'grupo-' + gi">
 
                           <!-- Círculo interno cuando está seleccionado -->
                           <div *ngIf="isGrupoSeleccionado(gi)"
@@ -2114,7 +2114,8 @@
 
             <!-- Productos -->
             <div *ngFor="let detalle of getDetallesByCategoria(1)" class="p-3 border-b border-gray-100 last:border-b-0">
-              <div class="grid gap-3 items-center" style="grid-template-columns: 0.6fr 0.6fr 80px 2.3fr 100px 100px 100px;">
+              <div class="grid gap-3 items-center"
+                style="grid-template-columns: 0.6fr 0.6fr 80px 2.3fr 100px 100px 100px;">
                 <!-- Proveedor -->
                 <div class="text-sm text-gray-900">
                   {{ detalle.proveedor?.nombre || 'Sin proveedor' }}

@@ -81,7 +81,7 @@ export class CotizacionService {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Cotizacion_${codigoCotizacion}.docx`;
+        link.download = `${codigoCotizacion}.docx`;
         link.click();
         window.URL.revokeObjectURL(url);
       },
