@@ -98,12 +98,12 @@ export class DocumentosComponent implements OnInit {
 
   // Tipo mappings
   tipoOptions = [
-    { value: 'PASAPORTE', label: 'Pasaporte' },
+    { value: 'PASAPORTE', label: 'PASAPORTE' },
     { value: 'DNI', label: 'DNI' },
-    { value: 'CEDULA', label: 'Cédula' },
-    { value: 'VISA', label: 'Visa' },
-    { value: 'LICENCIA', label: 'Licencia' },
-    { value: 'OTRO', label: 'Otro' }
+    { value: 'CEDULA', label: 'CEDULA' },
+    { value: 'VISA', label: 'VISA' },
+    { value: 'LICENCIA', label: 'LICENCIA' },
+    { value: 'OTRO', label: 'OTRO' }
   ];
 
   constructor(

@@ -89,6 +89,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   // ===== UI STATE =====
   isLoading = false;
+  isGenerating = false;
   loading: boolean = false;
   mostrarModalCrear = false;
   mostrarFormulario = false;
@@ -522,7 +523,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   // Form methods
   async mostrarFormularioCrear(): Promise<void> {
     try {
-      this.isLoading = true;
+      this.isGenerating  = true;
 
       // Cargar cotizaciones para selección
       await this.loadCotizaciones();
@@ -534,7 +535,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       console.error('Error en mostrarFormularioCrear:', error);
       this.showError('Error al cargar las cotizaciones');
     } finally {
-      this.isLoading = false;
+      this.isGenerating  = false;
     }
   }
 
