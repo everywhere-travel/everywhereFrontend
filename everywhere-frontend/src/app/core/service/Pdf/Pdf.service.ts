@@ -30,7 +30,7 @@ export class PdfService {
         const url = window.URL.createObjectURL(pdfBlob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `documento_cobranza_${nroSerie || id}.pdf`;
+        link.download = `${nroSerie || id}.pdf`;
         link.click();
         window.URL.revokeObjectURL(url);
       },
