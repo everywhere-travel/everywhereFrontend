@@ -35,39 +35,76 @@
   </div>
 
   <!-- Search Controls -->
-  <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Search Input -->
-    <div class="lg:col-span-2">
-      <div class="relative">
-        <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-        <input type="text" placeholder="Buscar por nombre, documento, email o teléfono..." [(ngModel)]="searchQuery"
-          (input)="onSearchChange()" [disabled]="isLoading"
-          class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
-        <button *ngIf="searchQuery" (click)="clearSearch()"
-          class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
-          <i class="fas fa-times"></i>
+  <div class="p-4 space-y-4">
+    <!-- Selector de tipo de búsqueda -->
+    <div class="flex items-center gap-3">
+      <span class="text-sm font-medium text-gray-700">Buscar por:</span>
+      <div class="bg-gray-100 p-1 rounded-xl border border-gray-200 flex gap-1">
+        <button (click)="cambiarTipoBusqueda('nombre')"
+          [class.bg-everywhere-primary]="searchType === 'nombre'"
+          [class.text-white]="searchType === 'nombre'"
+          [class.text-gray-600]="searchType !== 'nombre'"
+          [class.hover:bg-gray-200]="searchType !== 'nombre'"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2">
+          <i class="fas fa-user"></i>
+          <span>Nombre</span>
+        </button>
+        <button (click)="cambiarTipoBusqueda('documento')"
+          [class.bg-everywhere-primary]="searchType === 'documento'"
+          [class.text-white]="searchType === 'documento'"
+          [class.text-gray-600]="searchType !== 'documento'"
+          [class.hover:bg-gray-200]="searchType !== 'documento'"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2">
+          <i class="fas fa-file-alt"></i>
+          <span>Número de Documento</span>
         </button>
       </div>
     </div>
 
-    <!-- Filter Pills -->
-    <div class="flex flex-wrap gap-2">
-      <div class="bg-gray-100 p-1 rounded-2xl border border-gray-200 flex flex-wrap gap-2">
-        <button *ngFor="let filter of [
-                {key: 'todos', label: 'Todos', icon: 'fa-users', count: clientes.length},
-                {key: 'natural', label: 'Naturales', icon: 'fa-user', count: estadisticas.totalNaturales},
-                {key: 'juridica', label: 'Jurídicas', icon: 'fa-building', count: estadisticas.totalJuridicas}
-              ]" [class.bg-red-600]="filtroTipo === filter.key" [class.text-white]="filtroTipo === filter.key"
-          [class.text-gray-600]="filtroTipo !== filter.key" [class.bg-transparent]="filtroTipo !== filter.key"
-          [class.hover:bg-red-50]="filtroTipo !== filter.key" [class.hover:text-red-600]="filtroTipo !== filter.key"
-          (click)="aplicarFiltroTipo(filter.key)" [disabled]="isLoading"
-          class="px-4 py-2 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 text-sm whitespace-nowrap">
-          <i class="fas" [class]="filter.icon"></i>
-          <span>{{ filter.label }}</span>
-          <span class="px-2 py-1 rounded-lg text-xs font-bold min-w-[20px] text-center"
-            [class.bg-white/25]="filtroTipo === filter.key" [class.bg-gray-200]="filtroTipo !== filter.key"
-            *ngIf="!isLoading">{{ filter.count }}</span>
-        </button>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Search Input -->
+      <div class="lg:col-span-2">
+        <div class="relative flex gap-2">
+          <div class="relative flex-1">
+            <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <input type="text" [placeholder]="getSearchPlaceholder()" [(ngModel)]="searchQuery"
+              (input)="onSearchChange()" (keydown)="onKeyDownSearch($event)" [disabled]="isLoading"
+              class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+            <button *ngIf="searchQuery && searchType === 'nombre'" (click)="clearSearch()"
+              class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <!-- Botón de búsqueda solo visible en modo documento -->
+          <button *ngIf="searchType === 'documento'" (click)="ejecutarBusquedaDocumento()"
+            [disabled]="!searchQuery.trim() || isLoading"
+            class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            <i class="fas fa-search text-xl"></i>
+            <span class="text-lg">Buscar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Pills -->
+      <div class="flex flex-wrap gap-2" *ngIf="searchType === 'nombre'">
+        <div class="bg-gray-100 p-1 rounded-2xl border border-gray-200 flex flex-wrap gap-2">
+          <button *ngFor="let filter of [
+                  {key: 'todos', label: 'Todos', icon: 'fa-users', count: clientes.length},
+                  {key: 'natural', label: 'Naturales', icon: 'fa-user', count: estadisticas.totalNaturales},
+                  {key: 'juridica', label: 'Jurídicas', icon: 'fa-building', count: estadisticas.totalJuridicas}
+                ]" [class.bg-red-600]="filtroTipo === filter.key" [class.text-white]="filtroTipo === filter.key"
+            [class.text-gray-600]="filtroTipo !== filter.key" [class.bg-transparent]="filtroTipo !== filter.key"
+            [class.hover:bg-red-50]="filtroTipo !== filter.key" [class.hover:text-red-600]="filtroTipo !== filter.key"
+            (click)="aplicarFiltroTipo(filter.key)" [disabled]="isLoading"
+            class="px-4 py-2 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 text-sm whitespace-nowrap">
+            <i class="fas" [class]="filter.icon"></i>
+            <span>{{ filter.label }}</span>
+            <span class="px-2 py-1 rounded-lg text-xs font-bold min-w-[20px] text-center"
+              [class.bg-white/25]="filtroTipo === filter.key" [class.bg-gray-200]="filtroTipo !== filter.key"
+              *ngIf="!isLoading">{{ filter.count }}</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -273,8 +310,16 @@
                     :
                     persona.razonSocial }}
                   </div>
-                  <div class="flex items-center gap-3 text-sm">
+                  <div class="flex items-center gap-3 text-sm flex-wrap">
                     <span class="text-gray-600 font-mono font-medium">ID: #{{ persona.id }}</span>
+                    
+                    <!-- Mostrar tipo y número de documento solo cuando está en modo búsqueda por documento -->
+                    <span class="flex items-center gap-1 text-gray-700" *ngIf="modoBusquedaDocumento && persona.documentos && persona.documentos.length > 0 && persona.documentos[0].tipo">
+                      <i class="fas fa-file-alt text-blue-500"></i>
+                      <span class="font-semibold">{{ persona.documentos[0].tipo }}:</span>
+                      <span class="font-mono">{{ persona.documento }}</span>
+                    </span>
+                    
                     <span
                       class="bg-gradient-to-r from-yellow-400 to-orange-500 text-orange-900 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1"
                       *ngIf="isClienteVIP(persona)">
