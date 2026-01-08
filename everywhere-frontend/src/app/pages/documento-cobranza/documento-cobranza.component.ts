@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 // Services
 import { DocumentoCobranzaService } from '../../core/service/DocumentoCobranza/DocumentoCobranza.service';
 import { PdfService } from '../../core/service/Pdf/Pdf.service';
-import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service'; 
+import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
 import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
@@ -95,7 +95,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ===== TEMPLATE UTILITIES =====
   Math = Math;
 
-  constructor(private menuConfigService: MenuConfigService) {}
+  constructor(private menuConfigService: MenuConfigService) { }
 
   ngOnInit(): void {
     this.initializeForms();
@@ -147,7 +147,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       this.searchTerm = value;
       this.filterDocumentos();
     });
-  } 
+  }
 
   private async loadInitialData(): Promise<void> {
     this.loading = true;
@@ -406,8 +406,8 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       const origenDestino = cotizacion.origenDestino?.toLowerCase() || '';
 
       return codigoCotizacion.includes(searchTerm) ||
-             personaDisplay.includes(searchTerm) ||
-             origenDestino.includes(searchTerm);
+        personaDisplay.includes(searchTerm) ||
+        origenDestino.includes(searchTerm);
     });
   }
 
@@ -560,11 +560,44 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   formatDate(dateString: string | undefined): string {
     if (!dateString) return 'N/A';
+
+    // Si la fecha viene en formato LocalDate (YYYY-MM-DD) del backend,
+    // parseamos manualmente para evitar problemas de zona horaria
+    const dateParts = dateString.split('T')[0].split('-');
+    if (dateParts.length === 3) {
+      const year = parseInt(dateParts[0], 10);
+      const month = parseInt(dateParts[1], 10);
+      const day = parseInt(dateParts[2], 10);
+
+      // Crear fecha en la zona horaria local sin conversión UTC
+      const localDate = new Date(year, month - 1, day);
+      return localDate.toLocaleDateString('es-ES');
+    }
+
+    // Fallback al método original si el formato es inesperado
     return new Date(dateString).toLocaleDateString('es-ES');
   }
 
   formatDateTime(dateString: string | undefined): string {
     if (!dateString) return 'N/A';
+
+    // Parsear LocalDateTime del backend (YYYY-MM-DDTHH:mm:ss)
+    const isoMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/);
+    if (isoMatch) {
+      const [, year, month, day, hour, minute, second] = isoMatch;
+      // Crear fecha en zona horaria local sin conversión UTC
+      const localDate = new Date(
+        parseInt(year, 10),
+        parseInt(month, 10) - 1,
+        parseInt(day, 10),
+        parseInt(hour, 10),
+        parseInt(minute, 10),
+        parseInt(second, 10)
+      );
+      return localDate.toLocaleString('es-ES');
+    }
+
+    // Fallback al método original si el formato es inesperado
     return new Date(dateString).toLocaleString('es-ES');
   }
 
