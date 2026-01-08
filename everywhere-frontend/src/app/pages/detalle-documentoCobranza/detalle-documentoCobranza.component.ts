@@ -99,6 +99,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     });
 
     this.documentoForm = this.fb.group({
+      fechaEmision: [''],
       fileVenta: ['', [Validators.maxLength(100)]],
       costoEnvio: [0, [Validators.min(0)]],
       observaciones: ['', [Validators.maxLength(500)]],
@@ -167,11 +168,11 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       .subscribe(documento => {
         if (documento) {
           // Crear nueva referencia para forzar detección de cambios en Angular
-          this.documento = { ...documento }; 
+          this.documento = { ...documento };
           this.loadDetallesDocumento();
           // Cargar detalles del documento de cobranza
           this.loadDetalles(id);
-          
+
           // Si el URL ya tiene modo=editar, entrar en modo edición
           if (this.modoEdicion) {
             this.enterEditMode();
@@ -189,7 +190,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
     const subscription = this.detalleDocumentoService.findByPersonaId(this.documento.personaId)
       .pipe(
-        catchError(error => { 
+        catchError(error => {
           return of([]);
         })
       )
@@ -203,7 +204,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private loadDetalles(documentoId: number): void {
     const subscription = this.detalleDocumentoCobranzaService.getDetallesByDocumentoCobranza(documentoId)
       .pipe(
-        catchError(error => { 
+        catchError(error => {
           return of([]);
         })
       )
@@ -416,22 +417,22 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   irAEditarDocumento(): void {
-  this.enterEditMode();
-  this.router.navigate([], {
-    relativeTo: this.route,
-    queryParams: { modo: 'editar' },
-    queryParamsHandling: 'merge'
-  });
-}
+    this.enterEditMode();
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { modo: 'editar' },
+      queryParamsHandling: 'merge'
+    });
+  }
 
   private enterEditMode(): void {
     if (!this.documento) return;
-    
+
     this.modoEdicion = true;
-    
+
     // Cargar opciones necesarias
     this.cargarOpcionesEdicion();
-    
+
     // Llenar formulario con datos actuales
     let valorCombinado = null;
     if (this.documento.personaJuridicaId) {
@@ -440,7 +441,13 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       valorCombinado = 'doc_' + this.documento.detalleDocumentoId;
     }
 
+    // Convertir fechaEmision de ISO datetime a solo fecha (YYYY-MM-DD) para el input type="date"
+    const fechaEmisionValue = this.documento.fechaEmision
+      ? this.documento.fechaEmision.split('T')[0]
+      : '';
+
     this.documentoForm.patchValue({
+      fechaEmision: fechaEmisionValue,
       fileVenta: this.documento.fileVenta || '',
       costoEnvio: this.documento.costoEnvio || 0,
       observaciones: this.documento.observaciones || '',
@@ -741,6 +748,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     }
 
     const updateDTO: DocumentoCobranzaUpdateDTO = {
+      fechaEmision: formValue.fechaEmision || undefined,
       fileVenta: formValue.fileVenta?.trim() || '',
       costoEnvio: formValue.costoEnvio || 0,
       observaciones: formValue.observaciones?.trim() || '',

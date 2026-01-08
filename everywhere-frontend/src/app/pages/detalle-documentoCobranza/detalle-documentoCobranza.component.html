@@ -280,6 +280,24 @@
                   </div>
                 </div>
 
+                <!-- Fecha de Emisión -->
+                <div class="group">
+                  <label class="block text-xs font-medium text-gray-600 mb-3">
+                    Fecha de Emisión
+                  </label>
+                  <div *ngIf="!modoEdicion"
+                    class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                    <div class="w-6 h-6 bg-indigo-100 rounded-md flex items-center justify-center">
+                      <i class="fas fa-calendar text-indigo-600 text-xs"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">{{ (documento.fechaEmision | date:'dd/MM/yyyy') || 'Sin fecha' }}</span>
+                  </div>
+                  <div *ngIf="modoEdicion" class="relative">
+                    <input type="date" formControlName="fechaEmision"
+                      class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                  </div>
+                </div>
+
                 <!-- File Venta -->
                 <div class="group">
                   <label class="block text-xs font-medium text-gray-600 mb-3">File de Venta</label>
