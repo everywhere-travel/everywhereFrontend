@@ -1,0 +1,322 @@
+<div class="space-y-4">
+    <!-- Search & View Controls -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
+        *ngIf="config.enableSearch !== false || config.enableViewSwitcher !== false">
+        <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-everywhere-primary rounded-xl flex items-center justify-center">
+                        <i class="fas fa-search text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">Buscar y Filtrar</h2>
+                        <p class="text-sm text-gray-600">Encuentra registros específicos</p>
+                    </div>
+                </div>
+
+                <!-- View Controls -->
+                <div class="flex items-center gap-2 bg-gray-100 rounded-xl p-1"
+                    *ngIf="config.enableViewSwitcher !== false">
+                    <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                        [class.bg-white]="state.currentView === 'table'"
+                        [class.text-everywhere-primary]="state.currentView === 'table'"
+                        [class.shadow-sm]="state.currentView === 'table'"
+                        [class.text-gray-600]="state.currentView !== 'table'" (click)="changeView('table')"
+                        title="Vista de Tabla">
+                        <i class="fas fa-table mr-2"></i>Tabla
+                    </button>
+                    <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                        [class.bg-white]="state.currentView === 'cards'"
+                        [class.text-everywhere-primary]="state.currentView === 'cards'"
+                        [class.shadow-sm]="state.currentView === 'cards'"
+                        [class.text-gray-600]="state.currentView !== 'cards'" (click)="changeView('cards')"
+                        title="Vista de Tarjetas">
+                        <i class="fas fa-th mr-2"></i>Tarjetas
+                    </button>
+                    <button class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                        [class.bg-white]="state.currentView === 'list'"
+                        [class.text-everywhere-primary]="state.currentView === 'list'"
+                        [class.shadow-sm]="state.currentView === 'list'"
+                        [class.text-gray-600]="state.currentView !== 'list'" (click)="changeView('list')"
+                        title="Vista de Lista">
+                        <i class="fas fa-list mr-2"></i>Lista
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Input -->
+        <div class="p-4" *ngIf="config.enableSearch !== false">
+            <div class="relative">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" [placeholder]="config.searchPlaceholder || 'Buscar...'"
+                    [(ngModel)]="state.searchTerm" (ngModelChange)="onSearchChange($event)"
+                    class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white" />
+                <button *ngIf="state.searchTerm"
+                    class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    (click)="clearSearch()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="flex flex-col items-center justify-center py-16 px-6">
+            <div
+                class="w-16 h-16 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary rounded-2xl flex items-center justify-center mb-4">
+                <i class="fas fa-spinner fa-spin text-white text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">{{ config.loadingMessage || 'Cargando datos...' }}</h3>
+            <p class="text-gray-600">Por favor espera mientras obtenemos los datos...</p>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && filteredData.length === 0"
+        class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden p-12 text-center">
+        <div class="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+            <i class="fas fa-inbox text-4xl text-gray-400"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ config.emptyMessage || 'No se encontraron registros' }}
+        </h3>
+        <p class="text-gray-600">{{ state.searchTerm ? 'Intenta ajustar los filtros de búsqueda' : 'No hay datos para mostrar' }}</p>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div *ngIf="config.enableSelection && state.selectedItems.length > 0"
+        class="bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-lg flex justify-between items-center animate-in slide-in-from-top duration-300">
+        <div class="flex items-center gap-3 font-semibold">
+            <i class="fas fa-check-circle"></i>
+            <span>{{ state.selectedItems.length }} elemento{{ state.selectedItems.length === 1 ? '' : 's' }}
+                seleccionado{{ state.selectedItems.length === 1 ? '' : 's' }}</span>
+        </div>
+        <div class="flex gap-3">
+            <button *ngFor="let action of config.bulkActions" (click)="executeBulkAction(action)"
+                [class]="'bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors'">
+                <i [class]="'fas ' + action.icon"></i>
+                {{ action.label }}
+            </button>
+            <button (click)="clearSelection()"
+                class="bg-white/20 border border-white/30 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
+                <i class="fas fa-times"></i>
+                Cancelar
+            </button>
+        </div>
+    </div>
+
+    <!-- Table View -->
+    <div *ngIf="!isLoading && filteredData.length > 0 && state.currentView === 'table'"
+        class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <!-- Selection Column -->
+                        <th *ngIf="config.enableSelection" class="w-12 p-5 text-center">
+                            <label class="relative inline-block cursor-pointer">
+                                <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
+                                    (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0" />
+                                <span
+                                    class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500"
+                                    [class.bg-red-600]="allSelected || someSelected"
+                                    [class.border-red-600]="allSelected || someSelected">
+                                    <i *ngIf="allSelected && !someSelected" class="fas fa-check text-white text-xs"></i>
+                                    <i *ngIf="someSelected" class="fas fa-minus text-white text-xs"></i>
+                                </span>
+                            </label>
+                        </th>
+
+                        <!-- Row Index -->
+                        <th *ngIf="config.showRowIndex"
+                            class="w-12 px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            #
+                        </th>
+
+                        <!-- Data Columns -->
+                        <th *ngFor="let column of visibleColumns"
+                            [class]="'px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider ' + (column.sortable !== false && config.enableSorting !== false ? 'cursor-pointer hover:bg-gray-100' : '')"
+                            [class.text-left]="column.align === 'left' || !column.align"
+                            [class.text-center]="column.align === 'center'"
+                            [class.text-right]="column.align === 'right'" [style.width]="column.width"
+                            (click)="column.sortable !== false && config.enableSorting !== false ? onSort(column) : null">
+                            <div class="flex items-center gap-2">
+                                <i *ngIf="column.icon" [class]="'fas ' + column.icon + ' text-gray-500'"></i>
+                                <span class="font-bold">{{ column.header }}</span>
+                                <i *ngIf="column.sortable !== false && config.enableSorting !== false"
+                                    [class]="'fas text-xs ' + (state.sortColumn === column.key ? (state.sortDirection === 'asc' ? 'fa-sort-up text-everywhere-primary' : 'fa-sort-down text-everywhere-primary') : 'fa-sort text-gray-400')">
+                                </i>
+                            </div>
+                        </th>
+
+                        <!-- Actions Column -->
+                        <th *ngIf="config.actions && config.actions.length > 0"
+                            class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <i class="fas fa-cog text-gray-500"></i>
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody class="bg-white divide-y divide-gray-200">
+                    <tr *ngFor="let item of paginatedData; let i = index; trackBy: trackByFn"
+                        [class]="'transition-colors duration-200 ' + getRowClass(item) + (config.enableRowHover !== false ? ' hover:bg-gray-50' : '')">
+
+                        <!-- Selection -->
+                        <td *ngIf="config.enableSelection" class="p-5 text-center">
+                            <label class="relative inline-block cursor-pointer">
+                                <input type="checkbox" [checked]="isSelected(item)" (change)="toggleSelection(item)"
+                                    class="absolute opacity-0 w-0 h-0" />
+                                <span
+                                    class="w-5 h-5 bg-white border-2 border-gray-300 rounded-md flex items-center justify-center transition-all duration-200 hover:border-red-500"
+                                    [class.bg-red-600]="isSelected(item)" [class.border-red-600]="isSelected(item)">
+                                    <i *ngIf="isSelected(item)" class="fas fa-check text-white text-xs"></i>
+                                </span>
+                            </label>
+                        </td>
+
+                        <!-- Row Index -->
+                        <td *ngIf="config.showRowIndex" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ (state.currentPage - 1) * state.itemsPerPage + i + 1 }}
+                        </td>
+
+                        <!-- Data Cells -->
+                        <td *ngFor="let column of visibleColumns" class="px-6 py-4 whitespace-nowrap text-sm"
+                            [class.text-left]="column.align === 'left' || !column.align"
+                            [class.text-center]="column.align === 'center'"
+                            [class.text-right]="column.align === 'right'">
+                            <ng-container *ngIf="!column.cellTemplate">
+                                {{ getCellValue(item, column) }}
+                            </ng-container>
+                            <ng-container *ngIf="column.cellTemplate">
+                                <ng-container
+                                    *ngTemplateOutlet="column.cellTemplate; context: { $implicit: item }"></ng-container>
+                            </ng-container>
+                        </td>
+
+                        <!-- Actions -->
+                        <td *ngIf="config.actions && config.actions.length > 0"
+                            class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <div class="flex justify-center space-x-2">
+                                <button *ngFor="let action of config.actions" [hidden]="!shouldShowAction(action, item)"
+                                    [disabled]="isActionDisabled(action, item)" (click)="executeAction(action, item)"
+                                    [class]="'inline-flex items-center p-2 rounded-lg transition-all duration-200 ' + 
+                           'bg-' + action.color + '-50 text-' + action.color + '-700 ' +
+                           'hover:bg-' + action.color + '-100 hover:text-' + action.color + '-900 ' +
+                           'disabled:opacity-50 disabled:cursor-not-allowed'" [title]="action.label">
+                                    <i [class]="'fas ' + action.icon"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Cards View (Simplified - can be expanded) -->
+    <div *ngIf="!isLoading && filteredData.length > 0 && state.currentView === 'cards'"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div *ngFor="let item of paginatedData; trackBy: trackByFn"
+            [class]="'bg-white rounded-2xl shadow-lg border border-gray-200 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ' + getRowClass(item)">
+            <div class="space-y-3">
+                <div *ngFor="let column of visibleColumns.slice(0, 4)">
+                    <div class="text-sm text-gray-500">{{ column.header }}</div>
+                    <div class="text-sm font-medium text-gray-900">{{ getCellValue(item, column) }}</div>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100"
+                *ngIf="config.actions && config.actions.length > 0">
+                <button *ngFor="let action of config.actions" [hidden]="!shouldShowAction(action, item)"
+                    (click)="executeAction(action, item)"
+                    [class]="'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105 bg-' + action.color + '-50 text-' + action.color + '-700 hover:bg-' + action.color + '-100'">
+                    <i [class]="'fas ' + action.icon"></i>{{ action.label }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- List View (Simplified) -->
+    <div *ngIf="!isLoading && filteredData.length > 0 && state.currentView === 'list'" class="space-y-2">
+        <div *ngFor="let item of paginatedData; trackBy: trackByFn"
+            [class]="'bg-white rounded-lg border border-gray-200 p-4 transition-all duration-200 ' + (config.enableRowHover !== false ? 'hover:bg-gray-50' : '') + ' ' + getRowClass(item)">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4 flex-1">
+                    <label *ngIf="config.enableSelection" class="relative inline-block cursor-pointer">
+                        <input type="checkbox" [checked]="isSelected(item)" (change)="toggleSelection(item)"
+                            class="absolute opacity-0 w-0 h-0" />
+                        <span
+                            class="w-5 h-5 bg-white border-2 border-gray-300 rounded flex items-center justify-center transition-all"
+                            [class.bg-red-600]="isSelected(item)" [class.border-red-600]="isSelected(item)">
+                            <i *ngIf="isSelected(item)" class="fas fa-check text-white text-xs"></i>
+                        </span>
+                    </label>
+
+                    <span *ngFor="let column of visibleColumns.slice(0, 5)" class="text-sm text-gray-700 truncate">
+                        {{ getCellValue(item, column) }}
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2 ml-4" *ngIf="config.actions && config.actions.length > 0">
+                    <button *ngFor="let action of config.actions" [hidden]="!shouldShowAction(action, item)"
+                        (click)="executeAction(action, item)"
+                        [class]="'p-2 rounded transition-colors duration-200 bg-' + action.color + '-50 text-' + action.color + '-700 hover:bg-' + action.color + '-100'"
+                        [title]="action.label">
+                        <i [class]="'fas ' + action.icon + ' text-sm'"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div *ngIf="config.enablePagination !== false && filteredData.length > 0"
+        class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+        <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <!-- Items per page selector -->
+            <div class="flex items-center gap-2 text-sm text-gray-700 font-medium">
+                <span>Mostrar:</span>
+                <select [(ngModel)]="state.itemsPerPage" (change)="onItemsPerPageChange()"
+                    class="border border-gray-300 rounded-lg px-3 py-2 bg-white font-medium">
+                    <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+                </select>
+                <span>por página</span>
+            </div>
+
+            <!-- Results info -->
+            <div class="text-sm font-semibold text-gray-700">
+                Mostrando {{ Math.min((state.currentPage - 1) * state.itemsPerPage + 1, totalItems) }} -
+                {{ Math.min(state.currentPage * state.itemsPerPage, totalItems) }} de {{ totalItems }} registro{{
+                totalItems === 1 ? '' : 's' }}
+            </div>
+
+            <!-- Navigation buttons -->
+            <nav class="flex items-center gap-2" *ngIf="totalPages > 1">
+                <button [disabled]="state.currentPage === 1" (click)="goToPage(state.currentPage - 1)"
+                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+
+                <div class="flex items-center gap-1">
+                    <button *ngFor="let page of getVisiblePages()" [disabled]="page === -1"
+                        (click)="page !== -1 ? goToPage(page) : null" [class]="'w-10 h-10 flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-200 ' + 
+                     (page === state.currentPage ? 'bg-everywhere-primary text-white' : 
+                      page === -1 ? 'cursor-default' : 'border border-gray-300 text-gray-700 hover:bg-gray-50')">
+                        {{ page === -1 ? '...' : page }}
+                    </button>
+                </div>
+
+                <button [disabled]="state.currentPage === totalPages" (click)="goToPage(state.currentPage + 1)"
+                    class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <app-error-modal [show]="showConfirmationModal" [data]="confirmationModalData" (close)="onCancelModalAction()"
+        (confirmed)="onConfirmModalAction()">
+    </app-error-modal>
+</div>
