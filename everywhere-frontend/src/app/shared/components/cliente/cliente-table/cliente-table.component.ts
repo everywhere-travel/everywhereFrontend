@@ -15,6 +15,7 @@ export interface PersonaTabla {
   email?: string;
   telefono?: string;
   direccion?: string;
+  documentos?: Array<{numero: string, tipo: string, origen: string}>;
 }
 
 @Component({
@@ -28,6 +29,7 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   // Inputs
   @Input() clientes: PersonaTabla[] = [];
   @Input() isLoading: boolean = false;
+  @Input() modoBusquedaDocumento: boolean = false;
 
   // Outputs
   @Output() verCliente = new EventEmitter<PersonaTabla>();
@@ -35,10 +37,12 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   @Output() eliminarCliente = new EventEmitter<PersonaTabla>();
   @Output() eliminarMasivo = new EventEmitter<number[]>();
   @Output() refrescar = new EventEmitter<void>();
+  @Output() buscarPorDocumento = new EventEmitter<string>();
 
   // Estado interno
   currentView: 'table' | 'cards' | 'list' = 'table';
   searchQuery: string = '';
+  searchType: 'nombre' | 'documento' = 'nombre';
   filtroTipo: 'todos' | 'natural' | 'juridica' = 'todos';
   sortColumn: string = 'nombre';
   sortDirection: 'asc' | 'desc' = 'asc';
@@ -97,7 +101,45 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   onSearchChange(): void {
     this.currentPage = 1;
     this.clearSelection();
+
+    // En modo documento, no buscar automáticamente
+    if (this.searchType === 'documento') {
+      return;
+    }
+
+    // Solo aplicar filtros locales si está en modo nombre
     this.aplicarFiltros();
+  }
+
+  ejecutarBusquedaDocumento(): void {
+    if (this.searchType === 'documento' && this.searchQuery.trim()) {
+      this.buscarPorDocumento.emit(this.searchQuery.trim());
+    }
+  }
+
+  onKeyDownSearch(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && this.searchType === 'documento') {
+      this.ejecutarBusquedaDocumento();
+    }
+  }
+
+  cambiarTipoBusqueda(tipo: 'nombre' | 'documento'): void {
+    this.searchType = tipo;
+    this.searchQuery = '';
+    this.clearSelection();
+    
+    // Si vuelve a modo nombre, disparar refresco para restaurar vista normal
+    if (tipo === 'nombre') {
+      this.refrescar.emit();
+    } else {
+      this.aplicarFiltros();
+    }
+  }
+
+  getSearchPlaceholder(): string {
+    return this.searchType === 'nombre'
+      ? 'Buscar por nombre, documento, email...'
+      : 'Buscar por número de documento...';
   }
 
   clearSearch(): void {
@@ -197,6 +239,8 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   refreshData(): void {
     this.clearSelection();
     this.currentPage = 1;
+    this.searchQuery = ''; // Limpiar búsqueda
+    this.searchType = 'nombre'; // Volver a modo búsqueda por nombre
     this.refrescar.emit();
   }
 
