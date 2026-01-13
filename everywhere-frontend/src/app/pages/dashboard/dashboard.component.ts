@@ -70,7 +70,7 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.initializeData();
-    this.updateExchangeRate();
+    //this.updateExchangeRate();
   }
 
   private initializeData(): void {
