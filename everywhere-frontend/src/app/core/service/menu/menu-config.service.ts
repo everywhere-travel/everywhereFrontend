@@ -8,11 +8,11 @@ export interface ExtendedSidebarMenuItem extends SidebarMenuItem {
     moduleKey?: string;
     children?: ExtendedSidebarMenuItem[];
 }
- 
+
 interface UserPermissions {
     [key: string]: boolean | any;
 }
- 
+
 @Injectable({
     providedIn: 'root'
 })
@@ -304,6 +304,7 @@ export class MenuConfigService {
 
     /**
      * Mark the active route in menu items
+     * Also marks parent items as active if any of their children are active
      * 
      * @param items - Menu items
      * @param currentRoute - Current route
@@ -319,6 +320,11 @@ export class MenuConfigService {
 
             if (item.children) {
                 markedItem.children = this.markActiveRoute(item.children, currentRoute);
+                // Mark parent as active if any child is active
+                const hasActiveChild = markedItem.children.some(child => child.active);
+                if (hasActiveChild) {
+                    markedItem.active = true;
+                }
             }
 
             return markedItem;
