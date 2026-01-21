@@ -22,3 +22,14 @@ export interface DetalleDocumentoResponse {
   documento: DocumentoResponse
   personaNatural: PersonaNaturalResponse
 }
+
+export interface PersonaInfo {
+  personaId: number;
+  nombreCompleto: string;
+}
+
+export interface DetalleDocumentoConPersonasDto {
+  numeroDocumento: string;
+  tipoDocumento: string;
+  personas: PersonaInfo[];
+}

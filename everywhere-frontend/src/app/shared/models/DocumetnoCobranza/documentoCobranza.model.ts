@@ -67,10 +67,15 @@ export interface DocumentoCobranzaResponseDTO {
 
   // Información de DetalleDocumento (si fue seleccionado un documento personal)
   detalleDocumentoId?: number;
+
+  // Campos de auditoría
+  createdAt?: string; // ISO string format for LocalDateTime  
+  updatedAt?: string; // ISO string format for LocalDateTime
 }
 
 // DTO para actualización de documento de cobranza (equivalente a DocumentoCobranzaUpdateDTO)
 export interface DocumentoCobranzaUpdateDTO {
+  fechaEmision?: string; // ISO string format for LocalDateTime
   fileVenta?: string;
   costoEnvio?: number;
   observaciones?: string;

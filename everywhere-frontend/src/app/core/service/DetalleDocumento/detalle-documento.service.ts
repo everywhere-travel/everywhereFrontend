@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { DetalleDocumentoRequest, DetalleDocumentoResponse } from '../../../shared/models/Documento/detalleDocumento.model'; // Asegúrate que la ruta sea correcta
+import { DetalleDocumentoRequest, DetalleDocumentoResponse, DetalleDocumentoConPersonasDto } from '../../../shared/models/Documento/detalleDocumento.model'; // Asegúrate que la ruta sea correcta
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -47,5 +47,10 @@ export class DetalleDocumentoService {
 
   deleteDetalle(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  buscarPorNumeroDocumento(numero: string): Observable<DetalleDocumentoConPersonasDto[]> {
+    const params = new HttpParams().set('numero', numero);
+    return this.http.get<DetalleDocumentoConPersonasDto[]>(`${this.apiUrl}/buscar-por-numero`, { params });
   }
 }

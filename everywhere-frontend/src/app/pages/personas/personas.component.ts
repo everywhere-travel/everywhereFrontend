@@ -9,6 +9,7 @@ import { ClienteDetailModalComponent, DocumentoCliente } from './../../shared/co
 import { ClienteTableComponent } from './../../shared/components/cliente/cliente-table/cliente-table.component';
 import { ErrorModalComponent, ErrorModalData } from '../../shared/components/error-modal/error-modal.component';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { DetalleDocumentoConPersonasDto } from '../../shared/models/Documento/detalleDocumento.model';
 
 export interface PersonaTabla {
   id: number;
@@ -47,7 +48,9 @@ export class PersonasComponent implements OnInit {
 
   // Data
   personas: PersonaTabla[] = [];
+  personasOriginales: PersonaTabla[] = [];
   isLoading: boolean = false;
+  modoVistaDocumentos: boolean = false;
 
   // Stats
   estadisticas = {
@@ -110,6 +113,7 @@ export class PersonasComponent implements OnInit {
   async loadPersonas(): Promise<void> {
     try {
       this.isLoading = true;
+      this.modoVistaDocumentos = false; // Limpiar modo búsqueda por documento
 
       const [naturales, juridicas] = await Promise.all([
         this.personaNaturalService.findAll().toPromise(),
@@ -174,6 +178,7 @@ export class PersonasComponent implements OnInit {
       }
 
       this.personas = personasTabla;
+      this.personasOriginales = [...personasTabla];
       this.calcularEstadisticas();
 
     } catch (error) {
@@ -378,5 +383,65 @@ export class PersonasComponent implements OnInit {
 
   cerrarErrorModal(): void {
     this.showErrorModal = false;
+  }
+
+  // ============ BÚSQUEDA POR DOCUMENTO ============
+
+  onBuscarPorDocumento(numero: string): void {
+    if (!numero || numero.trim().length === 0) {
+      this.modoVistaDocumentos = false;
+      this.personas = [...this.personasOriginales];
+      this.calcularEstadisticas();
+      return;
+    }
+
+    this.isLoading = true;
+    this.modoVistaDocumentos = false; // Ocultar banner hasta que termine la búsqueda
+    
+    this.detalleDocumentoService.buscarPorNumeroDocumento(numero).subscribe({
+      next: (resultados) => {
+        // Convertir resultados de documentos a formato PersonaTabla
+        const personasDesdeDocumentos: PersonaTabla[] = [];
+        
+        resultados.forEach(doc => {
+          doc.personas.forEach(persona => {
+            // Buscar los datos completos de la persona en la lista original
+            const personaCompleta = this.personasOriginales.find(p => p.id === persona.personaId);
+            
+            if (personaCompleta) {
+              // Usar los datos de la persona pero mostrar el documento buscado
+              personasDesdeDocumentos.push({
+                ...personaCompleta,
+                documento: doc.numeroDocumento,
+                // Agregar info del tipo de documento para mostrarlo
+                documentos: [{
+                  numero: doc.numeroDocumento,
+                  tipo: doc.tipoDocumento,
+                  origen: ''
+                }]
+              });
+            }
+          });
+        });
+        
+        this.personas = personasDesdeDocumentos;
+        this.modoVistaDocumentos = true; // Mostrar banner solo si hay resultados
+        this.estadisticas.totalNaturales = personasDesdeDocumentos.filter(p => p.tipo === 'natural').length;
+        this.estadisticas.totalJuridicas = personasDesdeDocumentos.filter(p => p.tipo === 'juridica').length;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error al buscar documentos:', error);
+        this.mostrarError('Error en búsqueda', error);
+        this.isLoading = false;
+        this.modoVistaDocumentos = false;
+      }
+    });
+  }
+
+  onVolverAVistaNormal(): void {
+    this.modoVistaDocumentos = false;
+    this.personas = [...this.personasOriginales];
+    this.calcularEstadisticas();
   }
 }
