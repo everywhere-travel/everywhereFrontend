@@ -39,7 +39,8 @@ export interface DocumentoCobranzaDTO {
 // Modelo para la respuesta de listado de documentos (ResponseDTO)
 export interface DocumentoCobranzaResponseDTO {
   id?: number;
-  numero?: string;
+  serie?: string;
+  correlativo?: number;
   fechaEmision?: string; // ISO string format for LocalDateTime
   observaciones?: string;
   fileVenta?: string;
@@ -69,7 +70,7 @@ export interface DocumentoCobranzaResponseDTO {
   detalleDocumentoId?: number;
 
   // Campos de auditoría
-  createdAt?: string; // ISO string format for LocalDateTime  
+  createdAt?: string; // ISO string format for LocalDateTime
   updatedAt?: string; // ISO string format for LocalDateTime
 }
 

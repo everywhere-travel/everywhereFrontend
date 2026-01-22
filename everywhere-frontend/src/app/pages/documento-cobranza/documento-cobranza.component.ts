@@ -48,9 +48,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   currentView: 'table' | 'cards' | 'list' = 'table';
   mostrarModalCrear = false;
   mostrarModalVer = false;
+  mostrarModalTipoDocumento = false; // Modal para elegir entre DC o Recibo
   mostrarModalCotizaciones = false;
   mostrarFormulario = false;
   editandoDocumento = false;
+  tipoDocumentoSeleccionado: 'documento-cobranza' | 'recibo' | null = null;
 
   // ===== DATA ARRAYS =====
   documentos: DocumentoCobranzaResponseDTO[] = [];
@@ -89,7 +91,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   searchForm!: FormGroup;
   documentoForm!: FormGroup;
 
-  // ===== SIDEBAR CONFIGURATION ===== 
+  // ===== SIDEBAR CONFIGURATION =====
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // ===== TEMPLATE UTILITIES =====
@@ -258,7 +260,8 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     } else {
       const term = this.searchTerm.toLowerCase();
       this.filteredDocumentos = this.documentos.filter(doc =>
-        doc.numero?.toLowerCase().includes(term) ||
+        doc.serie?.toLowerCase().includes(term) ||
+        doc.correlativo?.toString().includes(term) ||
         doc.fileVenta?.toLowerCase().includes(term) ||
         doc.clienteNombre?.toLowerCase().includes(term) ||
         doc.codigoCotizacion?.toLowerCase().includes(term)
@@ -298,6 +301,13 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   async mostrarFormularioCrear(): Promise<void> {
+    // Primero mostrar modal para elegir tipo de documento
+    this.mostrarModalTipoDocumento = true;
+  }
+
+  async seleccionarTipoDocumento(tipo: 'documento-cobranza' | 'recibo'): Promise<void> {
+    this.tipoDocumentoSeleccionado = tipo;
+    this.mostrarModalTipoDocumento = false;
     this.editandoDocumento = false;
     this.resetForm();
 
@@ -308,6 +318,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
     await this.loadCotizaciones();
     this.mostrarModalCotizaciones = true;
+  }
+
+  cerrarModalTipoDocumento(): void {
+    this.mostrarModalTipoDocumento = false;
+    this.tipoDocumentoSeleccionado = null;
   }
 
   async mostrarFormularioEditar(documento: DocumentoCobranzaResponseDTO): Promise<void> {
@@ -328,6 +343,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.personaNaturalIdActual = null;
     this.personasJuridicas = [];
     this.sucursales = [];
+    this.tipoDocumentoSeleccionado = null;
     this.resetForm();
   }
 
@@ -351,7 +367,8 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   private populateForm(documento: DocumentoCobranzaResponseDTO): void {
     this.documentoForm.patchValue({
-      nroSerie: documento.numero,
+      nroSerie: documento.serie,
+      correlativo: documento.correlativo,
       fileVenta: documento.fileVenta,
       costoEnvio: documento.costoEnvio,
       fechaEmision: documento.fechaEmision ? documento.fechaEmision.split('T')[0] : '',
@@ -413,8 +430,13 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // ===== PDF METHODS =====
   descargarPDF(documento: DocumentoCobranzaResponseDTO): void {
-    if (!documento.numero) {
+    if (!documento.serie) {
       this.showError('No se puede generar PDF: documento sin número de serie');
+      return;
+    }
+
+    if (!documento.correlativo) {
+      this.showError('No se puede generar PDF: documento sin correlativo');
       return;
     }
 
@@ -424,7 +446,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.pdfService.downloadDocumentoCobranzaPdf(documentoId, documento.numero);
+    this.pdfService.downloadDocumentoCobranzaPdf(documentoId, documento.serie, documento.correlativo);
   }
 
   verPDF(documento: DocumentoCobranzaResponseDTO): void {
@@ -609,8 +631,15 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     }).format(amount);
   }
 
-  trackByDocumento(index: number, documento: DocumentoCobranzaResponseDTO): string {
-    return documento.numero || index.toString();
+  getNumeroDocumento(documento: DocumentoCobranzaResponseDTO): string {
+    if (documento?.serie && documento?.correlativo !== undefined && documento?.correlativo !== null) {
+      return `${documento.serie}-${String(documento.correlativo).padStart(9, '0')}`;
+    }
+    return 'Sin número';
+  }
+
+  trackByDocumento(index: number, documento: DocumentoCobranzaResponseDTO): any {
+    return documento.id ?? index;
   }
 
   // ===== NUEVOS MÉTODOS PARA SELECCIÓN =====

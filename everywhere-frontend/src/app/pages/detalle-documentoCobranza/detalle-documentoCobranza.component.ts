@@ -82,7 +82,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   showDocumentoForm = false;
   editingDetalleId: number | null = null;
 
-  // Sidebar Configuration 
+  // Sidebar Configuration
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
   sidebarCollapsed = false;
 
@@ -576,6 +576,13 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   getDetalleDocumentoInfo(id: number): DetalleDocumentoResponse | undefined {
     return this.detallesDocumento.find(d => d.id === id);
+  }
+
+  getNumeroDocumento(documento: DocumentoCobranzaResponseDTO | null): string {
+    if (documento?.serie && documento?.correlativo !== undefined && documento?.correlativo !== null) {
+      return `${documento.serie}-${String(documento.correlativo).padStart(9, '0')}`;
+    }
+    return 'Sin número';
   }
 
   onDetalleDocumentoChange(event: any): void {
