@@ -2,28 +2,26 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
-import { of } from 'rxjs';
 
 // Services
-import { DocumentoCobranzaService } from '../../core/service/DocumentoCobranza/DocumentoCobranza.service';
-import { DetalleDocumentoCobranzaService } from '../../core/service/DetalleDocumentoCobranza/detalle-documentoCobranza.service';
+import { ReciboService } from '../../core/service/Recibo/recibo.service';
+import { DetalleReciboService } from '../../core/service/Recibo/detalle-recibo.service';
 import { ProductoService } from '../../core/service/Producto/producto.service';
 import { LoadingService } from '../../core/service/loading.service';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { FormaPagoService } from '../../core/service/FormaPago/forma-pago.service';
-import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
-import { PersonaService } from '../../core/service/persona/persona.service';
+import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service'; 
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 
 // Models
-import { DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
-import { DetalleDocumentoCobranzaRequestDTO, DetalleDocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/detalleDocumentoCobranza.model';
+import { DetalleReciboRequestDTO, DetalleReciboResponseDTO } from '../../shared/models/Recibo/detalleRecibo.model';
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model';
+import { ReciboResponseDTO, ReciboUpdateDTO } from '../../shared/models/Recibo/recibo.model';
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
@@ -32,33 +30,32 @@ import { DetalleDocumentoResponse } from '../../shared/models/Documento/detalleD
 
 
 @Component({
-  selector: 'app-detalle-documentoCobranza',
+  selector: 'app-detalle-recibo',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule, SidebarComponent],
-  templateUrl: './detalle-documentoCobranza.component.html',
-  styleUrls: ['./detalle-documentoCobranza.component.css']
+  templateUrl: './detalle-recibo.component.html',
+  styleUrls: ['./detalle-recibo.component.css']
 })
-export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
+export class DetalleReciboComponent implements OnInit, OnDestroy {
 
   // Services
   private router = inject(Router);
   private route = inject(ActivatedRoute);
-  private documentoCobranzaService = inject(DocumentoCobranzaService);
-  private detalleDocumentoCobranzaService = inject(DetalleDocumentoCobranzaService);
+  private reciboService = inject(ReciboService);
+  private detalleReciboService = inject(DetalleReciboService);
   private detalleDocumentoService = inject(DetalleDocumentoService);
   private productoService = inject(ProductoService);
   private loadingService = inject(LoadingService);
   private fb = inject(FormBuilder);
   private sucursalService = inject(SucursalService);
   private naturalJuridicoService = inject(NaturalJuridicoService);
-  private personaService = inject(PersonaService);
   private formaPagoService = inject(FormaPagoService);
 
   // Data
-  documento: DocumentoCobranzaResponseDTO | null = null;
-  documentoId: number | null = null;
-  detalles: DetalleDocumentoCobranzaResponseDTO[] = [];
-  detallesFijos: DetalleDocumentoCobranzaResponseDTO[] = []; // Detalles temporales para agregar en modo edición
+  recibo: ReciboResponseDTO | null = null;
+  reciboId: number | null = null;
+  detalles: DetalleReciboResponseDTO[] = [];
+  detallesFijos: DetalleReciboResponseDTO[] = []; // Detalles temporales para agregar en modo edición
   detallesDocumento: DetalleDocumentoResponse[] = [];
   productos: ProductoResponse[] = [];
   sucursales: SucursalResponse[] = [];
@@ -71,7 +68,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // Forms
   detalleForm: FormGroup;
-  documentoForm: FormGroup;
+  reciboForm: FormGroup;
 
   // UI State
   isLoading = false;
@@ -79,7 +76,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   success: string | null = null;
   modoEdicion = false;
   showDetalleForm = false;
-  showDocumentoForm = false;
+  showReciboForm = false;
   editingDetalleId: number | null = null;
 
   // Sidebar Configuration
@@ -98,10 +95,9 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       productoId: [null]
     });
 
-    this.documentoForm = this.fb.group({
+    this.reciboForm = this.fb.group({
       fechaEmision: [''],
       fileVenta: ['', [Validators.maxLength(100)]],
-      costoEnvio: [0, [Validators.min(0)]],
       observaciones: ['', [Validators.maxLength(500)]],
       detalleDocumentoId: [null], // Puede contener 'doc_123' o 'pj_456' - Opcional
       sucursalId: [null], // Opcional
@@ -110,8 +106,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/documentos-cobranza/detalle/:id');
-    this.loadDocumentoFromRoute();
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/recibos/detalle/:id');
+    this.loadReciboFromRoute();
     this.loadProductos();
   }
 
@@ -133,31 +129,31 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== NAVIGATION METHODS =====
-  private loadDocumentoFromRoute(): void {
+  private loadReciboFromRoute(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
 
     if (!idParam || isNaN(Number(idParam))) {
-      this.error = 'ID de documento de cobranza inválido';
+      this.error = 'ID de recibo inválido';
       return;
     }
 
     const modoParam = this.route.snapshot.queryParamMap.get('modo');
     this.modoEdicion = modoParam === 'editar';
 
-    this.documentoId = Number(idParam);
-    this.loadDocumento(this.documentoId);
+    this.reciboId = Number(idParam);
+    this.loadRecibo(this.reciboId);
   }
 
-  private loadDocumento(id: number): void {
+  private loadRecibo(id: number): void {
     this.isLoading = true;
     this.error = null;
     this.loadingService.setLoading(true);
 
-    const subscription = this.documentoCobranzaService.getDocumentoById(id)
+    const subscription = this.reciboService.getReciboById(id)
       .pipe(
         catchError(error => {
-          console.error('Error al cargar documento:', error);
-          this.error = 'Error al cargar el documento de cobranza. Por favor, intente nuevamente.';
+          console.error('Error al cargar recibo:', error);
+          this.error = 'Error al cargar el recibo. Por favor, intente nuevamente.';
           return of(null);
         }),
         finalize(() => {
@@ -165,12 +161,12 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
           this.loadingService.setLoading(false);
         })
       )
-      .subscribe(documento => {
-        if (documento) {
+      .subscribe(recibo => {
+        if (recibo) {
           // Crear nueva referencia para forzar detección de cambios en Angular
-          this.documento = { ...documento };
-          this.loadDetallesDocumento();
-          // Cargar detalles del documento de cobranza
+          this.recibo = { ...recibo };
+          this.loadDetallesRecibo();
+          // Cargar detalles del recibo
           this.loadDetalles(id);
 
           // Si el URL ya tiene modo=editar, entrar en modo edición
@@ -183,12 +179,12 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.subscriptions.add(subscription);
   }
 
-  private loadDetallesDocumento(): void {
-    if (!this.documento?.personaId) {
+  private loadDetallesRecibo(): void {
+    if (!this.recibo?.personaId) {
       return;
     }
 
-    const subscription = this.detalleDocumentoService.findByPersonaId(this.documento.personaId)
+    const subscription = this.detalleDocumentoService.findByPersonaId(this.recibo.personaId)
       .pipe(
         catchError(error => {
           return of([]);
@@ -201,8 +197,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.subscriptions.add(subscription);
   }
 
-  private loadDetalles(documentoId: number): void {
-    const subscription = this.detalleDocumentoCobranzaService.getDetallesByDocumentoCobranza(documentoId)
+  private loadDetalles(reciboId: number): void {
+    const subscription = this.detalleReciboService.getDetallesByRecibo(reciboId)
       .pipe(
         catchError(error => {
           return of([]);
@@ -232,24 +228,24 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // ===== CRUD OPERATIONS =====
   guardarDetalle(): void {
-    if (!this.detalleForm.valid || !this.documentoId) {
+    if (!this.detalleForm.valid || !this.reciboId) {
       return;
     }
 
     const formValue = this.detalleForm.value;
-    const detalleRequest: DetalleDocumentoCobranzaRequestDTO = {
+    const detalleRequest: DetalleReciboRequestDTO = {
       cantidad: formValue.cantidad,
       descripcion: formValue.descripcion,
       precio: formValue.precio,
       productoId: formValue.productoId,
-      documentoCobranzaId: this.documentoId
+      reciboId: this.reciboId
     };
 
     this.isLoading = true;
 
     if (this.editingDetalleId) {
       // Actualizar detalle existente
-      const updateSubscription = this.detalleDocumentoCobranzaService.updateDetalle(this.editingDetalleId, detalleRequest)
+      const updateSubscription = this.detalleReciboService.updateDetalle(this.editingDetalleId, detalleRequest)
         .pipe(
           catchError(error => {
             console.error('Error al actualizar detalle:', error);
@@ -269,7 +265,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       this.subscriptions.add(updateSubscription);
     } else {
       // Crear nuevo detalle
-      const createSubscription = this.detalleDocumentoCobranzaService.createDetalle(detalleRequest)
+      const createSubscription = this.detalleReciboService.createDetalle(detalleRequest)
         .pipe(
           catchError(error => {
             console.error('Error al crear detalle:', error);
@@ -290,7 +286,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     }
   }
 
-  editarDetalle(detalle: DetalleDocumentoCobranzaResponseDTO): void {
+  editarDetalle(detalle: DetalleReciboResponseDTO): void {
     this.editingDetalleId = detalle.id || null;
     this.showDetalleForm = true;
 
@@ -309,7 +305,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
 
-    const deleteSubscription = this.detalleDocumentoCobranzaService.deleteDetalle(detalleId)
+    const deleteSubscription = this.detalleReciboService.deleteDetalle(detalleId)
       .pipe(
         catchError(error => {
           console.error('Error al eliminar detalle:', error);
@@ -328,12 +324,11 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // ===== DOCUMENTO CRUD OPERATIONS =====
   guardarDocumento(): void {
-    if (!this.documentoForm.valid || !this.documentoId) {
+    if (!this.reciboForm.valid || !this.reciboId) {
       return;
     }
 
-    const formValue = this.documentoForm.value;
-
+    const formValue = this.reciboForm.value;
     // Separar el valor combinado del dropdown
     let detalleDocumentoId: number | undefined = undefined;
     let personaJuridicaId: number | undefined = undefined;
@@ -347,9 +342,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       }
     }
 
-    const updateDTO: DocumentoCobranzaUpdateDTO = {
+    const updateDTO: ReciboUpdateDTO = {
       fileVenta: formValue.fileVenta?.trim() || '',
-      costoEnvio: formValue.costoEnvio || 0,
       observaciones: formValue.observaciones?.trim() || '',
       detalleDocumentoId: detalleDocumentoId,
       sucursalId: formValue.sucursalId || undefined,
@@ -359,7 +353,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
     this.isLoading = true;
 
-    const updateSubscription = this.documentoCobranzaService.updateDocumento(this.documentoId, updateDTO)
+    const updateSubscription = this.reciboService.updateRecibo(this.reciboId, updateDTO)
       .pipe(
         catchError(error => {
           console.error('Error al actualizar documento:', error);
@@ -372,8 +366,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
         if (response) {
           this.success = 'Documento actualizado correctamente';
           // Recargar documento completo desde el servidor para evitar caché
-          if (this.documentoId) {
-            this.loadDocumento(this.documentoId);
+          if (this.reciboId) {
+            this.loadRecibo(this.reciboId);
           }
           this.salirModoEdicion();
         }
@@ -383,20 +377,19 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== UI METHODS =====
-  mostrarFormularioEditarDocumento(): void {
-    if (this.documento) {
-      this.documentoForm.patchValue({
-        fileVenta: this.documento.fileVenta || '',
-        costoEnvio: this.documento.costoEnvio || 0,
-        observaciones: this.documento.observaciones || ''
+  mostrarFormularioEditarRecibo(): void {
+    if (this.recibo) {
+      this.reciboForm.patchValue({
+        fileVenta: this.recibo.fileVenta || '',
+        observaciones: this.recibo.observaciones || ''
       });
-      this.showDocumentoForm = true;
+      this.showReciboForm = true;
     }
   }
 
-  cancelarEdicionDocumento(): void {
-    this.showDocumentoForm = false;
-    this.documentoForm.reset();
+  cancelarEdicionRecibo(): void {
+    this.showReciboForm = false;
+    this.reciboForm.reset();
   }
 
   mostrarFormularioNuevoDetalle(): void {
@@ -416,7 +409,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.detalleForm.reset();
   }
 
-  irAEditarDocumento(): void {
+  irAEditarRecibo(): void {
     this.enterEditMode();
     this.router.navigate([], {
       relativeTo: this.route,
@@ -426,7 +419,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   private enterEditMode(): void {
-    if (!this.documento) return;
+    if (!this.recibo) return;
 
     this.modoEdicion = true;
 
@@ -435,34 +428,33 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
     // Llenar formulario con datos actuales
     let valorCombinado = null;
-    if (this.documento.personaJuridicaId) {
-      valorCombinado = 'pj_' + this.documento.personaJuridicaId;
-    } else if (this.documento.detalleDocumentoId) {
-      valorCombinado = 'doc_' + this.documento.detalleDocumentoId;
+    if (this.recibo.personaJuridicaId) {
+      valorCombinado = 'pj_' + this.recibo.personaJuridicaId;
+    } else if (this.recibo.detalleDocumentoId) {
+      valorCombinado = 'doc_' + this.recibo.detalleDocumentoId;
     }
 
     // Convertir fechaEmision de ISO datetime a solo fecha (YYYY-MM-DD) para el input type="date"
-    const fechaEmisionValue = this.documento.fechaEmision
-      ? this.documento.fechaEmision.split('T')[0]
+    const fechaEmisionValue = this.recibo.fechaEmision
+      ? this.recibo.fechaEmision.split('T')[0]
       : '';
 
-    this.documentoForm.patchValue({
+    this.reciboForm.patchValue({
       fechaEmision: fechaEmisionValue,
-      fileVenta: this.documento.fileVenta || '',
-      costoEnvio: this.documento.costoEnvio || 0,
-      observaciones: this.documento.observaciones || '',
+      fileVenta: this.recibo.fileVenta || '',
+      observaciones: this.recibo.observaciones || '',
       detalleDocumentoId: valorCombinado,
-      sucursalId: this.documento.sucursalId || null,
-      formaPagoId: this.documento.formaPagoId || null
+      sucursalId: this.recibo.sucursalId || null,
+      formaPagoId: this.recibo.formaPagoId || null
     });
-    this.sucursalSeleccionada = this.documento.sucursalId || null;
+    this.sucursalSeleccionada = this.recibo.sucursalId || null;
   }
 
   salirModoEdicion(): void {
     this.modoEdicion = false;
     this.showDetalleForm = false;
-    this.showDocumentoForm = false;
-    this.documentoForm.reset();
+    this.showReciboForm = false;
+    this.reciboForm.reset();
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { modo: null },
@@ -470,13 +462,13 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     });
   }
 
-  volverADocumentos(): void {
-    this.router.navigate(['/documentos-cobranza']);
+  volverARecibos(): void {
+    this.router.navigate(['/recibos']);
   }
 
   recargarDetalles(): void {
-    if (this.documentoId) {
-      this.loadDetalles(this.documentoId);
+    if (this.reciboId) {
+      this.loadDetalles(this.reciboId);
     }
   }
 
@@ -493,8 +485,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     const totalDetalles = this.detalles.reduce((total, detalle) => {
       return total + ((detalle.cantidad || 0) * (detalle.precio || 0));
     }, 0);
-    const costoEnvio = this.documento?.costoEnvio || 0;
-    return totalDetalles + costoEnvio;
+    return totalDetalles;
   }
 
   hideMessages(): void {
@@ -502,7 +493,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.error = null;
   }
 
-  trackByDetalle(index: number, detalle: DetalleDocumentoCobranzaResponseDTO): number {
+  trackByDetalle(index: number, detalle: DetalleReciboResponseDTO): number {
     return detalle.id || index;
   }
 
@@ -512,7 +503,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || []; // Cargar sucursales
       this.formasPago = await this.formaPagoService.getAllFormasPago().toPromise() || []; // Cargar formas de pago
 
-      const personaId = this.documento?.personaId; // Cargar documentos del cliente (DNI, Pasaporte, etc.)
+      const personaId = this.recibo?.personaId; // Cargar documentos del cliente (DNI, Pasaporte, etc.)
 
       if (personaId) {
         try {
@@ -528,11 +519,11 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
               .toPromise() || [];
             this.personasJuridicas = relaciones.map(r => r.personaJuridica);
           } else {
-            if (this.documento?.personaJuridicaId) {
+            if (this.recibo?.personaJuridicaId) {
               this.personasJuridicas = [{
-                id: this.documento.personaJuridicaId,
-                ruc: this.documento.personaJuridicaRuc || '',
-                razonSocial: this.documento.personaJuridicaRazonSocial || '',
+                id: this.recibo.personaJuridicaId,
+                ruc: this.recibo.personaJuridicaRuc || '',
+                razonSocial: this.recibo.personaJuridicaRazonSocial || '',
                 persona: {} as any,
                 creado: new Date().toISOString(),
                 actualizado: new Date().toISOString()
@@ -546,11 +537,11 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
           this.documentosCliente = [];
 
           // Verificar si es PersonaJuridica y cargarla
-          if (this.documento?.personaJuridicaId) {
+          if (this.recibo?.personaJuridicaId) {
             this.personasJuridicas = [{
-              id: this.documento.personaJuridicaId,
-              ruc: this.documento.personaJuridicaRuc || '',
-              razonSocial: this.documento.personaJuridicaRazonSocial || '',
+              id: this.recibo.personaJuridicaId,
+              ruc: this.recibo.personaJuridicaRuc || '',
+              razonSocial: this.recibo.personaJuridicaRazonSocial || '',
               persona: {} as any,
               creado: new Date().toISOString(),
               actualizado: new Date().toISOString()
@@ -567,7 +558,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // ============ HELPER METHODS =============
   getDetalleDocumentoDisplay(): string {
-    const detalleDocId = (this.documento as any)?.detalleDocumentoId;
+    const detalleDocId = (this.recibo as any)?.detalleDocumentoId;
     if (!detalleDocId) return 'Sin detalle de documento';
     const detalle = this.detallesDocumento.find(d => d.id === detalleDocId);
     if (!detalle) return 'Sin detalle de documento';
@@ -578,9 +569,9 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     return this.detallesDocumento.find(d => d.id === id);
   }
 
-  getNumeroDocumento(documento: DocumentoCobranzaResponseDTO | null): string {
-    if (documento?.serie && documento?.correlativo !== undefined && documento?.correlativo !== null) {
-      return `${documento.serie}-${String(documento.correlativo).padStart(9, '0')}`;
+  getNumeroRecibo(recibo: ReciboResponseDTO | null): string {
+    if (recibo?.serie && recibo?.correlativo !== undefined && recibo?.correlativo !== null) {
+      return `${recibo.serie}-${String(recibo.correlativo).padStart(9, '0')}`;
     }
     return 'Sin número';
   }
@@ -646,12 +637,12 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     }
 
     const formValue = this.detalleForm.value;
-    const nuevoDetalle: DetalleDocumentoCobranzaResponseDTO = {
+    const nuevoDetalle: DetalleReciboResponseDTO = {
       cantidad: formValue.cantidad || 1,
       descripcion: formValue.descripcion || '',
       precio: formValue.precio || 0,
       productoId: formValue.productoId || undefined,
-      documentoCobranzaId: this.documentoId || undefined
+      reciboId: this.reciboId || undefined
     };
 
     this.detallesFijos.push(nuevoDetalle);
@@ -669,8 +660,8 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
    * Guarda todos los cambios: detalles modificados, nuevos detalles fijos y documento
    */
   async guardarCambios(): Promise<void> {
-    if (!this.documentoId) {
-      this.error = 'No se puede guardar sin un ID de documento';
+    if (!this.reciboId) {
+      this.error = 'No se puede guardar sin un ID de recibo';
       return;
     }
 
@@ -678,42 +669,42 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.loadingService.setLoading(true);
 
     try {
-      await this.guardarDocumentoAsync();
+      await this.guardarReciboAsync();
 
       // 2. Actualizar detalles existentes
       for (const detalle of this.detalles) {
         if (detalle.id) {
-          const updateDTO: DetalleDocumentoCobranzaRequestDTO = {
+          const updateDTO: DetalleReciboRequestDTO = {
             cantidad: detalle.cantidad,
             descripcion: detalle.descripcion || '',
             precio: detalle.precio,
             productoId: detalle.productoId || 0,
-            documentoCobranzaId: this.documentoId
+            reciboId: this.reciboId
           };
 
-          await this.detalleDocumentoCobranzaService.updateDetalle(detalle.id, updateDTO).toPromise();
+          await this.detalleReciboService.updateDetalle(detalle.id, updateDTO).toPromise();
         }
       }
 
       // 3. Crear nuevos detalles fijos
       for (const detalleFijo of this.detallesFijos) {
-        const createDTO: DetalleDocumentoCobranzaRequestDTO = {
+        const createDTO: DetalleReciboRequestDTO = {
           cantidad: detalleFijo.cantidad,
           descripcion: detalleFijo.descripcion || '',
           precio: detalleFijo.precio,
           productoId: detalleFijo.productoId || 0,
-          documentoCobranzaId: this.documentoId
+          reciboId: this.reciboId
         };
 
-        await this.detalleDocumentoCobranzaService.createDetalle(createDTO).toPromise();
+        await this.detalleReciboService.createDetalle(createDTO).toPromise();
       }
 
       this.success = 'Cambios guardados correctamente';
       this.detallesFijos = []; // Limpiar detalles temporales
       this.recargarDetalles();
-      // Recargar documento completo desde el servidor para evitar caché
-      if (this.documentoId) {
-        this.loadDocumento(this.documentoId);
+      // Recargar recibo completo desde el servidor para evitar caché
+      if (this.reciboId) {
+        this.loadRecibo(this.reciboId);
       }
       this.salirModoEdicion();
 
@@ -727,19 +718,19 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Versión async del guardar documento
+   * Versión async del guardar recibo
    */
-  private async guardarDocumentoAsync(): Promise<void> {
-    if (!this.documentoForm.valid || !this.documentoId) {
-      console.error('Formulario inválido o sin documentoId', {
-        valid: this.documentoForm.valid,
-        documentoId: this.documentoId,
-        errors: this.documentoForm.errors
+  private async guardarReciboAsync(): Promise<void> {
+    if (!this.reciboForm.valid || !this.reciboId) {
+      console.error('Formulario inválido o sin reciboId', {
+        valid: this.reciboForm.valid,
+        reciboId: this.reciboId,
+        errors: this.reciboForm.errors
       });
       return;
     }
 
-    const formValue = this.documentoForm.value;
+    const formValue = this.reciboForm.value;
 
     // Separar el valor combinado del dropdown
     let detalleDocumentoId: number | undefined = undefined;
@@ -754,10 +745,9 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       }
     }
 
-    const updateDTO: DocumentoCobranzaUpdateDTO = {
+    const updateDTO: ReciboUpdateDTO = {
       fechaEmision: formValue.fechaEmision || undefined,
       fileVenta: formValue.fileVenta?.trim() || '',
-      costoEnvio: formValue.costoEnvio || 0,
       observaciones: formValue.observaciones?.trim() || '',
       detalleDocumentoId: detalleDocumentoId,
       sucursalId: formValue.sucursalId || undefined,
@@ -765,9 +755,9 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       formaPagoId: formValue.formaPagoId || undefined
     };
 
-    const response = await this.documentoCobranzaService.updateDocumento(this.documentoId, updateDTO).toPromise();
+    const response = await this.reciboService.updateRecibo(this.reciboId, updateDTO).toPromise();
     if (response) {
-      this.documento = response;
+      this.recibo = response;
     }
   }
 }

@@ -1,4 +1,4 @@
-﻿<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
   <!-- Sidebar Component -->
   <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
     (toggleSidebar)="onToggleSidebar()">
@@ -50,17 +50,17 @@
             <i class="fas fa-redo mr-2"></i>
             Reintentar
           </button>
-          <button (click)="volverADocumentos()"
+          <button (click)="volverARecibos()"
             class="px-6 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors">
             <i class="fas fa-arrow-left mr-2"></i>
-            Volver a Documentos
+            Volver a Recibos
           </button>
         </div>
       </div>
     </div>
 
     <!-- Content when data is loaded -->
-    <div *ngIf="documento && !isLoading" class="max-w-full mx-auto">
+    <div *ngIf="recibo && !isLoading" class="max-w-full mx-auto">
 
       <!-- Header Section -->
       <header
@@ -79,7 +79,7 @@
           <nav class="mb-6">
             <ol class="flex items-center space-x-2 text-sm">
               <li>
-                <button (click)="volverADocumentos()"
+                <button (click)="volverARecibos()"
                   class="text-white/80 hover:text-white transition-colors flex items-center gap-1">
                   <i class="fas fa-file-contract"></i>
                   Documentos de Cobranza
@@ -89,7 +89,7 @@
                 <i class="fas fa-chevron-right mx-2"></i>
               </li>
               <li class="text-white font-medium">
-                Detalle de Documento #{{ getNumeroDocumento(documento) }}
+                Detalle de Recibo #{{ getNumeroRecibo(recibo) }}
               </li>
             </ol>
           </nav>
@@ -103,10 +103,10 @@
                 </div>
                 <div>
                   <h1 class="text-3xl font-bold">
-                    Documento #{{ getNumeroDocumento(documento) }}
+                    Recibo #{{ getNumeroRecibo(recibo) }}
                   </h1>
                   <p class="text-white/80 text-lg">
-                    {{ modoEdicion ? 'Editando detalles del documento' : 'Gestión de detalles del documento de cobranza'
+                    {{ modoEdicion ? 'Editando detalles del recibo' : 'Gestión de detalles del recibo'
                     }}
                   </p>
                   <div *ngIf="modoEdicion" class="mt-2">
@@ -119,19 +119,15 @@
                 </div>
               </div>
 
-              <!-- Document Info Cards -->
+              <!-- Recibo Info Cards -->
               <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
                 <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-4">
                   <div class="text-sm text-white/80">Cliente</div>
-                  <div class="font-semibold text-white">{{ documento.clienteNombre || 'Sin cliente' }}</div>
+                  <div class="font-semibold text-white">{{ recibo.clienteNombre || 'Sin cliente' }}</div>
                 </div>
                 <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-4">
                   <div class="text-sm text-white/80">File Venta</div>
-                  <div class="font-semibold text-white">{{ documento.fileVenta || 'Sin file' }}</div>
-                </div>
-                <div class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-4">
-                  <div class="text-sm text-white/80">Costo de envio</div>
-                  <div class="font-semibold text-white">{{ documento.costoEnvio }}</div>
+                  <div class="font-semibold text-white">{{ recibo.fileVenta || 'Sin file' }}</div>
                 </div>
               </div>
             </div>
@@ -145,14 +141,14 @@
               </button>
 
               <div *ngIf="!modoEdicion">
-                <button (click)="irAEditarDocumento()"
+                <button (click)="irAEditarRecibo()"
                   class="px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2">
                   <i class="fas fa-edit"></i>
                   <span class="hidden sm:inline">Editar</span>
                 </button>
               </div>
 
-              <button (click)="volverADocumentos()"
+              <button (click)="volverARecibos()"
                 class="px-6 py-3 bg-white text-everywhere-primary rounded-xl hover:bg-gray-100 transition-colors flex items-center gap-2 font-medium">
                 <i class="fas fa-arrow-left"></i>
                 <span class="hidden sm:inline">Volver</span>
@@ -165,8 +161,8 @@
       <!-- Main Content -->
       <main class="px-4 py-8 max-w-full overflow-x-hidden">
 
-        <!-- Información del Documento -Formulario Inline -->
-        <form [formGroup]="documentoForm">
+        <!-- Información del Recibo -Formulario Inline -->
+        <form [formGroup]="reciboForm">
           <div
             class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50 mb-6 overflow-hidden">
             <div class="p-6">
@@ -201,7 +197,7 @@
                       <i class="fas fa-id-card text-blue-600 text-xs"></i>
                     </div>
                     <span class="text-sm font-medium text-gray-900">
-                      {{ documento.personaJuridicaId ? 'RUC: ' + documento.personaJuridicaRazonSocial + ' - ' + documento.personaJuridicaRuc : getDetalleDocumentoDisplay() }}
+                      {{ recibo.personaJuridicaId ? 'RUC: ' + recibo.personaJuridicaRazonSocial + ' - ' + recibo.personaJuridicaRuc : getDetalleDocumentoDisplay() }}
                     </span>
                   </div>
                   <div *ngIf="modoEdicion" class="relative">
@@ -221,7 +217,7 @@
                         </option>
                       </optgroup>
                     </select>
-                    <div *ngIf="documentoForm.get('detalleDocumentoId')?.invalid && documentoForm.get('detalleDocumentoId')?.touched"
+                    <div *ngIf="reciboForm.get('detalleDocumentoId')?.invalid && reciboForm.get('detalleDocumentoId')?.touched"
                       class="mt-1 text-xs text-red-500">
                       <i class="fas fa-exclamation-circle mr-1"></i>
                       Debes seleccionar un documento o empresa
@@ -239,7 +235,7 @@
                     <div class="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center">
                       <i class="fas fa-building text-purple-600 text-xs"></i>
                     </div>
-                    <span class="text-sm font-medium text-gray-900">{{ documento.sucursalDescripcion || 'Sin sucursal' }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ recibo.sucursalDescripcion || 'Sin sucursal' }}</span>
                   </div>
                   <div *ngIf="modoEdicion" class="relative">
                     <select formControlName="sucursalId"
@@ -249,7 +245,7 @@
                         {{ sucursal.descripcion }}
                       </option>
                     </select>
-                    <div *ngIf="documentoForm.get('sucursalId')?.invalid && documentoForm.get('sucursalId')?.touched"
+                    <div *ngIf="reciboForm.get('sucursalId')?.invalid && reciboForm.get('sucursalId')?.touched"
                       class="mt-1 text-xs text-red-500">
                       <i class="fas fa-exclamation-circle mr-1"></i>
                       La sucursal es obligatoria
@@ -267,7 +263,7 @@
                     <div class="w-6 h-6 bg-orange-100 rounded-md flex items-center justify-center">
                       <i class="fas fa-credit-card text-orange-600 text-xs"></i>
                     </div>
-                    <span class="text-sm font-medium text-gray-900">{{ documento.formaPagoDescripcion || 'Sin forma de pago' }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ recibo.formaPagoDescripcion || 'Sin forma de pago' }}</span>
                   </div>
                   <div *ngIf="modoEdicion" class="relative">
                     <select formControlName="formaPagoId"
@@ -290,7 +286,7 @@
                     <div class="w-6 h-6 bg-indigo-100 rounded-md flex items-center justify-center">
                       <i class="fas fa-calendar text-indigo-600 text-xs"></i>
                     </div>
-                    <span class="text-sm font-medium text-gray-900">{{ (documento.fechaEmision | date:'dd/MM/yyyy') || 'Sin fecha' }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ (recibo.fechaEmision | date:'dd/MM/yyyy') || 'Sin fecha' }}</span>
                   </div>
                   <div *ngIf="modoEdicion" class="relative">
                     <input type="date" formControlName="fechaEmision"
@@ -306,27 +302,10 @@
                     <div class="w-6 h-6 bg-blue-100 rounded-md flex items-center justify-center">
                       <i class="fas fa-file-alt text-blue-600 text-xs"></i>
                     </div>
-                    <span class="text-sm font-medium text-gray-900">{{ documento.fileVenta || 'Sin file' }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ recibo.fileVenta || 'Sin file' }}</span>
                   </div>
                   <div *ngIf="modoEdicion" class="relative">
                     <input type="text" formControlName="fileVenta"
-                      class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
-                  </div>
-                </div>
-
-                <!-- Costo Envío -->
-                <div class="group">
-                  <label class="block text-xs font-medium text-gray-600 mb-3">Costo de Envío</label>
-                  <div *ngIf="!modoEdicion"
-                    class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
-                    <div class="w-6 h-6 bg-green-100 rounded-md flex items-center justify-center">
-                      <i class="fas fa-dollar-sign text-green-600 text-xs"></i>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900">{{ documento.moneda || 'S/' }} {{
-                      documento.costoEnvio | number:'1.2-2' }}</span>
-                  </div>
-                  <div *ngIf="modoEdicion" class="relative">
-                    <input type="number" formControlName="costoEnvio" step="0.01"
                       class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
                   </div>
                 </div>
@@ -340,7 +319,7 @@
                   <div class="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5">
                     <i class="fas fa-sticky-note text-purple-600 text-xs"></i>
                   </div>
-                  <span class="text-sm font-medium text-gray-900 break-words whitespace-pre-wrap overflow-hidden" style="word-break: break-word; overflow-wrap: break-word;">{{ documento.observaciones || 'Sin observaciones' }}</span>
+                  <span class="text-sm font-medium text-gray-900 break-words whitespace-pre-wrap overflow-hidden" style="word-break: break-word; overflow-wrap: break-word;">{{ recibo.observaciones || 'Sin observaciones' }}</span>
                 </div>
                 <div *ngIf="modoEdicion" class="relative">
                   <textarea formControlName="observaciones" rows="3"
@@ -363,7 +342,7 @@
                     class="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mr-3">
                     <i class="fas fa-list-alt text-white text-sm"></i>
                   </div>
-                  Detalles del Documento
+                  Detalles del Recibo
                 </h3>
                 <div *ngIf="modoEdicion" class="flex gap-3">
                   <button type="button" (click)="salirModoEdicion()"
@@ -371,7 +350,7 @@
                     <i class="fas fa-times mr-2"></i>
                     Cancelar
                   </button>
-                  <button (click)="guardarCambios()" [disabled]="isLoading || !documentoForm.valid"
+                  <button (click)="guardarCambios()" [disabled]="isLoading || !reciboForm.valid"
                     class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2">
                     <i *ngIf="isLoading" class="fas fa-spinner fa-spin"></i>
                     <i *ngIf="!isLoading" class="fas fa-save"></i>
@@ -440,12 +419,12 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
                       <div *ngIf="!modoEdicion"
                         class="px-3 py-2 bg-white rounded-lg border border-gray-200/50 text-right">
-                        <span class="text-xs font-medium text-gray-900">{{ documento.moneda || 'S/' }} {{ detalle.precio | number:'1.2-2' }}</span>
+                        <span class="text-xs font-medium text-gray-900">{{ recibo.moneda || 'S/' }} {{ detalle.precio | number:'1.2-2' }}</span>
                       </div>
                     </div>
                     <!-- Total -->
                     <div class="px-3 py-2 bg-blue-50 rounded-lg border border-blue-200/50 text-right">
-                      <span class="text-xs font-bold text-blue-900">{{ documento.moneda || 'S/' }} {{ ((detalle.cantidad
+                      <span class="text-xs font-bold text-blue-900">{{ recibo.moneda || 'S/' }} {{ ((detalle.cantidad
                         || 0) * (detalle.precio || 0)) | number:'1.2-2' }}</span>
                     </div>
                     <!-- Acciones -->
@@ -496,7 +475,7 @@
                       </div>
                       <!-- Total -->
                       <div class="px-3 py-2 bg-green-50 rounded-lg border border-green-200/50 text-right">
-                        <span class="text-xs font-bold text-green-900">{{ documento.moneda || 'S/' }} {{
+                        <span class="text-xs font-bold text-green-900">{{ recibo.moneda || 'S/' }} {{
                           ((detalle.cantidad || 0) * (detalle.precio || 0)) | number:'1.2-2' }}</span>
                       </div>
                       <!-- Acciones -->
@@ -540,7 +519,7 @@
                     </div>
                     <!-- Total Placeholder -->
                     <div class="px-3 py-2 bg-gray-100 rounded-lg border border-gray-200/50 text-right">
-                      <span class="text-xs font-medium text-gray-500">{{ documento.moneda || 'S/' }} 0.00</span>
+                      <span class="text-xs font-medium text-gray-500">{{ recibo.moneda || 'S/' }} 0.00</span>
                     </div>
                     <!-- Botón Agregar -->
                     <div class="text-center">
@@ -556,8 +535,7 @@
                 <div *ngIf="detalles.length === 0 && detallesFijos.length === 0" class="text-center py-12">
                   <i class="fas fa-list text-4xl text-gray-300 mb-4"></i>
                   <h3 class="text-lg font-medium text-gray-900 mb-2">No hay detalles</h3>
-                  <p class="text-gray-500">{{ modoEdicion ? 'Agregue detalles usando el formulario arriba' : 'Este
-                    documento aún no tiene detalles registrados' }}</p>
+                  <p class="text-gray-500">{{ modoEdicion ? 'Agregue detalles usando el formulario arriba' : 'Este recibo aún no tiene detalles registrados' }}</p>
                 </div>
               </div>
 
@@ -568,18 +546,12 @@
                   <div class="space-y-3">
                     <div class="flex justify-between items-center text-sm">
                       <span class="text-gray-600">Subtotal Detalles:</span>
-                      <span class="font-medium text-gray-900">{{ documento.moneda || 'S/' }} {{ (calcularTotal() -
-                        (documento.costoEnvio || 0)) | number:'1.2-2' }}</span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm">
-                      <span class="text-gray-600">Costo Envío:</span>
-                      <span class="font-medium text-gray-900">{{ documento.moneda || 'S/' }} {{ documento.costoEnvio |
-                        number:'1.2-2' }}</span>
+                      <span class="font-medium text-gray-900">{{ recibo.moneda || 'S/' }} {{ (calcularTotal()) | number:'1.2-2' }}</span>
                     </div>
                     <div class="border-t border-blue-300 pt-3 mt-3">
                       <div class="flex justify-between items-center">
                         <span class="text-base font-semibold text-gray-900">Total:</span>
-                        <span class="text-2xl font-bold text-everywhere-primary">{{ documento.moneda || 'S/' }} {{
+                        <span class="text-2xl font-bold text-everywhere-primary">{{ recibo.moneda || 'S/' }} {{
                           calcularTotal() | number:'1.2-2' }}</span>
                       </div>
                     </div>
@@ -589,7 +561,6 @@
             </div>
           </div>
         </div>
-
       </main>
     </div>
   </div>

@@ -140,7 +140,7 @@ export class CacheService {
    * Este método es útil después de operaciones CREATE, UPDATE o DELETE
    * @param module Nombre del módulo a invalidar
    */
-  invalidateModule(module: 'personas' | 'liquidaciones' | 'cotizaciones' | 'documentos-cobranza' | 'all'): void {
+  invalidateModule(module: 'personas' | 'liquidaciones' | 'cotizaciones' | 'documentos-cobranza' | 'recibos' | 'all'): void {
     if (module === 'all') {
       this.clear();
       console.log('[CacheService] Toda la caché ha sido invalidada');
@@ -151,7 +151,8 @@ export class CacheService {
       'personas': '/personas',
       'liquidaciones': '/liquidaciones',
       'cotizaciones': '/cotizaciones',
-      'documentos-cobranza': '/documentos-cobranza'
+      'documentos-cobranza': '/documentos-cobranza',
+      'recibos': '/recibos'
     };
 
     const pattern = patterns[module];

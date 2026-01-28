@@ -46,11 +46,25 @@ export class MenuConfigService {
             moduleKey: 'LIQUIDACIONES'
         },
         {
-            id: 'documentos-cobranza',
-            title: 'Documentos de Cobranza',
-            icon: 'fas fa-file-contract',
-            route: '/documentos-cobranza',
-            moduleKey: 'DOCUMENTOS_COBRANZA'
+            id: 'generacion-documentos',
+            title: 'Generacion de Documentos',
+            icon: 'fas fa-box',
+            children: [
+                {
+                    id: 'documentos-cobranza',
+                    title: 'Documentos de Cobranza',
+                    icon: 'fas fa-file-contract',
+                    route: '/documentos-cobranza',
+                    moduleKey: 'DOCUMENTOS_COBRANZA'
+                },
+                {
+                    id: 'recibos',
+                    title: 'Recibos',
+                    icon: 'fas fa-file-alt',
+                    route: '/recibos',
+                    moduleKey: 'RECIBOS'
+                },
+            ]
         },
         {
             id: 'categorias',
@@ -144,7 +158,7 @@ export class MenuConfigService {
 
     /**
      * Get menu items filtered by user permissions and with active route marked
-     * 
+     *
      * @param currentRoute - Optional current route to mark as active
      * @returns Filtered menu items based on user permissions
      */
@@ -161,7 +175,7 @@ export class MenuConfigService {
 
     /**
      * Get menu items with automatic active route detection
-     * 
+     *
      * @returns Filtered menu items with current route marked as active
      */
     getMenuItemsWithActiveRoute(): ExtendedSidebarMenuItem[] {
@@ -171,7 +185,7 @@ export class MenuConfigService {
 
     /**
      * Get all menu items without filtering (useful for admin views)
-     * 
+     *
      * @returns All menu items
      */
     getAllMenuItems(): ExtendedSidebarMenuItem[] {
@@ -180,7 +194,7 @@ export class MenuConfigService {
 
     /**
      * Get user permissions from auth service
-     * 
+     *
      * @returns User permissions object
      */
     private getUserPermissions(): UserPermissions {
@@ -192,7 +206,7 @@ export class MenuConfigService {
      * Filter menu items based on user permissions
      * If user has ALL_MODULES permission, returns all items
      * Otherwise, filters items based on moduleKey permissions
-     * 
+     *
      * @param userPermissions - User permissions object
      * @returns Filtered menu items
      */
@@ -208,12 +222,12 @@ export class MenuConfigService {
 
     /**
      * Recursively filter menu items and their children based on permissions
-     * 
+     *
      * Rules:
      * - Dashboard is always visible
      * - Items without moduleKey are visible if they have visible children
      * - Items with moduleKey are visible only if user has that permission
-     * 
+     *
      * @param items - Menu items to filter
      * @param userPermissions - User permissions
      * @returns Filtered menu items
@@ -230,7 +244,7 @@ export class MenuConfigService {
 
     /**
      * Determine if an item should be shown based on permissions
-     * 
+     *
      * @param item - Menu item to check
      * @param userPermissions - User permissions
      * @returns True if item should be shown
@@ -255,7 +269,7 @@ export class MenuConfigService {
 
     /**
      * Check if user has a specific permission
-     * 
+     *
      * @param moduleKey - Module key to check
      * @param userPermissions - User permissions
      * @returns True if user has permission
@@ -266,7 +280,7 @@ export class MenuConfigService {
 
     /**
      * Filter children of a menu item
-     * 
+     *
      * @param item - Menu item
      * @param userPermissions - User permissions
      * @returns Menu item with filtered children
@@ -290,7 +304,7 @@ export class MenuConfigService {
     /**
      * Check if an item has visible content
      * Items with children are only visible if they have at least one visible child
-     * 
+     *
      * @param item - Menu item to check
      * @returns True if item has visible content
      */
@@ -305,7 +319,7 @@ export class MenuConfigService {
     /**
      * Mark the active route in menu items
      * Also marks parent items as active if any of their children are active
-     * 
+     *
      * @param items - Menu items
      * @param currentRoute - Current route
      * @returns Menu items with active route marked
@@ -333,7 +347,7 @@ export class MenuConfigService {
 
     /**
      * Check if a menu item's route matches the current route
-     * 
+     *
      * @param item - Menu item
      * @param currentRoute - Current route
      * @returns True if routes match
@@ -349,7 +363,7 @@ export class MenuConfigService {
 
     /**
      * Deep clone menu items to avoid mutations
-     * 
+     *
      * @param items - Items to clone
      * @returns Cloned items
      */

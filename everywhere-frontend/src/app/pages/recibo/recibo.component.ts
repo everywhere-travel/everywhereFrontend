@@ -4,16 +4,15 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, FormsModule } from '@angul
 import { Router } from '@angular/router';
 
 // Services
-import { DocumentoCobranzaService } from '../../core/service/DocumentoCobranza/DocumentoCobranza.service';
+import { ReciboService } from '../../core/service/Recibo/recibo.service';
 import { PdfService } from '../../core/service/Pdf/Pdf.service';
 import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
 import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
-import { PersonaService } from '../../core/service/persona/persona.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 
 // Models
-import { DocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
+import { ReciboResponseDTO } from '../../shared/models/Recibo/recibo.model';
 import { CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
 import { NaturalJuridicaResponse } from '../../shared/models/NaturalJuridica/naturalJuridica.models';
 import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
@@ -23,23 +22,22 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 
 
 @Component({
-  selector: 'app-documento-cobranza',
+  selector: 'app-recibo',
   standalone: true,
-  templateUrl: './documento-cobranza.component.html',
-  styleUrls: ['./documento-cobranza.component.css'],
+  templateUrl: './recibo.component.html',
+  styleUrls: ['./recibo.component.css'],
   imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent]
 })
-export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
+export class ReciboComponent implements OnInit, OnDestroy {
 
   // ===== SERVICES INJECTION =====
   private fb = inject(FormBuilder);
   private router = inject(Router);
-  private documentoCobranzaService = inject(DocumentoCobranzaService);
+  private reciboService = inject(ReciboService);
   private pdfService = inject(PdfService);
   private cotizacionService = inject(CotizacionService);
   private naturalJuridicoService = inject(NaturalJuridicoService);
   private sucursalService = inject(SucursalService);
-  private personaService = inject(PersonaService);
 
   // ===== UI STATE =====
   loading: boolean = false;
@@ -53,15 +51,15 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   editandoDocumento = false;
 
   // ===== DATA ARRAYS =====
-  documentos: DocumentoCobranzaResponseDTO[] = [];
-  filteredDocumentos: DocumentoCobranzaResponseDTO[] = [];
+  recibos: ReciboResponseDTO[] = [];
+  filteredRecibos: ReciboResponseDTO[] = [];
   cotizaciones: CotizacionResponse[] = [];
   cotizacionesFiltradas: CotizacionResponse[] = [];
   personasJuridicas: NaturalJuridicaResponse[] = [];
   sucursales: SucursalResponse[] = [];
 
   // ===== SELECTION STATE =====
-  documentoSeleccionado: DocumentoCobranzaResponseDTO | null = null;
+  reciboSeleccionado: ReciboResponseDTO | null = null;
   cotizacionSeleccionada: CotizacionResponse | null = null;
   personaJuridicaSeleccionada: NaturalJuridicaResponse | null = null;
   sucursalSeleccionada: SucursalResponse | null = null;
@@ -100,7 +98,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForms();
     this.loadInitialData();
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/documentos-cobranza');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/recibos');
   }
 
   ngOnDestroy(): void {
@@ -108,12 +106,12 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== STATS METHODS =====
-  getTotalDocumentos(): number {
-    return this.documentos.length;
+  getTotalRecibos(): number {
+    return this.recibos.length;
   }
 
-  getDocumentosConPdf(): number {
-    return this.documentos.filter(doc => doc.id).length; // Todos los documentos con ID tienen PDF disponible
+  getRecibosConPdf(): number {
+    return this.recibos.filter(recibo => recibo.id).length; // Todos los recibos con ID tienen PDF disponible
   }
 
   getCotizacionesDisponibles(): number {
@@ -145,7 +143,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     // Setup search
     this.searchForm.get('searchTerm')?.valueChanges.subscribe(value => {
       this.searchTerm = value;
-      this.filterDocumentos();
+      this.filterRecibos();
     });
   }
 
@@ -153,7 +151,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.isLoading = true;
     try {
-      await this.loadDocumentos();
+      await this.loadRecibos();
       await this.loadCotizaciones();
     } catch (error) {
       this.showError('Error al cargar los datos iniciales');
@@ -164,21 +162,21 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== DATA LOADING =====
-  private async loadDocumentos(setLoading: boolean = false): Promise<void> {
+  private async loadRecibos(setLoading: boolean = false): Promise<void> {
     try {
       if (setLoading) {
         this.loading = true;
         this.isLoading = true;
       }
 
-      this.documentos = await this.documentoCobranzaService.getAllDocumentos().toPromise() || [];
+      this.recibos = await this.reciboService.getAllRecibos().toPromise() || [];
 
-      this.filteredDocumentos = [...this.documentos];
-      this.totalItems = this.documentos.length;
+      this.filteredRecibos = [...this.recibos];
+      this.totalItems = this.recibos.length;
     } catch (error) {
-      console.error('Error al cargar documentos:', error);
-      this.showError('Error al cargar los documentos de cobranza');
-      this.documentos = [];
+      console.error('Error al cargar recibos:', error);
+      this.showError('Error al cargar los recibos');
+      this.recibos = [];
     } finally {
       if (setLoading) {
         this.loading = false;
@@ -191,14 +189,14 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     try {
       const todasLasCotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
 
-      // Filtrar solo las cotizaciones que no tienen documento de cobranza creado
+      // Filtrar solo las cotizaciones que no tienen recibo creado
       this.cotizaciones = todasLasCotizaciones.filter(cotizacion => {
-        // Verificar si ya existe un documento de cobranza para esta cotización
-        const yaExisteDocumento = this.documentos.some(documento =>
-          documento.cotizacionId === cotizacion.id ||
-          documento.codigoCotizacion === cotizacion.codigoCotizacion
+        // Verificar si ya existe un recibo para esta cotización
+        const yaExisteRecibo = this.recibos.some(recibo =>
+          recibo.cotizacionId === cotizacion.id ||
+          recibo.codigoCotizacion === cotizacion.codigoCotizacion
         );
-        return !yaExisteDocumento;
+        return !yaExisteRecibo;
       });
 
       this.cotizacionesFiltradas = [...this.cotizaciones];
@@ -213,7 +211,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.isLoading = true;
     try {
-      await this.loadDocumentos();
+      await this.loadRecibos();
       await this.loadCotizaciones();
     } catch (error) {
       this.showError('Error al actualizar los datos');
@@ -223,8 +221,8 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     }
   }
 
-  async recargarDocumentos(): Promise<void> {
-    await this.loadDocumentos();
+  async recargarRecibos(): Promise<void> {
+    await this.loadRecibos();
   }
 
   // ===== MESSAGE HANDLING =====
@@ -249,23 +247,23 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   clearSearch(): void {
     this.searchForm.patchValue({ searchTerm: '' });
     this.searchTerm = '';
-    this.filterDocumentos();
+    this.filterRecibos();
   }
 
-  private filterDocumentos(): void {
+  private filterRecibos(): void {
     if (!this.searchTerm.trim()) {
-      this.filteredDocumentos = [...this.documentos];
+      this.filteredRecibos = [...this.recibos];
     } else {
       const term = this.searchTerm.toLowerCase();
-      this.filteredDocumentos = this.documentos.filter(doc =>
-        doc.serie?.toLowerCase().includes(term) ||
-        doc.correlativo?.toString().includes(term) ||
-        doc.fileVenta?.toLowerCase().includes(term) ||
-        doc.clienteNombre?.toLowerCase().includes(term) ||
-        doc.codigoCotizacion?.toLowerCase().includes(term)
+      this.filteredRecibos = this.recibos.filter(recibo =>
+        recibo.serie?.toLowerCase().includes(term) ||
+        recibo.correlativo?.toString().includes(term) ||
+        recibo.fileVenta?.toLowerCase().includes(term) ||
+        recibo.clienteNombre?.toLowerCase().includes(term) ||
+        recibo.codigoCotizacion?.toLowerCase().includes(term)
       );
     }
-    this.totalItems = this.filteredDocumentos.length;
+    this.totalItems = this.filteredRecibos.length;
     this.currentPage = 1;
   }
 
@@ -275,45 +273,45 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== NAVIGATION METHODS =====
-  verDetalleDocumento(documento: DocumentoCobranzaResponseDTO): void {
-    if (documento.id) {
-      this.router.navigate(['/documentos-cobranza/detalle', documento.id]);
+  verDetalleDocumento(recibo: ReciboResponseDTO): void {
+    if (recibo.id) {
+      this.router.navigate(['/recibos/detalle', recibo.id]);
     }
   }
 
-  editarDocumento(documento: DocumentoCobranzaResponseDTO): void {
-    if (documento?.id) {
-      this.router.navigate(['/documentos-cobranza/detalle', documento.id]);
+  editarDocumento(recibo: ReciboResponseDTO): void {
+    if (recibo?.id) {
+      this.router.navigate(['/recibos/detalle', recibo.id]);
     }
   }
 
   // ===== MODAL METHODS =====
-  mostrarModalVerDocumento(documento: DocumentoCobranzaResponseDTO): void {
-    this.documentoSeleccionado = documento;
+  mostrarModalVerDocumento(recibo: ReciboResponseDTO): void {
+    this.reciboSeleccionado = recibo;
     this.mostrarModalVer = true;
   }
 
   cerrarModalVer(): void {
     this.mostrarModalVer = false;
-    this.documentoSeleccionado = null;
+    this.reciboSeleccionado = null;
   }
 
   async mostrarFormularioCrear(): Promise<void> {
     this.editandoDocumento = false;
     this.resetForm();
 
-    // Asegurarse de que los documentos estén cargados antes de filtrar las cotizaciones
-    if (this.documentos.length === 0) {
-      await this.loadDocumentos();
+    // Asegurarse de que los recibos estén cargados antes de filtrar las cotizaciones
+    if (this.recibos.length === 0) {
+      await this.loadRecibos();
     }
 
     await this.loadCotizaciones();
     this.mostrarModalCotizaciones = true;
   }
 
-  async mostrarFormularioEditar(documento: DocumentoCobranzaResponseDTO): Promise<void> {
+  async mostrarFormularioEditar(documento: ReciboResponseDTO): Promise<void> {
     this.editandoDocumento = true;
-    this.documentoSeleccionado = documento;
+    this.reciboSeleccionado = documento;
     this.populateForm(documento);
     this.mostrarFormulario = true;
   }
@@ -322,7 +320,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.mostrarFormulario = false;
     this.mostrarModalCotizaciones = false;
     this.editandoDocumento = false;
-    this.documentoSeleccionado = null;
+    this.reciboSeleccionado = null;
     this.cotizacionSeleccionada = null;
     this.personaJuridicaSeleccionada = null;
     this.sucursalSeleccionada = null;
@@ -350,12 +348,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     });
   }
 
-  private populateForm(documento: DocumentoCobranzaResponseDTO): void {
+  private populateForm(documento: ReciboResponseDTO): void {
     this.documentoForm.patchValue({
       nroSerie: documento.serie,
       correlativo: documento.correlativo,
       fileVenta: documento.fileVenta,
-      costoEnvio: documento.costoEnvio,
       fechaEmision: documento.fechaEmision ? documento.fechaEmision.split('T')[0] : '',
       clienteEmail: '', // No disponible en ResponseDTO
       clienteTelefono: '', // No disponible en ResponseDTO
@@ -414,34 +411,34 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== PDF METHODS =====
-  descargarPDF(documento: DocumentoCobranzaResponseDTO): void {
-    if (!documento.serie) {
-      this.showError('No se puede generar PDF: documento sin número de serie');
+  descargarPDF(recibo: ReciboResponseDTO): void {
+    if (!recibo.serie) {
+      this.showError('No se puede generar PDF: recibo sin número de serie');
       return;
     }
 
-    if (!documento.correlativo) {
-      this.showError('No se puede generar PDF: documento sin correlativo');
+    if (!recibo.correlativo) {
+      this.showError('No se puede generar PDF: recibo sin correlativo');
       return;
     }
 
-    const documentoId = documento.id;
-    if (!documentoId) {
-      this.showError('No se puede generar PDF: documento sin ID');
+    const reciboId = recibo.id;
+    if (!reciboId) {
+      this.showError('No se puede generar PDF: recibo sin ID');
       return;
     }
 
-    this.pdfService.downloadDocumentoCobranzaPdf(documentoId, documento.serie, documento.correlativo);
+    this.pdfService.downloadReciboPdf(reciboId, recibo.serie, recibo.correlativo);
   }
 
-  verPDF(documento: DocumentoCobranzaResponseDTO): void {
-    const documentoId = documento.id;
-    if (!documentoId) {
-      this.showError('No se puede visualizar PDF: documento sin ID');
+  verPDF(recibo: ReciboResponseDTO): void {
+    const reciboId = recibo.id;
+    if (!reciboId) {
+      this.showError('No se puede visualizar PDF: recibo sin ID');
       return;
     }
 
-    this.pdfService.viewDocumentoCobranzaPdf(documentoId);
+    this.pdfService.viewReciboPdf(reciboId);
   }
 
   // ===== SELECTION METHODS =====
@@ -449,8 +446,8 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     if (this.allSelected) {
       this.selectedItems = [];
     } else {
-      this.selectedItems = this.filteredDocumentos
-        .map(doc => (doc as any).id)
+      this.selectedItems = this.filteredRecibos
+        .map(recibo => (recibo as any).id)
         .filter(id => id !== undefined && id !== null);
     }
     this.updateSelectionState();
@@ -473,7 +470,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   updateSelectionState(): void {
-    this.allSelected = this.selectedItems.length === this.filteredDocumentos.length && this.filteredDocumentos.length > 0;
+    this.allSelected = this.selectedItems.length === this.filteredRecibos.length && this.filteredRecibos.length > 0;
     this.someSelected = this.selectedItems.length > 0 && !this.allSelected;
   }
 
@@ -487,10 +484,10 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     return Math.ceil(this.totalItems / this.itemsPerPage);
   }
 
-  get paginatedDocumentos(): DocumentoCobranzaResponseDTO[] {
+  get paginatedRecibos(): ReciboResponseDTO[] {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
-    return this.filteredDocumentos.slice(startIndex, endIndex);
+    return this.filteredRecibos.slice(startIndex, endIndex);
   }
 
   onItemsPerPageChange(): void {
@@ -616,15 +613,15 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     }).format(amount);
   }
 
-  getNumeroDocumento(documento: DocumentoCobranzaResponseDTO): string {
-    if (documento?.serie && documento?.correlativo !== undefined && documento?.correlativo !== null) {
-      return `${documento.serie}-${String(documento.correlativo).padStart(9, '0')}`;
+  getNumeroRecibo(recibo: ReciboResponseDTO): string {
+    if (recibo?.serie && recibo?.correlativo !== undefined && recibo?.correlativo !== null) {
+      return `${recibo.serie}-${String(recibo.correlativo).padStart(9, '0')}`;
     }
     return 'Sin número';
   }
 
-  trackByDocumento(index: number, documento: DocumentoCobranzaResponseDTO): any {
-    return documento.id ?? index;
+  trackByRecibo(index: number, recibo: ReciboResponseDTO): any {
+    return recibo.id ?? index;
   }
 
   // ===== NUEVOS MÉTODOS PARA SELECCIÓN =====
@@ -674,18 +671,18 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       const personaJuridicaId = this.personaJuridicaSeleccionada?.personaJuridica?.id;
       const sucursalId = this.sucursalSeleccionada?.id;
 
-      this.documentoCobranzaService.createDocumentoCobranza(
+      this.reciboService.createRecibo(
         this.cotizacionSeleccionada.id,
         personaJuridicaId,
         sucursalId
       ).subscribe({
-        next: async (documento) => {
-          this.showSuccess('Documento de cobranza creado exitosamente');
-          await this.recargarDocumentos();
+        next: async (recibo) => {
+          this.showSuccess('Recibo creado exitosamente');
+          await this.recargarRecibos();
           this.cerrarFormulario();
         },
         error: (error) => {
-          const errorMsg = error.error?.message || error.message || 'Error al crear el documento de cobranza';
+          const errorMsg = error.error?.message || error.message || 'Error al crear el recibo';
           this.showError(errorMsg);
         },
         complete: () => {
@@ -694,7 +691,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       });
     } catch (error) {
       this.isLoading = false;
-      this.showError('Error inesperado al crear el documento');
+      this.showError('Error inesperado al crear el recibo');
     }
   }
 

@@ -135,6 +135,18 @@ export const routes: Routes = [
       import('./pages/detalle-documentoCobranza/detalle-documentoCobranza.component').then(m => m.DetalleDocumentoCobranzaComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'recibos',
+    loadComponent: () =>
+      import('./pages/recibo/recibo.component').then(m => m.ReciboComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'recibos/detalle/:id',
+    loadComponent: () =>
+      import('./pages/detalle-recibo/detalle-recibo.component').then(m => m.DetalleReciboComponent),
+    canActivate: [authGuard]
+  },
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/auth/login' }
 ];
