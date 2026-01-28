@@ -1,5 +1,5 @@
 // Modelo para el detalle del recibo (ResponseDTO)
-export interface DetalleRecibo {
+export interface DetalleReciboResponseDTO {
   id?: number;
   cantidad?: number;
   descripcion?: string;

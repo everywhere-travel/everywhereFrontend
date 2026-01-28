@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { DetalleRecibo, DetalleReciboRequestDTO } from '../../../shared/models/Recibo/detalleRecibo.model';
+import { DetalleReciboResponseDTO, DetalleReciboRequestDTO } from '../../../shared/models/Recibo/detalleRecibo.model';
 import { environment } from '../../../../environments/environment';
 import { CacheService } from '../cache.service';
 import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
@@ -10,28 +10,28 @@ import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
   providedIn: 'root'
 })
 export class DetalleReciboService {
-  private apiUrl = `${environment.baseURL}/detalles-recibo`;
+  private apiUrl = `${environment.baseURL}/detalle-recibo`;
   private cacheService = inject(CacheService);
 
   constructor(private http: HttpClient) { }
 
-  getAllDetalles(): Observable<DetalleRecibo[]> {
+  getAllDetalles(): Observable<DetalleReciboResponseDTO[]> {
     const context = new HttpContext().set(BYPASS_CACHE, true);
-    return this.http.get<DetalleRecibo[]>(this.apiUrl, { context });
+    return this.http.get<DetalleReciboResponseDTO[]>(this.apiUrl, { context });
   }
 
-  getDetalleById(id: number): Observable<DetalleRecibo> {
+  getDetalleById(id: number): Observable<DetalleReciboResponseDTO> {
     const context = new HttpContext().set(BYPASS_CACHE, true);
-    return this.http.get<DetalleRecibo>(`${this.apiUrl}/${id}`, { context });
+    return this.http.get<DetalleReciboResponseDTO>(`${this.apiUrl}/${id}`, { context });
   }
 
-  getDetallesByRecibo(reciboId: number): Observable<DetalleRecibo[]> {
+  getDetallesByRecibo(reciboId: number): Observable<DetalleReciboResponseDTO[]> {
     const context = new HttpContext().set(BYPASS_CACHE, true);
-    return this.http.get<DetalleRecibo[]>(`${this.apiUrl}/recibo/${reciboId}`, { context });
+    return this.http.get<DetalleReciboResponseDTO[]>(`${this.apiUrl}/recibo/${reciboId}`, { context });
   }
 
-  createDetalle(dto: DetalleReciboRequestDTO): Observable<DetalleRecibo> {
-    return this.http.post<DetalleRecibo>(this.apiUrl, dto).pipe(
+  createDetalle(dto: DetalleReciboRequestDTO): Observable<DetalleReciboResponseDTO> {
+    return this.http.post<DetalleReciboResponseDTO>(this.apiUrl, dto).pipe(
       tap((response) => {
         if (response.reciboId) {
           this.cacheService.invalidatePattern(`/recibos/${response.reciboId}`);
@@ -40,8 +40,8 @@ export class DetalleReciboService {
     );
   }
 
-  updateDetalle(id: number, dto: DetalleReciboRequestDTO): Observable<DetalleRecibo> {
-    return this.http.patch<DetalleRecibo>(`${this.apiUrl}/${id}`, dto).pipe(
+  updateDetalle(id: number, dto: DetalleReciboRequestDTO): Observable<DetalleReciboResponseDTO> {
+    return this.http.patch<DetalleReciboResponseDTO>(`${this.apiUrl}/${id}`, dto).pipe(
       tap((response) => {
         if (response.reciboId) {
           this.cacheService.invalidatePattern(`/recibos/${response.reciboId}`);

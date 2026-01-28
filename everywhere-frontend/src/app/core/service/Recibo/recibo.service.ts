@@ -44,14 +44,6 @@ export class ReciboService {
     return this.http.get<ReciboResponseDTO>(`${this.apiUrl}/${id}`, { context });
   }
 
-  getReciboBySerieCorrelativo(serie: string, correlativo: number): Observable<ReciboResponseDTO> {
-    return this.http.get<ReciboResponseDTO>(`${this.apiUrl}/serie/${serie}/correlativo/${correlativo}`);
-  }
-
-  getReciboByCotizacion(cotizacionId: number): Observable<ReciboResponseDTO> {
-    return this.http.get<ReciboResponseDTO>(`${this.apiUrl}/cotizacion/${cotizacionId}`);
-  }
-
   updateRecibo(id: number, updateDTO: ReciboUpdateDTO): Observable<ReciboResponseDTO> {
     return this.http.patch<ReciboResponseDTO>(`${this.apiUrl}/${id}`, updateDTO).pipe(
       tap(() => {
