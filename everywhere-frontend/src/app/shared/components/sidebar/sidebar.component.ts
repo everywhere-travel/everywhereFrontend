@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthServiceService } from '../../../core/service/auth/auth.service';
@@ -23,7 +23,7 @@ export interface SidebarMenuItem {
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.css']
 })
-export class SidebarComponent implements OnInit{
+export class SidebarComponent implements OnInit, OnChanges {
   @Input() isCollapsed = false;
   @Input() menuItems: SidebarMenuItem[] = [];
   @Output() itemClick = new EventEmitter<SidebarMenuItem>();
@@ -61,6 +61,22 @@ export class SidebarComponent implements OnInit{
 
   isExpanded(itemId: string): boolean {
     return this.expandedItems.has(itemId);
+  }
+
+  /**
+   * Auto-expand menu items that have active children
+   * This ensures child routes are visible when navigating directly to them
+   */
+  private autoExpandActiveItems(): void {
+    this.menuItems.forEach(item => {
+      if (item.children && item.children.length > 0) {
+        // Check if any child is active
+        const hasActiveChild = item.children.some(child => child.active);
+        if (hasActiveChild) {
+          this.expandedItems.add(item.id);
+        }
+      }
+    });
   }
 
   onToggleSidebar(): void {
@@ -114,10 +130,18 @@ export class SidebarComponent implements OnInit{
   // ========== EXCHANGE RATE METHODS ==========
   ngOnInit(): void {
     this.loadExchangeRateFromCache();
+    this.autoExpandActiveItems();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // Auto-expand when menuItems change
+    if (changes['menuItems'] && this.menuItems) {
+      this.autoExpandActiveItems();
+    }
   }
   private loadExchangeRateFromCache(): void {
     const cachedData = localStorage.getItem('exchangeRateData');
-    
+
     if (cachedData) {
       try {
         this.exchangeData = JSON.parse(cachedData);
@@ -133,12 +157,12 @@ export class SidebarComponent implements OnInit{
   loadExchangeRate(): void {
     this.isLoadingExchange = true;
     this.exchangeError = false;
-    
+
     this.exchangeService.getExchangeRates().subscribe({
       next: (data) => {
         this.exchangeData = data;
         this.isLoadingExchange = false;
-        
+
         try {
           localStorage.setItem('exchangeRateData', JSON.stringify(data));
           console.log('Tipo de cambio actualizado y guardado en cache');

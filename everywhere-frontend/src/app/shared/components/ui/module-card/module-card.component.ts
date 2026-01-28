@@ -19,7 +19,7 @@ export interface ModuleCardData {
     icon?: string; // Icono para la acción (opcional)
   };
   featured?: boolean; // Para marcar módulos destacados
-  iconType: 'cotizaciones' | 'clientes' | 'liquidaciones' | 'productos' | 'reportes' | 'estadisticas' | 'counters' | 'sucursales' | 'documentos';
+  iconType: 'cotizaciones' | 'clientes' | 'liquidaciones' | 'productos' | 'recursos' | 'reportes' | 'estadisticas' | 'counters' | 'sucursales' | 'documentos' | 'categorias-persona';
   moduleKey?: string; // Clave para permisos del backend
 }
 
