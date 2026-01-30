@@ -676,10 +676,13 @@ export class ReciboComponent implements OnInit, OnDestroy {
         personaJuridicaId,
         sucursalId
       ).subscribe({
-        next: async (recibo) => {
+        next: async (recibo: any) => {
           this.showSuccess('Recibo creado exitosamente');
-          await this.recargarRecibos();
           this.cerrarFormulario();
+          // Redirigir al detalle en modo edición
+          this.router.navigate(['/recibos/detalle', recibo.id], {
+            queryParams: { modo: 'editar' }
+          });
         },
         error: (error) => {
           const errorMsg = error.error?.message || error.message || 'Error al crear el recibo';

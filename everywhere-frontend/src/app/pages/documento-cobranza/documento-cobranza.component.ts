@@ -679,10 +679,13 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
         personaJuridicaId,
         sucursalId
       ).subscribe({
-        next: async (documento) => {
+        next: async (documento: any) => {
           this.showSuccess('Documento de cobranza creado exitosamente');
-          await this.recargarDocumentos();
           this.cerrarFormulario();
+          // Redirigir al detalle en modo edición
+          this.router.navigate(['/documentos-cobranza/detalle', documento.id], {
+            queryParams: { modo: 'editar' }
+          });
         },
         error: (error) => {
           const errorMsg = error.error?.message || error.message || 'Error al crear el documento de cobranza';
