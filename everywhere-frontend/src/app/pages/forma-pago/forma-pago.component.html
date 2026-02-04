@@ -67,7 +67,8 @@
               </div>
               <div>
                 <h1 class="text-4xl font-bold">Gestión de Formas de Pago</h1>
-                <p class="text-xl opacity-90 mt-2">Administra y organiza todas las formas de pago disponibles en el sistema</p>
+                <p class="text-xl opacity-90 mt-2">Administra y organiza todas las formas de pago disponibles en el
+                  sistema</p>
               </div>
             </div>
 
@@ -79,8 +80,9 @@
                   <i class="fas fa-money-bill-wave text-white text-xl"></i>
                 </div>
                 <div>
-                  <div class="text-2xl font-bold">{{ formasPagoFiltradas.length }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Forma{{ formasPagoFiltradas.length === 1 ? '' : 's' }} Total{{ formasPagoFiltradas.length === 1 ? '' : 'es' }}</div>
+                  <div class="text-2xl font-bold">{{ totalFormasPago }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Forma{{ totalFormasPago === 1 ? ''
+                    : 's' }} Total{{ totalFormasPago === 1 ? '' : 'es' }}</div>
                 </div>
               </div>
 
@@ -91,18 +93,20 @@
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ formasPago.length }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Registrada{{ formasPago.length === 1 ? '' : 's' }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Registrada{{ formasPago.length ===
+                    1 ? '' : 's' }}</div>
                 </div>
               </div>
 
               <div
                 class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
                 <div class="w-14 h-14 bg-everywhere-secondary rounded-xl flex items-center justify-center">
-                  <i class="fas fa-filter text-white text-xl"></i>
+                  <i class="fas fa-credit-card text-white text-xl"></i>
                 </div>
                 <div>
-                  <div class="text-2xl font-bold">{{ hasActiveFilters() ? '1' : '0' }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Filtro{{ hasActiveFilters() ? '' : 's' }} Activo{{ hasActiveFilters() ? '' : 's' }}</div>
+                  <div class="text-2xl font-bold">{{ formaPagoTabla.length }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Disponible{{ formaPagoTabla.length
+                    === 1 ? '' : 's' }}</div>
                 </div>
               </div>
             </div>
@@ -123,302 +127,9 @@
       </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="max-w-full mx-auto px-6 py-6 space-y-6">
-      <!-- Search & Filters Panel -->
-      <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-        <!-- Panel Header -->
-        <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-everywhere-primary rounded-xl flex items-center justify-center">
-                <i class="fas fa-search text-white"></i>
-              </div>
-              <div>
-                <h2 class="text-lg font-bold text-gray-900">Buscar y Filtrar</h2>
-                <p class="text-sm text-gray-600">Encuentra formas de pago específicas</p>
-              </div>
-            </div>
-
-            <!-- View Controls -->
-            <div class="flex items-center gap-4">
-              <!-- View Type Selector -->
-              <div class="flex bg-gray-100 rounded-xl p-1">
-                <button (click)="changeView('table')"
-                  [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('table') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
-                  <i class="fas fa-table mr-2"></i>Tabla
-                </button>
-                <button (click)="changeView('cards')"
-                  [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('cards') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
-                  <i class="fas fa-th-large mr-2"></i>Tarjetas
-                </button>
-                <button (click)="changeView('list')"
-                  [class]="'px-4 py-2 rounded-lg text-sm font-medium transition-all ' + (isActiveView('list') ? 'bg-white text-everywhere-primary shadow-sm' : 'text-gray-600 hover:text-gray-900')">
-                  <i class="fas fa-list mr-2"></i>Lista
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Search Controls -->
-        <div class="p-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <!-- Search Input -->
-          <div class="lg:col-span-2">
-            <div class="relative">
-              <input type="text" [(ngModel)]="searchQuery" (input)="onSearchChange()"
-                placeholder="Buscar formas de pago por descripción o código..."
-                class="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-everywhere-primary focus:ring-4 focus:ring-everywhere-primary/20 transition-all bg-gray-50 focus:bg-white">
-              <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-              <button *ngIf="searchQuery" (click)="clearSearch()"
-                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Loading State -->
-      <div *ngIf="loading" class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
-        <div class="flex flex-col items-center gap-4">
-          <div class="w-16 h-16 border-4 border-gray-200 border-t-everywhere-primary rounded-full animate-spin"></div>
-          <p class="text-gray-600 font-medium">Cargando formas de pago...</p>
-        </div>
-      </div>
-
-      <!-- Empty State -->
-      <div *ngIf="!loading && filteredFormasPago.length === 0" class="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
-        <div class="flex flex-col items-center gap-4">
-          <i class="fas fa-inbox text-6xl text-gray-300"></i>
-          <h3 class="text-2xl font-bold text-gray-900">No hay formas de pago</h3>
-          <p class="text-gray-600 max-w-md">{{ searchQuery ? 'No se encontraron resultados para tu búsqueda.' : 'Comienza creando una nueva forma de pago.' }}</p>
-          <button (click)="openCreateModal()" class="mt-4 bg-everywhere-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-everywhere-secondary transition-all">
-            <i class="fas fa-plus mr-2"></i>Crear Forma de Pago
-          </button>
-        </div>
-      </div>
-      <!-- Data Content -->
-      <div *ngIf="!loading && filteredFormasPago.length > 0" class="space-y-2">
-        <!-- Data Header -->
-        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <div class="bg-gradient-to-r from-gray-50 to-white px-8 py-4">
-            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-
-              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div class="flex items-center gap-3">
-                  <i class="fas fa-database text-red-600"></i>
-                  <h2 class="text-xl font-bold text-gray-900">Lista de Formas de Pago</h2>
-                </div>
-              </div>
-
-              <div class="flex gap-3">
-                <button (click)="refreshData()"
-                  class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5">
-                  <i class="fas fa-sync-alt"></i>
-                  <span>Actualizar</span>
-                </button>
-                <button (click)="openCreateModal()"
-                  class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white hover:from-[#D9043D]/90 hover:to-[#BF4968]/90 px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all duration-200 hover:-translate-y-0.5 shadow-lg">
-                  <i class="fas fa-plus"></i>
-                  <span>Nueva Forma de Pago</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TABLE VIEW -->
-        <div *ngIf="currentView === 'table'"
-        class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
-                <tr><!--
-                  <th
-                    class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
-                    (click)="sortBy('codigo')" [class.bg-everywhere-primary/5]="sortColumn === 'codigo'">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <i class="fas fa-barcode text-gray-500"></i>
-                        <span>Código</span>
-                      </div>
-                      <div class="flex flex-col opacity-40 group-hover:opacity-70"
-                        [class.opacity-100]="sortColumn === 'codigo'">
-                        <i class="fas fa-caret-up text-xs leading-none"
-                          [class.text-everywhere-primary]="sortColumn === 'codigo' && sortDirection === 'asc'"></i>
-                        <i class="fas fa-caret-down text-xs leading-none"
-                          [class.text-everywhere-primary]="sortColumn === 'codigo' && sortDirection === 'desc'"></i>
-                      </div>
-                    </div>
-                  </th>-->
-                  <th
-                    class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
-                    (click)="sortBy('descripcion')" [class.bg-everywhere-primary/5]="sortColumn === 'descripcion'">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <i class="fas fa-align-left text-gray-500"></i>
-                        <span>Descripción</span>
-                      </div>
-                      <div class="flex flex-col opacity-40 group-hover:opacity-70"
-                        [class.opacity-100]="sortColumn === 'descripcion'">
-                        <i class="fas fa-caret-up text-xs leading-none"
-                          [class.text-everywhere-primary]="sortColumn === 'descripcion' && sortDirection === 'asc'"></i>
-                        <i class="fas fa-caret-down text-xs leading-none"
-                          [class.text-everywhere-primary]="sortColumn === 'descripcion' && sortDirection === 'desc'"></i>
-                      </div>
-                    </div>
-                  </th>
-                  <th
-                    class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
-                    (click)="sortBy('creado')" [class.bg-everywhere-primary/5]="sortColumn === 'creado'">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <i class="fas fa-calendar-plus text-gray-500"></i>
-                        <span>Creado</span>
-                      </div>
-                      <div class="flex flex-col opacity-40 group-hover:opacity-70"
-                        [class.opacity-100]="sortColumn === 'creado'">
-                        <i class="fas fa-caret-up text-xs leading-none"
-                          [class.text-everywhere-primary]="sortColumn === 'creado' && sortDirection === 'asc'"></i>
-                        <i class="fas fa-caret-down text-xs leading-none"
-                          [class.text-everywhere-primary]="sortColumn === 'creado' && sortDirection === 'desc'"></i>
-                      </div>
-                    </div>
-                  </th>
-                  <th
-                    class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
-                    (click)="sortBy('actualizado')" [class.bg-everywhere-primary/5]="sortColumn === 'actualizado'">
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center gap-2">
-                        <i class="fas fa-calendar-check text-gray-500"></i>
-                        <span>Última Actualización</span>
-                      </div>
-                      <div class="flex flex-col opacity-40 group-hover:opacity-70"
-                        [class.opacity-100]="sortColumn === 'actualizado'">
-                        <i class="fas fa-caret-up text-xs leading-none"
-                          [class.text-everywhere-primary]="sortColumn === 'actualizado' && sortDirection === 'asc'"></i>
-                        <i class="fas fa-caret-down text-xs leading-none"
-                          [class.text-everywhere-primary]="sortColumn === 'actualizado' && sortDirection === 'desc'"></i>
-                      </div>
-                    </div>
-                  </th>
-                  <th class="px-6 py-4 text-left text-sm font-bold text-gray-700 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group">
-                    <div class="flex items-center justify-center">
-                      <div class="flex items-center gap-2">
-                        <i class="fas fa-cogs text-gray-500"></i>
-                        <span>Acciones</span>
-                      </div>
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr *ngFor="let forma of paginatedFormasPago" class="hover:bg-gray-50 transition-colors">
-                  <!--<td class="px-6 py-4 text-sm font-semibold text-gray-900">{{ forma.codigo || '-' }}</td>-->
-                  <td class="px-6 py-4 text-base font-bold text-gray-900 truncate">{{ forma.descripcion || '-' }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(forma.creado) }}</td>
-                  <td class="px-6 py-4 text-sm text-gray-600">{{ formatDate(forma.actualizado) }}</td>
-                  <td class="px-6 py-4 text-right">
-                    <div class="flex items-center justify-center gap-2">
-                      <button (click)="openEditModal(getFormaPagoById(forma.id))"
-                        class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button (click)="confirmDelete(getFormaPagoById(forma.id))"
-                        class="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
-                        <i class="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Pagination -->
-          <div *ngIf="totalPages > 1" class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-            <div class="text-sm text-gray-600">
-              Mostrando <strong>{{ (currentPage - 1) * itemsPerPage + 1 }}</strong> a <strong>{{ Math.min(currentPage * itemsPerPage, totalItems) }}</strong> de <strong>{{ totalItems }}</strong>
-            </div>
-            <nav class="flex items-center gap-2">
-              <button [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-
-              <button *ngFor="let page of getPageNumbers()" (click)="goToPage(page)"
-                [class]="page === currentPage ? 'bg-everywhere-primary text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'"
-                class="w-10 h-10 flex items-center justify-center rounded-xl font-semibold transition-all">
-                {{ page }}
-              </button>
-
-              <button [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)"
-                class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-            </nav>
-          </div>
-        </div>
-
-        <!-- CARDS VIEW -->
-        <div *ngIf="currentView === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div *ngFor="let forma of paginatedFormasPago" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group">
-            <div class="p-6">
-              <div class="flex items-start justify-between mb-4">
-                <div class="flex-1">
-                  <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">{{ forma.descripcion }}</h3>
-                </div>
-              </div>
-
-              <div class="space-y-3 mb-6">
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-gray-600">Código:</span>
-                  <span class="text-sm text-gray-900 font-semibold">{{ forma.codigo || '-' }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-sm text-gray-600">Creado:</span>
-                  <span class="text-sm text-gray-900">{{ forma.creado }}</span>
-                </div>
-              </div>
-
-              <div class="flex gap-2 pt-4 border-t border-gray-100">
-                <button (click)="openEditModal(getFormaPagoById(forma.id))"
-                  class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2">
-                  <i class="fas fa-edit"></i>Editar
-                </button>
-                <button (click)="confirmDelete(getFormaPagoById(forma.id))"
-                  class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2">
-                  <i class="fas fa-trash"></i>Eliminar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- LIST VIEW -->
-        <div *ngIf="currentView === 'list'" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-          <div *ngFor="let forma of paginatedFormasPago" class="px-6 py-4 border-b border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-between">
-            <div class="flex items-center gap-4 flex-1">
-              <div class="h-12 w-12 rounded-xl forma-avatar flex items-center justify-center bg-red-600 text-white font-bold text-lg">
-                <i class="fas fa-money-bill-wave"></i>
-              </div>
-              <div class="flex-1">
-                <div class="text-base font-bold text-gray-900">{{ forma.descripcion || 'Sin descripción' }}</div>
-                <div class="text-sm text-gray-500">ID: {{ forma.id }} • {{ forma.codigo ? ('Código: ' + forma.codigo) : 'Sin código' }}</div>
-              </div>
-            </div>
-            <div class="flex items-center gap-3">
-              <button (click)="openEditModal(getFormaPagoById(forma.id))" class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
-                <i class="fas fa-edit mr-2"></i>Editar
-              </button>
-              <button (click)="confirmDelete(getFormaPagoById(forma.id))" class="bg-red-100 hover:bg-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
-                <i class="fas fa-trash mr-2"></i>Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <main class="max-w-full mx-auto px-6 py-6">
+      <app-data-table [config]="tableConfig" [isLoading]="isLoading">
+      </app-data-table>
     </main>
   </div>
 </div>
@@ -427,7 +138,8 @@
 <div *ngIf="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
   <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-screen overflow-y-auto">
     <!-- Modal Header (styled like Operadores) -->
-    <div class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white p-6 border-b border-red-100">
+    <div
+      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white p-6 border-b border-red-100">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">

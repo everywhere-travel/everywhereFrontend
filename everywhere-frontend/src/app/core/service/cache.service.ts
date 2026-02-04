@@ -143,7 +143,6 @@ export class CacheService {
   invalidateModule(module: 'personas' | 'liquidaciones' | 'cotizaciones' | 'documentos-cobranza' | 'recibos' | 'all'): void {
     if (module === 'all') {
       this.clear();
-      console.log('[CacheService] Toda la caché ha sido invalidada');
       return;
     }
 
@@ -158,7 +157,6 @@ export class CacheService {
     const pattern = patterns[module];
     if (pattern) {
       this.invalidatePattern(pattern);
-      console.log(`[CacheService] Caché del módulo '${module}' invalidada`);
     }
   }
 }

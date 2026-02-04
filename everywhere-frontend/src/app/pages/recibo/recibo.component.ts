@@ -10,6 +10,8 @@ import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.serv
 import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
 // Models
 import { ReciboResponseDTO } from '../../shared/models/Recibo/recibo.model';
@@ -26,7 +28,7 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
   standalone: true,
   templateUrl: './recibo.component.html',
   styleUrls: ['./recibo.component.css'],
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent]
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent, DataTableComponent]
 })
 export class ReciboComponent implements OnInit, OnDestroy {
 
@@ -92,6 +94,93 @@ export class ReciboComponent implements OnInit, OnDestroy {
 
   // ===== TEMPLATE UTILITIES =====
   Math = Math;
+
+  // Configuración de DataTable
+  tableConfig: DataTableConfig<ReciboResponseDTO> = {
+    data: [],
+    columns: [
+      {
+        key: 'serie',
+        header: 'N° Recibo',
+        icon: 'fa-file-invoice',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.getNumeroRecibo(item)
+      },
+      {
+        key: 'codigoCotizacion',
+        header: 'Código Cotización',
+        icon: 'fa-hashtag',
+        sortable: true,
+        width: '180px',
+        render: (item) => item.codigoCotizacion || 'N/A'
+      },
+      {
+        key: 'clienteNombre',
+        header: 'Cliente',
+        icon: 'fa-user',
+        sortable: true,
+        render: (item) => item.clienteNombre || 'N/A'
+      },
+      {
+        key: 'fechaEmision',
+        header: 'Fecha Emisión',
+        icon: 'fa-calendar',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.fechaEmision)
+      },
+      {
+        key: 'creado',
+        header: 'Fecha de Creación',
+        icon: 'fa-calendar',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.createdAt)
+      },
+      {
+        key: 'actualizado',
+        header: 'Fecha de Actualización',
+        icon: 'fa-calendar',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.updatedAt)
+      }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar recibos...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-eye',
+        label: 'Ver Detalles',
+        color: 'blue',
+        handler: (item) => this.verDetalleDocumento(item)
+      },
+      {
+        icon: 'fa-file-pdf',
+        label: 'Ver PDF',
+        color: 'red',
+        handler: (item) => this.verPDF(item)
+      },
+      {
+        icon: 'fa-download',
+        label: 'Descargar PDF',
+        color: 'green',
+        handler: (item) => this.descargarPDF(item)
+      }
+    ],
+    emptyMessage: 'No se encontraron recibos',
+    loadingMessage: 'Cargando recibos...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
 
   constructor(private menuConfigService: MenuConfigService) { }
 
@@ -173,6 +262,11 @@ export class ReciboComponent implements OnInit, OnDestroy {
 
       this.filteredRecibos = [...this.recibos];
       this.totalItems = this.recibos.length;
+      // Actualizar data del DataTable - Recrear tableConfig para forzar detección de cambios
+      this.tableConfig = {
+        ...this.tableConfig,
+        data: this.recibos
+      };
     } catch (error) {
       console.error('Error al cargar recibos:', error);
       this.showError('Error al cargar los recibos');

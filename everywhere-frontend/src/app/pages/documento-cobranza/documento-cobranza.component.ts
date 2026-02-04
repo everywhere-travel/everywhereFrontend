@@ -10,7 +10,10 @@ import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.serv
 import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
-import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import {
+  MenuConfigService,
+  ExtendedSidebarMenuItem,
+} from '../../core/service/menu/menu-config.service';
 
 // Models
 import { DocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
@@ -20,17 +23,31 @@ import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 
 // Components
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
+// Interface para la tabla de documentos de cobranza
+interface DocumentoCobranzaTabla {
+  id: number;
+  numero: string;
+  codigoCotizacion: string;
+  clienteNombre: string;
+  fechaEmision: string;
+  moneda: string;
+  fileVenta: string;
+  createdAt: string;
+  updatedAt: string;
+  documentoOriginal: DocumentoCobranzaResponseDTO;
+}
 
 @Component({
   selector: 'app-documento-cobranza',
   standalone: true,
   templateUrl: './documento-cobranza.component.html',
   styleUrls: ['./documento-cobranza.component.css'],
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent]
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent, DataTableComponent],
 })
 export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
-
   // ===== SERVICES INJECTION =====
   private fb = inject(FormBuilder);
   private router = inject(Router);
@@ -45,7 +62,6 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   loading: boolean = false;
   isLoading = false;
   sidebarCollapsed = false;
-  currentView: 'table' | 'cards' | 'list' = 'table';
   mostrarModalCrear = false;
   mostrarModalVer = false;
   mostrarModalCotizaciones = false;
@@ -66,17 +82,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   personaJuridicaSeleccionada: NaturalJuridicaResponse | null = null;
   sucursalSeleccionada: SucursalResponse | null = null;
   personaNaturalIdActual: number | null = null;
-  selectedItems: number[] = [];
-  allSelected: boolean = false;
-  someSelected: boolean = false;
 
   // ===== SEARCH AND FILTERS =====
   searchTerm = '';
   searchCotizacion = '';
 
-  // ===== PAGINATION =====
-  currentPage = 1;
-  itemsPerPage = 10;
   totalItems = 0;
 
   // ===== MESSAGES =====
@@ -92,10 +102,99 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ===== SIDEBAR CONFIGURATION =====
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
-  // ===== TEMPLATE UTILITIES =====
-  Math = Math;
+  // ===== DATA TABLE CONFIGURATION =====
+  documentosTabla: DocumentoCobranzaTabla[] = [];
+  tableConfig: DataTableConfig<DocumentoCobranzaTabla> = {
+    data: [],
+    columns: [
+      {
+        key: 'numero',
+        header: 'Número',
+        icon: 'fa-hashtag',
+        sortable: true,
+        width: '150px',
+      },
+      {
+        key: 'codigoCotizacion',
+        header: 'Cotización',
+        icon: 'fa-file-alt',
+        sortable: true,
+      },
+      {
+        key: 'clienteNombre',
+        header: 'Cliente',
+        icon: 'fa-user',
+        sortable: true,
+      },
+      {
+        key: 'fechaEmision',
+        header: 'Fecha Emisión',
+        icon: 'fa-calendar',
+        sortable: true,
+      },
+      {
+        key: 'moneda',
+        header: 'Moneda',
+        icon: 'fa-money-bill',
+        sortable: true,
+        align: 'center',
+        width: '100px',
+      },
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar por número, cotización, cliente...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-eye',
+        label: 'Ver',
+        color: 'green',
+        handler: (item) => this.verDetalleDocumento(item.documentoOriginal),
+      },
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item) => this.editarDocumento(item.documentoOriginal),
+      },
+      {
+        icon: 'fa-file-pdf',
+        label: 'Ver PDF',
+        color: 'gray',
+        handler: (item) => this.verPDF(item.documentoOriginal),
+      },
+      {
+        icon: 'fa-download',
+        label: 'Descargar PDF',
+        color: 'purple',
+        handler: (item) => this.descargarPDF(item.documentoOriginal),
+      },
+    ],
+    bulkActions: [
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar seleccionados',
+        color: 'red',
+        handler: (items) => this.eliminarDocumentosMasivo(items.map((i) => i.id)),
+        confirm: {
+          title: 'Eliminar documentos',
+          message: 'Esta acción no se puede deshacer',
+        },
+      },
+    ],
+    emptyMessage: 'No se encontraron documentos de cobranza',
+    loadingMessage: 'Cargando documentos...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id',
+  };
 
-  constructor(private menuConfigService: MenuConfigService) { }
+  constructor(private menuConfigService: MenuConfigService) {}
 
   ngOnInit(): void {
     this.initializeForms();
@@ -113,7 +212,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   getDocumentosConPdf(): number {
-    return this.documentos.filter(doc => doc.id).length; // Todos los documentos con ID tienen PDF disponible
+    return this.documentos.filter((doc) => doc.id).length; // Todos los documentos con ID tienen PDF disponible
   }
 
   getCotizacionesDisponibles(): number {
@@ -123,7 +222,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ===== INITIALIZATION =====
   private initializeForms(): void {
     this.searchForm = this.fb.group({
-      searchTerm: ['']
+      searchTerm: [''],
     });
 
     this.documentoForm = this.fb.group({
@@ -139,11 +238,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       puntoCompra: [''],
       moneda: [''],
       formaPago: [''],
-      observaciones: ['']
+      observaciones: [''],
     });
 
     // Setup search
-    this.searchForm.get('searchTerm')?.valueChanges.subscribe(value => {
+    this.searchForm.get('searchTerm')?.valueChanges.subscribe((value) => {
       this.searchTerm = value;
       this.filterDocumentos();
     });
@@ -171,10 +270,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
         this.isLoading = true;
       }
 
-      this.documentos = await this.documentoCobranzaService.getAllDocumentos().toPromise() || [];
+      this.documentos = (await this.documentoCobranzaService.getAllDocumentos().toPromise()) || [];
 
       this.filteredDocumentos = [...this.documentos];
       this.totalItems = this.documentos.length;
+      this.updateTableConfig();
     } catch (error) {
       console.error('Error al cargar documentos:', error);
       this.showError('Error al cargar los documentos de cobranza');
@@ -189,14 +289,16 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   private async loadCotizaciones(): Promise<void> {
     try {
-      const todasLasCotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
+      const todasLasCotizaciones =
+        (await this.cotizacionService.getAllCotizaciones().toPromise()) || [];
 
       // Filtrar solo las cotizaciones que no tienen documento de cobranza creado
-      this.cotizaciones = todasLasCotizaciones.filter(cotizacion => {
+      this.cotizaciones = todasLasCotizaciones.filter((cotizacion) => {
         // Verificar si ya existe un documento de cobranza para esta cotización
-        const yaExisteDocumento = this.documentos.some(documento =>
-          documento.cotizacionId === cotizacion.id ||
-          documento.codigoCotizacion === cotizacion.codigoCotizacion
+        const yaExisteDocumento = this.documentos.some(
+          (documento) =>
+            documento.cotizacionId === cotizacion.id ||
+            documento.codigoCotizacion === cotizacion.codigoCotizacion,
         );
         return !yaExisteDocumento;
       });
@@ -257,21 +359,48 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       this.filteredDocumentos = [...this.documentos];
     } else {
       const term = this.searchTerm.toLowerCase();
-      this.filteredDocumentos = this.documentos.filter(doc =>
-        doc.serie?.toLowerCase().includes(term) ||
-        doc.correlativo?.toString().includes(term) ||
-        doc.fileVenta?.toLowerCase().includes(term) ||
-        doc.clienteNombre?.toLowerCase().includes(term) ||
-        doc.codigoCotizacion?.toLowerCase().includes(term)
+      this.filteredDocumentos = this.documentos.filter(
+        (doc) =>
+          doc.serie?.toLowerCase().includes(term) ||
+          doc.correlativo?.toString().includes(term) ||
+          doc.fileVenta?.toLowerCase().includes(term) ||
+          doc.clienteNombre?.toLowerCase().includes(term) ||
+          doc.codigoCotizacion?.toLowerCase().includes(term),
       );
     }
     this.totalItems = this.filteredDocumentos.length;
-    this.currentPage = 1;
+    this.updateTableConfig();
   }
 
-  // ===== VIEW METHODS =====
-  changeView(view: 'table' | 'cards' | 'list'): void {
-    this.currentView = view;
+  // ===== TABLE CONFIG UPDATE =====
+  private updateTableConfig(): void {
+    this.documentosTabla = this.filteredDocumentos.map((doc) => ({
+      id: doc.id || 0,
+      numero: this.getNumeroDocumento(doc),
+      codigoCotizacion: doc.codigoCotizacion || 'Sin cotización',
+      clienteNombre: doc.clienteNombre || 'Sin nombre',
+      fechaEmision: this.formatDate(doc.fechaEmision),
+      moneda: doc.moneda || 'PEN',
+      fileVenta: doc.fileVenta || 'Sin file',
+      createdAt: this.formatDateTime(doc.createdAt),
+      updatedAt: this.formatDateTime(doc.updatedAt),
+      documentoOriginal: doc,
+    }));
+
+    this.tableConfig = {
+      ...this.tableConfig,
+      data: this.documentosTabla,
+    };
+  }
+
+  // ===== BULK DELETE =====
+  // TODO: Implementar cuando el servicio tenga el método deleteDocumento
+  eliminarDocumentosMasivo(ids: number[]): void {
+    this.showError('La eliminación masiva aún no está disponible.');
+  }
+
+  confirmarEliminacion(documento: DocumentoCobranzaTabla): void {
+    this.showError('La eliminación aún no está disponible.');
   }
 
   // ===== NAVIGATION METHODS =====
@@ -346,7 +475,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       puntoCompra: '',
       moneda: '',
       formaPago: '',
-      observaciones: ''
+      observaciones: '',
     });
   }
 
@@ -365,7 +494,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       puntoCompra: '', // No disponible en ResponseDTO
       moneda: documento.moneda,
       formaPago: documento.formaPagoDescripcion,
-      observaciones: documento.observaciones
+      observaciones: documento.observaciones,
     });
   }
 
@@ -375,9 +504,10 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       this.cotizacionesFiltradas = [...this.cotizaciones];
     } else {
       const term = this.searchCotizacion.toLowerCase();
-      this.cotizacionesFiltradas = this.cotizaciones.filter(cot =>
-        cot.codigoCotizacion?.toLowerCase().includes(term) ||
-        cot.origenDestino?.toLowerCase().includes(term)
+      this.cotizacionesFiltradas = this.cotizaciones.filter(
+        (cot) =>
+          cot.codigoCotizacion?.toLowerCase().includes(term) ||
+          cot.origenDestino?.toLowerCase().includes(term),
       );
     }
   }
@@ -402,14 +532,16 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.cotizacionesFiltradas = this.cotizaciones.filter(cotizacion => {
+    this.cotizacionesFiltradas = this.cotizaciones.filter((cotizacion) => {
       const codigoCotizacion = cotizacion.codigoCotizacion?.toLowerCase() || '';
       const personaDisplay = this.getPersonaDisplayName(cotizacion).toLowerCase();
       const origenDestino = cotizacion.origenDestino?.toLowerCase() || '';
 
-      return codigoCotizacion.includes(searchTerm) ||
+      return (
+        codigoCotizacion.includes(searchTerm) ||
         personaDisplay.includes(searchTerm) ||
-        origenDestino.includes(searchTerm);
+        origenDestino.includes(searchTerm)
+      );
     });
   }
 
@@ -431,7 +563,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.pdfService.downloadDocumentoCobranzaPdf(documentoId, documento.serie, documento.correlativo);
+    this.pdfService.downloadDocumentoCobranzaPdf(
+      documentoId,
+      documento.serie,
+      documento.correlativo,
+    );
   }
 
   verPDF(documento: DocumentoCobranzaResponseDTO): void {
@@ -442,97 +578,6 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     }
 
     this.pdfService.viewDocumentoCobranzaPdf(documentoId);
-  }
-
-  // ===== SELECTION METHODS =====
-  toggleAllSelection(): void {
-    if (this.allSelected) {
-      this.selectedItems = [];
-    } else {
-      this.selectedItems = this.filteredDocumentos
-        .map(doc => (doc as any).id)
-        .filter(id => id !== undefined && id !== null);
-    }
-    this.updateSelectionState();
-  }
-
-  toggleSelection(id: number | undefined): void {
-    if (!id) return;
-    const index = this.selectedItems.indexOf(id);
-    if (index > -1) {
-      this.selectedItems.splice(index, 1);
-    } else {
-      this.selectedItems.push(id);
-    }
-    this.updateSelectionState();
-  }
-
-  isSelected(id: number | undefined): boolean {
-    if (!id) return false;
-    return this.selectedItems.includes(id);
-  }
-
-  updateSelectionState(): void {
-    this.allSelected = this.selectedItems.length === this.filteredDocumentos.length && this.filteredDocumentos.length > 0;
-    this.someSelected = this.selectedItems.length > 0 && !this.allSelected;
-  }
-
-  clearSelection(): void {
-    this.selectedItems = [];
-    this.updateSelectionState();
-  }
-
-  // ===== PAGINATION =====
-  get totalPages(): number {
-    return Math.ceil(this.totalItems / this.itemsPerPage);
-  }
-
-  get paginatedDocumentos(): DocumentoCobranzaResponseDTO[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    return this.filteredDocumentos.slice(startIndex, endIndex);
-  }
-
-  onItemsPerPageChange(): void {
-    this.currentPage = 1;
-  }
-
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  getVisiblePages(): number[] {
-    const totalPages = this.totalPages;
-    const currentPage = this.currentPage;
-    const visiblePages: number[] = [];
-
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) {
-        visiblePages.push(i);
-      }
-    } else {
-      if (currentPage <= 4) {
-        for (let i = 1; i <= 5; i++) {
-          visiblePages.push(i);
-        }
-        visiblePages.push(-1, totalPages);
-      } else if (currentPage >= totalPages - 3) {
-        visiblePages.push(1, -1);
-        for (let i = totalPages - 4; i <= totalPages; i++) {
-          visiblePages.push(i);
-        }
-      } else {
-        visiblePages.push(1, -1);
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          visiblePages.push(i);
-        }
-        visiblePages.push(-1, totalPages);
-      }
-    }
-
-    return visiblePages;
   }
 
   // ===== SIDEBAR METHODS =====
@@ -599,7 +644,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
         parseInt(day, 10),
         parseInt(hour, 10),
         parseInt(minute, 10),
-        parseInt(second, 10)
+        parseInt(second, 10),
       );
       return localDate.toLocaleString('es-ES');
     }
@@ -612,12 +657,16 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     if (amount === undefined || amount === null) return 'S/ 0.00';
     return new Intl.NumberFormat('es-PE', {
       style: 'currency',
-      currency: 'PEN'
+      currency: 'PEN',
     }).format(amount);
   }
 
   getNumeroDocumento(documento: DocumentoCobranzaResponseDTO): string {
-    if (documento?.serie && documento?.correlativo !== undefined && documento?.correlativo !== null) {
+    if (
+      documento?.serie &&
+      documento?.correlativo !== undefined &&
+      documento?.correlativo !== null
+    ) {
       return `${documento.serie}-${String(documento.correlativo).padStart(9, '0')}`;
     }
     return 'Sin número';
@@ -633,7 +682,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       this.isLoading = true;
 
       // Cargar sucursales
-      this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
+      this.sucursales = (await this.sucursalService.findAllSucursal().toPromise()) || [];
 
       // Obtener personaId de la cotización (ID de tabla 'personas')
       // El backend tiene PersonaNaturalRepository.findByPersonasId() que convierte automáticamente
@@ -644,9 +693,8 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
           // Cargar personas jurídicas asociadas
           // El backend convierte internamente de personas.id a persona_natural.id
-          this.personasJuridicas = await this.naturalJuridicoService
-            .findByPersonaNaturalId(personaId)
-            .toPromise() || [];
+          this.personasJuridicas =
+            (await this.naturalJuridicoService.findByPersonaNaturalId(personaId).toPromise()) || [];
         } catch (error) {
           this.personasJuridicas = [];
           this.personaNaturalIdActual = null;

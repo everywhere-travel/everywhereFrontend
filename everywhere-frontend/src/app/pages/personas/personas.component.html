@@ -93,28 +93,9 @@
 
     <!-- Main Content -->
     <main class="max-w-full mx-auto px-6 py-6">
-      <!-- Banner informativo cuando está en modo búsqueda por documento -->
-      <div *ngIf="modoVistaDocumentos" class="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-file-alt text-blue-600"></i>
-          </div>
-          <div>
-            <h4 class="font-bold text-blue-900">Resultados de Búsqueda por Documento</h4>
-            <p class="text-sm text-blue-700">Mostrando clientes filtrados por número de documento. Cambia a "Buscar por: Nombre" para ver todos.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tabla unificada -->
-      <app-cliente-table [clientes]="personas" [isLoading]="isLoading" [modoBusquedaDocumento]="modoVistaDocumentos"
-        (verCliente)="onVerCliente($event)"
-        (editarCliente)="onEditarCliente($event)" 
-        (eliminarCliente)="onEliminarCliente($event)"
-        (refrescar)="loadPersonas()" 
-        (eliminarMasivo)="onEliminarMasivo($event)"
-        (buscarPorDocumento)="onBuscarPorDocumento($event)">
-      </app-cliente-table>
+      <!-- ===== NUEVO: DataTable Component ===== -->
+      <app-data-table [config]="tableConfig" [isLoading]="isLoading">
+      </app-data-table>
     </main>
   </div>
 
