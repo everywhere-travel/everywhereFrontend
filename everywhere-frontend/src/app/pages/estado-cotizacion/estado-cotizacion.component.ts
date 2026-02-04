@@ -11,6 +11,8 @@ import { EstadoCotizacionRequest, EstadoCotizacionResponse } from './../../share
 
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
 // Interface para la tabla
 export interface EstadoCotizacionTabla {
@@ -30,7 +32,8 @@ export interface EstadoCotizacionTabla {
     FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
-    ErrorModalComponent
+    ErrorModalComponent,
+    DataTableComponent
   ]
 })
 export class EstadoCotizacionComponent implements OnInit {
@@ -45,10 +48,10 @@ export class EstadoCotizacionComponent implements OnInit {
   // Data arrays
   estadosCotizacion: EstadoCotizacionResponse[] = [];
   EstadoCotizacionTabla: EstadoCotizacionTabla[] = [];
-  filteredEstadoCotizacion: EstadoCotizacionTabla[] = [];
 
   // Control variables
   loading = false;
+  isLoading: boolean = false;
   mostrarModalCrear = false;
   mostrarModalEliminar = false;
   mostrarModalError = false;
@@ -66,40 +69,71 @@ export class EstadoCotizacionComponent implements OnInit {
   errorModalData: ErrorModalData | null = null;
   backendErrorData: BackendErrorResponse | null = null;
 
-  searchTerm = '';
-  currentView: 'table' | 'cards' | 'list' = 'table';
-
-  // Pagination
-  currentPage = 1;
-  itemsPerPage = 10;
-  totalItems = 0;
-  itemsPerPageOptions = [5, 10, 25, 50];
-
-  // Sorting
-  sortColumn: string = '';
-  sortDirection: 'asc' | 'desc' = 'asc';
-
-  // Variables para selección múltiple
-  selectedItems: number[] = [];
-  allSelected: boolean = false;
-  someSelected: boolean = false;
-
-  // Menu states
-  showActionMenu: number | null = null;
-  showQuickActions: number | null = null;
-
   // Estadísticas
   totalEstadoCotizacion = 0;
 
-  // Math object for template use
-  Math = Math;
+  tableConfig: DataTableConfig<EstadoCotizacionTabla> = {
+    data: [],
+    columns: [
+      {
+        key: 'descripcion',
+        header: 'Descripción',
+        icon: 'fa-align-left',
+        sortable: true,
+        render: (item) => item.descripcion || 'Sin descripción'
+      },
+      {
+        key: 'creado',
+        header: 'Fecha Creación',
+        icon: 'fa-calendar-plus',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.creado)
+      },
+      {
+        key: 'actualizado',
+        header: 'Última Actualización',
+        icon: 'fa-calendar-check',
+        sortable: true,
+        width: '180px',
+        render: (item) => this.formatDate(item.actualizado)
+      }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar por descripción...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item) => this.editarEstadoCotizacion(item)
+      },
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar',
+        color: 'red',
+        handler: (item) => this.eliminarEstadoCotizacion(item.id)
+      }
+    ],
+    emptyMessage: 'No se encontraron estados de cotización',
+    loadingMessage: 'Cargando estados...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
 
   constructor(
     private fb: FormBuilder,
     private estadoCotizacionService: EstadoCotizacionService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private errorHandler: ErrorHandlerService, 
+    private errorHandler: ErrorHandlerService,
     private menuConfigService: MenuConfigService
   ) {
     this.initializeForms();
@@ -133,17 +167,25 @@ export class EstadoCotizacionComponent implements OnInit {
   // CRUD Operations
   loadEstadosCotizacion(): void {
     this.loading = true;
+    this.isLoading = true;
     this.estadoCotizacionService.getAllEstadosCotizacion().subscribe({
       next: (estadosCotizacion) => {
         this.estadosCotizacion = estadosCotizacion;
         this.convertirATabla();
-        this.applyFilters();
+        this.totalEstadoCotizacion = this.EstadoCotizacionTabla.length;
+        // Actualizar la configuración del DataTable con los nuevos datos
+        this.tableConfig = {
+          ...this.tableConfig,
+          data: this.EstadoCotizacionTabla
+        };
         this.loading = false;
+        this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: (error) => {
-        console.error('Error al cargar proveedores:', error);
+        console.error('Error al cargar estados de cotización:', error);
         this.loading = false;
+        this.isLoading = false;
       }
     });
   }
@@ -181,9 +223,9 @@ export class EstadoCotizacionComponent implements OnInit {
         },
         error: (error) => {
           const errorMessage = error?.error?.detail ||
-                              error?.error?.message ||
-                              error?.message ||
-                              'Error al crear el estado de cotización';
+            error?.error?.message ||
+            error?.message ||
+            'Error al crear el estado de cotización';
           this.showError(errorMessage);
           this.loading = false;
         }
@@ -205,9 +247,9 @@ export class EstadoCotizacionComponent implements OnInit {
         },
         error: (error) => {
           const errorMessage = error?.error?.detail ||
-                              error?.error?.message ||
-                              error?.message ||
-                              'Error al actualizar el estado de cotización';
+            error?.error?.message ||
+            error?.message ||
+            'Error al actualizar el estado de cotización';
           this.showError(errorMessage);
           this.loading = false;
         }
@@ -266,9 +308,9 @@ export class EstadoCotizacionComponent implements OnInit {
       error: (error) => {
         this.loading = false;
         const errorMessage = error?.error?.detail ||
-                            error?.error?.message ||
-                            error?.message ||
-                            'Error al eliminar el estado de cotización';
+          error?.error?.message ||
+          error?.message ||
+          'Error al eliminar el estado de cotización';
         this.showError(errorMessage);
         this.cerrarModalEliminar();
         console.error('Error al eliminar estado de cotizacion:', error);
@@ -297,238 +339,8 @@ export class EstadoCotizacionComponent implements OnInit {
     this.estadoCotizacionForm.reset();
   }
 
-  updateSelectionState(): void {
-    const totalItems = this.filteredEstadoCotizacion.length;
-    const selectedCount = this.selectedItems.length;
-
-    this.allSelected = selectedCount === totalItems && totalItems > 0;
-    this.someSelected = selectedCount > 0 && selectedCount < totalItems;
-  }
-
   refreshData(): void {
     this.loadEstadosCotizacion();
-  }
-
-  // Métodos para acciones masivas
-  clearSelection(): void {
-    this.selectedItems = [];
-    this.updateSelectionState();
-  }
-
-  editarSeleccionados(): void {
-    if (this.selectedItems.length === 0) return;
-
-    if (this.selectedItems.length === 1) {
-      const EstadoCotizacionTabla = this.EstadoCotizacionTabla.find(c => c.id === this.selectedItems[0]);
-      if (EstadoCotizacionTabla) {
-        this.editarEstadoCotizacion(EstadoCotizacionTabla);
-      }
-    } else {
-      const EstadoCotizacionTabla = this.EstadoCotizacionTabla.find(c => c.id === this.selectedItems[0]);
-      if (EstadoCotizacionTabla) {
-        this.editarEstadoCotizacion(EstadoCotizacionTabla);
-      }
-    }
-  }
-
-  eliminarSeleccionados(): void {
-    if (this.selectedItems.length === 0) return;
-
-    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} estado${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
-    if (confirm(confirmMessage)) {
-      this.loading = true;
-      let eliminados = 0;
-      const total = this.selectedItems.length;
-
-      this.selectedItems.forEach(id => {
-        const estadoCotizacion = this.estadosCotizacion.find(p => p.id === id);
-        if (estadoCotizacion) {
-          this.estadoCotizacionService.deleteByIdEstadoCotizacion(estadoCotizacion.id).subscribe({
-            next: () => {
-              eliminados++;
-              if (eliminados === total) {
-                this.loadEstadosCotizacion();
-                this.clearSelection();
-                this.loading = false;
-              }
-            },
-            error: (error) => {
-              console.error('Error al eliminar estado de cotizacion:', error);
-              eliminados++;
-              if (eliminados === total) {
-                this.loadEstadosCotizacion();
-                this.clearSelection();
-                this.loading = false;
-              }
-            }
-          });
-
-        }
-      });
-    }
-  }
-
-  // Search and filter
-  applyFilters(): void {
-    let filtered = [...this.EstadoCotizacionTabla];
-
-    // Filtro por búsqueda
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.toLowerCase().trim();
-      filtered = filtered.filter(estadoCotizacion => {
-        const searchableText = `${estadoCotizacion.descripcion}`.toLowerCase();
-        return searchableText.includes(term);
-      });
-    }
-
-    this.filteredEstadoCotizacion = filtered;
-    this.totalItems = filtered.length;
-
-    // Aplicar ordenamiento
-    this.applySorting();
-  }
-
-  // Sorting functionality
-  sortBy(column: string): void {
-    if (this.sortColumn === column) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortColumn = column;
-      this.sortDirection = 'asc';
-    }
-    this.applySorting();
-  }
-
-  applySorting(): void {
-    if (!this.filteredEstadoCotizacion.length) return;
-
-    this.filteredEstadoCotizacion.sort((a, b) => {
-      let aValue: any = '';
-      let bValue: any = '';
-
-      switch (this.sortColumn) {
-        case 'nombre':
-          aValue = a.descripcion || '';
-          bValue = b.descripcion || '';
-          break;
-        case 'creado':
-          aValue = new Date(a.creado);
-          bValue = new Date(b.creado);
-          break;
-        case 'actualizado':
-          aValue = new Date(a.actualizado);
-          bValue = new Date(b.actualizado);
-          break;
-        default:
-          return 0;
-      }
-
-      if (aValue < bValue) return this.sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return this.sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }
-
-  getSortIcon(column: string): string {
-    if (this.sortColumn !== column) return 'fas fa-sort text-gray-400';
-    return this.sortDirection === 'asc'
-      ? 'fas fa-sort-up text-blue-500'
-      : 'fas fa-sort-down text-blue-500';
-  }
-
-  // Pagination
-  get paginatedEstadoCotizacion(): EstadoCotizacionTabla[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    return this.filteredEstadoCotizacion.slice(startIndex, endIndex);
-  }
-
-  get totalPages(): number {
-    return Math.ceil(this.totalItems / this.itemsPerPage);
-  }
-
-  changePage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  onItemsPerPageChange(): void {
-    this.currentPage = 1;
-    this.calcularEstadisticas();
-  }
-
-  getVisiblePages(): number[] {
-    const totalPages = this.totalPages;
-    const currentPage = this.currentPage;
-    const visiblePages: number[] = [];
-
-    const startPage = Math.max(1, currentPage - 2);
-    const endPage = Math.min(totalPages, currentPage + 2);
-
-    for (let i = startPage; i <= endPage; i++) {
-      visiblePages.push(i);
-    }
-
-    return visiblePages;
-  }
-
-  // View management
-  setView(view: 'table' | 'cards' | 'list'): void {
-    this.currentView = view;
-  }
-
-  // Métodos para selección múltiple
-  toggleAllSelection(): void {
-    if (this.allSelected) {
-      this.selectedItems = [];
-    } else {
-      this.selectedItems = this.filteredEstadoCotizacion.map(p => p.id!);
-    }
-    this.updateSelectionState();
-  }
-
-  toggleSelection(id: number): void {
-    const index = this.selectedItems.indexOf(id);
-    if (index > -1) {
-      this.selectedItems.splice(index, 1);
-    } else {
-      this.selectedItems.push(id);
-    }
-    this.updateSelectionState();
-  }
-
-  isSelected(id: number): boolean {
-    return this.selectedItems.includes(id);
-  }
-
-  clearSearch(): void {
-    this.searchTerm = '';
-    this.applyFilters();
-  }
-
-  // Menu handling
-  toggleActionMenu(id: number, event: Event): void {
-    event.stopPropagation();
-    this.showActionMenu = this.showActionMenu === id ? null : id;
-    this.showQuickActions = null;
-  }
-
-  toggleQuickActions(id: number, event: Event): void {
-    event.stopPropagation();
-    this.showQuickActions = this.showQuickActions === id ? null : id;
-    this.showActionMenu = null;
-  }
-
-  @HostListener('document:click', ['$event'])
-  closeMenus(event: Event): void {
-    this.showActionMenu = null;
-    this.showQuickActions = null;
-  }
-
-  closeAllMenus(): void {
-    this.showActionMenu = null;
-    this.showQuickActions = null;
   }
 
   // Statistics
@@ -544,29 +356,6 @@ export class EstadoCotizacionComponent implements OnInit {
       month: 'short',
       day: 'numeric'
     });
-  }
-
-  formatTime(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  formatDateTime(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleString('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
-  trackByEstadoCotizacionId(index: number, item: EstadoCotizacionTabla): number {
-    return item.id;
   }
 
   // ===== ALERT SYSTEM =====

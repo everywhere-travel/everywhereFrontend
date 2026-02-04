@@ -8,6 +8,8 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
 // Interface para la tabla
 export interface ProveedorTabla {
@@ -27,15 +29,17 @@ export interface ProveedorTabla {
     FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
-    ErrorModalComponent
+    ErrorModalComponent,
+    DataTableComponent
   ]
 })
 export class ProveedorComponent implements OnInit {
 
   // Sidebar Configuration
-  sidebarCollapsed = false; 
+  sidebarCollapsed = false;
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
+  isLoading: boolean = false;
   // Forms
   proveedorForm!: FormGroup;
 
@@ -90,6 +94,63 @@ export class ProveedorComponent implements OnInit {
 
   // Math object for template use
   Math = Math;
+
+  // Configuración de DataTable
+  tableConfig: DataTableConfig<ProveedorTabla> = {
+    data: [],
+    columns: [
+      {
+        key: 'nombre',
+        header: 'Nombre',
+        icon: 'fa-building',
+        sortable: true,
+        render: (item) => item.nombre || 'N/A'
+      },
+      {
+        key: 'creado',
+        header: 'Fecha Creación',
+        icon: 'fa-calendar-alt',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.creado)
+      },
+      {
+        key: 'actualizado',
+        header: 'Fecha Actualización',
+        icon: 'fa-calendar-alt',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.actualizado)
+      }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar proveedores...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item) => this.editarProveedor(item)
+      },
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar',
+        color: 'red',
+        handler: (item) => this.confirmarEliminar(this.proveedores.find(p => p.id === item.id)!)
+      }
+    ],
+    emptyMessage: 'No se encontraron proveedores',
+    loadingMessage: 'Cargando proveedores...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -152,7 +213,11 @@ export class ProveedorComponent implements OnInit {
       creado: proveedor.creado,
       actualizado: proveedor.actualizado
     }));
-    this.totalProveedores = this.proveedoresTabla.length;
+    this.totalProveedores = this.proveedoresTabla.length; 
+    this.tableConfig = {
+      ...this.tableConfig,
+      data: this.proveedoresTabla
+    };
   }
 
   // Método principal para guardar (crea o actualiza según el estado)
@@ -179,9 +244,9 @@ export class ProveedorComponent implements OnInit {
         error: (error) => {
           this.loading = false;
           const errorMessage = error?.error?.detail ||
-                              error?.error?.message ||
-                              error?.message ||
-                              'Error al crear proveedor';
+            error?.error?.message ||
+            error?.message ||
+            'Error al crear proveedor';
           this.showError(errorMessage);
         }
       });
@@ -203,9 +268,9 @@ export class ProveedorComponent implements OnInit {
         error: (error) => {
           this.loading = false;
           const errorMessage = error?.error?.detail ||
-                              error?.error?.message ||
-                              error?.message ||
-                              'Error al actualizar proveedor';
+            error?.error?.message ||
+            error?.message ||
+            'Error al actualizar proveedor';
           this.showError(errorMessage);
         }
       });
@@ -265,9 +330,9 @@ export class ProveedorComponent implements OnInit {
 
         // Capturar error con RFC 7807 priority: detail > message > fallback
         const errorMessage = error?.error?.detail ||
-                            error?.error?.message ||
-                            error?.message ||
-                            'Error al eliminar proveedor';
+          error?.error?.message ||
+          error?.message ||
+          'Error al eliminar proveedor';
         this.showError(errorMessage);
       }
     });

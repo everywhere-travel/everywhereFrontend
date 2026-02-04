@@ -22,8 +22,16 @@ import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/m
 
 import { personaDisplay } from '../../shared/models/Persona/persona.model';
 // Models
-import { CotizacionRequest, CotizacionResponse, CotizacionConDetallesResponseDTO, CotizacionPatchRequest } from '../../shared/models/Cotizacion/cotizacion.model';
-import { DetalleCotizacionRequest, DetalleCotizacionResponse } from '../../shared/models/Cotizacion/detalleCotizacion.model';
+import {
+  CotizacionRequest,
+  CotizacionResponse,
+  CotizacionConDetallesResponseDTO,
+  CotizacionPatchRequest
+} from '../../shared/models/Cotizacion/cotizacion.model';
+import {
+  DetalleCotizacionRequest,
+  DetalleCotizacionResponse
+} from '../../shared/models/Cotizacion/detalleCotizacion.model';
 import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model';
@@ -36,6 +44,8 @@ import { CategoriaRequest } from '../../shared/models/Categoria/categoria.model'
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
 interface DetalleCotizacionTemp {
   id?: number;
@@ -60,12 +70,29 @@ interface GrupoHotelTemp {
   seleccionado?: boolean; // Campo para marcar si el grupo está seleccionado
 }
 
+// Interfaz para tabla de cotizaciones
+export interface CotizacionTabla {
+  id: number;
+  codigoCotizacion: string;
+  cliente: string;
+  clienteId: number;
+  fechaEmision: string;
+  fechaVencimiento: string;
+  cantAdultos: number;
+  cantNinos: number;
+  estado: string;
+  estadoId: number;
+  moneda: string;
+  total: number;
+  cotizacionOriginal: CotizacionResponse;
+}
+
 @Component({
   selector: 'app-cotizaciones',
   standalone: true,
   templateUrl: './cotizaciones.component.html',
   styleUrls: ['./cotizaciones.component.css'],
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent, LucideAngularModule]
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent, LucideAngularModule, DataTableComponent],
 })
 export class CotizacionesComponent implements OnInit, OnDestroy {
   // ===== CACHE AND MAPPING =====
@@ -98,7 +125,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   editandoCotizacion = false;
   mostrarGestionGrupos = false;
   mostrarModalVer = false;
-  currentView: 'table' | 'cards' | 'list' = 'table';
 
   // Selección única de grupo de hoteles
   grupoSeleccionadoId: number | null = null;
@@ -118,20 +144,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   cotizacionEditandoId: number | null = null;
   cotizacionOriginal: CotizacionResponse | null = null; // Para comparar cambios en PATCH
 
-  selectedItems: number[] = [];
-  allSelected: boolean = false;
-  someSelected: boolean = false;
-
   // ===== PAGINATION =====
-  currentPage = 1;
-  itemsPerPage = 10;
   totalItems = 0;
 
   // ===== STATISTICS =====
   totalProductos = 0;
-
-  // ===== TEMPLATE UTILITIES =====
-  Math = Math;
 
   sidebarCollapsed = false;
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
@@ -170,7 +187,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
   todosLosClientes: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
   buscandoClientes = false;
-  clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay | null = null;
+  clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay | null =
+    null;
 
   // ===== CATEGORY MANAGEMENT =====
   creandoCategoria = false;
@@ -183,7 +201,123 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   tiempoPresionado = 0;
   intervaloPulsacion: any = null;
 
-  constructor(private menuConfigService: MenuConfigService) { }
+  // ===== Configuración del DataTable =====
+  cotizacionesTabla: CotizacionTabla[] = [];
+
+  tableConfig: DataTableConfig<CotizacionTabla> = {
+    data: [],
+    columns: [
+      {
+        key: 'codigoCotizacion',
+        header: 'Código',
+        icon: 'fa-hashtag',
+        sortable: true,
+        width: '120px',
+      },
+      {
+        key: 'cliente',
+        header: 'Cliente',
+        icon: 'fa-user',
+        sortable: true,
+      },
+      {
+        key: 'fechaEmision',
+        header: 'Fecha Emisión',
+        icon: 'fa-calendar',
+        sortable: true,
+        render: (item: CotizacionTabla) => this.formatDate(item.fechaEmision),
+      },
+      {
+        key: 'fechaVencimiento',
+        header: 'Fecha Vencimiento',
+        icon: 'fa-calendar-check',
+        sortable: true,
+        render: (item: CotizacionTabla) => this.formatDate(item.fechaVencimiento),
+      },
+      {
+        key: 'cantAdultos',
+        header: 'Pasajeros',
+        icon: 'fa-users',
+        sortable: true,
+        align: 'center',
+        render: (item: CotizacionTabla) => {
+          let text = `${item.cantAdultos} adulto${item.cantAdultos !== 1 ? 's' : ''}`;
+          if (item.cantNinos > 0) {
+            text += ` | ${item.cantNinos} niño${item.cantNinos !== 1 ? 's' : ''}`;
+          }
+          return text;
+        },
+      },
+      {
+        key: 'estado',
+        header: 'Estado',
+        icon: 'fa-info-circle',
+        sortable: true,
+        align: 'center',
+      },
+      {
+        key: 'moneda',
+        header: 'Moneda',
+        icon: 'fa-dollar-sign',
+        sortable: true,
+        align: 'center',
+        width: '100px',
+      },
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar por código, cliente...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-eye',
+        label: 'Ver',
+        color: 'green',
+        handler: (item: CotizacionTabla) => this.mostrarModalVerCotizacion(item.cotizacionOriginal),
+      },
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item: CotizacionTabla) => this.mostrarFormularioEditar(item.cotizacionOriginal),
+      },
+      {
+        icon: 'fa-file-word',
+        label: 'Descargar Word',
+        color: 'indigo',
+        handler: (item: CotizacionTabla) => this.descargarWord(item.cotizacionOriginal),
+      },
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar',
+        color: 'red',
+        handler: (item: CotizacionTabla) => this.confirmarEliminacion(item.cotizacionOriginal),
+      },
+    ],
+    bulkActions: [
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar seleccionados',
+        color: 'red',
+        handler: (items: CotizacionTabla[]) => this.eliminarCotizacionesMasivo(items.map((i) => i.id)),
+        confirm: {
+          title: 'Eliminar múltiples cotizaciones',
+          message: 'Esta acción no se puede deshacer',
+        },
+      },
+    ],
+    emptyMessage: 'No se encontraron cotizaciones',
+    loadingMessage: 'Cargando cotizaciones...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id',
+  };
+
+  constructor(private menuConfigService: MenuConfigService) {}
 
   ngOnInit(): void {
     this.sidebarMenuItems = this.menuConfigService.getMenuItems('/cotizaciones');
@@ -228,13 +362,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private initializeForms(): void {
     // Search form
     this.searchForm = this.fb.group({
-      searchTerm: ['']
+      searchTerm: [''],
     });
 
     // Nueva categoría form
     this.nuevaCategoriaForm = this.fb.group({
       nombre: ['', [Validators.required, Validators.minLength(3)]],
-      descripcion: ['']
+      descripcion: [''],
     });
 
     // Cotización form
@@ -265,7 +399,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       precioHistorico: [0, [Validators.required, Validators.min(0)]],
       comision: [0, [Validators.min(0)]],
       cantidad: [1, [Validators.required, Validators.min(1)]],
-      unidad: [1, [Validators.required, Validators.min(1)]]
+      unidad: [1, [Validators.required, Validators.min(1)]],
     });
 
     // Detalle form para grupos de hoteles (SEPARADO)
@@ -277,16 +411,16 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       precioHistorico: [0, [Validators.required, Validators.min(0)]],
       comision: [0, [Validators.min(0)]],
       cantidad: [1, [Validators.required, Validators.min(1)]],
-      unidad: [1, [Validators.required, Validators.min(1)]]
+      unidad: [1, [Validators.required, Validators.min(1)]],
     });
 
     // Grupo hotel form
     this.grupoHotelForm = this.fb.group({
-      categoria: ['', [Validators.required]]
+      categoria: ['', [Validators.required]],
     });
 
     // Subscribe to search changes
-    this.searchForm.get('searchTerm')?.valueChanges.subscribe(term => {
+    this.searchForm.get('searchTerm')?.valueChanges.subscribe((term) => {
       this.searchTerm = term;
       this.filterCotizaciones();
     });
@@ -306,10 +440,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       'fechaVencimiento',
       'moneda',
       'cantAdultos',
-      'cantNinos'
+      'cantNinos',
     ];
 
-    fieldsToRelax.forEach(fieldName => {
+    fieldsToRelax.forEach((fieldName) => {
       const control = this.cotizacionForm.get(fieldName);
       if (control) {
         control.clearAsyncValidators();
@@ -338,7 +472,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       cantAdultos: [1, [Validators.min(1)]],
       cantNinos: [0, [Validators.min(0)]],
       moneda: ['USD', [Validators.required]],
-      observacion: ['']
+      observacion: [''],
     });
   }
 
@@ -358,24 +492,23 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       .pipe(
         debounceTime(300), // Reducido para respuesta más rápida
         distinctUntilChanged(),
-        switchMap(searchTerm => {
+        switchMap((searchTerm) => {
           this.buscandoClientes = true;
           const termino = searchTerm?.trim() || '';
 
           // Si no hay término de búsqueda, mostrar todos los clientes
-          const resultados = this.todosLosClientes.filter(persona =>
-            this.getClienteDisplayName(persona).toLowerCase().includes(termino)
+          const resultados = this.todosLosClientes.filter((persona) =>
+            this.getClienteDisplayName(persona).toLowerCase().includes(termino),
           );
           this.personasEncontradas = resultados;
           this.buscandoClientes = false;
           return of(null);
-        })
+        }),
       )
       .subscribe({
         error: (err) => {
-
           this.buscandoClientes = false;
-        }
+        },
       });
   }
 
@@ -390,16 +523,19 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.loadSucursales(),
       this.loadProductos(),
       this.loadProveedores(),
-      this.loadCategorias()
-    ]).then(() => {
-      // Cargar cotizaciones AL FINAL
-      return this.loadCotizaciones();
-    }).then(() => {
-      // Después de cargar cotizaciones, verificar y cargar clientes faltantes
-      return this.findAndLoadMissingClients();
-    }).finally(() => {
-      this.isLoading = false;
-    });
+      this.loadCategorias(),
+    ])
+      .then(() => {
+        // Cargar cotizaciones AL FINAL
+        return this.loadCotizaciones();
+      })
+      .then(() => {
+        // Después de cargar cotizaciones, verificar y cargar clientes faltantes
+        return this.findAndLoadMissingClients();
+      })
+      .finally(() => {
+        this.isLoading = false;
+      });
   }
 
   private async loadCotizaciones(): Promise<void> {
@@ -407,7 +543,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.loading = true;
       this.isLoading = true;
 
-      this.cotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
+      this.cotizaciones = (await this.cotizacionService.getAllCotizaciones().toPromise()) || [];
       this.filterCotizaciones();
     } catch (error) {
       this.showError('Error al cargar las cotizaciones. Por favor, recargue la página.');
@@ -422,11 +558,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       // Usar el mismo enfoque que funciona en liquidaciones
       // Cargar personas naturales
-      const personasNaturales = await this.personaNaturalService.findAll().toPromise() || [];
+      const personasNaturales = (await this.personaNaturalService.findAll().toPromise()) || [];
       // Cargar personas jurídicas
-      const personasJuridicas = await this.personaJuridicaService.findAll().toPromise() || [];
-
-
+      const personasJuridicas = (await this.personaJuridicaService.findAll().toPromise()) || [];
 
       // Combinar ambas listas
       this.personas = [...personasNaturales, ...personasJuridicas];
@@ -435,9 +569,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.personasEncontradas = [...this.todosLosClientes];
 
       // Poblar cache usando ENFOQUE HÍBRIDO (tabla padre SI existe, sino tabla hija)
-      this.personas.forEach(persona => {
+      this.personas.forEach((persona) => {
         // Intentar usar ID de tabla padre PRIMERO, si no existe usar tabla hija
-  const personaId = persona.persona?.id || persona.id; // persona.id exists on both responses
+        const personaId = persona.persona?.id || persona.id; // persona.id exists on both responses
 
         if (!personaId) return;
 
@@ -449,7 +583,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
             id: personaId,
             identificador: pj.ruc || '',
             nombre: pj.razonSocial || 'Sin nombre',
-            tipo: 'JURIDICA'
+            tipo: 'JURIDICA',
           };
         } else {
           // Persona natural
@@ -459,17 +593,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
             id: personaId,
             identificador: pn.documento || '',
             nombre: `${pn.nombres || ''} ${apellidos}`.trim() || 'Sin nombre',
-            tipo: 'NATURAL'
+            tipo: 'NATURAL',
           };
         }
 
-        const cached = this.personasCache[personaId]
-          this.personasDisplayMap[personaId] = cached.nombre;
+        const cached = this.personasCache[personaId];
+        this.personasDisplayMap[personaId] = cached.nombre;
       });
-
     } catch (error) {
-
-      this.showError('Error al cargar los clientes. Algunas funciones pueden no estar disponibles.');
+      this.showError(
+        'Error al cargar los clientes. Algunas funciones pueden no estar disponibles.',
+      );
       this.personas = [];
       this.todosLosClientes = [];
       this.personasEncontradas = [];
@@ -483,15 +617,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       // Obtener IDs únicos de personas desde las cotizaciones cargadas
       const personaIdsEnCotizaciones = new Set<number>();
-      this.cotizaciones.forEach(cotizacion => {
+      this.cotizaciones.forEach((cotizacion) => {
         if (cotizacion.personas?.id) {
           personaIdsEnCotizaciones.add(cotizacion.personas.id);
         }
       });
 
       // Encontrar IDs que están en cotizaciones pero NO en cache
-      const idsEnCache = new Set(Object.keys(this.personasCache).map(id => parseInt(id)));
-      const idsFaltantes = Array.from(personaIdsEnCotizaciones).filter(id => !idsEnCache.has(id));
+      const idsEnCache = new Set(Object.keys(this.personasCache).map((id) => parseInt(id)));
+      const idsFaltantes = Array.from(personaIdsEnCotizaciones).filter((id) => !idsEnCache.has(id));
 
       if (idsFaltantes.length === 0) {
         return;
@@ -501,18 +635,20 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const clientesFaltantes = await Promise.all(
         idsFaltantes.map(async (personaId) => {
           try {
-            const personaDisplay = await this.personaService.findPersonaNaturalOrJuridicaById(personaId).toPromise();
+            const personaDisplay = await this.personaService
+              .findPersonaNaturalOrJuridicaById(personaId)
+              .toPromise();
             return personaDisplay;
           } catch (error) {
             return null;
           }
-        })
+        }),
       );
 
       // Agregar clientes válidos al cache y listas
-      const clientesValidos = clientesFaltantes.filter(c => c !== null) as any[];
+      const clientesValidos = clientesFaltantes.filter((c) => c !== null) as any[];
 
-      clientesValidos.forEach(cliente => {
+      clientesValidos.forEach((cliente) => {
         if (cliente.id) {
           // Agregar al cache - mejorar datos para clientes "genéricos"
           const esGenerico = cliente.tipo === 'GENERICA' || !cliente.identificador;
@@ -521,14 +657,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
             id: cliente.id,
             identificador: cliente.identificador || '',
             nombre: cliente.nombre || `Cliente ID: ${cliente.id}`,
-            tipo: esGenerico ? 'UNKNOWN' : cliente.tipo
+            tipo: esGenerico ? 'UNKNOWN' : cliente.tipo,
           };
 
           const cached = this.personasCache[cliente.id];
           if (cached.identificador) {
-            this.personasDisplayMap[cliente.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : cached.tipo === 'NATURAL' ? 'DNI' : 'DOC'}: ${cached.identificador} - ${cached.nombre}`;
+            this.personasDisplayMap[cliente.id] =
+              `${cached.tipo === 'JURIDICA' ? 'RUC' : cached.tipo === 'NATURAL' ? 'DNI' : 'DOC'}: ${cached.identificador} - ${cached.nombre}`;
           } else {
-            this.personasDisplayMap[cliente.id] = esGenerico ? `Cliente ID: ${cliente.id} (Sin datos)` : cached.nombre;
+            this.personasDisplayMap[cliente.id] = esGenerico
+              ? `Cliente ID: ${cliente.id} (Sin datos)`
+              : cached.nombre;
           }
 
           // Agregar a las listas para búsqueda (solo si no es genérico)
@@ -539,9 +678,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           }
         }
       });
-
-
-
     } catch (error) {
       // Error silencioso para no saturar la consola
     }
@@ -549,7 +685,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadFormasPago(): Promise<void> {
     try {
-      this.formasPago = await this.formaPagoService.getAllFormasPago().toPromise() || [];
+      this.formasPago = (await this.formaPagoService.getAllFormasPago().toPromise()) || [];
     } catch (error) {
       this.showError('Error al cargar las formas de pago.');
       this.formasPago = [];
@@ -558,7 +694,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadEstadosCotizacion(): Promise<void> {
     try {
-      this.estadosCotizacion = await this.estadoCotizacionService.getAllEstadosCotizacion().toPromise() || [];
+      this.estadosCotizacion =
+        (await this.estadoCotizacionService.getAllEstadosCotizacion().toPromise()) || [];
     } catch (error) {
       this.estadosCotizacion = [];
     }
@@ -566,7 +703,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadSucursales(): Promise<void> {
     try {
-      this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
+      this.sucursales = (await this.sucursalService.findAllSucursal().toPromise()) || [];
     } catch (error) {
       this.sucursales = [];
     }
@@ -574,7 +711,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadProductos(): Promise<void> {
     try {
-      this.productos = await this.productoService.getAllProductos().toPromise() || [];
+      this.productos = (await this.productoService.getAllProductos().toPromise()) || [];
     } catch (error) {
       this.productos = [];
     }
@@ -582,7 +719,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadProveedores(): Promise<void> {
     try {
-      this.proveedores = await this.proveedorService.findAllProveedor().toPromise() || [];
+      this.proveedores = (await this.proveedorService.findAllProveedor().toPromise()) || [];
     } catch (error) {
       this.proveedores = [];
     }
@@ -609,11 +746,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Métodos para cambiar entre vistas
-  changeView(view: 'table' | 'cards' | 'list'): void {
-    this.currentView = view;
-  }
-
   // Search and filter methods
   clearSearch(): void {
     this.searchForm.get('searchTerm')?.setValue('');
@@ -626,15 +758,76 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.filteredCotizaciones = [...this.cotizaciones];
     } else {
       const term = this.searchTerm.toLowerCase();
-      this.filteredCotizaciones = this.cotizaciones.filter(cotizacion => {
-        return cotizacion.codigoCotizacion?.toLowerCase().includes(term) ||
-          this.getPersonaDisplayName(cotizacion.personas?.id || 0).toLowerCase().includes(term) ||
-          cotizacion.origenDestino?.toLowerCase().includes(term);
+      this.filteredCotizaciones = this.cotizaciones.filter((cotizacion) => {
+        return (
+          cotizacion.codigoCotizacion?.toLowerCase().includes(term) ||
+          this.getPersonaDisplayName(cotizacion.personas?.id || 0)
+            .toLowerCase()
+            .includes(term) ||
+          cotizacion.origenDestino?.toLowerCase().includes(term)
+        );
       });
     }
     // Update totalItems after filtering
     this.totalItems = this.filteredCotizaciones.length;
-    this.updateSelectionState();
+    this.updateTableConfig();
+  }
+
+  // ===== TABLE CONFIG UPDATE =====
+  private updateTableConfig(): void {
+    this.cotizacionesTabla = this.filteredCotizaciones.map((c) => ({
+      id: c.id,
+      codigoCotizacion: c.codigoCotizacion || '',
+      cliente: this.getPersonaDisplayName(c.personas?.id || 0),
+      clienteId: c.personas?.id || 0,
+      fechaEmision: c.fechaEmision || '',
+      fechaVencimiento: c.fechaVencimiento || '',
+      cantAdultos: c.cantAdultos || 0,
+      cantNinos: c.cantNinos || 0,
+      estado: c.estadoCotizacion?.descripcion || 'Sin estado',
+      estadoId: c.estadoCotizacion?.id || 0,
+      moneda: c.moneda || 'USD',
+      total: 0,
+      cotizacionOriginal: c,
+    }));
+
+    this.tableConfig = {
+      ...this.tableConfig,
+      data: this.cotizacionesTabla,
+    };
+  }
+
+  // ===== CONFIRMACIÓN DE ELIMINACIÓN =====
+  confirmarEliminacion(cotizacion: CotizacionResponse): void {
+    this.cotizacionAEliminar = cotizacion;
+    this.iniciarEliminacion(cotizacion);
+  }
+
+  // ===== ELIMINACIÓN MASIVA =====
+  async eliminarCotizacionesMasivo(ids: number[]): Promise<void> {
+    if (ids.length === 0) return;
+
+    this.isLoading = true;
+    let eliminados = 0;
+    const total = ids.length;
+
+    for (const id of ids) {
+      try {
+        await this.cotizacionService.deleteByIdCotizacion(id).toPromise();
+        eliminados++;
+      } catch (error) {
+        console.error(`Error al eliminar cotización ${id}:`, error);
+      }
+    }
+
+    await this.loadCotizaciones();
+    this.isLoading = false;
+
+    if (eliminados === total) {
+      this.showSuccess(`${eliminados} cotización(es) eliminada(s) correctamente`);
+    } else {
+      this.showError(`Se eliminaron ${eliminados} de ${total} cotizaciones`);
+    }
   }
 
   // Form methods
@@ -653,9 +846,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.cotizacionEditandoId = null;
       this.setupDatesForNew();
       this.mostrarFormulario = true; // Abre el modal al final
-
     } catch (error) {
-
       this.showError('Error al preparar el formulario de cotización');
     } finally {
       // Se asegura de que el indicador de carga se oculte siempre
@@ -685,7 +876,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       await this.loadCotizacionCompleta(cotizacion.id);
 
       this.mostrarFormulario = true; // Muestra el modal con los datos ya cargados
-
     } catch (error) {
       this.showError('Error al cargar el formulario de edición');
     } finally {
@@ -702,7 +892,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       await this.loadCotizacionCompleta(cotizacion.id);
 
       this.mostrarModalVer = true;
-
     } catch (error) {
       this.showError('Error al cargar los detalles de la cotización');
     } finally {
@@ -718,7 +907,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Método para obtener subtotal de una categoría
   getSubtotalCategoria(detalles: any[]): number {
-    return detalles.reduce((sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1), 0);
+    return detalles.reduce(
+      (sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1),
+      0,
+    );
   }
 
   // Método para editar desde el modal
@@ -726,7 +918,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     if (this.cotizacionCompleta) {
       this.mostrarFormularioEditar({
         id: this.cotizacionCompleta.id,
-        codigoCotizacion: this.cotizacionCompleta.codigoCotizacion
+        codigoCotizacion: this.cotizacionCompleta.codigoCotizacion,
       } as any);
       this.cerrarModalVer();
     }
@@ -750,7 +942,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Métodos auxiliares para la visualización
   getCategoriasNoFijas(): any[] {
-    return this.getCategoriasConDetalles().filter(c => c.id !== 1);
+    return this.getCategoriasConDetalles().filter((c) => c.id !== 1);
   }
 
   hasCategoriasNoFijas(): boolean {
@@ -758,12 +950,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   getTotalCategoria(detalles: any[]): number {
-    return detalles.reduce((sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1), 0);
+    return detalles.reduce(
+      (sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1),
+      0,
+    );
   }
 
   getTotalProductosFijos(): number {
     const fijos = this.getDetallesByCategoria(1);
-    return fijos.reduce((sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1), 0);
+    return fijos.reduce(
+      (sum, d) => sum + ((d.precioHistorico || 0) + (d.comision || 0)) * (d.cantidad || 1),
+      0,
+    );
   }
 
   hasProductosFijos(): boolean {
@@ -792,7 +990,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       cantAdultos: 1,
       cantNinos: 0,
       moneda: 'USD',
-      observacion: ''
+      observacion: '',
     });
 
     // Limpieza de los detalles de la cotización
@@ -819,7 +1017,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const now = new Date();
 
     // Obtener la fecha actual en zona horaria de Lima
-    const limaTime = new Date(now.toLocaleString("en-US", {timeZone: "America/Lima"}));
+    const limaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Lima' }));
 
     // Crear fecha de vencimiento el mismo día a las 11pm en hora de Lima
     const vencimiento = new Date(limaTime);
@@ -833,7 +1031,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.cotizacionForm.patchValue({
       fechaEmision: this.formatDateTimeLocal(limaTime),
       fechaVencimiento: this.formatDateTimeLocal(vencimiento),
-      codigoCotizacion: this.generateNextCode()
+      codigoCotizacion: this.generateNextCode(),
     });
   }
 
@@ -852,7 +1050,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    */
   private getCurrentLimaTime(): Date {
     const now = new Date();
-    return new Date(now.toLocaleString("en-US", {timeZone: "America/Lima"}));
+    return new Date(now.toLocaleString('en-US', { timeZone: 'America/Lima' }));
   }
 
   /**
@@ -874,7 +1072,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadCotizacionCompleta(cotizacionId: number): Promise<void> {
     try {
-      this.cotizacionCompleta = await this.cotizacionService.getCotizacionConDetalles(cotizacionId).toPromise() || null;
+      this.cotizacionCompleta =
+        (await this.cotizacionService.getCotizacionConDetalles(cotizacionId).toPromise()) || null;
 
       if (!this.cotizacionCompleta) {
         throw new Error('No se pudo cargar la cotización completa');
@@ -886,38 +1085,46 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       } else {
         // Si estamos visualizando, también cargar los detalles para mostrar los grupos seleccionados
         if (this.cotizacionCompleta.detalles && this.cotizacionCompleta.detalles.length > 0) {
-          this.loadDetallesFromCotizacionCompleta(this.cotizacionCompleta.detalles, this.cotizacionCompleta);
+          this.loadDetallesFromCotizacionCompleta(
+            this.cotizacionCompleta.detalles,
+            this.cotizacionCompleta,
+          );
         }
       }
-
     } catch (error) {
-
       this.showError('Error al cargar los datos completos de la cotización.');
       throw error;
     }
   }
 
-  private async populateFormFromCotizacionCompleta(cotizacion: CotizacionConDetallesResponseDTO): Promise<void> {
-
+  private async populateFormFromCotizacionCompleta(
+    cotizacion: CotizacionConDetallesResponseDTO,
+  ): Promise<void> {
     // Poblar formulario principal
     this.cotizacionForm.patchValue({
       codigoCotizacion: cotizacion.codigoCotizacion,
       personaId: cotizacion.personas?.id,
-      fechaEmision: cotizacion.fechaEmision ? this.formatDateTimeLocal(new Date(cotizacion.fechaEmision)) : '',
-      fechaVencimiento: cotizacion.fechaVencimiento ? this.formatDateTimeLocal(new Date(cotizacion.fechaVencimiento)) : '',
+      fechaEmision: cotizacion.fechaEmision
+        ? this.formatDateTimeLocal(new Date(cotizacion.fechaEmision))
+        : '',
+      fechaVencimiento: cotizacion.fechaVencimiento
+        ? this.formatDateTimeLocal(new Date(cotizacion.fechaVencimiento))
+        : '',
       estadoCotizacionId: cotizacion.estadoCotizacion?.id,
       sucursalId: cotizacion.sucursal?.id,
       origenDestino: cotizacion.origenDestino,
-      fechaSalida: cotizacion.fechaSalida ? this.formatDateForInput(new Date(cotizacion.fechaSalida)) : '',
-      fechaRegreso: cotizacion.fechaRegreso ? this.formatDateForInput(new Date(cotizacion.fechaRegreso)) : '',
+      fechaSalida: cotizacion.fechaSalida
+        ? this.formatDateForInput(new Date(cotizacion.fechaSalida))
+        : '',
+      fechaRegreso: cotizacion.fechaRegreso
+        ? this.formatDateForInput(new Date(cotizacion.fechaRegreso))
+        : '',
       formaPagoId: cotizacion.formaPago?.id,
       cantAdultos: cotizacion.cantAdultos || 1,
       cantNinos: cotizacion.cantNinos || 0,
       moneda: cotizacion.moneda || 'USD',
-      observacion: cotizacion.observacion || ''
+      observacion: cotizacion.observacion || '',
     });
-
-
 
     // Cargar cliente si existe
     if (cotizacion.personas?.id) {
@@ -926,22 +1133,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Cargar detalles desde la respuesta completa
     if (cotizacion.detalles && cotizacion.detalles.length > 0) {
-
       this.loadDetallesFromCotizacionCompleta(cotizacion.detalles, cotizacion);
     }
   }
 
   private loadDetallesFromCotizacionCompleta(detalles: any[], cotizacionCompleta?: any): void {
-
-
     // Reset arrays
     this.detallesFijos = [];
     this.gruposHoteles = [];
 
     // Convertir detalles del DTO a formato local
     detalles.forEach((detalle, index) => {
-
-
       const detalleConverted = {
         id: detalle.id,
         proveedor: detalle.proveedor,
@@ -954,10 +1156,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         unidad: detalle.unidad || 1,
         total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
         isTemporary: false,
-        seleccionado: detalle.seleccionado || false // Incluir el estado de selección real de BD
+        seleccionado: detalle.seleccionado || false, // Incluir el estado de selección real de BD
       };
-
-
 
       if (detalle.categoria?.id === 1) {
         // Productos fijos
@@ -970,8 +1170,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       }
     });
 
-
-
     // NUEVA LÓGICA: Inferir qué grupo está seleccionado basándose en los detalles
     this.inferirGrupoSeleccionado();
   }
@@ -980,15 +1178,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    * NUEVA LÓGICA: Infiere qué grupo está seleccionado basándose en si alguno de sus detalles tiene seleccionado=true
    */
   private inferirGrupoSeleccionado(): void {
-
-
     // Reset: ningún grupo seleccionado inicialmente
     this.grupoSeleccionadoId = null;
-    this.gruposHoteles.forEach(grupo => grupo.seleccionado = false);
+    this.gruposHoteles.forEach((grupo) => (grupo.seleccionado = false));
 
     // Buscar un grupo que tenga al menos un detalle seleccionado
     for (const grupo of this.gruposHoteles) {
-      const tieneDetallesSeleccionados = grupo.detalles.some(detalle => detalle.seleccionado === true);
+      const tieneDetallesSeleccionados = grupo.detalles.some(
+        (detalle) => detalle.seleccionado === true,
+      );
 
       if (tieneDetallesSeleccionados && grupo.categoria.id) {
         this.grupoSeleccionadoId = grupo.categoria.id;
@@ -999,13 +1197,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     if (!this.grupoSeleccionadoId) {
-
     }
   }
 
   private addDetalleToGrupoHotelFromCompleta(detalle: any, categoria: any): void {
     const categoriaId = categoria?.id;
-    let grupo = this.gruposHoteles.find(g => g.categoria.id === categoriaId);
+    let grupo = this.gruposHoteles.find((g) => g.categoria.id === categoriaId);
 
     if (!grupo && categoria) {
       grupo = {
@@ -1013,7 +1210,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         detalles: [],
         total: 0,
         isTemporary: false,
-        seleccionado: false     // Inicializar como no seleccionado
+        seleccionado: false, // Inicializar como no seleccionado
       };
       this.gruposHoteles.push(grupo);
     }
@@ -1028,29 +1225,36 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.cotizacionForm.patchValue({
       codigoCotizacion: cotizacion.codigoCotizacion,
       personaId: cotizacion.personas?.id,
-      fechaEmision: cotizacion.fechaEmision ? this.formatDateTimeLocal(new Date(cotizacion.fechaEmision)) : '',
-      fechaVencimiento: cotizacion.fechaVencimiento ? this.formatDateTimeLocal(new Date(cotizacion.fechaVencimiento)) : '',
+      fechaEmision: cotizacion.fechaEmision
+        ? this.formatDateTimeLocal(new Date(cotizacion.fechaEmision))
+        : '',
+      fechaVencimiento: cotizacion.fechaVencimiento
+        ? this.formatDateTimeLocal(new Date(cotizacion.fechaVencimiento))
+        : '',
       estadoCotizacionId: cotizacion.estadoCotizacion?.id,
       sucursalId: cotizacion.sucursal?.id,
       origenDestino: cotizacion.origenDestino,
-      fechaSalida: cotizacion.fechaSalida ? this.formatDateForInput(new Date(cotizacion.fechaSalida)) : '',
-      fechaRegreso: cotizacion.fechaRegreso ? this.formatDateForInput(new Date(cotizacion.fechaRegreso)) : '',
+      fechaSalida: cotizacion.fechaSalida
+        ? this.formatDateForInput(new Date(cotizacion.fechaSalida))
+        : '',
+      fechaRegreso: cotizacion.fechaRegreso
+        ? this.formatDateForInput(new Date(cotizacion.fechaRegreso))
+        : '',
       formaPagoId: cotizacion.formaPago?.id,
       cantAdultos: cotizacion.cantAdultos || 1,
       cantNinos: cotizacion.cantNinos || 0,
       moneda: cotizacion.moneda || 'USD',
-      observacion: cotizacion.observacion || ''
+      observacion: cotizacion.observacion || '',
     });
 
-    if (cotizacion.personas?.id)
-      await this.loadClienteForEdit(cotizacion.personas.id);
+    if (cotizacion.personas?.id) await this.loadClienteForEdit(cotizacion.personas.id);
 
-    if (this.categorias.length === 0)
-      await this.loadCategorias();
+    if (this.categorias.length === 0) await this.loadCategorias();
 
     // Load detalles
     try {
-      const detalles = await this.detalleCotizacionService.getByCotizacionId(cotizacion.id).toPromise() || [];
+      const detalles =
+        (await this.detalleCotizacionService.getByCotizacionId(cotizacion.id).toPromise()) || [];
       this.loadDetallesIntoForm(detalles);
     } catch (error) {
       this.showError('Error al cargar los detalles de la cotización.');
@@ -1059,8 +1263,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadClienteForEdit(personaId: number): Promise<void> {
     try {
-      const persona = await firstValueFrom(this.personaService.findPersonaNaturalOrJuridicaById(personaId));
-      console.debug('[cotizaciones] loadClienteForEdit -> persona fetched for id:', personaId, persona);
+      const persona = await firstValueFrom(
+        this.personaService.findPersonaNaturalOrJuridicaById(personaId),
+      );
+      console.debug(
+        '[cotizaciones] loadClienteForEdit -> persona fetched for id:',
+        personaId,
+        persona,
+      );
       if (persona) {
         this.clienteSeleccionado = persona;
 
@@ -1076,7 +1286,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         return;
       }
     } catch (error) {
-
       this.showError('Error al cargar los datos del cliente para edición.');
     }
     // Si no se encuentra, resetea
@@ -1097,11 +1306,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.grupoSeleccionadoId = null; // NUEVO: Reset grupo seleccionado
 
     // Separate detalles by category
-    detalles.forEach(detalle => {
-      if (detalle.categoria?.id === 1) { // Productos fijos
+    detalles.forEach((detalle) => {
+      if (detalle.categoria?.id === 1) {
+        // Productos fijos
         const detalleTemp = this.convertDetalleToTemp(detalle);
         this.detallesFijos.push(detalleTemp);
-      } else { // Grupos de hoteles
+      } else {
+        // Grupos de hoteles
         this.addDetalleToGrupoHotel(detalle);
       }
     });
@@ -1114,7 +1325,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private determinarGrupoSeleccionado(): void {
     // IMPORTANTE: No tocar los productos fijos, solo procesar grupos de hoteles
     for (const grupo of this.gruposHoteles) {
-      const tieneDetallesSeleccionados = grupo.detalles.some(detalle => detalle.seleccionado);
+      const tieneDetallesSeleccionados = grupo.detalles.some((detalle) => detalle.seleccionado);
 
       if (tieneDetallesSeleccionados && grupo.categoria.id !== undefined) {
         // Si encontramos un grupo con detalles seleccionados, ese es el grupo activo
@@ -1122,22 +1333,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         grupo.seleccionado = true;
 
         // Asegurar que TODOS los detalles del grupo estén seleccionados (consistencia)
-        grupo.detalles.forEach(detalle => {
+        grupo.detalles.forEach((detalle) => {
           detalle.seleccionado = true;
         });
-
 
         return; // Solo puede haber un grupo seleccionado
       }
     }
 
-
-
     // Verificar que todos los productos fijos mantengan seleccionado=true
-    this.detallesFijos.forEach(detalle => {
+    this.detallesFijos.forEach((detalle) => {
       detalle.seleccionado = true;
     });
-
   }
 
   private convertDetalleToTemp(detalle: DetalleCotizacionResponse): DetalleCotizacionTemp {
@@ -1155,15 +1362,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       unidad: detalle.unidad || 1,
       total: (detalle.precioHistorico || 0) + (detalle.comision || 0),
       isTemporary: false,
-      seleccionado: categoriaId === 1 ? true : (detalle.seleccionado || false)
+      seleccionado: categoriaId === 1 ? true : detalle.seleccionado || false,
     };
   }
 
   private addDetalleToGrupoHotel(detalle: DetalleCotizacionResponse): void {
     const categoriaId = detalle.categoria?.id;
-    let grupo = this.gruposHoteles.find(g => g.categoria.id === categoriaId);
+    let grupo = this.gruposHoteles.find((g) => g.categoria.id === categoriaId);
     if (!grupo) {
-      const categoriaObj = this.categorias.find(c => c.id === categoriaId);
+      const categoriaObj = this.categorias.find((c) => c.id === categoriaId);
 
       if (categoriaObj) {
         grupo = {
@@ -1171,10 +1378,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           detalles: [],
           total: 0,
           isTemporary: false,
-          seleccionado: false
+          seleccionado: false,
         };
         this.gruposHoteles.push(grupo);
-
       } else {
         return;
       }
@@ -1207,9 +1413,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Detalle cotización methods (Productos Fijos)
   agregarDetalleFijo(): void {
-
     if (this.detalleForm.invalid) {
-
       this.markFormGroupTouched(this.detalleForm);
       return;
     }
@@ -1221,27 +1425,27 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Handle proveedor
     if (formValue.proveedorId) {
       const proveedorId = Number(formValue.proveedorId);
-      proveedor = this.proveedores.find(p => p.id === proveedorId) || null;
+      proveedor = this.proveedores.find((p) => p.id === proveedorId) || null;
     } else if (formValue.nuevoProveedor?.trim()) {
       // This would create a new proveedor, for now we'll simulate it
       proveedor = {
         id: 0, // temporary ID
         nombre: formValue.nuevoProveedor.trim(),
         creado: this.getCurrentLimaISOString(),
-        actualizado: this.getCurrentLimaISOString()
+        actualizado: this.getCurrentLimaISOString(),
       } as ProveedorResponse;
     }
 
     let producto = null;
     if (formValue.productoId) {
       const productoId = Number(formValue.productoId);
-      producto = this.productos.find(p => p.id === productoId) || null;
+      producto = this.productos.find((p) => p.id === productoId) || null;
     }
 
     // Validar que tengamos al menos un producto
     if (!producto) {
       this.errorMessage = 'Error: No se pudo encontrar el producto seleccionado';
-      setTimeout(() => this.errorMessage = '', 3000);
+      setTimeout(() => (this.errorMessage = ''), 3000);
       return;
     }
 
@@ -1262,26 +1466,26 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       unidad,
       total: (precioHistorico + comision) * cantidad, // Correcto: (precio + comisión) * cantidad
       isTemporary: true,
-      seleccionado: true     // PRODUCTOS FIJOS siempre seleccionados
+      seleccionado: true, // PRODUCTOS FIJOS siempre seleccionados
     };
 
     this.detallesFijos.push(nuevoDetalle); // Agregar al final de la lista
 
     // Limpiar TODOS los campos del formulario después de agregar
     this.detalleForm.patchValue({
-      proveedorId: '',        // Limpiar proveedor
-      productoId: '',         // Limpiar producto
-      descripcion: '',        // Limpiar descripción
-      precioHistorico: 0,     // Limpiar precio
-      comision: 0,           // Limpiar comisión
-      cantidad: 1            // Resetear cantidad a 1
+      proveedorId: '', // Limpiar proveedor
+      productoId: '', // Limpiar producto
+      descripcion: '', // Limpiar descripción
+      precioHistorico: 0, // Limpiar precio
+      comision: 0, // Limpiar comisión
+      cantidad: 1, // Resetear cantidad a 1
     });
 
     // Mensaje de éxito
     this.successMessage = 'Producto agregado correctamente';
-    setTimeout(() => this.successMessage = '', 3000);
-
-  } eliminarDetalleFijo(index: number): void {
+    setTimeout(() => (this.successMessage = ''), 3000);
+  }
+  eliminarDetalleFijo(index: number): void {
     const detalle = this.detallesFijos[index];
     if (detalle.id && !detalle.isTemporary) {
       this.deletedDetalleIds.push(detalle.id);
@@ -1296,10 +1500,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       switch (field) {
         case 'proveedorId':
-          detalle.proveedor = value ? this.proveedores.find(p => p.id === Number(value)) || null : null;
+          detalle.proveedor = value
+            ? this.proveedores.find((p) => p.id === Number(value)) || null
+            : null;
           break;
         case 'productoId':
-          detalle.producto = value ? this.productos.find(p => p.id === Number(value)) : undefined;
+          detalle.producto = value ? this.productos.find((p) => p.id === Number(value)) : undefined;
           break;
         case 'descripcion':
           detalle.descripcion = value || '';
@@ -1337,10 +1543,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
         switch (field) {
           case 'proveedorId':
-            detalle.proveedor = value ? this.proveedores.find(p => p.id === Number(value)) || null : null;
+            detalle.proveedor = value
+              ? this.proveedores.find((p) => p.id === Number(value)) || null
+              : null;
             break;
           case 'productoId':
-            detalle.producto = value ? this.productos.find(p => p.id === Number(value)) : undefined;
+            detalle.producto = value
+              ? this.productos.find((p) => p.id === Number(value))
+              : undefined;
             break;
           case 'cantidad':
             detalle.cantidad = Number(value) || 1;
@@ -1395,23 +1605,24 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     const categoriaValue = this.grupoHotelForm.value.categoria;
-    const categoriaId = typeof categoriaValue === 'object' && categoriaValue !== null
-      ? categoriaValue.id
-      : Number(categoriaValue);
+    const categoriaId =
+      typeof categoriaValue === 'object' && categoriaValue !== null
+        ? categoriaValue.id
+        : Number(categoriaValue);
 
     if (!categoriaId || isNaN(categoriaId)) {
       return;
     }
 
-    const categoriaObj = this.categorias.find(c => c.id === categoriaId);
+    const categoriaObj = this.categorias.find((c) => c.id === categoriaId);
 
-    if (categoriaObj && !this.gruposHoteles.find(g => g.categoria.id === categoriaId)) {
+    if (categoriaObj && !this.gruposHoteles.find((g) => g.categoria.id === categoriaId)) {
       const nuevoGrupo: GrupoHotelTemp = {
         categoria: categoriaObj,
         detalles: [],
         total: 0,
         isTemporary: true,
-        seleccionado: false     // Inicializar como no seleccionado
+        seleccionado: false, // Inicializar como no seleccionado
       };
       this.gruposHoteles.push(nuevoGrupo);
       this.grupoHotelForm.reset();
@@ -1423,7 +1634,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     const grupo = this.gruposHoteles[index];
 
     // Add all detalle IDs to deleted array
-    grupo.detalles.forEach(detalle => {
+    grupo.detalles.forEach((detalle) => {
       if (detalle.id && !detalle.isTemporary) {
         this.deletedDetalleIds.push(detalle.id);
       }
@@ -1452,22 +1663,20 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const grupoSeleccionado = this.gruposHoteles[grupoIndex];
       const categoriaId = grupoSeleccionado.categoria.id;
 
-
       // Si ya está seleccionado, lo deseleccionamos
       if (this.grupoSeleccionadoId === categoriaId) {
         this.grupoSeleccionadoId = null;
         grupoSeleccionado.seleccionado = false;
         // NUEVO: Marcar todos los detalles como NO seleccionados
-        grupoSeleccionado.detalles.forEach(detalle => {
+        grupoSeleccionado.detalles.forEach((detalle) => {
           detalle.seleccionado = false;
         });
-
       } else {
         // Deseleccionar todos los grupos primero
-        this.gruposHoteles.forEach(grupo => {
+        this.gruposHoteles.forEach((grupo) => {
           grupo.seleccionado = false;
           // NUEVO: Marcar todos los detalles como NO seleccionados
-          grupo.detalles.forEach(detalle => {
+          grupo.detalles.forEach((detalle) => {
             detalle.seleccionado = false;
           });
         });
@@ -1477,14 +1686,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           this.grupoSeleccionadoId = categoriaId;
           grupoSeleccionado.seleccionado = true;
           // NUEVO: Marcar todos los detalles del grupo seleccionado como seleccionados
-          grupoSeleccionado.detalles.forEach(detalle => {
+          grupoSeleccionado.detalles.forEach((detalle) => {
             detalle.seleccionado = true;
           });
-
         }
       }
     } else {
-
     }
   }
 
@@ -1508,9 +1715,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return null;
     }
 
-    return this.gruposHoteles.find(grupo =>
-      grupo.categoria.id === this.grupoSeleccionadoId
-    ) || null;
+    return (
+      this.gruposHoteles.find((grupo) => grupo.categoria.id === this.grupoSeleccionadoId) || null
+    );
   }
 
   /**
@@ -1526,19 +1733,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    * Si solo hay un grupo con detalles, se considera seleccionado para visualización
    */
   getGrupoSeleccionadoEnVisualizacion(): GrupoHotelTemp | null {
-
     // NO re-inferir aquí para evitar bucle infinito
     // La inferencia ya se hizo al cargar los detalles
 
     // Devolver el grupo que está marcado como seleccionado
     if (this.grupoSeleccionadoId) {
-      const grupoSeleccionado = this.gruposHoteles.find(g => g.categoria.id === this.grupoSeleccionadoId);
+      const grupoSeleccionado = this.gruposHoteles.find(
+        (g) => g.categoria.id === this.grupoSeleccionadoId,
+      );
       if (grupoSeleccionado) {
-
         return grupoSeleccionado;
       }
     }
-
 
     return null;
   }
@@ -1569,7 +1775,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         grupo.detalles[detalleIndex].seleccionado = seleccionado;
 
         // Actualizar el estado del grupo basado en los detalles seleccionados
-        const detallesSeleccionados = grupo.detalles.filter(d => d.seleccionado).length;
+        const detallesSeleccionados = grupo.detalles.filter((d) => d.seleccionado).length;
         const totalDetalles = grupo.detalles.length;
 
         if (detallesSeleccionados === 0) {
@@ -1589,8 +1795,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   obtenerDetallesSeleccionados(): DetalleCotizacionTemp[] {
     const detallesSeleccionados: DetalleCotizacionTemp[] = [];
 
-    this.gruposHoteles.forEach(grupo => {
-      grupo.detalles.forEach(detalle => {
+    this.gruposHoteles.forEach((grupo) => {
+      grupo.detalles.forEach((detalle) => {
         if (detalle.seleccionado) {
           detallesSeleccionados.push(detalle);
         }
@@ -1603,13 +1809,19 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   /**
    * Obtiene información de selección para mostrar al usuario (selección única)
    */
-  obtenerEstadoSeleccion(): { gruposSeleccionados: number, detallesSeleccionados: number, totalGrupos: number, totalDetalles: number, grupoSeleccionado: GrupoHotelTemp | null } {
+  obtenerEstadoSeleccion(): {
+    gruposSeleccionados: number;
+    detallesSeleccionados: number;
+    totalGrupos: number;
+    totalDetalles: number;
+    grupoSeleccionado: GrupoHotelTemp | null;
+  } {
     const grupoSeleccionado = this.getGrupoSeleccionado();
     const gruposSeleccionados = grupoSeleccionado ? 1 : 0;
     const detallesSeleccionados = grupoSeleccionado ? grupoSeleccionado.detalles.length : 0;
 
     let totalDetalles = 0;
-    this.gruposHoteles.forEach(grupo => {
+    this.gruposHoteles.forEach((grupo) => {
       totalDetalles += grupo.detalles.length;
     });
 
@@ -1618,7 +1830,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       detallesSeleccionados,
       totalGrupos: this.gruposHoteles.length,
       totalDetalles,
-      grupoSeleccionado
+      grupoSeleccionado,
     };
   }
 
@@ -1626,9 +1838,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    * Deselecciona todos los grupos y detalles
    */
   deseleccionarTodos(): void {
-    this.gruposHoteles.forEach(grupo => {
+    this.gruposHoteles.forEach((grupo) => {
       grupo.seleccionado = false;
-      grupo.detalles.forEach(detalle => {
+      grupo.detalles.forEach((detalle) => {
         detalle.seleccionado = false;
       });
     });
@@ -1645,7 +1857,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    * Cuenta los detalles seleccionados en un grupo específico
    */
   contarDetallesSeleccionados(grupo: GrupoHotelTemp): number {
-    return grupo.detalles.filter(d => d.seleccionado).length;
+    return grupo.detalles.filter((d) => d.seleccionado).length;
   }
 
   /**
@@ -1653,7 +1865,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    * Solo guarda detalles que tienen ID (no temporales)
    */
   async guardarSelecciones(): Promise<void> {
-
     if (!this.editandoCotizacion || !this.cotizacionEditandoId) {
       this.showError('Debe estar editando una cotización para guardar selecciones');
       return;
@@ -1668,10 +1879,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       }
 
       // Recopilar solo las selecciones del grupo seleccionado
-      const selecciones: {detalleId: number, seleccionado: boolean}[] = [];
+      const selecciones: { detalleId: number; seleccionado: boolean }[] = [];
 
       // Buscar el grupo seleccionado
-      const grupoSeleccionado = this.gruposHoteles.find(g => g.categoria.id === this.grupoSeleccionadoId);
+      const grupoSeleccionado = this.gruposHoteles.find(
+        (g) => g.categoria.id === this.grupoSeleccionadoId,
+      );
 
       if (!grupoSeleccionado) {
         this.showError('No se encontró el grupo seleccionado');
@@ -1679,33 +1892,33 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       }
 
       // Agregar solo los detalles del grupo seleccionado
-      grupoSeleccionado.detalles.forEach(detalle => {
+      grupoSeleccionado.detalles.forEach((detalle) => {
         if (detalle.id) {
           selecciones.push({
             detalleId: detalle.id,
-            seleccionado: true // Los detalles del grupo seleccionado deben marcarse como seleccionados
+            seleccionado: true, // Los detalles del grupo seleccionado deben marcarse como seleccionados
           });
         }
       });
 
       // También incluir productos fijos (siempre seleccionados)
-      this.detallesFijos.forEach(detalle => {
+      this.detallesFijos.forEach((detalle) => {
         if (detalle.id) {
           selecciones.push({
             detalleId: detalle.id,
-            seleccionado: true // Los productos fijos siempre están seleccionados
+            seleccionado: true, // Los productos fijos siempre están seleccionados
           });
         }
       });
 
       // Marcar como NO seleccionados los detalles de otros grupos
-      this.gruposHoteles.forEach(grupo => {
+      this.gruposHoteles.forEach((grupo) => {
         if (grupo.categoria.id !== this.grupoSeleccionadoId) {
-          grupo.detalles.forEach(detalle => {
+          grupo.detalles.forEach((detalle) => {
             if (detalle.id) {
               selecciones.push({
                 detalleId: detalle.id,
-                seleccionado: false // Los detalles de otros grupos deben marcarse como NO seleccionados
+                seleccionado: false, // Los detalles de otros grupos deben marcarse como NO seleccionados
               });
             }
           });
@@ -1717,18 +1930,18 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         return;
       }
 
-
-
       // Actualizar cada detalle con PATCH para cambiar solo el campo 'seleccionado'
       for (const seleccion of selecciones) {
-        await this.detalleCotizacionService.updateDetalleCotizacion(seleccion.detalleId, { seleccionado: seleccion.seleccionado }).toPromise();
+        await this.detalleCotizacionService
+          .updateDetalleCotizacion(seleccion.detalleId, { seleccionado: seleccion.seleccionado })
+          .toPromise();
       }
 
-      const detallesSeleccionados = selecciones.filter(s => s.seleccionado).length;
-      this.showSuccess(`Selecciones guardadas exitosamente: ${detallesSeleccionados} detalles seleccionados del grupo "${grupoSeleccionado.categoria.nombre}"`);
-
+      const detallesSeleccionados = selecciones.filter((s) => s.seleccionado).length;
+      this.showSuccess(
+        `Selecciones guardadas exitosamente: ${detallesSeleccionados} detalles seleccionados del grupo "${grupoSeleccionado.categoria.nombre}"`,
+      );
     } catch (error) {
-
       this.showError('Error al guardar las selecciones. Por favor, intente nuevamente.');
     } finally {
       this.isLoading = false;
@@ -1746,14 +1959,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const grupoOriginal = this.gruposHoteles[index];
       const grupoDuplicado: GrupoHotelTemp = {
         categoria: { ...grupoOriginal.categoria },
-        detalles: grupoOriginal.detalles.map(detalle => ({
+        detalles: grupoOriginal.detalles.map((detalle) => ({
           ...detalle,
           proveedor: detalle.proveedor ? { ...detalle.proveedor } : undefined,
           producto: detalle.producto ? { ...detalle.producto } : undefined,
-          isTemporary: true
+          isTemporary: true,
         })),
         isTemporary: true,
-        total: grupoOriginal.total
+        total: grupoOriginal.total,
       };
 
       // Agregar "(Copia)" al nombre de la categoría
@@ -1774,7 +1987,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           ...detalleOriginal,
           proveedor: detalleOriginal.proveedor ? { ...detalleOriginal.proveedor } : undefined,
           producto: detalleOriginal.producto ? { ...detalleOriginal.producto } : undefined,
-          isTemporary: true
+          isTemporary: true,
         };
 
         grupo.detalles.push(detalleDuplicado);
@@ -1786,7 +1999,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Limpiar todos los grupos
   limpiarTodosLosGrupos(): void {
-    if (confirm('¿Estás seguro de que quieres eliminar todos los grupos? Esta acción no se puede deshacer.')) {
+    if (
+      confirm(
+        '¿Estás seguro de que quieres eliminar todos los grupos? Esta acción no se puede deshacer.',
+      )
+    ) {
       this.gruposHoteles = [];
     }
   }
@@ -1798,7 +2015,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       totalGrupos: this.gruposHoteles.length,
       totalOpciones: this.getTotalOpcionesGrupos(),
       valorTotal: this.calcularTotalGrupos(),
-      grupos: this.gruposHoteles
+      grupos: this.gruposHoteles,
     };
 
     const dataStr = JSON.stringify(datosExport, null, 2);
@@ -1824,7 +2041,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Crear nueva categoría
     const nuevaCategoria: CategoriaRequest = {
-      nombre: formValue.nombre
+      nombre: formValue.nombre,
     };
 
     // Llamar al servicio para crear la categoría
@@ -1839,7 +2056,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.showError('Error al crear la categoría. Por favor, intente nuevamente.');
         this.creandoCategoria = false;
-      }
+      },
     });
   }
 
@@ -1855,7 +2072,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.categoriaEditandose = index;
       // Guardar datos originales para poder cancelar
       this.categoriaDatosOriginales = {
-        nombre: this.categorias[index].nombre
+        nombre: this.categorias[index].nombre,
       };
     }
   }
@@ -1873,7 +2090,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       // Crear objeto para actualizar
       const categoriaActualizada: CategoriaRequest = {
-        nombre: categoria.nombre
+        nombre: categoria.nombre,
       };
 
       // Llamar al servicio para actualizar
@@ -1888,7 +2105,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           this.showError('Error al actualizar la categoría. Por favor, intente nuevamente.');
           // Restaurar datos originales en caso de error
           this.cancelarEdicionCategoria(index);
-        }
+        },
       });
     }
   }
@@ -1907,7 +2124,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   confirmarEliminarCategoria(index: number): void {
     if (index >= 0 && index < this.categorias.length) {
       const categoria = this.categorias[index];
-      const mensaje = `¿Estás seguro de que quieres eliminar la categoría "${categoria.nombre}"?\n\n` +
+      const mensaje =
+        `¿Estás seguro de que quieres eliminar la categoría "${categoria.nombre}"?\n\n` +
         `Esta acción no se puede deshacer y podría afectar grupos existentes.`;
 
       if (confirm(mensaje)) {
@@ -1927,8 +2145,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           this.showSuccess('Categoría eliminada exitosamente');
         },
         error: (error) => {
-          this.showError('Error al eliminar la categoría. Puede estar en uso por grupos existentes.');
-        }
+          this.showError(
+            'Error al eliminar la categoría. Puede estar en uso por grupos existentes.',
+          );
+        },
       });
     }
   }
@@ -1950,13 +2170,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     return date.toLocaleDateString('es-ES', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   }
 
   // Marcar todos los controles como untouched
   private markFormGroupUntouched(formGroup: FormGroup): void {
-    Object.keys(formGroup.controls).forEach(key => {
+    Object.keys(formGroup.controls).forEach((key) => {
       const control = formGroup.get(key);
       control?.markAsUntouched();
       control?.markAsPristine();
@@ -1975,20 +2195,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     let proveedor: ProveedorResponse | null = null;
     if (formValue.proveedorId) {
       const proveedorId = Number(formValue.proveedorId);
-      proveedor = this.proveedores.find(p => p.id === proveedorId) || null;
-
-
+      proveedor = this.proveedores.find((p) => p.id === proveedorId) || null;
     } else if (formValue.nuevoProveedor?.trim()) {
       proveedor = {
         id: 0,
         nombre: formValue.nuevoProveedor.trim(),
         creado: this.getCurrentLimaISOString(),
-        actualizado: this.getCurrentLimaISOString()
+        actualizado: this.getCurrentLimaISOString(),
       } as ProveedorResponse;
-
     }
 
-    const producto = this.productos.find(p => p.id === Number(formValue.productoId));
+    const producto = this.productos.find((p) => p.id === Number(formValue.productoId));
     const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
     const precioHistorico = formValue.precioHistorico || 0;
     const comision = formValue.comision || 0; // Leer comisión del formulario
@@ -2006,16 +2223,19 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       unidad,
       total: (precioHistorico + comision) * cantidad, // Calcular correctamente: (precio + comisión) * cantidad
       isTemporary: true,
-      seleccionado: false     // Inicializar como no seleccionado
+      seleccionado: false, // Inicializar como no seleccionado
     };
 
     grupo.detalles.push(nuevoDetalle);
-    grupo.total = grupo.detalles.reduce((sum, d) => sum + ((d.precioHistorico + d.comision) * d.cantidad), 0);
+    grupo.total = grupo.detalles.reduce(
+      (sum, d) => sum + (d.precioHistorico + d.comision) * d.cantidad,
+      0,
+    );
     this.detalleGrupoForm.reset({
       cantidad: 1,
       unidad: 1,
       precioHistorico: 0,
-      comision: 0 // Resetear comisión también
+      comision: 0, // Resetear comisión también
     });
   }
 
@@ -2047,7 +2267,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return totalFijos;
     }
 
-    const grupoMasEconomico = Math.min(...this.gruposHoteles.map(g => g.total));
+    const grupoMasEconomico = Math.min(...this.gruposHoteles.map((g) => g.total));
     return totalFijos + grupoMasEconomico;
   }
 
@@ -2081,12 +2301,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           'formaPagoId',
           'estadoCotizacionId',
           'sucursalId',
-          'carpetaId'
+          'carpetaId',
         ];
 
-        relationFields.forEach(field => {
+        relationFields.forEach((field) => {
           const val = (formValue as any)[field as string];
-          const originalVal = this.cotizacionOriginal ? (this.cotizacionOriginal as any)[field as string] : undefined;
+          const originalVal = this.cotizacionOriginal
+            ? (this.cotizacionOriginal as any)[field as string]
+            : undefined;
           if (val !== undefined && val !== null && val !== '' && val !== originalVal) {
             (patchPayload as any)[field] = val;
           }
@@ -2129,20 +2351,24 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           formaPagoId: formValue.formaPagoId,
           estadoCotizacionId: formValue.estadoCotizacionId,
           sucursalId: formValue.sucursalId,
-          carpetaId: formValue.carpetaId
+          carpetaId: formValue.carpetaId,
         };
 
-  let createResult: CotizacionResponse | undefined = undefined;
+        let createResult: CotizacionResponse | undefined = undefined;
         if (formValue.personaId) {
           // Si se seleccionó una persona, usar el endpoint que crea la cotización vinculada a la persona
-          createResult = await this.cotizacionService.createCotizacionWithPersona(formValue.personaId, cotizacionRequest).toPromise();
+          createResult = await this.cotizacionService
+            .createCotizacionWithPersona(formValue.personaId, cotizacionRequest)
+            .toPromise();
         } else {
-          createResult = await this.cotizacionService.createCotizacion(cotizacionRequest).toPromise();
+          createResult = await this.cotizacionService
+            .createCotizacion(cotizacionRequest)
+            .toPromise();
         }
         if (!createResult) throw new Error('Failed to create cotización');
         cotizacionResponse = createResult;
 
-  // Ya incluimos las relaciones en el payload de creación (si vienen)
+        // Ya incluimos las relaciones en el payload de creación (si vienen)
 
         this.showSuccess('Cotización creada exitosamente!');
       }
@@ -2155,7 +2381,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.cerrarFormulario();
     } catch (error) {
       console.error('Error al guardar cotización:', error);
-      this.showError('Error al guardar la cotización. Por favor, verifique los datos e intente nuevamente.');
+      this.showError(
+        'Error al guardar la cotización. Por favor, verifique los datos e intente nuevamente.',
+      );
     } finally {
       this.isLoading = false;
     }
@@ -2183,7 +2411,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       'fechaRegreso',
       'moneda',
       'observacion',
-      'fechaVencimiento'
+      'fechaVencimiento',
     ];
 
     // Manejar cantAdultos y cantNinos juntos - si alguno cambia, incluir ambos
@@ -2196,7 +2424,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     // Comparar resto de campos
-    fieldsToCheck.forEach(field => {
+    fieldsToCheck.forEach((field) => {
       const newValue = formValue[field];
       const originalValue = this.cotizacionOriginal![field as keyof CotizacionResponse];
 
@@ -2215,7 +2443,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private sanitizePatchPayload(patch: CotizacionPatchRequest): CotizacionPatchRequest {
     const sanitized: CotizacionPatchRequest = {};
 
-    Object.keys(patch).forEach(key => {
+    Object.keys(patch).forEach((key) => {
       let value: any = patch[key as keyof CotizacionPatchRequest];
 
       // Convertir Date objects a string ISO
@@ -2232,8 +2460,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // Relaciones ahora se envían como parte del payload de creación/actualización (PATCH/POST)
 
   private async eliminarDetallesEliminados(): Promise<void> {
-    const deletePromises = this.deletedDetalleIds.map(id =>
-      this.detalleCotizacionService.deleteDetalleCotizacion(id).toPromise()
+    const deletePromises = this.deletedDetalleIds.map((id) =>
+      this.detalleCotizacionService.deleteDetalleCotizacion(id).toPromise(),
     );
 
     await Promise.all(deletePromises);
@@ -2265,9 +2493,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async crearDetalle(cotizacionId: number, detalle: DetalleCotizacionTemp, categoria: number): Promise<void> {
-
-    const categoriaExiste = this.categorias.find(c => c.id === categoria);
+  private async crearDetalle(
+    cotizacionId: number,
+    detalle: DetalleCotizacionTemp,
+    categoria: number,
+  ): Promise<void> {
+    const categoriaExiste = this.categorias.find((c) => c.id === categoria);
 
     if (!categoriaExiste) {
       throw new Error(`Categoría con ID ${categoria} no encontrada en el frontend`);
@@ -2284,24 +2515,26 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Create proveedor if needed
     let proveedorId = detalle.proveedor?.id;
     if (detalle.proveedor && detalle.proveedor.id === 0) {
-      const nuevoProveedor = await this.proveedorService.createProveedor({
-        nombre: detalle.proveedor.nombre
-      }).toPromise();
+      const nuevoProveedor = await this.proveedorService
+        .createProveedor({
+          nombre: detalle.proveedor.nombre,
+        })
+        .toPromise();
       proveedorId = nuevoProveedor?.id;
     }
 
     const productoId = detalle.producto?.id;
     const request: DetalleCotizacionRequest = {
-      cantidad: detalle.cantidad || 1,                   // Default 1
-      unidad: detalle.unidad || 1,                       // Default 1
-      descripcion: detalle.descripcion || '',            // Default empty
-      categoria: categoria,                              // Mantener para compatibilidad local
-      categoriaId: categoria,                            // Enviar categoriaId al backend
-      productoId: productoId,                            // Enviar productoId si existe
-      proveedorId: proveedorId,                          // Enviar proveedorId si existe
-      comision: detalle.comision || 0,                   // Default 0
-      precioHistorico: detalle.precioHistorico || 0,     // Default 0
-      seleccionado: detalle.seleccionado || false        // Campo de selección
+      cantidad: detalle.cantidad || 1, // Default 1
+      unidad: detalle.unidad || 1, // Default 1
+      descripcion: detalle.descripcion || '', // Default empty
+      categoria: categoria, // Mantener para compatibilidad local
+      categoriaId: categoria, // Enviar categoriaId al backend
+      productoId: productoId, // Enviar productoId si existe
+      proveedorId: proveedorId, // Enviar proveedorId si existe
+      comision: detalle.comision || 0, // Default 0
+      precioHistorico: detalle.precioHistorico || 0, // Default 0
+      seleccionado: detalle.seleccionado || false, // Campo de selección
     };
 
     // Validación final antes de enviar
@@ -2309,7 +2542,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       throw new Error('categoria es requerido para crear detalle');
     }
 
-    const detalleCreado = await this.detalleCotizacionService.createDetalleCotizacion(cotizacionId, request).toPromise();
+    const detalleCreado = await this.detalleCotizacionService
+      .createDetalleCotizacion(cotizacionId, request)
+      .toPromise();
 
     // NOTA: Los endpoints setProducto() y setProveedor() no existen en el backend actual.
     // El producto y proveedor deben incluirse en el payload al crear el detalle.
@@ -2329,7 +2564,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Enviamos también la categoría
     let categoriaId: number;
-    if (typeof detalle.categoria === 'object' && detalle.categoria !== null && 'id' in detalle.categoria) {
+    if (
+      typeof detalle.categoria === 'object' &&
+      detalle.categoria !== null &&
+      'id' in detalle.categoria
+    ) {
       categoriaId = (detalle.categoria as any).id;
     } else {
       categoriaId = detalle.categoria as number;
@@ -2339,7 +2578,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     const request: DetalleCotizacionRequest = {
       cantidad: detalle.cantidad || 1,
-      unidad: (detalle.unidad !== undefined && detalle.unidad !== null) ? detalle.unidad : 0,
+      unidad: detalle.unidad !== undefined && detalle.unidad !== null ? detalle.unidad : 0,
       descripcion: detalle.descripcion || '',
       categoria: categoriaId,
       categoriaId: categoriaId,
@@ -2347,7 +2586,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       proveedorId: proveedorId,
       comision: detalle.comision || 0,
       precioHistorico: detalle.precioHistorico || 0,
-      seleccionado: detalle.seleccionado || false        // Campo de selección
+      seleccionado: detalle.seleccionado || false, // Campo de selección
     };
 
     await this.detalleCotizacionService.updateDetalleCotizacion(detalle.id, request).toPromise();
@@ -2365,9 +2604,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       // Mostrar progreso en consola cada segundo
       if (this.tiempoPresionado % 1000 === 0)
-
-        // Después de 3 segundos (3000ms), proceder con eliminación
         if (this.tiempoPresionado >= 3000) {
+          // Después de 3 segundos (3000ms), proceder con eliminación
           this.completarEliminacion();
         }
     }, 100);
@@ -2413,10 +2651,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.showSuccess('Cotización eliminada exitosamente.');
     } catch (error: any) {
       // Capturar el mensaje del backend si existe (RFC 7807 Problem Details format)
-      const errorMessage = error?.error?.detail ||    // RFC 7807 format (detail)
-                          error?.error?.message ||     // Custom format (message)
-                          error?.message ||             // Error object message
-                          'Error al eliminar la cotización. Por favor, inténtelo de nuevo.';
+      const errorMessage =
+        error?.error?.detail || // RFC 7807 format (detail)
+        error?.error?.message || // Custom format (message)
+        error?.message || // Error object message
+        'Error al eliminar la cotización. Por favor, inténtelo de nuevo.';
       this.showError(errorMessage);
     } finally {
       this.isLoading = false;
@@ -2425,7 +2664,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   // Helper methods
   private markFormGroupTouched(formGroup: FormGroup): void {
-    Object.keys(formGroup.controls).forEach(key => {
+    Object.keys(formGroup.controls).forEach((key) => {
       const control = formGroup.get(key);
       control?.markAsTouched();
     });
@@ -2482,14 +2721,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return 'Sin documento';
     }
 
-
     return 'Documento no disponible';
   }
 
   /**
    * Agrega una persona al cache (acepta respuesta natural/juridica o `personaDisplay` normalizado)
    */
-  private addPersonaToCache(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): void {
+  private addPersonaToCache(
+    persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay,
+  ): void {
     console.debug('[cotizaciones] addPersonaToCache -> persona:', persona);
     if (!persona || !persona.id) return;
 
@@ -2503,7 +2743,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         id: persona.id,
         identificador: pj.ruc || '',
         nombre: pj.razonSocial || 'Sin nombre',
-        tipo: 'JURIDICA'
+        tipo: 'JURIDICA',
       };
     } else {
       // Persona natural
@@ -2515,14 +2755,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const apellidoPaterno = pn.apellidosPaterno != null ? String(pn.apellidosPaterno).trim() : '';
       const apellidoMaterno = pn.apellidosMaterno != null ? String(pn.apellidosMaterno).trim() : '';
 
-      const partesNombre = [nombres, apellidoPaterno, apellidoMaterno]
-        .filter(parte => parte && parte !== 'null' && parte !== 'undefined');
+      const partesNombre = [nombres, apellidoPaterno, apellidoMaterno].filter(
+        (parte) => parte && parte !== 'null' && parte !== 'undefined',
+      );
 
       this.personasCache[persona.id] = {
         id: persona.id,
         identificador: pn.documento || '',
         nombre: partesNombre.join(' ').trim() || 'Sin nombre',
-        tipo: 'NATURAL'
+        tipo: 'NATURAL',
       };
     }
 
@@ -2532,7 +2773,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.personasDisplayMap[persona.id] = cached.nombre;
 
     // Si la entidad tiene una relación `persona` (tabla padre) y su id difiere, duplicar la entrada
-    if ('persona' in (persona as any) && (persona as any).persona?.id && (persona as any).persona.id !== persona.id) {
+    if (
+      'persona' in (persona as any) &&
+      (persona as any).persona?.id &&
+      (persona as any).persona.id !== persona.id
+    ) {
       const parentId = (persona as any).persona.id as number;
       this.personasCache[parentId] = { ...this.personasCache[persona.id], id: parentId };
       this.personasDisplayMap[parentId] = this.personasDisplayMap[persona.id];
@@ -2552,7 +2797,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Cargar persona de forma asíncrona
     firstValueFrom(this.personaService.findPersonaNaturalOrJuridicaById(personaId))
-      .then(persona => {
+      .then((persona) => {
         if (persona) {
           console.debug('[cotizaciones] loadMissingPersona -> loaded:', personaId, persona);
           this.todosLosClientes.push(persona);
@@ -2561,9 +2806,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           this.filterCotizaciones();
         }
       })
-      .catch(error => {
-
-      })
+      .catch((error) => {})
       .finally(() => {
         this.loadingPersonas.delete(personaId);
       });
@@ -2602,8 +2845,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return [];
     }
 
-    const categoriasUsadas = this.gruposHoteles.map(g => g.categoria.id);
-    const disponibles = this.categorias.filter(c => c.id !== 1 && !categoriasUsadas.includes(c.id));
+    const categoriasUsadas = this.gruposHoteles.map((g) => g.categoria.id);
+    const disponibles = this.categorias.filter(
+      (c) => c.id !== 1 && !categoriasUsadas.includes(c.id),
+    );
 
     return disponibles;
   }
@@ -2626,8 +2871,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     // Calcular el total de cada categoría y obtener el más económico
-    const totalesPorCategoria = categoriasNoFijas.map(categoria =>
-      this.getTotalCategoria(this.getDetallesByCategoria(categoria.id))
+    const totalesPorCategoria = categoriasNoFijas.map((categoria) =>
+      this.getTotalCategoria(this.getDetallesByCategoria(categoria.id)),
     );
 
     const grupoMasEconomico = Math.min(...totalesPorCategoria);
@@ -2637,7 +2882,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   getDetallesByCategoria(categoriaId: number): any[] {
     if (!this.cotizacionCompleta?.detalles) return [];
-    return this.cotizacionCompleta.detalles.filter(detalle => detalle.categoria?.id === categoriaId);
+    return this.cotizacionCompleta.detalles.filter(
+      (detalle) => detalle.categoria?.id === categoriaId,
+    );
   }
 
   getCategoriasConDetalles(): any[] {
@@ -2645,7 +2892,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     const categoriasMap = new Map();
 
-    this.cotizacionCompleta.detalles.forEach(detalle => {
+    this.cotizacionCompleta.detalles.forEach((detalle) => {
       const categoriaId = detalle.categoria?.id || 1;
       const categoriaNombre = detalle.categoria?.nombre || 'Productos Fijos';
 
@@ -2653,7 +2900,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         categoriasMap.set(categoriaId, {
           id: categoriaId,
           nombre: categoriaNombre,
-          detalles: []
+          detalles: [],
         });
       }
 
@@ -2667,7 +2914,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   // CLIENT SEARCH METHODS (SIMPLIFIED)
   // ============================================
 
-  private async buscarClientesEnTiempoReal(searchTerm: string): Promise<(PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[]> {
+  private async buscarClientesEnTiempoReal(
+    searchTerm: string,
+  ): Promise<(PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[]> {
     if (!searchTerm || searchTerm.length < 1) {
       // Si no hay término de búsqueda, mostrar todos los clientes (primeros 20)
       return this.todosLosClientes.slice(0, 20);
@@ -2678,19 +2927,31 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const resultados: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
 
       // Filtrar todos los clientes cargados
-      const clientesFiltrados = this.todosLosClientes.filter(persona => {
-        if ('nombres' in persona && ('apellidos' in persona || 'apellidosPaterno' in persona || 'apellidosMaterno' in persona)) {
-            // Persona Natural (soporta apellidosPaterno/apellidosMaterno)
-            const nombres = ((persona as any).nombres || '').toString().toLowerCase();
-            const apellidos = ((persona as any).apellidosPaterno || (persona as any).apellidos || (persona as any).apellidosMaterno || '').toString().toLowerCase();
-            const documento = ((persona as any).documento || '').toString().toLowerCase();
-            const nombreCompleto = `${nombres} ${apellidos}`.trim();
+      const clientesFiltrados = this.todosLosClientes.filter((persona) => {
+        if (
+          'nombres' in persona &&
+          ('apellidos' in persona || 'apellidosPaterno' in persona || 'apellidosMaterno' in persona)
+        ) {
+          // Persona Natural (soporta apellidosPaterno/apellidosMaterno)
+          const nombres = ((persona as any).nombres || '').toString().toLowerCase();
+          const apellidos = (
+            (persona as any).apellidosPaterno ||
+            (persona as any).apellidos ||
+            (persona as any).apellidosMaterno ||
+            ''
+          )
+            .toString()
+            .toLowerCase();
+          const documento = ((persona as any).documento || '').toString().toLowerCase();
+          const nombreCompleto = `${nombres} ${apellidos}`.trim();
 
-            return nombres.includes(term) ||
-              apellidos.includes(term) ||
-              documento.includes(term) ||
-              nombreCompleto.includes(term);
-          } else if ('razonSocial' in persona) {
+          return (
+            nombres.includes(term) ||
+            apellidos.includes(term) ||
+            documento.includes(term) ||
+            nombreCompleto.includes(term)
+          );
+        } else if ('razonSocial' in persona) {
           // Persona Jurídica
           const razonSocial = ((persona as any).razonSocial || '').toString().toLowerCase();
           const ruc = ((persona as any).ruc || '').toString().toLowerCase();
@@ -2715,7 +2976,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       });
 
       return clientesFiltrados.slice(0, 20); // Máximo 20 resultados
-
     } catch (error) {
       return this.todosLosClientes.slice(0, 20); // Fallback a mostrar todos
     }
@@ -2737,7 +2997,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.clearClienteSearch();
   }
 
-  seleccionarCliente(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): void {
+  seleccionarCliente(
+    persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay,
+  ): void {
     // Obtener el ID del cliente para el formulario
     let personaId: number;
 
@@ -2746,9 +3008,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       personaId = persona.id;
     } else {
       // Para tipos originales, usar el FK de la tabla persona base si existe, si no el id propio
-      personaId = typeof (persona as any).persona === 'object'
-        ? (persona as any).persona.id
-        : (persona as any).persona || persona.id;
+      personaId =
+        typeof (persona as any).persona === 'object'
+          ? (persona as any).persona.id
+          : (persona as any).persona || persona.id;
     }
 
     this.clienteSeleccionado = persona;
@@ -2756,8 +3019,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.clearClienteSearch();
   }
 
-  getClienteType(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
-    if (!persona) {return 'Cliente'};
+  getClienteType(
+    persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay,
+  ): string {
+    if (!persona) {
+      return 'Cliente';
+    }
 
     // Si es personaDisplay (nuevo modelo unificado)
     if ('tipo' in persona && 'identificador' in persona) {
@@ -2766,12 +3033,16 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     // Compatibilidad con modelos antiguos
-    if ('ruc' in persona && persona.ruc) { return 'Empresa' };
+    if ('ruc' in persona && persona.ruc) {
+      return 'Empresa';
+    }
 
     return 'Cliente';
   }
 
-  getClienteDocumento(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
+  getClienteDocumento(
+    persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay,
+  ): string {
     if (!persona) return '';
 
     // Si es personaDisplay (nuevo modelo unificado)
@@ -2787,7 +3058,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  hasDocumento(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): boolean {
+  hasDocumento(
+    persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay,
+  ): boolean {
     if (!persona) return false;
 
     // Si es personaDisplay (nuevo modelo unificado)
@@ -2808,14 +3081,16 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    * Devuelve SOLO el nombre del cliente, sin documento ni RUC
    * Se usa en la tarjeta de cliente seleccionado
    */
-  getClienteNombreSolo(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
+  getClienteNombreSolo(
+    persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay,
+  ): string {
     if (!persona) return 'Cliente';
     // Si es personaDisplay (modelo unificado)
     if ('tipo' in persona && 'nombre' in persona) {
       // LIMPIAR el nombre si contiene "null" como texto
       const nombreLimpio = persona.nombre
         .split(' ')
-        .filter(parte => parte && parte !== 'null' && parte !== 'undefined')
+        .filter((parte) => parte && parte !== 'null' && parte !== 'undefined')
         .join(' ')
         .trim();
       return nombreLimpio || 'Sin nombre';
@@ -2831,8 +3106,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       // Construir nombre completo solo con valores que existan y no sean 'null' como string
       const partes = [nombres, apellidoPaterno, apellidoMaterno]
-        .map(parte => String(parte || '').trim())
-        .filter(parte => parte && parte !== 'null' && parte !== 'undefined');
+        .map((parte) => String(parte || '').trim())
+        .filter((parte) => parte && parte !== 'null' && parte !== 'undefined');
 
       const resultado = partes.join(' ').trim() || 'Sin nombre';
       return resultado;
@@ -2850,13 +3125,15 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
    * Devuelve el nombre del cliente CON el formato completo (DNI/RUC: xxx - Nombre)
    * Se usa en el BUSCADOR de clientes
    */
-  getClienteDisplayName(persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay): string {
+  getClienteDisplayName(
+    persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay,
+  ): string {
     // Soporta personaDisplay, PersonaNaturalResponse y PersonaJuridicaResponse
     if (!persona) {
       return 'Cliente';
     }
     // Si es personaDisplay
-    if ('tipo' in persona && 'nombre' in persona){
+    if ('tipo' in persona && 'nombre' in persona) {
       return persona.nombre;
     }
     // Compatibilidad con modelos antiguos (soporta apellidosPaterno/apellidosMaterno)
@@ -2864,8 +3141,10 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       const nombres = (persona as any).nombres || '';
       const apellidoPaterno = (persona as any).apellidosPaterno || '';
       const apellidoMaterno = (persona as any).apellidosMaterno || '';
-      
-      const partesNombre = [nombres, apellidoPaterno, apellidoMaterno].filter(parte => parte && parte !== 'null');
+
+      const partesNombre = [nombres, apellidoPaterno, apellidoMaterno].filter(
+        (parte) => parte && parte !== 'null',
+      );
       return partesNombre.join(' ').trim() || 'Sin nombre';
     }
     // Si es PersonaJuridica
@@ -2881,20 +3160,20 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   getCotizacionesPendientes(): number {
-    return this.cotizaciones.filter(cot =>
-      cot.estadoCotizacion?.descripcion?.toLowerCase() === 'pendiente'
+    return this.cotizaciones.filter(
+      (cot) => cot.estadoCotizacion?.descripcion?.toLowerCase() === 'pendiente',
     ).length;
   }
 
   getCotizacionesAprobadas(): number {
-    return this.cotizaciones.filter(cot =>
-      cot.estadoCotizacion?.descripcion?.toLowerCase() === 'aprobada'
+    return this.cotizaciones.filter(
+      (cot) => cot.estadoCotizacion?.descripcion?.toLowerCase() === 'aprobada',
     ).length;
   }
 
   getCotizacionesPorConfirmar(): number {
-    return this.cotizaciones.filter(cot =>
-      cot.estadoCotizacion?.descripcion?.toLowerCase() === 'pendiente'
+    return this.cotizaciones.filter(
+      (cot) => cot.estadoCotizacion?.descripcion?.toLowerCase() === 'pendiente',
     ).length;
   }
 
@@ -2910,149 +3189,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.loadCotizaciones();
   }
 
-  editarSeleccionados(): void {
-    if (this.selectedItems.length === 0) {
-      this.showError('Debe seleccionar al menos una cotización para editar.');
-      return;
-    }
-
-    if (this.selectedItems.length === 1) {
-      const cotizacion = this.cotizaciones.find(c => c.id === this.selectedItems[0]);
-      if (cotizacion) {
-        this.mostrarFormularioEditar(cotizacion);
-      } else {
-        this.showError('No se encontró la cotización seleccionada.');
-      }
-    } else {
-      this.showError('Solo puede editar una cotización a la vez. Seleccione únicamente una cotización.');
-    }
-  }
-
-  updateSelectionState(): void {
-    const totalItems = this.filteredCotizaciones.length;
-    const selectedCount = this.selectedItems.length;
-    this.allSelected = selectedCount === totalItems && totalItems > 0;
-    this.someSelected = selectedCount > 0 && selectedCount < totalItems;
-  }
-
-  // Métodos para acciones masivas
-  clearSelection(): void {
-    this.selectedItems = [];
-    this.updateSelectionState();
-  }
-
-  eliminarSeleccionados(): void {
-    if (this.selectedItems.length === 0) return;
-
-    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cotización${this.selectedItems.length > 1 ? 'es' : ''}?\n\nEsta acción no se puede deshacer.`;
-    if (confirm(confirmMessage)) {
-      this.isLoading = true;
-      let eliminados = 0;
-      const total = this.selectedItems.length;
-
-      this.selectedItems.forEach(id => {
-        const cotizacion = this.cotizaciones.find(c => c.id === id);
-        if (cotizacion) {
-          this.cotizacionService.deleteByIdCotizacion(id).subscribe({
-            next: () => {
-              eliminados++;
-              if (eliminados === total) {
-                this.loadCotizaciones();
-                this.clearSelection();
-                this.isLoading = false;
-                this.showSuccess(`${total} cotización${total > 1 ? 'es' : ''} eliminada${total > 1 ? 's' : ''} exitosamente.`);
-              }
-            },
-            error: (error: any) => {
-              this.showError('Error al eliminar algunas cotizaciones. Por favor, revise e intente nuevamente.');
-              eliminados++;
-              if (eliminados === total) {
-                this.loadCotizaciones();
-                this.clearSelection();
-                this.isLoading = false;
-              }
-            }
-          });
-        } else {
-          eliminados++;
-          if (eliminados === total) {
-            this.loadCotizaciones();
-            this.clearSelection();
-            this.isLoading = false;
-          }
-        }
-      });
-    }
-  }
-
   calcularEstadisticas(): void {
     this.totalCotizaciones = this.cotizaciones.length;
   }
-
-
-  get totalPages(): number {
-    const itemsPerPageNum = Number(this.itemsPerPage);
-    return Math.ceil(this.totalItems / itemsPerPageNum);
-  }
-
-  onItemsPerPageChange(): void {
-    this.itemsPerPage = Number(this.itemsPerPage);
-    this.currentPage = 1;
-    this.calcularEstadisticas();
-  }
-
-  // Métodos para selección múltiple
-  toggleAllSelection(): void {
-    if (this.allSelected) {
-      this.selectedItems = [];
-    } else {
-      this.selectedItems = this.filteredCotizaciones.map(c => c.id!);
-    }
-    this.updateSelectionState();
-  }
-
-  toggleSelection(id: number): void {
-    const index = this.selectedItems.indexOf(id);
-    if (index > -1) {
-      this.selectedItems.splice(index, 1);
-    } else {
-      this.selectedItems.push(id);
-    }
-    this.updateSelectionState();
-  }
-
-  isSelected(id: number): boolean {
-    return this.selectedItems.includes(id);
-  }
-
-    // Métodos para paginación (remover el getter duplicado)
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  getVisiblePages(): number[] {
-    const total = this.totalPages;
-    const current = this.currentPage;
-    const delta = 2;
-
-    let start = Math.max(1, current - delta);
-    let end = Math.min(total, current + delta);
-
-    if (end - start < 2 * delta) {
-      if (start === 1) {
-        end = Math.min(total, start + 2 * delta);
-      } else if (end === total) {
-        start = Math.max(1, end - 2 * delta);
-      }
-    }
-
-    const pages: number[] = [];
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-    return pages;
-  }
-
 }

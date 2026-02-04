@@ -11,6 +11,8 @@ import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../..
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { ModuleCardComponent, ModuleCardData } from '../../shared/components/ui/module-card/module-card.component';
 import { StatusIndicatorComponent, StatusData } from '../../shared/components/ui/status-indicator/status-indicator.component';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
 // Interface para la tabla de documentos
 export interface DocumentoTabla {
@@ -34,43 +36,21 @@ export interface DocumentoTabla {
     SidebarComponent,
     ErrorModalComponent,
     ModuleCardComponent,
-    StatusIndicatorComponent
+    DataTableComponent
   ]
 })
 export class DocumentosComponent implements OnInit {
 
   // Sidebar Configuration
-  sidebarCollapsed = false; 
+  sidebarCollapsed = false;
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
 
   // Estado general
   loading = false;
+  isLoading: boolean = false;
   documentos: DocumentoTabla[] = [];
-  filteredDocumentos: DocumentoTabla[] = [];
   totalDocumentos = 0;
-
-  // Búsqueda y filtros
-  searchTerm = '';
-  selectedTipo = '';
-
-  // Paginación
-  currentPage = 1;
-  itemsPerPage = 10;
-  totalItems = 0;
-  totalPages = 0;
-
-  // Vistas
-  currentView: 'table' | 'cards' | 'list' = 'table';
-
-  // Selección múltiple
-  selectedItems: number[] = [];
-  allSelected = false;
-  someSelected = false;
-
-  // Ordenamiento
-  sortColumn = '';
-  sortDirection: 'asc' | 'desc' = 'asc';
 
   // Modales
   mostrarModalCrear = false;
@@ -81,9 +61,7 @@ export class DocumentosComponent implements OnInit {
   // Formularios
   documentoForm!: FormGroup;
   editandoDocumento = false;
-  // Id del documento que se edita actualmente (si aplica)
   editingDocumentoId: number | null = null;
-  // Copia del documento original para usar como fallback al actualizar
   originalDocumento: DocumentoTabla | null = null;
   documentoAEliminar: DocumentoTabla | null = null;
   documentoAConfirmar: DocumentoTabla | null = null;
@@ -106,12 +84,94 @@ export class DocumentosComponent implements OnInit {
     { value: 'OTRO', label: 'OTRO' }
   ];
 
+  // ===== Configuración del DataTable =====
+  tableConfig: DataTableConfig<DocumentoTabla> = {
+    data: [],
+    columns: [
+      {
+        key: 'tipo',
+        header: 'Tipo de Documento',
+        icon: 'fa-file-alt',
+        sortable: true,
+        align: 'center',
+        width: '150px',
+        render: (item) => this.getTipoLabel(item.tipo)
+      },
+      {
+        key: 'descripcion',
+        header: 'Descripción',
+        icon: 'fa-align-left',
+        sortable: true,
+        render: (item) => item.descripcion || 'Sin descripción'
+      },
+      {
+        key: 'estado',
+        header: 'Estado',
+        icon: 'fa-toggle-on',
+        sortable: true,
+        align: 'center',
+        width: '100px',
+        render: (item) => item.estado ? 'Activo' : 'Inactivo'
+      },
+      {
+        key: 'creado',
+        header: 'Fecha Creación',
+        icon: 'fa-calendar-plus',
+        sortable: true,
+        width: '120px',
+        render: (item) => this.formatDate(item.creado)
+      },
+      {
+        key: 'actualizado',
+        header: 'Última Actualización',
+        icon: 'fa-calendar-check',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.actualizado)
+      }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar por tipo, descripción...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item) => this.editarDocumento(item)
+      },
+      {
+        icon: 'fa-toggle-on',
+        label: 'Cambiar Estado',
+        color: 'yellow',
+        handler: (item) => this.onCardAction(item)
+      },
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar',
+        color: 'red',
+        handler: (item) => this.eliminarDocumento(item.id)
+      }
+    ],
+
+    emptyMessage: 'No se encontraron tipos de documentos',
+    loadingMessage: 'Cargando documentos...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
+
   constructor(
     private documentoService: DocumentoService,
     private fb: FormBuilder,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private errorHandler: ErrorHandlerService, 
+    private errorHandler: ErrorHandlerService,
     private menuConfigService: MenuConfigService
   ) {
     this.initializeForm();
@@ -120,7 +180,7 @@ export class DocumentosComponent implements OnInit {
   ngOnInit(): void {
     this.sidebarMenuItems = this.menuConfigService.getMenuItems('/documentos');
     this.cargarDocumentos();
-  } 
+  }
 
   private initializeForm(): void {
     this.documentoForm = this.fb.group({
@@ -143,6 +203,7 @@ export class DocumentosComponent implements OnInit {
   // Data loading
   cargarDocumentos(): void {
     this.loading = true;
+    this.isLoading = true;
     this.documentoService.getAllDocumentos().subscribe({
       next: (documentos) => {
         this.documentos = documentos.map(doc => ({
@@ -153,159 +214,26 @@ export class DocumentosComponent implements OnInit {
           creado: doc.creado,
           actualizado: doc.actualizado
         }));
-        this.aplicarFiltros();
+        this.totalDocumentos = this.documentos.length;
+        // Actualizar la configuración del DataTable con los nuevos datos
+        this.tableConfig = {
+          ...this.tableConfig,
+          data: this.documentos
+        };
         this.loading = false;
+        this.isLoading = false;
         this.cdr.detectChanges();
       },
       error: (error) => {
         this.mostrarError('Error al cargar documentos', 'No se pudieron cargar los tipos de documentos.');
         this.loading = false;
+        this.isLoading = false;
       }
     });
   }
 
   refreshData(): void {
     this.cargarDocumentos();
-  }
-
-  // Search and filters
-  onSearchChange(): void {
-    this.currentPage = 1;
-    this.aplicarFiltros();
-  }
-
-  clearSearch(): void {
-    this.searchTerm = '';
-    this.aplicarFiltros();
-  }
-
-  aplicarFiltros(): void {
-    let filtered = [...this.documentos];
-
-    // Filtro por búsqueda
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(doc =>
-        doc.tipo.toLowerCase().includes(term) ||
-        doc.descripcion.toLowerCase().includes(term)
-      );
-    }
-
-    // Filtro por tipo
-    if (this.selectedTipo) {
-      filtered = filtered.filter(doc => doc.tipo === this.selectedTipo);
-    }
-
-    this.filteredDocumentos = filtered;
-    this.totalItems = filtered.length;
-    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
-    this.totalDocumentos = this.documentos.length;
-
-    // Adjust current page if necessary
-    if (this.currentPage > this.totalPages && this.totalPages > 0) {
-      this.currentPage = this.totalPages;
-    }
-  }
-
-  // View controls
-  changeView(view: 'table' | 'cards' | 'list'): void {
-    this.currentView = view;
-  }
-
-  // Pagination
-  get paginatedDocumentos(): DocumentoTabla[] {
-    const start = (this.currentPage - 1) * this.itemsPerPage;
-    const end = start + this.itemsPerPage;
-    return this.filteredDocumentos.slice(start, end);
-  }
-
-  onItemsPerPageChange(): void {
-    this.currentPage = 1;
-    this.aplicarFiltros();
-  }
-
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  getVisiblePages(): number[] {
-    const pages: number[] = [];
-    const maxVisiblePages = 5;
-
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    return pages;
-  }
-
-  // Selection methods
-  isSelected(id: number): boolean {
-    return this.selectedItems.includes(id);
-  }
-
-  toggleSelection(id: number): void {
-    const index = this.selectedItems.indexOf(id);
-    if (index === -1) {
-      this.selectedItems.push(id);
-    } else {
-      this.selectedItems.splice(index, 1);
-    }
-    this.updateSelectionState();
-  }
-
-  toggleAllSelection(): void {
-    if (this.allSelected) {
-      this.selectedItems = [];
-    } else {
-      this.selectedItems = this.paginatedDocumentos.map(doc => doc.id);
-    }
-    this.updateSelectionState();
-  }
-
-  private updateSelectionState(): void {
-    const pageIds = this.paginatedDocumentos.map(doc => doc.id);
-    const selectedInPage = this.selectedItems.filter(id => pageIds.includes(id));
-
-    this.allSelected = pageIds.length > 0 && selectedInPage.length === pageIds.length;
-    this.someSelected = selectedInPage.length > 0 && selectedInPage.length < pageIds.length;
-  }
-
-  clearSelection(): void {
-    this.selectedItems = [];
-    this.updateSelectionState();
-  }
-
-  // Sorting
-  sortBy(column: string): void {
-    if (this.sortColumn === column) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortColumn = column;
-      this.sortDirection = 'asc';
-    }
-
-    this.filteredDocumentos.sort((a, b) => {
-      let aValue = (a as any)[column];
-      let bValue = (b as any)[column];
-
-      if (aValue < bValue) {
-        return this.sortDirection === 'asc' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return this.sortDirection === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
   }
 
   // CRUD Operations
@@ -404,18 +332,6 @@ export class DocumentosComponent implements OnInit {
     }
   }
 
-  editarSeleccionados(): void {
-    // Implementation for bulk edit
-    console.log('Editar seleccionados:', this.selectedItems);
-  }
-
-  eliminarSeleccionados(): void {
-    if (this.selectedItems.length > 0 && confirm(`¿Eliminar ${this.selectedItems.length} documentos seleccionados?`)) {
-      // Implementation for bulk delete
-      console.log('Eliminar seleccionados:', this.selectedItems);
-    }
-  }
-
   // Modal controls
   cerrarModal(): void {
     this.mostrarModalCrear = false;
@@ -472,46 +388,7 @@ export class DocumentosComponent implements OnInit {
     return option ? option.label : tipo;
   }
 
-  getTipoColorClass(tipo: string): string {
-    const colorMap: { [key: string]: string } = {
-      'PASAPORTE': 'bg-blue-100 text-blue-800',
-      'DNI': 'bg-green-100 text-green-800',
-      'CEDULA': 'bg-yellow-100 text-yellow-800',
-      'VISA': 'bg-purple-100 text-purple-800',
-      'LICENCIA': 'bg-red-100 text-red-800',
-      'OTRO': 'bg-gray-100 text-gray-800'
-    };
-    return colorMap[tipo] || 'bg-gray-100 text-gray-800';
-  }
-
-  getUniqueTypesCount(): number {
-    const uniqueTypes = new Set(this.documentos.map(doc => doc.tipo));
-    return uniqueTypes.size;
-  }
-
-  // Math utility
-  get Math() {
-    return Math;
-  }
-
   // Métodos para reutilizar componentes compartidos
-  convertToModuleCard(documento: DocumentoTabla): ModuleCardData {
-    return {
-      title: this.getTipoLabel(documento.tipo),
-      description: documento.descripcion || 'Sin descripción',
-      route: '#', // No navigation for these cards
-      icon: 'fas fa-file-alt',
-      iconType: 'documentos', // Usando el tipo correcto ahora
-      status: {
-        text: documento.estado ? 'Activo' : 'Inactivo',
-        type: documento.estado ? 'success' : 'warning'
-      },
-      action: {
-        text: documento.estado ? 'Desactivar' : 'Activar'
-      }
-    };
-  }
-
   convertToModuleCardForConfirmation(documento: DocumentoTabla): ModuleCardData {
     const nuevoEstado = !documento.estado;
     return {
@@ -530,15 +407,6 @@ export class DocumentosComponent implements OnInit {
     };
   }
 
-  getDocumentStatusData(documento: DocumentoTabla): StatusData {
-    return {
-      status: documento.estado ? 'operational' : 'error',
-      text: documento.estado ? 'Documento Activo' : 'Documento Inactivo',
-      subtext: `Tipo: ${this.getTipoLabel(documento.tipo)}`,
-      showTime: false
-    };
-  }
-
   onCardAction(documento: DocumentoTabla): void {
     // Mostrar modal de confirmación con la card del documento
     this.documentoAConfirmar = documento;
@@ -554,8 +422,11 @@ export class DocumentosComponent implements OnInit {
       documento.actualizado = this.formatDateToString(new Date());
     }
 
-    // Aplicar filtros para actualizar la vista
-    this.aplicarFiltros();
+    // Actualizar el tableConfig con los nuevos datos
+    this.tableConfig = {
+      ...this.tableConfig,
+      data: [...this.documentos]
+    };
     this.cdr.detectChanges();
 
     // Simular llamada al servicio (aquí iría la llamada real al backend)
@@ -567,7 +438,7 @@ export class DocumentosComponent implements OnInit {
     //     // Revertir el cambio si hay error
     //     if (documento) {
     //       documento.estado = !nuevoEstado;
-    //       this.aplicarFiltros();
+    //       this.tableConfig = { ...this.tableConfig, data: [...this.documentos] };
     //       this.cdr.detectChanges();
     //     }
     //     this.mostrarError('Error al cambiar estado', 'No se pudo actualizar el estado del documento.');
