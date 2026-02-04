@@ -36,9 +36,24 @@ import { ViajeroConPersonaNatural, ViajeroResponse } from '../../shared/models/V
 
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
 // Services
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+
+// Interfaz para tabla de liquidaciones
+export interface LiquidacionTabla {
+  id: number;
+  numeroLiquidacion?: string;
+  numeroCotizacion?: string;
+  personaNombre?: string;
+  destino?: string;
+  fechaCompra?: string;
+  numeroPasajeros?: number;
+  producto?: string;
+  formaPago?: string;
+}
 
 interface DetalleLiquidacionTemp {
   id?: number;
@@ -63,7 +78,14 @@ interface DetalleLiquidacionTemp {
   standalone: true,
   templateUrl: './liquidaciones.component.html',
   styleUrls: ['./liquidaciones.component.css'],
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent, LucideAngularModule]
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    FormsModule,
+    SidebarComponent,
+    LucideAngularModule,
+    DataTableComponent
+  ]
 })
 export class LiquidacionesComponent implements OnInit, OnDestroy {
   // ===== CACHE AND MAPPING =====
@@ -98,7 +120,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   mostrarModalVer = false;
   mostrarModalCotizaciones = false;
   sidebarCollapsed = false;
-  currentView: 'table' | 'cards' | 'list' = 'table';
 
   // ===== COTIZACIONES DATA =====
   cotizaciones: CotizacionResponse[] = [];
@@ -120,25 +141,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   liquidacionCompleta: LiquidacionConDetallesResponse | null = null;
   liquidacionEditandoId: number | null = null;
 
-  selectedItems: number[] = [];
-  allSelected: boolean = false;
-  someSelected: boolean = false;
-
-  // ===== PAGINATION =====
-  currentPage = 1;
-  itemsPerPage = 10;
-  totalItems = 0;
-
-  // ===== STATISTICS =====
-  totalProductos = 0;
-
-  // ===== TEMPLATE UTILITIES =====
-  Math = Math;
   // ===== SIDEBAR CONFIGURATION =====
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
-
-  // ===== FORMS =====
-  searchForm!: FormGroup;
   liquidacionForm!: FormGroup;
   detalleForm!: FormGroup;
   clienteSearchControl: FormControl = new FormControl('');
@@ -156,26 +160,115 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   detalles: DetalleLiquidacionTemp[] = [];
   deletedDetalleIds: number[] = [];
 
-  // ===== SEARCH AND FILTERS =====
-  searchTerm = '';
-  filteredLiquidaciones: LiquidacionResponse[] = [];
-
   // ===== CLIENT SELECTION =====
   personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
   todosLosClientes: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
   buscandoClientes = false;
   clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | null = null;
 
-  // ===== CATEGORY MANAGEMENT =====
-  creandoCategoria = false;
-  categoriaEditandose: number | null = null;
-  categoriaDatosOriginales: any = null;
+  // Data arrays for table
+  liquidacionesTabla: LiquidacionTabla[] = [];
 
-  // ===== PRESS AND HOLD DELETION =====
-  liquidacionAEliminar: LiquidacionResponse | null = null;
-  presionandoEliminar = false;
-  tiempoPresionado = 0;
-  intervaloPulsacion: any = null;
+  tableConfig: DataTableConfig<LiquidacionTabla> = {
+    data: [],
+    columns: [
+      {
+        key: 'numeroLiquidacion',
+        header: 'N° Liquidación',
+        icon: 'fa-hashtag',
+        sortable: true,
+        width: '140px',
+        render: (item) => item.numeroLiquidacion || 'N/A'
+      },
+      {
+        key: 'numeroCotizacion',
+        header: 'N° Cotización',
+        icon: 'fa-file-invoice',
+        sortable: true,
+        width: '140px',
+        render: (item) => item.numeroCotizacion || 'No vinculada'
+      },
+      {
+        key: 'personaNombre',
+        header: 'Cliente',
+        icon: 'fa-user',
+        sortable: true,
+        render: (item) => item.personaNombre || 'Sin cliente'
+      },
+      {
+        key: 'destino',
+        header: 'Destino',
+        icon: 'fa-map-marker-alt',
+        sortable: true,
+        render: (item) => item.destino || 'Sin destino'
+      },
+      {
+        key: 'fechaCompra',
+        header: 'Fecha Compra',
+        icon: 'fa-calendar-alt',
+        sortable: true,
+        width: '130px',
+        render: (item) => this.formatDate(item.fechaCompra)
+      },
+      {
+        key: 'numeroPasajeros',
+        header: 'Pasajeros',
+        icon: 'fa-users',
+        sortable: true,
+        width: '100px',
+        render: (item) => item.numeroPasajeros?.toString() || '0'
+      },
+      {
+        key: 'producto',
+        header: 'Producto',
+        icon: 'fa-box',
+        sortable: true,
+        width: '150px',
+        render: (item) => item.producto || 'Sin producto'
+      },
+      {
+        key: 'formaPago',
+        header: 'Forma de Pago',
+        icon: 'fa-credit-card',
+        sortable: true,
+        width: '150px',
+        render: (item) => item.formaPago || 'Sin forma de pago'
+      }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar por número, cotización, cliente, destino...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-eye',
+        label: 'Ver Detalles',
+        color: 'blue',
+        handler: (item) => this.mostrarModalVerLiquidacion(this.getLiquidacionById(item.id)!)
+      },
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'green',
+        handler: (item) => this.mostrarFormularioEditar(this.getLiquidacionById(item.id)!)
+      },
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar',
+        color: 'red',
+        handler: (item) => this.eliminarLiquidacionDirectamente(item.id)
+      }
+    ],
+    emptyMessage: 'No se encontraron liquidaciones',
+    loadingMessage: 'Cargando liquidaciones...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
 
   constructor(private menuConfigService: MenuConfigService) { }
 
@@ -187,12 +280,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Limpiar intervalo si existe
     this.clienteSearchSubscription?.unsubscribe();
-    if (this.intervaloPulsacion) {
-      clearInterval(this.intervaloPulsacion);
-      this.intervaloPulsacion = null;
-    }
   }
 
   // ===== MESSAGE HANDLING =====
@@ -220,11 +308,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   private initializeForms(): void {
-    // Search form
-    this.searchForm = this.fb.group({
-      searchTerm: ['']
-    });
-
     // Liquidación form
     this.liquidacionForm = this.fb.group({
       numero: [''],
@@ -252,11 +335,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       montoDescuento: [0, [Validators.min(0)]],
       pagoPaxUSD: [0, [Validators.min(0)]],
       pagoPaxPEN: [0, [Validators.min(0)]]
-    });
-
-    this.searchForm.get('searchTerm')?.valueChanges.subscribe(term => {
-      this.searchTerm = term;
-      this.filterLiquidaciones();
     });
   }
 
@@ -323,14 +401,43 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.isLoading = true;
 
       this.liquidaciones = await this.liquidacionService.getAllLiquidaciones().toPromise() || [];
-      this.filterLiquidaciones();
+
+      // Convertir a LiquidacionTabla
+      this.liquidacionesTabla = this.convertToLiquidacionTabla(this.liquidaciones);
+
+      // Actualizar tableConfig.data
+      this.tableConfig = {
+        ...this.tableConfig,
+        data: this.liquidacionesTabla
+      };
     } catch (error) {
       this.showError('Error al cargar las liquidaciones. Por favor, recargue la página.');
       this.liquidaciones = [];
+      this.liquidacionesTabla = [];
     } finally {
       this.loading = false;
       this.isLoading = false;
     }
+  }
+
+  private convertToLiquidacionTabla(liquidaciones: LiquidacionResponse[]): LiquidacionTabla[] {
+    return liquidaciones.map(liq => ({
+      id: liq.id,
+      numeroLiquidacion: liq.numero,
+      numeroCotizacion: liq.cotizacion?.codigoCotizacion,
+      personaNombre: liq.cotizacion?.personas?.id
+        ? this.getPersonaDisplayName(liq.cotizacion.personas.id)
+        : 'Sin cliente',
+      destino: liq.destino,
+      fechaCompra: liq.fechaCompra,
+      numeroPasajeros: liq.numeroPasajeros,
+      producto: liq.producto?.descripcion,
+      formaPago: liq.formaPago?.descripcion
+    }));
+  }
+
+  getLiquidacionById(id: number): LiquidacionResponse | undefined {
+    return this.liquidaciones.find(l => l.id === id);
   }
 
   private async loadPersonas(): Promise<void> {
@@ -341,9 +448,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.todosLosClientes = [...this.personas];
       this.personasEncontradas = [...this.todosLosClientes];
 
-      // Poblar cache usando ENFOQUE HÍBRIDO (tabla padre SI existe, sino tabla hija)
+      // Poblar cache simple
       this.personas.forEach(persona => {
-        // Intentar usar ID de tabla padre PRIMERO, si no existe usar tabla hija
         const personaId = persona.persona?.id || persona.id;
 
         if (personaId) {
@@ -353,12 +459,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
             nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidosPaterno || ''} ${persona.apellidosMaterno || ''}`.trim() || 'Sin nombre',
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
-          const cached = this.personasCache[personaId];
-          if (cached.identificador) {
-            this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
-          } else {
-            this.personasDisplayMap[personaId] = cached.nombre;
-          }
+          // Solo mostrar el nombre del cliente (sin documento)
+          this.personasDisplayMap[personaId] = this.personasCache[personaId].nombre;
         }
       });
 
@@ -491,39 +593,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Métodos para cambiar entre vistas
-  changeView(view: 'table' | 'cards' | 'list'): void {
-    this.currentView = view;
-  }
-
-  // Search and filter methods
-  clearSearch(): void {
-    this.searchForm.get('searchTerm')?.setValue('');
-    this.searchTerm = '';
-    this.filterLiquidaciones();
-  }
-
-  private filterLiquidaciones(): void {
-    if (!this.searchTerm.trim()) {
-      this.filteredLiquidaciones = [...this.liquidaciones];
-    } else {
-      const term = this.searchTerm.toLowerCase();
-      this.filteredLiquidaciones = this.liquidaciones.filter(liquidacion => {
-        return (liquidacion.numero?.toLowerCase().includes(term)) ||
-               (liquidacion.destino?.toLowerCase().includes(term)) ||
-               (liquidacion.producto?.descripcion?.toLowerCase().includes(term)) ||
-               (liquidacion.cotizacion?.codigoCotizacion?.toLowerCase().includes(term));
-      });
-    }
-    // Update totalItems after filtering
-    this.totalItems = this.filteredLiquidaciones.length;
-    this.updateSelectionState();
-  }
-
   // Form methods
   async mostrarFormularioCrear(): Promise<void> {
     try {
-      this.isGenerating  = true;
+      this.isGenerating = true;
 
       // Cargar cotizaciones para selección
       await this.loadCotizaciones();
@@ -535,7 +608,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       console.error('Error en mostrarFormularioCrear:', error);
       this.showError('Error al cargar las cotizaciones');
     } finally {
-      this.isGenerating  = false;
+      this.isGenerating = false;
     }
   }
 
@@ -722,34 +795,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     setTimeout(() => this.successMessage = '', 3000);
   }
 
-  cancelarEliminacion(): void {
-    this.presionandoEliminar = false;
-    this.tiempoPresionado = 0;
-    this.liquidacionAEliminar = null;
-
-    if (this.intervaloPulsacion) {
-      clearInterval(this.intervaloPulsacion);
-      this.intervaloPulsacion = null;
-    }
-  }
-
-  // Completar eliminación después de 3 segundos
-  completarEliminacion(): void {
-    if (this.liquidacionAEliminar) {
-      const cotizacion = this.liquidacionAEliminar;
-      this.cancelarEliminacion();
-    }
-  }
-
-  // Obtener porcentaje de progreso para mostrar visualmente
-  getPorcentajeProgreso(): number {
-    return Math.min((this.tiempoPresionado / 3000) * 100, 100);
-  }
-
-  getMath() {
-    return Math;
-  }
-
   // Helper methods
   private markFormGroupTouched(formGroup: FormGroup): void {
     Object.keys(formGroup.controls).forEach(key => {
@@ -801,100 +846,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     return `${day}/${month}/${year}`;
   }
 
-  formatDateTime(dateString: string | undefined): string {
-    if (!dateString) return '';
-    return new Date(dateString).toLocaleString('es-ES');
-  }
-
-  updateSelectionState(): void {
-    const totalItems = this.filteredLiquidaciones.length;
-    const selectedCount = this.selectedItems.length;
-    this.allSelected = selectedCount === totalItems && totalItems > 0;
-    this.someSelected = selectedCount > 0 && selectedCount < totalItems;
-  }
-
-  // Métodos para acciones masivas
-  clearSelection(): void {
-    this.selectedItems = [];
-    this.updateSelectionState();
-  }
-
-  calcularEstadisticas(): void {
-    this.totalLiquidaciones = this.liquidaciones.length;
-  }
-
-  get totalPages(): number {
-    const itemsPerPageNum = Number(this.itemsPerPage);
-    return Math.ceil(this.totalItems / itemsPerPageNum);
-  }
-
-  get paginatedLiquidaciones(): LiquidacionResponse[] {
-    const itemsPerPageNum = Number(this.itemsPerPage);
-    const startIndex = (this.currentPage - 1) * itemsPerPageNum;
-    const endIndex = startIndex + itemsPerPageNum;
-    return this.filteredLiquidaciones.slice(startIndex, endIndex);
-  }
-
-  onItemsPerPageChange(): void {
-    this.itemsPerPage = Number(this.itemsPerPage);
-    this.currentPage = 1;
-    this.calcularEstadisticas();
-  }
-
-  // Métodos para selección múltiple
-  toggleAllSelection(): void {
-    if (this.allSelected) {
-      this.selectedItems = [];
-    } else {
-      this.selectedItems = this.filteredLiquidaciones.map(l => l.id!);
-    }
-    this.updateSelectionState();
-  }
-
-  toggleSelection(id: number): void {
-    const index = this.selectedItems.indexOf(id);
-    if (index > -1) {
-      this.selectedItems.splice(index, 1);
-    } else {
-      this.selectedItems.push(id);
-    }
-    this.updateSelectionState();
-  }
-
-  isSelected(id: number): boolean {
-    return this.selectedItems.includes(id);
-  }
-
-    // Métodos para paginación (remover el getter duplicado)
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  getVisiblePages(): number[] {
-    const total = this.totalPages;
-    const current = this.currentPage;
-    const delta = 2;
-
-    let start = Math.max(1, current - delta);
-    let end = Math.min(total, current + delta);
-
-    if (end - start < 2 * delta) {
-      if (start === 1) {
-        end = Math.min(total, start + 2 * delta);
-      } else if (end === total) {
-        start = Math.max(1, end - 2 * delta);
-      }
-    }
-
-    const pages: number[] = [];
-    for (let i = start; i <= end; i++) {
-      pages.push(i);
-    }
-    return pages;
-  }
-
   // ===== MÉTODOS PARA LIQUIDACIONES =====
   getTotalLiquidaciones(): number {
     return this.liquidaciones.length;
@@ -906,10 +857,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   getLiquidacionesPendientes(): number {
     return this.liquidaciones.filter(liq => liq.producto === null || liq.formaPago === null).length;
-  }
-
-  trackByLiquidacion(index: number, liquidacion: LiquidacionResponse): number {
-    return liquidacion.id;
   }
 
   trackByDetalle(index: number, detalle: DetalleLiquidacionResponse): number {
@@ -946,9 +893,9 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       await this.loadLiquidaciones();
     } catch (error: any) {
       const errorMessage = error?.error?.detail ||    // RFC 7807 format
-                          error?.error?.message ||     // Custom format
-                          error?.message ||             // Error object
-                          'Error al eliminar la liquidación';
+        error?.error?.message ||     // Custom format
+        error?.message ||             // Error object
+        'Error al eliminar la liquidación';
       this.showError(errorMessage);
     } finally {
       this.isLoading = false;
@@ -1003,9 +950,9 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.cerrarFormulario();
     } catch (error: any) {
       const errorMessage = error?.error?.detail ||    // RFC 7807 format
-                          error?.error?.message ||     // Custom format
-                          error?.message ||             // Error object
-                          'Error al guardar la liquidación. Por favor, verifique los datos e intente nuevamente.';
+        error?.error?.message ||     // Custom format
+        error?.message ||             // Error object
+        'Error al guardar la liquidación. Por favor, verifique los datos e intente nuevamente.';
       this.showError(errorMessage);
     } finally {
       this.isLoading = false;
@@ -1119,23 +1066,24 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   async crearLiquidacionDesdeCotizacion(cotizacion: CotizacionResponse): Promise<void> {
-    try { 
+    try {
       // Cerrar modal PRIMERO
       this.mostrarModalCotizaciones = false;
       this.cotizacionSeleccionada = null;
-      
+
       // Mapear datos de cotización a liquidación
       const liquidacionRequest: LiquidacionRequest = {
         cotizacionId: cotizacion.id,
         fechaCompra: cotizacion.fechaEmision ? this.formatDateForInput(new Date(cotizacion.fechaEmision)) : undefined,
         destino: cotizacion.origenDestino,
         numeroPasajeros: (cotizacion.cantAdultos || 0) + (cotizacion.cantNinos || 0),
-        formaPagoId: cotizacion.formaPago?.id   };
+        formaPagoId: cotizacion.formaPago?.id
+      };
 
       // Crear la liquidación
       const nuevaLiquidacion = await this.liquidacionService.createLiquidacionConCotizacion(cotizacion.id, liquidacionRequest).toPromise();
 
-      if (!nuevaLiquidacion) throw new Error('Error al crear la liquidación'); 
+      if (!nuevaLiquidacion) throw new Error('Error al crear la liquidación');
 
       this.mostrarModalCotizaciones = false;
       this.cotizacionSeleccionada = null;

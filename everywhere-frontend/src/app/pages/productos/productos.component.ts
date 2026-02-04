@@ -8,6 +8,8 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
 // Interface para la tabla de productos
 export interface ProductoTabla {
@@ -29,13 +31,14 @@ export interface ProductoTabla {
     FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
-    ErrorModalComponent
+    ErrorModalComponent,
+    DataTableComponent
   ]
 })
 export class ProductosComponent implements OnInit {
 
   // Sidebar Configuration
-  sidebarCollapsed = false; 
+  sidebarCollapsed = false;
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // Data
@@ -92,8 +95,75 @@ export class ProductosComponent implements OnInit {
   // Math object for template use
   Math = Math;
 
+  isLoading: boolean = false;
+
   // Tipos únicos extraídos de los datos
   tiposUnicos: string[] = [];
+
+  // Configuración de DataTable
+  tableConfig: DataTableConfig<ProductoTabla> = {
+    data: [],
+    columns: [
+      {
+        key: 'descripcion',
+        header: 'Descripción',
+        icon: 'fa-box',
+        sortable: true,
+        render: (item) => item.descripcion || 'N/A'
+      },
+      {
+        key: 'tipo',
+        header: 'Tipo',
+        icon: 'fa-tag',
+        sortable: true,
+        width: '150px',
+        render: (item) => item.tipo || 'Sin tipo'
+      },
+      {
+        key: 'creado',
+        header: 'Fecha Creación',
+        icon: 'fa-calendar-alt',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.creado)
+      },
+      {
+        key: 'actualizado',
+        header: 'Fecha Actualización',
+        icon: 'fa-calendar-alt',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.actualizado)
+      }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar productos...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item) => this.editarProducto(item)
+      },
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar',
+        color: 'red',
+        handler: (item) => this.confirmarEliminar(this.productos.find(p => p.id === item.id)!)
+      }
+    ],
+    emptyMessage: 'No se encontraron productos',
+    loadingMessage: 'Cargando productos...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -160,6 +230,11 @@ export class ProductosComponent implements OnInit {
       actualizado: producto.actualizado
     }));
     this.totalProductos = this.productosTabla.length;
+    // Actualizar data del DataTable - Recrear tableConfig para forzar detección de cambios
+    this.tableConfig = {
+      ...this.tableConfig,
+      data: this.productosTabla
+    };
   }
 
   // Método principal para guardar (crea o actualiza según el estado)
@@ -262,9 +337,9 @@ export class ProductosComponent implements OnInit {
 
         // Capturar error con RFC 7807 priority: detail > message > fallback
         const errorMessage = error?.error?.detail ||
-                            error?.error?.message ||
-                            error?.message ||
-                            'Error al eliminar producto';
+          error?.error?.message ||
+          error?.message ||
+          'Error al eliminar producto';
         this.showError(errorMessage);
       }
     });
@@ -552,8 +627,8 @@ export class ProductosComponent implements OnInit {
       this.showActionMenu = null;
       this.showQuickActions = null;
     }
-  } 
-  
+  }
+
   // Métodos para cambiar entre vistas
   changeView(view: 'table' | 'cards' | 'list'): void {
     this.currentView = view;

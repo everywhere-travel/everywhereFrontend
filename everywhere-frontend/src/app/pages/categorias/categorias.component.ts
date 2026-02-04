@@ -7,8 +7,9 @@ import { CategoriaRequest, CategoriaResponse } from '../../shared/models/Categor
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 import { ErrorModalComponent } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
-import { ModuleCardData } from '../../shared/components/ui/module-card/module-card.component';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
 // Interfaz para tabla de categorías
 export interface CategoriaTabla {
@@ -28,7 +29,8 @@ export interface CategoriaTabla {
     FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
-    ErrorModalComponent
+    ErrorModalComponent,
+    DataTableComponent
   ]
 })
 export class CategoriasComponent implements OnInit {
@@ -61,25 +63,77 @@ export class CategoriasComponent implements OnInit {
   showErrorAlert: boolean = false;
   showSuccessAlert: boolean = false;
 
-  // Search and Filter
-  searchTerm: string = '';
-  currentView: 'table' | 'cards' | 'list' = 'table';
-
-  // Sorting variables
-  sortColumn: string = 'creado';
-  sortDirection: 'asc' | 'desc' = 'desc';
-
-  // Pagination
-  currentPage = 1;
-  itemsPerPage = 10;
-  totalItems = 0;
-  itemsPerPageOptions = [5, 10, 25, 50];
-
   // Estadísticas
   totalCategorias = 0;
 
-  // Math object for template use
-  Math = Math;
+  // Para DataTable
+  isLoading: boolean = false;
+
+  tableConfig: DataTableConfig<CategoriaTabla> = {
+    data: [],
+    columns: [
+      {
+        key: 'nombre',
+        header: 'Categoría',
+        icon: 'fa-tag',
+        sortable: true
+      },
+      {
+        key: 'creado',
+        header: 'Fecha de Creación',
+        icon: 'fa-calendar-plus',
+        sortable: true,
+        render: (item: CategoriaTabla) => this.formatDateTime(item.creado)
+      },
+      {
+        key: 'actualizado',
+        header: 'Última Actualización',
+        icon: 'fa-calendar-check',
+        sortable: true,
+        render: (item: CategoriaTabla) => this.formatDateTime(item.actualizado)
+      }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar por nombre...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item: CategoriaTabla) => this.openEditModal(this.getCategoriaById(item.id))
+      },
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar',
+        color: 'red',
+        handler: (item: CategoriaTabla) => this.confirmDelete(this.getCategoriaById(item.id)),
+        disabled: (item: CategoriaTabla) => item.id === 1
+      }
+    ],
+    bulkActions: [
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar seleccionados',
+        color: 'red',
+        handler: (items: CategoriaTabla[]) => this.onEliminarMasivo(items.map((i: CategoriaTabla) => i.id!).filter((id: number) => id !== undefined)),
+        confirm: {
+          title: 'Eliminar múltiples categorías',
+          message: 'Esta acción no se puede deshacer'
+        }
+      }
+    ],
+    emptyMessage: 'No se encontraron categorías',
+    loadingMessage: 'Cargando categorías...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -111,100 +165,6 @@ export class CategoriasComponent implements OnInit {
   }
 
   // =================================================================
-  // VIEW MANAGEMENT
-  // =================================================================
-
-  changeView(view: 'table' | 'cards' | 'list'): void {
-    this.currentView = view;
-  }
-
-  isActiveView(view: 'table' | 'cards' | 'list'): boolean {
-    return this.currentView === view;
-  }
-
-  // =================================================================
-  // SEARCH & FILTER
-  // =================================================================
-
-  onSearchChange(): void {
-    this.currentPage = 1;
-    this.applyFilters();
-  }
-
-  clearSearch(): void {
-    this.searchTerm = '';
-    this.currentPage = 1;
-    this.applyFilters();
-  }
-
-  applyFilters(): void {
-    let filtered = [...this.categoriasTabla];
-
-    // Filtro por búsqueda
-    const term = this.searchTerm?.trim().toLowerCase();
-    if (term) {
-      filtered = filtered.filter(categoria => {
-        const searchableText = `${categoria.nombre}`.toLowerCase();
-        return searchableText.includes(term);
-      });
-    }
-
-    this.filteredCategorias = filtered;
-    this.totalItems = filtered.length;
-
-    // Aplicar ordenamiento
-    this.applySorting();
-  }
-
-  sortBy(column: string): void {
-    if (this.sortColumn === column) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortColumn = column;
-      this.sortDirection = 'asc';
-    }
-    this.applySorting();
-  }
-
-  private applySorting(): void {
-    if (!this.filteredCategorias.length) return;
-
-    this.filteredCategorias.sort((a, b) => {
-      let valueA: any;
-      let valueB: any;
-
-      switch (this.sortColumn) {
-        case 'nombre':
-          valueA = a.nombre?.toLowerCase() || '';
-          valueB = b.nombre?.toLowerCase() || '';
-          break;
-        case 'creado':
-          valueA = new Date(a.creado || 0);
-          valueB = new Date(b.creado || 0);
-          break;
-        case 'actualizado':
-          valueA = new Date(a.actualizado || 0);
-          valueB = new Date(b.actualizado || 0);
-          break;
-        default:
-          return 0;
-      }
-
-      if (valueA < valueB) {
-        return this.sortDirection === 'asc' ? -1 : 1;
-      }
-      if (valueA > valueB) {
-        return this.sortDirection === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-  }
-
-  hasActiveFilters(): boolean {
-    return this.searchTerm?.trim().length > 0;
-  }
-
-  // =================================================================
   // DATA LOADING
   // =================================================================
 
@@ -229,78 +189,27 @@ export class CategoriasComponent implements OnInit {
           actualizado: c.actualizado ? new Date(c.actualizado).toISOString() : undefined
         }));
 
-        this.applyFilters();
+        this.filteredCategorias = [...this.categoriasTabla];
+        this.updateTableConfig();
         this.loading = false;
       },
       error: () => {
         this.categorias = [];
         this.categoriasTabla = [];
+        this.filteredCategorias = [];
         this.totalCategorias = 0;
+        this.updateTableConfig();
         this.loading = false;
         this.showError('Error al cargar las categorías');
       }
     });
   }
 
-  // =================================================================
-  // PAGINATION
-  // =================================================================
-
-  get paginatedCategorias(): CategoriaTabla[] {
-    const start = (this.currentPage - 1) * this.itemsPerPage;
-    const end = start + this.itemsPerPage;
-    return this.filteredCategorias.slice(start, end);
-  }
-
-  get totalPages(): number {
-    return Math.ceil(this.totalItems / this.itemsPerPage);
-  }
-
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    const maxButtons = 5;
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxButtons / 2));
-    const endPage = Math.min(this.totalPages, startPage + maxButtons - 1);
-
-    if (endPage - startPage + 1 < maxButtons) {
-      startPage = Math.max(1, endPage - maxButtons + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    return pages;
-  }
-
-  changePage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  onItemsPerPageChange(): void {
-    this.currentPage = 1;
-  }
-
-  getVisiblePages(): number[] {
-    const totalPages = this.totalPages;
-    const currentPage = this.currentPage;
-    const visiblePages: number[] = [];
-
-    const startPage = Math.max(1, currentPage - 2);
-    const endPage = Math.min(totalPages, currentPage + 2);
-
-    for (let i = startPage; i <= endPage; i++) {
-      visiblePages.push(i);
-    }
-
-    return visiblePages;
+  private updateTableConfig(): void {
+    this.tableConfig = {
+      ...this.tableConfig,
+      data: this.categoriasTabla
+    };
   }
 
   // =================================================================
@@ -402,35 +311,61 @@ export class CategoriasComponent implements OnInit {
     this.categoriaToDelete = null;
   }
 
+  onEliminarMasivo(ids: number[]): void {
+    if (ids.length === 0) return;
+
+    // Filtrar ID 1 (categoría por defecto)
+    const idsToDelete = ids.filter(id => id !== 1);
+    if (idsToDelete.length === 0) {
+      this.showError('No es posible eliminar la categoría por defecto');
+      return;
+    }
+
+    this.loading = true;
+    let eliminados = 0;
+    const total = idsToDelete.length;
+
+    idsToDelete.forEach(id => {
+      this.categoriaService.delete(id).subscribe({
+        next: () => {
+          eliminados++;
+          if (eliminados === total) {
+            this.showSuccess(`${eliminados} categoría(s) eliminada(s) correctamente`);
+            this.loadCategorias();
+            this.loading = false;
+          }
+        },
+        error: (error) => {
+          console.error('Error al eliminar categoría:', error);
+          eliminados++;
+          if (eliminados === total) {
+            this.loadCategorias();
+            this.loading = false;
+          }
+        }
+      });
+    });
+  }
+
   // =================================================================
   // HELPERS
   // =================================================================
 
-  refreshData(): void {
-    this.loadCategorias();
-  }
-
-  formatDate(d?: string | Date | undefined): string {
+  formatDateTime(d?: string | Date | undefined): string {
     if (!d) return '-';
     const date = d instanceof Date ? d : new Date(d as string);
     if (isNaN(date.getTime())) return '-';
-    return date.toLocaleString();
+    return date.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
   getCategoriaById(id?: number): CategoriaResponse | undefined {
     return this.categorias.find(c => c.id === id);
-  }
-
-  convertToModuleCard(c: CategoriaResponse): ModuleCardData {
-    return {
-      title: c.nombre || `Categoría ${c.id}`,
-      description: `ID: ${c.id}`,
-      route: `/categorias`,
-      icon: 'fas fa-tags',
-      iconType: 'documentos',
-      moduleKey: 'CATEGORIAS',
-      featured: false
-    } as ModuleCardData;
   }
 
   closeErrorModal(): void {

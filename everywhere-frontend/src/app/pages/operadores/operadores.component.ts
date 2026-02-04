@@ -8,6 +8,8 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 import { ErrorModalComponent } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
 @Component({
   selector: 'app-operadores',
@@ -19,12 +21,13 @@ import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/m
     FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
-    ErrorModalComponent
+    ErrorModalComponent,
+    DataTableComponent
   ]
 })
 export class OperadoresComponent implements OnInit {
   // Sidebar Configuration
-  sidebarCollapsed = false; 
+  sidebarCollapsed = false;
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // Formulario
@@ -76,6 +79,55 @@ export class OperadoresComponent implements OnInit {
   operadores: OperadorResponse[] = [];
   operadoresFiltrados: OperadorResponse[] = [];
 
+  // Configuración de DataTable
+  tableConfig: DataTableConfig<OperadorResponse> = {
+    data: [],
+    columns: [
+      {
+        key: 'nombre',
+        header: 'Nombre',
+        icon: 'fa-user',
+        sortable: true,
+        render: (item) => item.nombre || 'N/A'
+      },
+      {
+        key: 'creado',
+        header: 'Fecha Creación',
+        icon: 'fa-calendar-alt',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.creado)
+      }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar operadores...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item) => this.openEditModal(item)
+      },
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar',
+        color: 'red',
+        handler: (item) => this.confirmDelete(item)
+      }
+    ],
+    emptyMessage: 'No se encontraron operadores',
+    loadingMessage: 'Cargando operadores...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
+
   constructor(
     private fb: FormBuilder,
     private operadorService: OperadorService,
@@ -120,6 +172,10 @@ export class OperadoresComponent implements OnInit {
       next: (operadores) => {
         this.operadores = operadores || [];
         this.applyFilters();
+        this.tableConfig = {
+          ...this.tableConfig,
+          data: this.operadores
+        };
         this.loading = false;
         this.isLoading = false;
       },
@@ -502,7 +558,7 @@ export class OperadoresComponent implements OnInit {
     this.applyFilters();
   }
 
-   // Estadísticas
+  // Estadísticas
   calcularEstadisticas(): void {
     this.totalOperadores = this.operadores.length;
   }

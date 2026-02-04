@@ -11,6 +11,9 @@ import { ErrorHandlerService } from '../../shared/services/error-handler.service
 import { ModuleCardData } from '../../shared/components/ui/module-card/module-card.component';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
+
 // Interfaz para tabla de formas de pago
 export interface FormaPagoTabla {
   id?: number;
@@ -30,7 +33,8 @@ export interface FormaPagoTabla {
     FormsModule,
     ReactiveFormsModule,
     SidebarComponent,
-    ErrorModalComponent
+    ErrorModalComponent,
+    DataTableComponent
   ]
 })
 export class FormaPagoComponent implements OnInit {
@@ -45,12 +49,6 @@ export class FormaPagoComponent implements OnInit {
   // Variables de control
   loading: boolean = false;
   isLoading: boolean = false;
-  searchQuery: string = '';
-  sortDirection: 'asc' | 'desc' = 'asc';
-  sortColumn: string = 'descripcion';
-
-  // Variables de control para las vistas
-  currentView: 'table' | 'cards' | 'list' = 'table';
 
   // Variables para modales
   showModal: boolean = false;
@@ -67,33 +65,74 @@ export class FormaPagoComponent implements OnInit {
   showErrorAlert: boolean = false;
   showSuccessAlert: boolean = false;
 
-  // Variables para menú de acciones
-  showActionMenu: number | null = null;
-  showActionMenuCards: number | null = null;
-  showActionMenuList: number | null = null;
-  showQuickActions: number | null = null;
-
-  // Variables para selección múltiple
-  selectedItems: number[] = [];
-  allSelected: boolean = false;
-  someSelected: boolean = false;
-
   // Estadísticas
   totalFormasPago = 0;
-
-  // Math object for template use
-  Math = Math;
-
-  // Variables para paginación
-  currentPage = 1;
-  itemsPerPage = 10;
-  totalItems = 0;
 
   // Datos
   formasPago: FormaPagoResponse[] = [];
   formaPagoTabla: FormaPagoTabla[] = [];
-  filteredFormasPago: FormaPagoTabla[] = [];
-  formasPagoFiltradas: FormaPagoResponse[] = [];
+
+  tableConfig: DataTableConfig<FormaPagoTabla> = {
+    data: [],
+    columns: [ 
+      {
+        key: 'descripcion',
+        header: 'Descripción',
+        icon: 'fa-align-left',
+        sortable: true,
+        render: (item) => item.descripcion || 'Sin descripción'
+      },
+      {
+        key: 'creado',
+        header: 'Fecha Creación',
+        icon: 'fa-calendar-plus',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.creado)
+      },
+      {
+        key: 'actualizado',
+        header: 'Última Actualización',
+        icon: 'fa-calendar-check',
+        sortable: true,
+        width: '180px',
+        render: (item) => this.formatDate(item.actualizado)
+      }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar por código o descripción...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item) => {
+          const formaPago = this.getFormaPagoById(item.id);
+          this.openEditModal(formaPago);
+        }
+      },
+      {
+        icon: 'fa-trash',
+        label: 'Eliminar',
+        color: 'red',
+        handler: (item) => {
+          const formaPago = this.getFormaPagoById(item.id);
+          this.confirmDelete(formaPago);
+        }
+      }
+    ],
+    emptyMessage: 'No se encontraron formas de pago',
+    loadingMessage: 'Cargando formas de pago...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -124,104 +163,6 @@ export class FormaPagoComponent implements OnInit {
     }
   }
 
-  // =================================================================
-  // VIEW MANAGEMENT
-  // =================================================================
-
-  changeView(view: 'table' | 'cards' | 'list'): void {
-    this.currentView = view;
-  }
-
-  isActiveView(view: 'table' | 'cards' | 'list'): boolean {
-    return this.currentView === view;
-  }
-
-  // =================================================================
-  // SEARCH & FILTER
-  // =================================================================
-
-  onSearchChange(): void {
-    this.currentPage = 1;
-    this.applyFilters();
-  }
-
-  clearSearch(): void {
-    this.searchQuery = '';
-    this.currentPage = 1;
-    this.applyFilters();
-  }
-
-  applyFilters(): void {
-    let filtered = [...this.formaPagoTabla];
-
-    // Filtro por búsqueda
-    const term = this.searchQuery?.trim().toLowerCase();
-    if (term) {
-      filtered = filtered.filter(forma => {
-        const searchableText = `${forma.descripcion} ${forma.codigo}`.toLowerCase();
-        return searchableText.includes(term);
-      });
-    }
-
-    this.filteredFormasPago = filtered;
-    this.totalItems = filtered.length;
-
-    // Aplicar ordenamiento
-    this.applySorting();
-  }
-
-  sortBy(column: string): void {
-    if (this.sortColumn === column) {
-      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortColumn = column;
-      this.sortDirection = 'asc';
-    }
-    this.applySorting();
-  }
-
-  private applySorting(): void {
-    if (!this.filteredFormasPago.length) return;
-
-    this.filteredFormasPago.sort((a, b) => {
-      let valueA: any;
-      let valueB: any;
-
-      switch (this.sortColumn) {
-        case 'codigo':
-          valueA = a.codigo?.toLowerCase() || '';
-          valueB = b.codigo?.toLowerCase() || '';
-          break;
-        case 'descripcion':
-          valueA = a.descripcion?.toLowerCase() || '';
-          valueB = b.descripcion?.toLowerCase() || '';
-          break;
-        case 'creado':
-          valueA = new Date(a.creado || 0);
-          valueB = new Date(b.creado || 0);
-          break;
-        case 'actualizado':
-          valueA = new Date(a.actualizado || 0);
-          valueB = new Date(b.actualizado || 0);
-          break;
-        default:
-          return 0;
-      }
-
-      if (valueA < valueB) {
-        return this.sortDirection === 'asc' ? -1 : 1;
-      }
-      if (valueA > valueB) {
-        return this.sortDirection === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-  }
-
-  hasActiveFilters(): boolean {
-    return this.searchQuery?.trim().length > 0;
-  }
-
   refreshData(): void {
     this.loadFormasPago();
   }
@@ -239,6 +180,7 @@ export class FormaPagoComponent implements OnInit {
 
   loadFormasPago(): void {
     this.loading = true;
+    this.isLoading = true;
     this.formaPagoService.getAllFormasPago().subscribe({
       next: (res) => {
         this.formasPago = res || [];
@@ -253,53 +195,24 @@ export class FormaPagoComponent implements OnInit {
           actualizado: f.fechaActualizacion ? new Date(f.fechaActualizacion).toISOString() : undefined
         }));
 
-        this.applyFilters();
+        // Actualizar la configuración del DataTable con los nuevos datos
+        this.tableConfig = {
+          ...this.tableConfig,
+          data: this.formaPagoTabla
+        };
+
         this.loading = false;
+        this.isLoading = false;
       },
       error: () => {
         this.formasPago = [];
         this.formaPagoTabla = [];
         this.totalFormasPago = 0;
         this.loading = false;
+        this.isLoading = false;
         this.showError('Error al cargar las formas de pago');
       }
     });
-  }
-
-  // =================================================================
-  // PAGINATION
-  // =================================================================
-
-  get paginatedFormasPago(): FormaPagoTabla[] {
-    const start = (this.currentPage - 1) * this.itemsPerPage;
-    const end = start + this.itemsPerPage;
-    return this.filteredFormasPago.slice(start, end);
-  }
-
-  get totalPages(): number {
-    return Math.ceil(this.totalItems / this.itemsPerPage);
-  }
-
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    const maxButtons = 5;
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxButtons / 2));
-    const endPage = Math.min(this.totalPages, startPage + maxButtons - 1);
-
-    if (endPage - startPage + 1 < maxButtons) {
-      startPage = Math.max(1, endPage - maxButtons + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    return pages;
   }
 
   // =================================================================
@@ -354,9 +267,9 @@ export class FormaPagoComponent implements OnInit {
       error: (error) => {
         this.loading = false;
         const errorMessage = error?.error?.detail ||
-                            error?.error?.message ||
-                            error?.message ||
-                            'Error al guardar forma de pago';
+          error?.error?.message ||
+          error?.message ||
+          'Error al guardar forma de pago';
         this.showError(errorMessage);
       }
     });
@@ -379,15 +292,14 @@ export class FormaPagoComponent implements OnInit {
           this.showSuccess('Forma de pago eliminada correctamente');
           this.loadFormasPago();
           this.closeConfirmModal();
-          this.selectedItems = this.selectedItems.filter(i => i !== id);
           this.loading = false;
         },
         error: (error) => {
           this.loading = false;
           const errorMessage = error?.error?.detail ||
-                              error?.error?.message ||
-                              error?.message ||
-                              'Error al eliminar forma de pago';
+            error?.error?.message ||
+            error?.message ||
+            'Error al eliminar forma de pago';
           this.showError(errorMessage);
         }
       });

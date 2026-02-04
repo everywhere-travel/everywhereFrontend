@@ -198,7 +198,10 @@ export class CategoriaPersonaComponent implements OnInit {
       actualizado: categoria.actualizado
     }));
     this.totalCategoriaPersona = this.categoriaPersonaTabla.length;
-    this.tableConfig.data = this.categoriaPersonaTabla;
+    this.tableConfig = {
+      ...this.tableConfig,
+      data: this.categoriaPersonaTabla
+    };
   }
 
   // Método principal para guardar (crea o actualiza según el estado)

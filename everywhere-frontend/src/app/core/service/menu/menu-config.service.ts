@@ -48,7 +48,7 @@ export class MenuConfigService {
         {
             id: 'generacion-documentos',
             title: 'Generacion de Documentos',
-            icon: 'fas fa-box',
+            icon: 'fas fa-file-pdf',
             children: [
                 {
                     id: 'documentos-cobranza',
@@ -69,7 +69,7 @@ export class MenuConfigService {
         {
             id: 'categorias',
             title: 'Gestion de Categorias',
-            icon: 'fas fa-box',
+            icon: 'fas fa-table-columns',
             children: [
                 {
                     id: 'categorias-persona',

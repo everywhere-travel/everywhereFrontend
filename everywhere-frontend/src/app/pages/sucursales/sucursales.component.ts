@@ -6,6 +6,8 @@ import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { SucursalRequest, SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
 // Interface para la tabla de sucursales
 export interface SucursalTabla {
@@ -27,7 +29,8 @@ export interface SucursalTabla {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    SidebarComponent
+    SidebarComponent,
+    DataTableComponent
   ],
   templateUrl: './sucursales.component.html',
   styleUrls: ['./sucursales.component.css']
@@ -47,6 +50,7 @@ export class SucursalesComponent implements OnInit {
   sucursalForm!: FormGroup;
 
   // Control variables
+  isLoading: boolean = false;
   loading = false;
   mostrarModalCrear = false;
   mostrarModalEliminar = false;
@@ -80,6 +84,93 @@ export class SucursalesComponent implements OnInit {
 
   // Math object for template use
   Math = Math;
+
+  // Configuración de DataTable
+  tableConfig: DataTableConfig<SucursalTabla> = {
+    data: [],
+    columns: [
+      {
+        key: 'descripcion',
+        header: 'Nombre',
+        icon: 'fa-map-marker-alt',
+        sortable: true,
+        render: (item) => item.descripcion || 'N/A'
+      },
+      {
+        key: 'direccion',
+        header: 'Dirección',
+        icon: 'fa-location-arrow',
+        sortable: true,
+        render: (item) => item.direccion || 'N/A'
+      },
+      {
+        key: 'telefono',
+        header: 'Teléfono',
+        icon: 'fa-phone',
+        sortable: true,
+        width: '130px',
+        render: (item) => item.telefono || 'N/A'
+      },
+      {
+        key: 'email',
+        header: 'Email',
+        icon: 'fa-envelope',
+        sortable: true,
+        render: (item) => item.email || 'N/A'
+      },
+      {
+        key: 'estado',
+        header: 'Estado',
+        icon: 'fa-info-circle',
+        sortable: true,
+        width: '100px',
+        render: (item) => item.estadoText
+      },
+      {
+        key: 'creado',
+        header: 'Fecha de Creación',
+        icon: 'fa-calendar',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.fechaCreacion)
+      },
+      {
+        key: 'actualizado',
+        header: 'Fecha de Actualización',
+        icon: 'fa-calendar',
+        sortable: true,
+        width: '150px',
+        render: (item) => this.formatDate(item.fechaActualizacion)
+      }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar sucursales...',
+    enableSelection: true,
+    enablePagination: true,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item) => this.editarSucursal(item)
+      },
+      {
+        icon: 'fa-power-off',
+        label: 'Cambiar Estado',
+        color: 'yellow',
+        handler: (item) => this.confirmarEliminar(item)
+      }
+    ],
+    emptyMessage: 'No se encontraron sucursales',
+    loadingMessage: 'Cargando sucursales...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
 
   constructor(
     private fb: FormBuilder,
@@ -165,6 +256,10 @@ export class SucursalesComponent implements OnInit {
       ...sucursal,
       estadoText: sucursal.estado ? 'Activa' : 'Inactiva'
     }));
+    this.tableConfig = {
+      ...this.tableConfig,
+      data: this.sucursalesTabla
+    };
   }
 
   // Método principal para guardar (crea o actualiza según el estado)
