@@ -12,8 +12,9 @@ import { ProductoService } from '../../core/service/Producto/producto.service';
 import { LoadingService } from '../../core/service/loading.service';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { FormaPagoService } from '../../core/service/FormaPago/forma-pago.service';
-import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service'; 
+import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { PdfService } from '../../core/service/Pdf/Pdf.service';
 
 // Models
 import { DetalleReciboRequestDTO, DetalleReciboResponseDTO } from '../../shared/models/Recibo/detalleRecibo.model';
@@ -50,6 +51,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
   private sucursalService = inject(SucursalService);
   private naturalJuridicoService = inject(NaturalJuridicoService);
   private formaPagoService = inject(FormaPagoService);
+  private pdfService = inject(PdfService);
 
   // Data
   recibo: ReciboResponseDTO | null = null;
@@ -759,5 +761,46 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
     if (response) {
       this.recibo = response;
     }
+  }
+
+  // ===== PDF METHODS =====
+  descargarPDF(): void {
+    if (!this.recibo) {
+      this.error = 'No hay recibo cargado';
+      return;
+    }
+
+    if (!this.recibo.serie) {
+      this.error = 'No se puede generar PDF: recibo sin número de serie';
+      return;
+    }
+
+    if (!this.recibo.correlativo) {
+      this.error = 'No se puede generar PDF: recibo sin correlativo';
+      return;
+    }
+
+    const reciboId = this.recibo.id;
+    if (!reciboId) {
+      this.error = 'No se puede generar PDF: recibo sin ID';
+      return;
+    }
+
+    this.pdfService.downloadReciboPdf(reciboId, this.recibo.serie, this.recibo.correlativo);
+  }
+
+  verPDF(): void {
+    if (!this.recibo) {
+      this.error = 'No hay recibo cargado';
+      return;
+    }
+
+    const reciboId = this.recibo.id;
+    if (!reciboId) {
+      this.error = 'No se puede visualizar PDF: recibo sin ID';
+      return;
+    }
+
+    this.pdfService.viewReciboPdf(reciboId);
   }
 }

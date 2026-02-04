@@ -16,6 +16,7 @@ import { FormaPagoService } from '../../core/service/FormaPago/forma-pago.servic
 import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { PdfService } from '../../core/service/Pdf/Pdf.service';
 
 // Models
 import { DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
@@ -53,6 +54,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   private naturalJuridicoService = inject(NaturalJuridicoService);
   private personaService = inject(PersonaService);
   private formaPagoService = inject(FormaPagoService);
+  private pdfService = inject(PdfService);
 
   // Data
   documento: DocumentoCobranzaResponseDTO | null = null;
@@ -769,5 +771,46 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
     if (response) {
       this.documento = response;
     }
+  }
+
+  // ===== PDF METHODS =====
+  descargarPDF(): void {
+    if (!this.documento) {
+      this.error = 'No hay documento cargado';
+      return;
+    }
+
+    if (!this.documento.serie) {
+      this.error = 'No se puede generar PDF: documento sin número de serie';
+      return;
+    }
+
+    if (!this.documento.correlativo) {
+      this.error = 'No se puede generar PDF: documento sin correlativo';
+      return;
+    }
+
+    const documentoId = this.documento.id;
+    if (!documentoId) {
+      this.error = 'No se puede generar PDF: documento sin ID';
+      return;
+    }
+
+    this.pdfService.downloadDocumentoCobranzaPdf(documentoId, this.documento.serie, this.documento.correlativo);
+  }
+
+  verPDF(): void {
+    if (!this.documento) {
+      this.error = 'No hay documento cargado';
+      return;
+    }
+
+    const documentoId = this.documento.id;
+    if (!documentoId) {
+      this.error = 'No se puede visualizar PDF: documento sin ID';
+      return;
+    }
+
+    this.pdfService.viewDocumentoCobranzaPdf(documentoId);
   }
 }

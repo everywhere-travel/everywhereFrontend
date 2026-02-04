@@ -722,23 +722,27 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       const personaJuridicaId = this.personaJuridicaSeleccionada?.personaJuridica?.id;
       const sucursalId = this.sucursalSeleccionada?.id;
 
-      this.documentoCobranzaService
-        .createDocumentoCobranza(this.cotizacionSeleccionada.id, personaJuridicaId, sucursalId)
-        .subscribe({
-          next: async (documento) => {
-            this.showSuccess('Documento de cobranza creado exitosamente');
-            await this.recargarDocumentos();
-            this.cerrarFormulario();
-          },
-          error: (error) => {
-            const errorMsg =
-              error.error?.message || error.message || 'Error al crear el documento de cobranza';
-            this.showError(errorMsg);
-          },
-          complete: () => {
-            this.isLoading = false;
-          },
-        });
+      this.documentoCobranzaService.createDocumentoCobranza(
+        this.cotizacionSeleccionada.id,
+        personaJuridicaId,
+        sucursalId
+      ).subscribe({
+        next: async (documento: any) => {
+          this.showSuccess('Documento de cobranza creado exitosamente');
+          this.cerrarFormulario();
+          // Redirigir al detalle en modo edición
+          this.router.navigate(['/documentos-cobranza/detalle', documento.id], {
+            queryParams: { modo: 'editar' }
+          });
+        },
+        error: (error) => {
+          const errorMsg = error.error?.message || error.message || 'Error al crear el documento de cobranza';
+          this.showError(errorMsg);
+        },
+        complete: () => {
+          this.isLoading = false;
+        }
+      });
     } catch (error) {
       this.isLoading = false;
       this.showError('Error inesperado al crear el documento');
