@@ -105,19 +105,19 @@ export class ProductosComponent implements OnInit {
     data: [],
     columns: [
       {
-        key: 'descripcion',
-        header: 'Descripción',
-        icon: 'fa-box',
-        sortable: true,
-        render: (item) => item.descripcion || 'N/A'
-      },
-      {
         key: 'tipo',
         header: 'Tipo',
         icon: 'fa-tag',
         sortable: true,
         width: '150px',
         render: (item) => item.tipo || 'Sin tipo'
+      },
+      {
+        key: 'descripcion',
+        header: 'Descripción',
+        icon: 'fa-box',
+        sortable: true,
+        render: (item) => item.descripcion || 'N/A'
       },
       {
         key: 'creado',

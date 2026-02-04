@@ -194,7 +194,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     trackByKey: 'id',
   };
 
-  constructor(private menuConfigService: MenuConfigService) {}
+  constructor(private menuConfigService: MenuConfigService) { }
 
   ngOnInit(): void {
     this.initializeForms();
@@ -412,7 +412,9 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   editarDocumento(documento: DocumentoCobranzaResponseDTO): void {
     if (documento?.id) {
-      this.router.navigate(['/documentos-cobranza/detalle', documento.id]);
+      this.router.navigate(['/documentos-cobranza/detalle', documento.id], {
+        queryParams: { modo: 'editar' }
+      });
     }
   }
 
