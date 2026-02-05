@@ -159,7 +159,7 @@ export class SucursalesComponent implements OnInit {
         handler: (item) => this.editarSucursal(item)
       },
       {
-        icon: 'fa-power-off',
+        icon: 'fa-toggle-on',
         label: 'Cambiar Estado',
         color: 'yellow',
         handler: (item) => this.confirmarEliminar(item)

@@ -164,13 +164,13 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       },
       {
         icon: 'fa-file-pdf',
-        label: 'Ver PDF',
+        label: 'Ver',
         color: 'gray',
         handler: (item) => this.verPDF(item.documentoOriginal),
       },
       {
         icon: 'fa-download',
-        label: 'Descargar PDF',
+        label: 'Descargar',
         color: 'purple',
         handler: (item) => this.descargarPDF(item.documentoOriginal),
       },

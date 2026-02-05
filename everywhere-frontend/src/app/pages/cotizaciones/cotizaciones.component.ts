@@ -287,7 +287,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       },
       {
         icon: 'fa-file-word',
-        label: 'Descargar Word',
+        label: 'Word',
         color: 'indigo',
         handler: (item: CotizacionTabla) => this.descargarWord(item.cotizacionOriginal),
       },

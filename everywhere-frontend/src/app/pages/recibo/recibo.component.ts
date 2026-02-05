@@ -158,19 +158,19 @@ export class ReciboComponent implements OnInit, OnDestroy {
     actions: [
       {
         icon: 'fa-eye',
-        label: 'Ver Detalles',
+        label: 'Ver',
         color: 'blue',
         handler: (item) => this.verDetalleDocumento(item)
       },
       {
         icon: 'fa-file-pdf',
-        label: 'Ver PDF',
+        label: 'Ver',
         color: 'red',
         handler: (item) => this.verPDF(item)
       },
       {
         icon: 'fa-download',
-        label: 'Descargar PDF',
+        label: 'Descargar',
         color: 'green',
         handler: (item) => this.descargarPDF(item)
       }
