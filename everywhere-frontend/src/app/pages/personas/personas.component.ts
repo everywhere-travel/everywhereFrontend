@@ -9,8 +9,7 @@ import { ClienteDetailModalComponent, DocumentoCliente } from './../../shared/co
 import { ClienteTableComponent } from './../../shared/components/cliente/cliente-table/cliente-table.component';
 import { ErrorModalComponent, ErrorModalData } from '../../shared/components/error-modal/error-modal.component';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
-import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
-import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
+import { DetalleDocumentoConPersonasDto } from '../../shared/models/Documento/detalleDocumento.model';
 
 export interface PersonaTabla {
   id: number;
@@ -37,8 +36,8 @@ export interface PersonaTabla {
     CommonModule,
     SidebarComponent,
     ClienteDetailModalComponent,
-    ErrorModalComponent,
-    DataTableComponent
+    ClienteTableComponent,
+    ErrorModalComponent
   ]
 })
 export class PersonasComponent implements OnInit {
@@ -82,87 +81,6 @@ export class PersonasComponent implements OnInit {
     title: '',
     message: '',
     buttonText: 'Entendido'
-  };
-
-  // ===== Configuración del DataTable =====
-  tableConfig: DataTableConfig<PersonaTabla> = {
-    data: [],
-    columns: [
-      {
-        key: 'tipo',
-        header: 'Tipo',
-        icon: 'fa-tag',
-        sortable: true,
-        align: 'center',
-        width: '100px',
-        render: (item) => item.tipo === 'natural' ? 'NATURAL' : 'JURÍDICA'
-      },
-      {
-        key: 'nombre',
-        header: 'Nombre / Razón Social',
-        icon: 'fa-user',
-        sortable: true
-      },
-      {
-        key: 'email',
-        header: 'Email',
-        icon: 'fa-envelope',
-        sortable: true,
-        render: (item) => item.email || 'SIN EMAIL'
-      },
-      {
-        key: 'telefono',
-        header: 'Teléfono',
-        icon: 'fa-phone',
-        sortable: false,
-        render: (item) => item.telefono || 'SIN TELÉFONO'
-      }
-    ],
-    enableSearch: true,
-    searchPlaceholder: 'Buscar por nombre, documento, email...',
-    enableSelection: true,
-    enablePagination: true,
-    enableViewSwitcher: true,
-    enableSorting: true,
-    itemsPerPage: 10,
-    pageSizeOptions: [5, 10, 25, 50],
-    actions: [
-      {
-        icon: 'fa-eye',
-        label: 'Ver',
-        color: 'green',
-        handler: (item) => this.onVerCliente(item)
-      },
-      {
-        icon: 'fa-edit',
-        label: 'Editar',
-        color: 'blue',
-        handler: (item) => this.onEditarCliente(item)
-      },
-      {
-        icon: 'fa-trash',
-        label: 'Eliminar',
-        color: 'red',
-        handler: (item) => this.onEliminarCliente(item)
-      }
-    ],
-    bulkActions: [
-      {
-        icon: 'fa-trash',
-        label: 'Eliminar seleccionados',
-        color: 'red',
-        handler: (items) => this.onEliminarMasivo(items.map(i => i.id)),
-        confirm: {
-          title: 'Eliminar múltiples clientes',
-          message: 'Esta acción no se puede deshacer'
-        }
-      }
-    ],
-    emptyMessage: 'No se encontraron clientes',
-    loadingMessage: 'Cargando clientes...',
-    defaultView: 'table',
-    enableRowHover: true,
-    trackByKey: 'id'
   };
 
   constructor(
@@ -261,13 +179,6 @@ export class PersonasComponent implements OnInit {
 
       this.personas = personasTabla;
       this.personasOriginales = [...personasTabla];
-
-      // Actualizar tableConfig para que el DataTable muestre los datos
-      this.tableConfig = {
-        ...this.tableConfig,
-        data: this.personas
-      };
-
       this.calcularEstadisticas();
 
     } catch (error) {
@@ -486,17 +397,17 @@ export class PersonasComponent implements OnInit {
 
     this.isLoading = true;
     this.modoVistaDocumentos = false; // Ocultar banner hasta que termine la búsqueda
-
+    
     this.detalleDocumentoService.buscarPorNumeroDocumento(numero).subscribe({
       next: (resultados) => {
         // Convertir resultados de documentos a formato PersonaTabla
         const personasDesdeDocumentos: PersonaTabla[] = [];
-
+        
         resultados.forEach(doc => {
           doc.personas.forEach(persona => {
             // Buscar los datos completos de la persona en la lista original
             const personaCompleta = this.personasOriginales.find(p => p.id === persona.personaId);
-
+            
             if (personaCompleta) {
               // Usar los datos de la persona pero mostrar el documento buscado
               personasDesdeDocumentos.push({
@@ -512,18 +423,11 @@ export class PersonasComponent implements OnInit {
             }
           });
         });
-
+        
         this.personas = personasDesdeDocumentos;
         this.modoVistaDocumentos = true; // Mostrar banner solo si hay resultados
         this.estadisticas.totalNaturales = personasDesdeDocumentos.filter(p => p.tipo === 'natural').length;
         this.estadisticas.totalJuridicas = personasDesdeDocumentos.filter(p => p.tipo === 'juridica').length;
-
-        // Actualizar tableConfig
-        this.tableConfig = {
-          ...this.tableConfig,
-          data: this.personas
-        };
-
         this.isLoading = false;
       },
       error: (error) => {
@@ -538,13 +442,6 @@ export class PersonasComponent implements OnInit {
   onVolverAVistaNormal(): void {
     this.modoVistaDocumentos = false;
     this.personas = [...this.personasOriginales];
-
-    // Actualizar tableConfig
-    this.tableConfig = {
-      ...this.tableConfig,
-      data: this.personas
-    };
-
     this.calcularEstadisticas();
   }
 }
