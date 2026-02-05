@@ -247,13 +247,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       {
         icon: 'fa-eye',
         label: 'Ver Detalles',
-        color: 'blue',
+        color: 'green',
         handler: (item) => this.mostrarModalVerLiquidacion(this.getLiquidacionById(item.id)!)
       },
       {
         icon: 'fa-edit',
         label: 'Editar',
-        color: 'green',
+        color: 'blue',
         handler: (item) => this.mostrarFormularioEditar(this.getLiquidacionById(item.id)!)
       },
       {

@@ -494,7 +494,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         distinctUntilChanged(),
         switchMap((searchTerm) => {
           this.buscandoClientes = true;
-          const termino = searchTerm?.trim() || '';
+          const termino = searchTerm?.trim().toLowerCase() || '';
 
           // Si no hay término de búsqueda, mostrar todos los clientes
           const resultados = this.todosLosClientes.filter((persona) =>
