@@ -44,6 +44,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'cotizaciones/detalle/:id',
+    loadComponent: () =>
+      import('./pages/detalle-cotizacion/detalle-cotizacion.component').then(m => m.DetalleCotizacionComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'counters',
     loadComponent: () =>
       import('./pages/counters/counters.component').then(m => m.CountersComponent),

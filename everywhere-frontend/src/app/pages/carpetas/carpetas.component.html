@@ -1,8 +1,8 @@
 <!-- File Explorer Layout -->
 <div class="min-h-screen bg-gray-50">
   <!-- Sidebar Component -->
-  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems"
-    (itemClick)="onSidebarItemClick($event)" (toggleSidebar)="onToggleSidebar()">
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()">
   </app-sidebar>
 
   <!-- Main Content Area -->
@@ -32,35 +32,69 @@
 
           <!-- View Mode Selector -->
           <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-            <button
-              (click)="cambiarModoVista('breadcrumb')"
+            <button (click)="cambiarModoVista('breadcrumb')"
               class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
               [class.bg-white]="currentViewMode === 'breadcrumb'"
               [class.text-blue-600]="currentViewMode === 'breadcrumb'"
               [class.shadow-sm]="currentViewMode === 'breadcrumb'"
-              [class.text-gray-600]="currentViewMode !== 'breadcrumb'"
-              title="Navegar entre carpetas como Drive">
+              [class.text-gray-600]="currentViewMode !== 'breadcrumb'" title="Navegar entre carpetas como Drive">
               <i class="fas fa-folder-open mr-2"></i>Navegación
             </button>
 
-            <button
-              (click)="cambiarModoVista('tree')"
+            <button (click)="cambiarModoVista('tree')"
               class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
-              [class.bg-white]="currentViewMode === 'tree'"
-              [class.text-blue-600]="currentViewMode === 'tree'"
-              [class.shadow-sm]="currentViewMode === 'tree'"
-              [class.text-gray-600]="currentViewMode !== 'tree'"
+              [class.bg-white]="currentViewMode === 'tree'" [class.text-blue-600]="currentViewMode === 'tree'"
+              [class.shadow-sm]="currentViewMode === 'tree'" [class.text-gray-600]="currentViewMode !== 'tree'"
               title="Mostrar todas las carpetas como árbol">
               <i class="fas fa-sitemap mr-2"></i>Vista Árbol
             </button>
           </div>
 
-          <!-- Action Button -->
-          <button (click)="abrirModalCrear()"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors">
-            <i class="fas fa-plus"></i>
-            Nueva Carpeta
-          </button>
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-2">
+            <button (click)="abrirModalCrear()"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors">
+              <i class="fas fa-plus"></i>
+              Nueva Carpeta
+            </button>
+
+            <!-- Dropdown Nuevo Documento -->
+            <div *ngIf="carpetaActual" class="relative">
+              <button (click)="showNuevoDocumentoDropdown = !showNuevoDocumentoDropdown"
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors">
+                <i class="fas fa-file-plus"></i>
+                Nuevo Documento
+                <i class="fas fa-chevron-down text-xs"></i>
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div *ngIf="showNuevoDocumentoDropdown" (clickOutside)="showNuevoDocumentoDropdown = false"
+                class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                <div class="py-1">
+                  <button (click)="abrirSelectorDocumento('liquidacion')"
+                    class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-3">
+                    <i class="fas fa-file-invoice text-green-600"></i>
+                    <span class="text-gray-700">Liquidación</span>
+                  </button>
+                  <button (click)="abrirSelectorDocumento('cotizacion')"
+                    class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-3">
+                    <i class="fas fa-file-alt text-blue-600"></i>
+                    <span class="text-gray-700">Cotización</span>
+                  </button>
+                  <button (click)="abrirSelectorDocumento('recibo')"
+                    class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-3">
+                    <i class="fas fa-receipt text-yellow-600"></i>
+                    <span class="text-gray-700">Recibo</span>
+                  </button>
+                  <button (click)="abrirSelectorDocumento('documento-cobranza')"
+                    class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-3">
+                    <i class="fas fa-file-contract text-purple-600"></i>
+                    <span class="text-gray-700">Documento de Cobranza</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -82,8 +116,7 @@
               <!-- Navigation Controls -->
               <div class="flex items-center gap-2 mr-4">
                 <button (click)="navegarAtrasDual()" [disabled]="breadcrumbPath.length <= 1"
-                  class="p-1 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Atrás">
+                  class="p-1 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed" title="Atrás">
                   <i class="fas fa-arrow-left text-gray-600"></i>
                 </button>
                 <button (click)="actualizarVistaNavegacion()" [disabled]="breadcrumbLoading"
@@ -121,7 +154,8 @@
             </div>
 
             <!-- Empty State -->
-            <div *ngIf="!breadcrumbLoading && carpetasEnNivelActual.length === 0" class="flex items-center justify-center h-64">
+            <div *ngIf="!breadcrumbLoading && carpetasEnNivelActual.length === 0 && documentosAsociados.length === 0"
+              class="flex items-center justify-center h-64">
               <div class="text-center">
                 <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <i class="fas fa-folder-open text-gray-400 text-2xl"></i>
@@ -139,13 +173,15 @@
             <div *ngIf="!breadcrumbLoading && carpetasEnNivelActual.length > 0"
               class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
 
-              <div *ngFor="let carpeta of carpetasEnNivelActual"
-                class="group cursor-pointer" (dblclick)="navegarACarpetaDual(carpeta)">
+              <div *ngFor="let carpeta of carpetasEnNivelActual" class="group cursor-pointer"
+                (dblclick)="navegarACarpetaDual(carpeta)">
 
-                <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 group-hover:border-blue-300">
+                <div
+                  class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 group-hover:border-blue-300">
                   <!-- Folder Icon -->
                   <div class="flex justify-center mb-3">
-                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
+                    <div
+                      class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200 transition-colors">
                       <i class="fas fa-folder text-yellow-600 text-xl"></i>
                     </div>
                   </div>
@@ -165,20 +201,75 @@
                 <div class="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <div class="flex justify-center gap-1">
                     <button (click)="navegarACarpetaDual(carpeta); $event.stopPropagation()"
-                      class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600"
-                      title="Abrir">
+                      class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600" title="Abrir">
                       <i class="fas fa-folder-open text-xs"></i>
                     </button>
                     <button (click)="editarCarpeta(carpeta); $event.stopPropagation()"
-                      class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600"
-                      title="Editar">
+                      class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-green-600" title="Editar">
                       <i class="fas fa-edit text-xs"></i>
                     </button>
                     <button (click)="confirmarEliminar(carpeta); $event.stopPropagation()"
-                      class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-red-600"
-                      title="Eliminar">
+                      class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-red-600" title="Eliminar">
                       <i class="fas fa-trash text-xs"></i>
                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Documentos Asociados -->
+            <div *ngIf="carpetaActual && documentosAsociados.length > 0" class="mt-8">
+              <h3 class="text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
+                <i class="fas fa-file-alt text-gray-500"></i>
+                Documentos ({{ documentosAsociados.length }})
+              </h3>
+
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                <div *ngFor="let doc of documentosAsociados" class="group cursor-pointer"
+                  (dblclick)="navegarADocumento(doc)">
+
+                  <div
+                    class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 group-hover:border-blue-300">
+                    <!-- Document Icon -->
+                    <div class="flex justify-center mb-3">
+                      <div class="w-12 h-12 rounded-lg flex items-center justify-center transition-colors" [ngClass]="{
+                             'bg-green-100 group-hover:bg-green-200': doc.tipo === 'liquidacion',
+                             'bg-blue-100 group-hover:bg-blue-200': doc.tipo === 'cotizacion',
+                             'bg-yellow-100 group-hover:bg-yellow-200': doc.tipo === 'recibo',
+                             'bg-purple-100 group-hover:bg-purple-200': doc.tipo === 'documento-cobranza'
+                           }">
+                        <i class="text-xl" [ngClass]="{
+                             'fas fa-file-invoice text-green-600': doc.tipo === 'liquidacion',
+                             'fas fa-file-alt text-blue-600': doc.tipo === 'cotizacion',
+                             'fas fa-receipt text-yellow-600': doc.tipo === 'recibo',
+                             'fas fa-file-contract text-purple-600': doc.tipo === 'documento-cobranza'
+                           }"></i>
+                      </div>
+                    </div>
+
+                    <!-- Document Info -->
+                    <div class="text-center">
+                      <h3 class="text-sm font-medium text-gray-900 truncate" [title]="doc.numero">
+                        {{ doc.numero }}
+                      </h3>
+                      <p class="text-xs text-gray-500 mt-1">
+                        {{ doc.fecha | date:'dd/MM/yy' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <!-- Context Menu -->
+                  <div class="mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div class="flex justify-center gap-1">
+                      <button (click)="navegarADocumento(doc); $event.stopPropagation()"
+                        class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-blue-600" title="Abrir">
+                        <i class="fas fa-external-link-alt text-xs"></i>
+                      </button>
+                      <button (click)="desasociarDocumento(doc); $event.stopPropagation()"
+                        class="p-1 hover:bg-gray-100 rounded text-gray-600 hover:text-red-600" title="Desasociar">
+                        <i class="fas fa-unlink text-xs"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -224,8 +315,7 @@
                     [class.border-blue-200]="selectedTreeNode && selectedTreeNode.carpeta.id === node.carpeta.id">
 
                     <!-- Expand/Collapse Button -->
-                    <button *ngIf="node.hasChildren"
-                      (click)="toggleNodeExpansion(node); $event.stopPropagation()"
+                    <button *ngIf="node.hasChildren" (click)="toggleNodeExpansion(node); $event.stopPropagation()"
                       class="mr-2 p-1 hover:bg-gray-200 rounded">
                       <i class="fas fa-chevron-right text-gray-400 text-xs transition-transform"
                         [class.rotate-90]="node.expanded"></i>
@@ -285,8 +375,7 @@
       (click)="seleccionarNodoArbol(node)"
       [class.bg-blue-50]="selectedTreeNode && selectedTreeNode.carpeta.id === node.carpeta.id">
 
-      <button *ngIf="node.hasChildren"
-        (click)="toggleNodeExpansion(node); $event.stopPropagation()"
+      <button *ngIf="node.hasChildren" (click)="toggleNodeExpansion(node); $event.stopPropagation()"
         class="mr-2 p-1 hover:bg-gray-200 rounded">
         <i class="fas fa-chevron-right text-gray-400 text-xs transition-transform"
           [class.rotate-90]="node.expanded"></i>
@@ -346,9 +435,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-1">
           Nombre *
         </label>
-        <input
-          type="text"
-          formControlName="nombre"
+        <input type="text" formControlName="nombre"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
           placeholder="Ingrese el nombre de la carpeta">
 
@@ -368,9 +455,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-1">
           Descripción
         </label>
-        <textarea
-          formControlName="descripcion"
-          rows="3"
+        <textarea formControlName="descripcion" rows="3"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 resize-none"
           placeholder="Descripción opcional"></textarea>
       </div>
@@ -386,15 +471,11 @@
 
       <!-- Botones -->
       <div class="flex justify-end gap-3 pt-4">
-        <button
-          type="button"
-          (click)="cerrarModal()"
+        <button type="button" (click)="cerrarModal()"
           class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
           Cancelar
         </button>
-        <button
-          type="submit"
-          [disabled]="carpetaForm.invalid || loading"
+        <button type="submit" [disabled]="carpetaForm.invalid || loading"
           class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
           <i *ngIf="loading" class="fas fa-spinner fa-spin mr-2"></i>
           {{ editandoCarpeta ? 'Actualizar' : 'Crear' }}
@@ -405,7 +486,8 @@
 </div>
 
 <!-- Modal de confirmación de eliminación -->
-<div *ngIf="mostrarModalEliminar" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+<div *ngIf="mostrarModalEliminar"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
   <div class="bg-white rounded-lg shadow-xl max-w-md w-full" (click)="$event.stopPropagation()">
 
     <!-- Modal Header -->
@@ -439,22 +521,94 @@
 
       <!-- Botones -->
       <div class="flex justify-end gap-3">
-        <button
-          type="button"
-          (click)="cerrarModalEliminar()"
-          [disabled]="loading"
+        <button type="button" (click)="cerrarModalEliminar()" [disabled]="loading"
           class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50">
           Cancelar
         </button>
-        <button
-          type="button"
-          (click)="eliminarCarpetaDefinitivo()"
-          [disabled]="loading"
+        <button type="button" (click)="eliminarCarpetaDefinitivo()" [disabled]="loading"
           class="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
           <i *ngIf="loading" class="fas fa-spinner fa-spin mr-2"></i>
           Eliminar
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Selección de Documentos -->
+<div *ngIf="mostrarModalSelector"
+  class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col"
+    (click)="$event.stopPropagation()">
+
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+      <h3 class="text-lg font-semibold text-gray-900">
+        Seleccionar {{ getTipoDocumentoLabel(tipoDocumentoSeleccionado) }}
+      </h3>
+      <button (click)="cerrarModalSelector()" class="text-gray-400 hover:text-gray-600">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="p-4 border-b border-gray-200">
+      <div class="relative">
+        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        <input type="text" [(ngModel)]="searchDocumento" (ngModelChange)="filtrarDocumentos()"
+          placeholder="Buscar documento..."
+          class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+      </div>
+    </div>
+
+    <!-- Modal Body - Lista de documentos -->
+    <div class="flex-1 overflow-auto p-4">
+      <!-- Loading -->
+      <div *ngIf="loadingDocumentosDisponibles" class="flex justify-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+
+      <!-- Lista de documentos -->
+      <div *ngIf="!loadingDocumentosDisponibles && documentosFiltrados.length > 0" class="space-y-2">
+        <button *ngFor="let doc of documentosFiltrados" (click)="asociarDocumento(doc)"
+          class="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" [ngClass]="{
+                   'bg-green-100': tipoDocumentoSeleccionado === 'liquidacion',
+                   'bg-blue-100': tipoDocumentoSeleccionado === 'cotizacion',
+                   'bg-yellow-100': tipoDocumentoSeleccionado === 'recibo',
+                   'bg-purple-100': tipoDocumentoSeleccionado === 'documento-cobranza'
+                 }">
+              <i [ngClass]="{
+                   'fas fa-file-invoice text-green-600': tipoDocumentoSeleccionado === 'liquidacion',
+                   'fas fa-file-alt text-blue-600': tipoDocumentoSeleccionado === 'cotizacion',
+                   'fas fa-receipt text-yellow-600': tipoDocumentoSeleccionado === 'recibo',
+                   'fas fa-file-contract text-purple-600': tipoDocumentoSeleccionado === 'documento-cobranza'
+                 }"></i>
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-gray-900">{{ getDocumentoNumero(doc) }}</p>
+              <p class="text-sm text-gray-500">{{ getDocumentoFecha(doc) | date:'dd/MM/yyyy' }}</p>
+            </div>
+            <i class="fas fa-arrow-right text-gray-400"></i>
+          </div>
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loadingDocumentosDisponibles && documentosFiltrados.length === 0" class="text-center py-12">
+        <i class="fas fa-inbox text-gray-400 text-4xl mb-3"></i>
+        <p class="text-gray-600">No hay documentos disponibles</p>
+        <p class="text-sm text-gray-500">Todos los documentos ya están asociados a una carpeta</p>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="p-4 border-t border-gray-200">
+      <button (click)="cerrarModalSelector()"
+        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+        Cancelar
+      </button>
     </div>
   </div>
 </div>

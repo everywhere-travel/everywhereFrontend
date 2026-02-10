@@ -6,6 +6,14 @@ import { CarpetaService } from '../../core/service/Carpeta/carpeta.service';
 import { CarpetaRequest, CarpetaResponse } from '../../shared/models/Carpeta/carpeta.model';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { LiquidacionService } from '../../core/service/Liquidacion/liquidacion.service';
+import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
+import { ReciboService } from '../../core/service/Recibo/recibo.service';
+import { DocumentoCobranzaService } from '../../core/service/DocumentoCobranza/DocumentoCobranza.service';
+import { LiquidacionResponse } from '../../shared/models/Liquidacion/liquidacion.model';
+import { CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
+import { ReciboResponseDTO } from '../../shared/models/Recibo/recibo.model';
+import { DocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 
 // Interface para la tabla de carpetas
 export interface CarpetaTabla {
@@ -37,6 +45,18 @@ interface BreadcrumbItem {
 // Tipos de vista del explorador
 type ViewMode = 'breadcrumb' | 'tree';
 
+// Tipo de documento
+type TipoDocumento = 'liquidacion' | 'cotizacion' | 'recibo' | 'documento-cobranza';
+
+// Interface para documentos asociados
+interface DocumentoAsociado {
+  id: number;
+  tipo: TipoDocumento;
+  numero: string;
+  fecha: string;
+  descripcion?: string;
+}
+
 @Component({
   selector: 'app-carpetas',
   standalone: true,
@@ -52,7 +72,7 @@ type ViewMode = 'breadcrumb' | 'tree';
 export class CarpetasComponent implements OnInit {
 
   // Sidebar
-  sidebarCollapsed = false; 
+  sidebarCollapsed = false;
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
   // Data - Modo tradicional
@@ -88,6 +108,21 @@ export class CarpetasComponent implements OnInit {
 
   searchTerm = '';
 
+  // Documentos asociados a la carpeta actual
+  documentosAsociados: DocumentoAsociado[] = [];
+  loadingDocumentos = false;
+
+  // Control del dropdown "Nuevo Documento"
+  showNuevoDocumentoDropdown = false;
+
+  // Modal de selección de documentos
+  mostrarModalSelector = false;
+  tipoDocumentoSeleccionado: TipoDocumento | null = null;
+  documentosDisponibles: any[] = [];
+  documentosFiltrados: any[] = [];
+  searchDocumento = '';
+  loadingDocumentosDisponibles = false;
+
   // Action menu control
   showActionMenu: number | null = null;
   showQuickActions: number | null = null;
@@ -100,7 +135,11 @@ export class CarpetasComponent implements OnInit {
     private carpetaService: CarpetaService,
     private router: Router,
     private cdr: ChangeDetectorRef,
-    private menuConfigService: MenuConfigService
+    private menuConfigService: MenuConfigService,
+    private liquidacionService: LiquidacionService,
+    private cotizacionService: CotizacionService,
+    private reciboService: ReciboService,
+    private documentoCobranzaService: DocumentoCobranzaService
   ) {
     this.initializeForms();
   }
@@ -298,6 +337,11 @@ export class CarpetasComponent implements OnInit {
 
       this.aplicarFiltrosBreadcrumb();
 
+      // Cargar documentos asociados a esta carpeta
+      if (carpeta.id) {
+        await this.cargarDocumentosDeCarpeta(carpeta.id);
+      }
+
     } catch (error) {
       console.error('Error al navegar a carpeta:', error);
       this.mostrarError('Error al cargar contenido de la carpeta');
@@ -457,7 +501,7 @@ export class CarpetasComponent implements OnInit {
     // Lógica para determinar si una carpeta debe tener borde rojo
     // Por ejemplo: carpetas de nivel 0 (raíces) o con nombres específicos
     return carpeta.nivel === 0 ||
-           !!(carpeta.nombre && ['Importante', 'Urgente', 'Confidencial'].includes(carpeta.nombre));
+      !!(carpeta.nombre && ['Importante', 'Urgente', 'Confidencial'].includes(carpeta.nombre));
   }
 
   // CRUD Operations
@@ -837,6 +881,8 @@ export class CarpetasComponent implements OnInit {
   // =================================================================
 
   private mostrarExito(mensaje: string): void {
+
+
     // Simulación de notificación exitosa
     console.log('Éxito:', mensaje);
     // Aquí podrías integrar una librería de notificaciones como Toastr o SweetAlert2
@@ -846,5 +892,256 @@ export class CarpetasComponent implements OnInit {
     // Simulación de notificación de error
     console.error('Error:', mensaje);
     // Aquí podrías integrar una librería de notificaciones como Toastr o SweetAlert2
+  }
+
+  // =================================================================
+  // GESTIÓN DE DOCUMENTOS ASOCIADOS
+  // =================================================================
+
+  /** Abrir selector de documentos por tipo */
+  abrirSelectorDocumento(tipo: TipoDocumento): void {
+    if (!this.carpetaActual) {
+      this.mostrarError('Selecciona una carpeta primero');
+      return;
+    }
+
+    this.tipoDocumentoSeleccionado = tipo;
+    this.mostrarModalSelector = true;
+    this.showNuevoDocumentoDropdown = false;
+    this.searchDocumento = '';
+    this.cargarDocumentosDisponibles(tipo);
+  }
+
+  /** Cargar documentos sin carpeta asignada */
+  async cargarDocumentosDisponibles(tipo: TipoDocumento): Promise<void> {
+    this.loadingDocumentosDisponibles = true;
+    try {
+      let docs: any[] = [];
+
+      switch (tipo) {
+        case 'liquidacion':
+          docs = await this.liquidacionService.getLiquidacionesSinCarpeta().toPromise() || [];
+          break;
+        case 'cotizacion':
+          docs = await this.cotizacionService.getCotizacionesSinCarpeta().toPromise() || [];
+          break;
+        case 'recibo':
+          docs = await this.reciboService.getRecibosSinCarpeta().toPromise() || [];
+          break;
+        case 'documento-cobranza':
+          docs = await this.documentoCobranzaService.getDocumentosSinCarpeta().toPromise() || [];
+          break;
+      }
+
+      this.documentosDisponibles = docs;
+      this.documentosFiltrados = [...docs];
+    } catch (error) {
+      console.error('Error al cargar documentos disponibles:', error);
+      this.mostrarError('Error al cargar documentos disponibles');
+    } finally {
+      this.loadingDocumentosDisponibles = false;
+    }
+  }
+
+  /** Filtrar documentos en el modal */
+  filtrarDocumentos(): void {
+    if (!this.searchDocumento.trim()) {
+      this.documentosFiltrados = [...this.documentosDisponibles];
+      return;
+    }
+
+    const search = this.searchDocumento.toLowerCase();
+    this.documentosFiltrados = this.documentosDisponibles.filter(doc => {
+      const numero = this.getDocumentoNumero(doc).toLowerCase();
+      return numero.includes(search);
+    });
+  }
+
+  /** Asociar documento a la carpeta actual */
+  async asociarDocumento(documento: any): Promise<void> {
+    if (!this.carpetaActual || !this.tipoDocumentoSeleccionado) return;
+
+    this.loading = true;
+    try {
+      const docId = this.tipoDocumentoSeleccionado === 'documento-cobranza' ? Number(documento.id) : documento.id;
+      const carpetaId = this.carpetaActual.id!;
+
+      switch (this.tipoDocumentoSeleccionado) {
+        case 'liquidacion':
+          await this.liquidacionService.updateCarpeta(docId, carpetaId).toPromise();
+          break;
+        case 'cotizacion':
+          await this.cotizacionService.updateCarpeta(docId, carpetaId).toPromise();
+          break;
+        case 'recibo':
+          await this.reciboService.updateCarpeta(docId, carpetaId).toPromise();
+          break;
+        case 'documento-cobranza':
+          await this.documentoCobranzaService.updateCarpeta(docId, carpetaId).toPromise();
+          break;
+      }
+
+      this.mostrarExito('Documento asociado exitosamente');
+      this.cerrarModalSelector();
+      await this.cargarDocumentosDeCarpeta(carpetaId);
+    } catch (error) {
+      console.error('Error al asociar documento:', error);
+      this.mostrarError('Error al asociar documento');
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  /** Desasociar documento de la carpeta */
+  async desasociarDocumento(documento: DocumentoAsociado): Promise<void> {
+    if (confirm('¿Desasociar este documento de la carpeta?')) {
+      this.loading = true;
+      try {
+        const docId = documento.tipo === 'documento-cobranza' ? Number(documento.id) : documento.id;
+
+        switch (documento.tipo) {
+          case 'liquidacion':
+            await this.liquidacionService.updateCarpeta(docId, null).toPromise();
+            break;
+          case 'cotizacion':
+            await this.cotizacionService.updateCarpeta(docId, null).toPromise();
+            break;
+          case 'recibo':
+            await this.reciboService.updateCarpeta(docId, null).toPromise();
+            break;
+          case 'documento-cobranza':
+            await this.documentoCobranzaService.updateCarpeta(docId, null).toPromise();
+            break;
+        }
+
+        this.mostrarExito('Documento desasociado exitosamente');
+        if (this.carpetaActual?.id) {
+          await this.cargarDocumentosDeCarpeta(this.carpetaActual.id);
+        }
+      } catch (error) {
+        console.error('Error al desasociar documento:', error);
+        this.mostrarError('Error al desasociar documento');
+      } finally {
+        this.loading = false;
+      }
+    }
+  }
+
+  /** Cargar todos los documentos de la carpeta actual */
+  async cargarDocumentosDeCarpeta(carpetaId: number): Promise<void> {
+    this.loadingDocumentos = true;
+    try {
+      const [liquidaciones, cotizaciones, recibos, documentos] = await Promise.all([
+        this.liquidacionService.getLiquidacionesByCarpeta(carpetaId).toPromise(),
+        this.cotizacionService.getCotizacionesByCarpeta(carpetaId).toPromise(),
+        this.reciboService.getRecibosByCarpeta(carpetaId).toPromise(),
+        this.documentoCobranzaService.getDocumentosByCarpeta(carpetaId).toPromise()
+      ]);
+
+      this.documentosAsociados = [
+        ...this.mapLiquidaciones(liquidaciones || []),
+        ...this.mapCotizaciones(cotizaciones || []),
+        ...this.mapRecibos(recibos || []),
+        ...this.mapDocumentosCobranza(documentos || [])
+      ];
+    } catch (error) {
+      console.error('Error al cargar documentos de carpeta:', error);
+      this.documentosAsociados = [];
+    } finally {
+      this.loadingDocumentos = false;
+    }
+  }
+
+  /** Navegar al detalle del documento */
+  navegarADocumento(documento: DocumentoAsociado): void {
+    const routes: Record<TipoDocumento, string> = {
+      'liquidacion': `/liquidaciones/detalle/${documento.id}`,
+      'cotizacion': `/cotizaciones/detalle/${documento.id}`,
+      'recibo': `/recibos/detalle/${documento.id}`,
+      'documento-cobranza': `/documentos-cobranza/detalle/${documento.id}`
+    };
+
+    this.router.navigate([routes[documento.tipo]]);
+  }
+
+  /** Cerrar modal selector */
+  cerrarModalSelector(): void {
+    this.mostrarModalSelector = false;
+    this.tipoDocumentoSeleccionado = null;
+    this.documentosDisponibles = [];
+    this.documentosFiltrados = [];
+    this.searchDocumento = '';
+  }
+
+  // =================================================================
+  // MAPPERS - Convertir documentos a DocumentoAsociado
+  // =================================================================
+
+  private mapLiquidaciones(liquidaciones: LiquidacionResponse[]): DocumentoAsociado[] {
+    return liquidaciones.map(liq => ({
+      id: liq.id!,
+      tipo: 'liquidacion' as TipoDocumento,
+      numero: liq.numero || `LIQ-${liq.id}`,
+      fecha: liq.fechaCompra || liq.creado || '',
+      descripcion: undefined
+    }));
+  }
+
+  private mapCotizaciones(cotizaciones: CotizacionResponse[]): DocumentoAsociado[] {
+    return cotizaciones.map(cot => ({
+      id: cot.id!,
+      tipo: 'cotizacion' as TipoDocumento,
+      numero: cot.codigoCotizacion || `COT-${cot.id}`,
+      fecha: cot.fechaEmision || '',
+      descripcion: cot.observacion
+    }));
+  }
+
+  private mapRecibos(recibos: ReciboResponseDTO[]): DocumentoAsociado[] {
+    return recibos.map(rec => ({
+      id: rec.id!,
+      tipo: 'recibo' as TipoDocumento,
+      numero: `${rec.serie}-${String(rec.correlativo).padStart(9, '0')}`,
+      fecha: rec.fechaEmision || '',
+      descripcion: rec.observaciones
+    }));
+  }
+
+  private mapDocumentosCobranza(docs: DocumentoCobranzaResponseDTO[]): DocumentoAsociado[] {
+    return docs.map(doc => ({
+      id: doc.id!,
+      tipo: 'documento-cobranza' as TipoDocumento,
+      numero: `${doc.serie}-${String(doc.correlativo).padStart(9, '0')}`,
+      fecha: doc.fechaEmision || '',
+      descripcion: doc.observaciones
+    }));
+  }
+
+  // =================================================================
+  // HELPERS
+  // =================================================================
+
+  getTipoDocumentoLabel(tipo: TipoDocumento | null): string {
+    const labels: Record<TipoDocumento, string> = {
+      'liquidacion': 'Liquidación',
+      'cotizacion': 'Cotización',
+      'recibo': 'Recibo',
+      'documento-cobranza': 'Documento de Cobranza'
+    };
+    return tipo ? labels[tipo] : '';
+  }
+
+  getDocumentoNumero(doc: any): string {
+    if (doc.serie && doc.correlativo) {
+      return `${doc.serie}-${doc.correlativo}`;
+    }
+    if (doc.codigoCotizacion) {
+      return doc.codigoCotizacion;
+    }
+    return doc.id?.toString() || '';
+  }
+
+  getDocumentoFecha(doc: any): string {
+    return doc.fechaEmision || doc.createdAt || '';
   }
 }

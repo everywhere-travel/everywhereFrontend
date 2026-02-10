@@ -23,6 +23,10 @@ export interface ReciboResponseDTO {
   sucursalDescripcion?: string;
   formaPagoDescripcion?: string;
 
+  // Información de carpeta
+  carpetaId?: number;
+  carpetaNombre?: string;
+
   // Información de PersonaJuridica (si fue seleccionada)
   personaJuridicaId?: number;
   personaJuridicaRuc?: string;
