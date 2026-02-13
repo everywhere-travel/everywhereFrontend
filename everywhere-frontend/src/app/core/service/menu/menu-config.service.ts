@@ -32,6 +32,13 @@ export class MenuConfigService {
             moduleKey: 'PERSONAS'
         },
         {
+            id: 'carpetas',
+            title: 'Carpetas',
+            icon: 'fas fa-folder',
+            route: '/carpetas',
+            moduleKey: 'CARPETAS'
+        },
+        {
             id: 'cotizaciones',
             title: 'Cotizaciones',
             icon: 'fas fa-file-invoice',

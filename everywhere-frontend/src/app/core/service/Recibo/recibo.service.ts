@@ -52,4 +52,23 @@ export class ReciboService {
       })
     );
   }
+
+  // Métodos para gestión de carpetas
+  getRecibosByCarpeta(carpetaId: number): Observable<ReciboResponseDTO[]> {
+    return this.http.get<ReciboResponseDTO[]>(`${this.apiUrl}/carpeta/${carpetaId}`);
+  }
+
+  getRecibosSinCarpeta(): Observable<ReciboResponseDTO[]> {
+    return this.http.get<ReciboResponseDTO[]>(`${this.apiUrl}/sin-carpeta`);
+  }
+
+  updateCarpeta(id: number, carpetaId: number | null): Observable<ReciboResponseDTO> {
+    let params = new HttpParams();
+    if (carpetaId !== null) {
+      params = params.set('carpetaId', carpetaId.toString());
+    }
+    return this.http.patch<ReciboResponseDTO>(`${this.apiUrl}/${id}/carpeta`, null, { params }).pipe(
+      tap(() => this.cacheService.invalidateModule('recibos'))
+    );
+  }
 }
