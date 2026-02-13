@@ -99,6 +99,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
 
     this.reciboForm = this.fb.group({
       fechaEmision: [''],
+      fechaVencimiento: [''],
       fileVenta: ['', [Validators.maxLength(100)]],
       observaciones: ['', [Validators.maxLength(500)]],
       detalleDocumentoId: [null], // Puede contener 'doc_123' o 'pj_456' - Opcional
@@ -441,8 +442,13 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
       ? this.recibo.fechaEmision.split('T')[0]
       : '';
 
+    const fechaVencimientoValue = this.recibo.fechaVencimiento
+      ? this.recibo.fechaVencimiento.split('T')[0]
+      : '';
+
     this.reciboForm.patchValue({
       fechaEmision: fechaEmisionValue,
+      fechaVencimiento: fechaVencimientoValue,
       fileVenta: this.recibo.fileVenta || '',
       observaciones: this.recibo.observaciones || '',
       detalleDocumentoId: valorCombinado,
@@ -749,6 +755,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
 
     const updateDTO: ReciboUpdateDTO = {
       fechaEmision: formValue.fechaEmision || undefined,
+      fechaVencimiento: formValue.fechaVencimiento || undefined,
       fileVenta: formValue.fileVenta?.trim() || '',
       observaciones: formValue.observaciones?.trim() || '',
       detalleDocumentoId: detalleDocumentoId,

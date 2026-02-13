@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpContext } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { CotizacionConDetallesResponseDTO, CotizacionRequest, CotizacionResponse, CotizacionPatchRequest } from '../../../shared/models/Cotizacion/cotizacion.model';
 import { environment } from '../../../../environments/environment';
@@ -36,8 +36,8 @@ export class CotizacionService {
   }
 
   getCotizacionConDetalles(id: number): Observable<CotizacionConDetallesResponseDTO> {
-      return this.http.get<CotizacionConDetallesResponseDTO>(`${this.apiUrl}/${id}/con-detalles`);
-    }
+    return this.http.get<CotizacionConDetallesResponseDTO>(`${this.apiUrl}/${id}/con-detalles`);
+  }
 
   updateCotizacion(id: number, cotizacionPatchRequest: CotizacionPatchRequest): Observable<CotizacionResponse> {
     return this.http.patch<CotizacionResponse>(`${this.apiUrl}/${id}`, cotizacionPatchRequest).pipe(
@@ -51,7 +51,7 @@ export class CotizacionService {
     );
   }
 
-  actualizarSeleccionesDetalles(cotizacionId: number, detalleSelecciones: {detalleId: number, seleccionado: boolean}[]): Observable<CotizacionResponse> {
+  actualizarSeleccionesDetalles(cotizacionId: number, detalleSelecciones: { detalleId: number, seleccionado: boolean }[]): Observable<CotizacionResponse> {
     const payload = {
       selecciones: detalleSelecciones
     };
@@ -89,5 +89,24 @@ export class CotizacionService {
         console.error('Error al descargar el documento:', error);
       }
     });
+  }
+
+  // Métodos para gestión de carpetas
+  getCotizacionesByCarpeta(carpetaId: number): Observable<CotizacionResponse[]> {
+    return this.http.get<CotizacionResponse[]>(`${this.apiUrl}/carpeta/${carpetaId}`);
+  }
+
+  getCotizacionesSinCarpeta(): Observable<CotizacionResponse[]> {
+    return this.http.get<CotizacionResponse[]>(`${this.apiUrl}/sin-carpeta`);
+  }
+
+  updateCarpeta(id: number, carpetaId: number | null): Observable<CotizacionResponse> {
+    let params = new HttpParams();
+    if (carpetaId !== null) {
+      params = params.set('carpetaId', carpetaId.toString());
+    }
+    return this.http.patch<CotizacionResponse>(`${this.apiUrl}/${id}/carpeta`, null, { params }).pipe(
+      tap(() => this.cacheService.invalidateModule('cotizaciones'))
+    );
   }
 }

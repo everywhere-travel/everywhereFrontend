@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { LiquidacionConDetallesResponse, LiquidacionRequest,  LiquidacionResponse} from '../../../shared/models/Liquidacion/liquidacion.model';
-import {environment} from '../../../../environments/environment';
+import { LiquidacionConDetallesResponse, LiquidacionRequest, LiquidacionResponse } from '../../../shared/models/Liquidacion/liquidacion.model';
+import { environment } from '../../../../environments/environment';
 import { CacheService } from '../cache.service';
 
 @Injectable({
@@ -13,7 +13,7 @@ export class LiquidacionService {
   private apiUrl = `${environment.baseURL}/liquidaciones`;
   private cacheService = inject(CacheService);
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getAllLiquidaciones(): Observable<LiquidacionResponse[]> {
     return this.http.get<LiquidacionResponse[]>(this.apiUrl);
@@ -47,6 +47,25 @@ export class LiquidacionService {
 
   createLiquidacionConCotizacion(cotizacionId: number, liquidacionRequest: LiquidacionRequest): Observable<LiquidacionResponse> {
     return this.http.post<LiquidacionResponse>(`${this.apiUrl}/cotizacion/${cotizacionId}`, liquidacionRequest).pipe(
+      tap(() => this.cacheService.invalidateModule('liquidaciones'))
+    );
+  }
+
+  // Métodos para gestión de carpetas
+  getLiquidacionesByCarpeta(carpetaId: number): Observable<LiquidacionResponse[]> {
+    return this.http.get<LiquidacionResponse[]>(`${this.apiUrl}/carpeta/${carpetaId}`);
+  }
+
+  getLiquidacionesSinCarpeta(): Observable<LiquidacionResponse[]> {
+    return this.http.get<LiquidacionResponse[]>(`${this.apiUrl}/sin-carpeta`);
+  }
+
+  updateCarpeta(id: number, carpetaId: number | null): Observable<LiquidacionResponse> {
+    let params = new HttpParams();
+    if (carpetaId !== null) {
+      params = params.set('carpetaId', carpetaId.toString());
+    }
+    return this.http.patch<LiquidacionResponse>(`${this.apiUrl}/${id}/carpeta`, null, { params }).pipe(
       tap(() => this.cacheService.invalidateModule('liquidaciones'))
     );
   }

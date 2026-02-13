@@ -60,4 +60,23 @@ export class DocumentoCobranzaService {
       })
     );
   }
+
+  // Métodos para gestión de carpetas
+  getDocumentosByCarpeta(carpetaId: number): Observable<DocumentoCobranzaResponseDTO[]> {
+    return this.http.get<DocumentoCobranzaResponseDTO[]>(`${this.apiUrl}/carpeta/${carpetaId}`);
+  }
+
+  getDocumentosSinCarpeta(): Observable<DocumentoCobranzaResponseDTO[]> {
+    return this.http.get<DocumentoCobranzaResponseDTO[]>(`${this.apiUrl}/sin-carpeta`);
+  }
+
+  updateCarpeta(id: number, carpetaId: number | null): Observable<DocumentoCobranzaResponseDTO> {
+    let params = new HttpParams();
+    if (carpetaId !== null) {
+      params = params.set('carpetaId', carpetaId.toString());
+    }
+    return this.http.patch<DocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}/carpeta`, null, { params }).pipe(
+      tap(() => this.cacheService.invalidateModule('documentos-cobranza'))
+    );
+  }
 }

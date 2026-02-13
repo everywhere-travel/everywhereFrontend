@@ -158,20 +158,26 @@ export class ReciboComponent implements OnInit, OnDestroy {
     actions: [
       {
         icon: 'fa-eye',
-        label: 'Ver Detalles',
-        color: 'blue',
+        label: 'Ver',
+        color: 'green',
         handler: (item) => this.verDetalleDocumento(item)
       },
       {
+        icon: 'fa-edit',
+        label: 'Editar',
+        color: 'blue',
+        handler: (item) => this.editarDocumento(item)
+      },
+      {
         icon: 'fa-file-pdf',
-        label: 'Ver PDF',
-        color: 'red',
+        label: 'Ver',
+        color: 'gray',
         handler: (item) => this.verPDF(item)
       },
       {
         icon: 'fa-download',
-        label: 'Descargar PDF',
-        color: 'green',
+        label: 'Descargar',
+        color: 'purple',
         handler: (item) => this.descargarPDF(item)
       }
     ],
@@ -375,7 +381,9 @@ export class ReciboComponent implements OnInit, OnDestroy {
 
   editarDocumento(recibo: ReciboResponseDTO): void {
     if (recibo?.id) {
-      this.router.navigate(['/recibos/detalle', recibo.id]);
+      this.router.navigate(['/recibos/detalle', recibo.id], {
+        queryParams: { modo: 'editar' }
+      });
     }
   }
 

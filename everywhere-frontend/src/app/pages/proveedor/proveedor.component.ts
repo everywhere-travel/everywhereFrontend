@@ -15,6 +15,8 @@ import { DataTableConfig } from '../../shared/components/data-table/data-table.c
 export interface ProveedorTabla {
   id: number;
   nombre: string;
+  ruc?: number;
+  nombreJuridico?: string;
   creado: string;
   actualizado: string;
 }
@@ -107,6 +109,20 @@ export class ProveedorComponent implements OnInit {
         render: (item) => item.nombre || 'N/A'
       },
       {
+        key: 'ruc',
+        header: 'RUC',
+        icon: 'fa-building-circle-check',
+        sortable: true,
+        render: (item) => item.ruc?.toString() || 'N/A'
+      },
+      {
+        key: 'nombreJuridico',
+        header: 'Razón Social',
+        icon: 'fa-industry',
+        sortable: true,
+        render: (item) => item.nombreJuridico || 'N/A'
+      },
+      {
         key: 'creado',
         header: 'Fecha Creación',
         icon: 'fa-calendar-alt',
@@ -132,6 +148,12 @@ export class ProveedorComponent implements OnInit {
     itemsPerPage: 10,
     pageSizeOptions: [5, 10, 25, 50],
     actions: [
+      {
+        icon: 'fa-eye',
+        label: 'Ver',
+        color: 'green',
+        handler: (item) => this.verDetalles(item.id)
+      },
       {
         icon: 'fa-edit',
         label: 'Editar',
@@ -171,7 +193,7 @@ export class ProveedorComponent implements OnInit {
 
   // =================================================================
   // SIDEBAR FILTERING
-  // ================================================================= 
+  // =================================================================
   onToggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
@@ -210,10 +232,12 @@ export class ProveedorComponent implements OnInit {
     this.proveedoresTabla = this.proveedores.map(proveedor => ({
       id: proveedor.id,
       nombre: proveedor.nombre,
+      ruc: proveedor.ruc,
+      nombreJuridico: proveedor.nombreJuridico,
       creado: proveedor.creado,
       actualizado: proveedor.actualizado
     }));
-    this.totalProveedores = this.proveedoresTabla.length; 
+    this.totalProveedores = this.proveedoresTabla.length;
     this.tableConfig = {
       ...this.tableConfig,
       data: this.proveedoresTabla
@@ -277,17 +301,17 @@ export class ProveedorComponent implements OnInit {
     }
   }
 
-  editarProveedor(proveedor: ProveedorTabla): void {
-    this.editandoProveedor = true;
-    this.proveedorSeleccionado = this.proveedores.find(p => p.id === proveedor.id) || null;
-
-    if (this.proveedorSeleccionado) {
-      this.proveedorForm.patchValue({
-        nombre: this.proveedorSeleccionado.nombre || ''
-      });
-
-      this.mostrarModalCrear = true;
+  editarProveedor(proveedor: ProveedorResponse): void {
+    if (proveedor?.id) {
+      this.router.navigate(['/proveedores/detalle', proveedor.id], {
+        queryParams: { modo: 'editar'}
+      }
+      );
     }
+  }
+
+  verDetalles(id: number): void {
+    this.router.navigate(['/proveedores/detalle', id]);
   }
 
   eliminarProveedor(id: number): void {

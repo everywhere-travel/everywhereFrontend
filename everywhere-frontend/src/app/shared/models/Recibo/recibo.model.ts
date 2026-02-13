@@ -5,6 +5,7 @@ export interface ReciboResponseDTO {
   correlativo?: number;
   fechaEmision?: string; // ISO string format
   observaciones?: string;
+  fechaVencimiento?: string; // ISO string format
   fileVenta?: string;
   moneda?: string;
 
@@ -22,6 +23,10 @@ export interface ReciboResponseDTO {
   tipoDocumentoCliente?: string;
   sucursalDescripcion?: string;
   formaPagoDescripcion?: string;
+
+  // Información de carpeta
+  carpetaId?: number;
+  carpetaNombre?: string;
 
   // Información de PersonaJuridica (si fue seleccionada)
   personaJuridicaId?: number;
@@ -41,6 +46,7 @@ export interface ReciboUpdateDTO {
   fechaEmision?: string; // ISO string format
   fileVenta?: string;
   observaciones?: string;
+  fechaVencimiento?: string; // ISO string format
   detalleDocumentoId?: number;
   sucursalId?: number;
   personaJuridicaId?: number;

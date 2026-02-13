@@ -212,7 +212,8 @@
                       <i class="fas fa-id-card text-blue-600 text-xs"></i>
                     </div>
                     <span class="text-sm font-medium text-gray-900">
-                      {{ recibo.personaJuridicaId ? 'RUC: ' + recibo.personaJuridicaRazonSocial + ' - ' + recibo.personaJuridicaRuc : getDetalleDocumentoDisplay() }}
+                      {{ recibo.personaJuridicaId ? 'RUC: ' + recibo.personaJuridicaRazonSocial + ' - ' +
+                      recibo.personaJuridicaRuc : getDetalleDocumentoDisplay() }}
                     </span>
                   </div>
                   <div *ngIf="modoEdicion" class="relative">
@@ -232,7 +233,8 @@
                         </option>
                       </optgroup>
                     </select>
-                    <div *ngIf="reciboForm.get('detalleDocumentoId')?.invalid && reciboForm.get('detalleDocumentoId')?.touched"
+                    <div
+                      *ngIf="reciboForm.get('detalleDocumentoId')?.invalid && reciboForm.get('detalleDocumentoId')?.touched"
                       class="mt-1 text-xs text-red-500">
                       <i class="fas fa-exclamation-circle mr-1"></i>
                       Debes seleccionar un documento o empresa
@@ -250,7 +252,8 @@
                     <div class="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center">
                       <i class="fas fa-building text-purple-600 text-xs"></i>
                     </div>
-                    <span class="text-sm font-medium text-gray-900">{{ recibo.sucursalDescripcion || 'Sin sucursal' }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ recibo.sucursalDescripcion || 'Sin sucursal'
+                      }}</span>
                   </div>
                   <div *ngIf="modoEdicion" class="relative">
                     <select formControlName="sucursalId"
@@ -278,7 +281,8 @@
                     <div class="w-6 h-6 bg-orange-100 rounded-md flex items-center justify-center">
                       <i class="fas fa-credit-card text-orange-600 text-xs"></i>
                     </div>
-                    <span class="text-sm font-medium text-gray-900">{{ recibo.formaPagoDescripcion || 'Sin forma de pago' }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ recibo.formaPagoDescripcion || 'Sin forma de
+                      pago' }}</span>
                   </div>
                   <div *ngIf="modoEdicion" class="relative">
                     <select formControlName="formaPagoId"
@@ -301,10 +305,30 @@
                     <div class="w-6 h-6 bg-indigo-100 rounded-md flex items-center justify-center">
                       <i class="fas fa-calendar text-indigo-600 text-xs"></i>
                     </div>
-                    <span class="text-sm font-medium text-gray-900">{{ (recibo.fechaEmision | date:'dd/MM/yyyy') || 'Sin fecha' }}</span>
+                    <span class="text-sm font-medium text-gray-900">{{ (recibo.fechaEmision | date:'dd/MM/yyyy') || 'Sin
+                      fecha' }}</span>
                   </div>
                   <div *ngIf="modoEdicion" class="relative">
                     <input type="date" formControlName="fechaEmision"
+                      class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
+                  </div>
+                </div>
+
+                <!-- Fecha de Vencimiento -->
+                <div class="group">
+                  <label class="block text-xs font-medium text-gray-600 mb-3">
+                    Fecha de Vencimiento
+                  </label>
+                  <div *ngIf="!modoEdicion"
+                    class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200/50">
+                    <div class="w-6 h-6 bg-amber-100 rounded-md flex items-center justify-center">
+                      <i class="fas fa-calendar-check text-amber-600 text-xs"></i>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900">{{ (recibo.fechaVencimiento | date:'dd/MM/yyyy') ||
+                      'Sin fecha' }}</span>
+                  </div>
+                  <div *ngIf="modoEdicion" class="relative">
+                    <input type="date" formControlName="fechaVencimiento"
                       class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm">
                   </div>
                 </div>
@@ -334,7 +358,9 @@
                   <div class="w-6 h-6 bg-purple-100 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5">
                     <i class="fas fa-sticky-note text-purple-600 text-xs"></i>
                   </div>
-                  <span class="text-sm font-medium text-gray-900 break-words whitespace-pre-wrap overflow-hidden" style="word-break: break-word; overflow-wrap: break-word;">{{ recibo.observaciones || 'Sin observaciones' }}</span>
+                  <span class="text-sm font-medium text-gray-900 break-words whitespace-pre-wrap overflow-hidden"
+                    style="word-break: break-word; overflow-wrap: break-word;">{{ recibo.observaciones || 'Sin
+                    observaciones' }}</span>
                 </div>
                 <div *ngIf="modoEdicion" class="relative">
                   <textarea formControlName="observaciones" rows="3"
@@ -412,7 +438,8 @@
                         placeholder="Descripción" rows="2"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-y min-h-[60px] max-h-[200px]"></textarea>
                       <div *ngIf="!modoEdicion" class="px-3 py-2 bg-white rounded-lg border border-gray-200/50">
-                        <span class="text-xs font-medium text-gray-900 break-words">{{ detalle.descripcion || 'Sin descripción' }}</span>
+                        <span class="text-xs font-medium text-gray-900 break-words">{{ detalle.descripcion || 'Sin
+                          descripción' }}</span>
                       </div>
                     </div>
                     <!-- Cantidad -->
@@ -434,7 +461,8 @@
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
                       <div *ngIf="!modoEdicion"
                         class="px-3 py-2 bg-white rounded-lg border border-gray-200/50 text-right">
-                        <span class="text-xs font-medium text-gray-900">{{ recibo.moneda || 'S/' }} {{ detalle.precio | number:'1.2-2' }}</span>
+                        <span class="text-xs font-medium text-gray-900">{{ recibo.moneda || 'S/' }} {{ detalle.precio |
+                          number:'1.2-2' }}</span>
                       </div>
                     </div>
                     <!-- Total -->
@@ -550,7 +578,8 @@
                 <div *ngIf="detalles.length === 0 && detallesFijos.length === 0" class="text-center py-12">
                   <i class="fas fa-list text-4xl text-gray-300 mb-4"></i>
                   <h3 class="text-lg font-medium text-gray-900 mb-2">No hay detalles</h3>
-                  <p class="text-gray-500">{{ modoEdicion ? 'Agregue detalles usando el formulario arriba' : 'Este recibo aún no tiene detalles registrados' }}</p>
+                  <p class="text-gray-500">{{ modoEdicion ? 'Agregue detalles usando el formulario arriba' : 'Este
+                    recibo aún no tiene detalles registrados' }}</p>
                 </div>
               </div>
 
@@ -561,7 +590,8 @@
                   <div class="space-y-3">
                     <div class="flex justify-between items-center text-sm">
                       <span class="text-gray-600">Subtotal Detalles:</span>
-                      <span class="font-medium text-gray-900">{{ recibo.moneda || 'S/' }} {{ (calcularTotal()) | number:'1.2-2' }}</span>
+                      <span class="font-medium text-gray-900">{{ recibo.moneda || 'S/' }} {{ (calcularTotal()) |
+                        number:'1.2-2' }}</span>
                     </div>
                     <div class="border-t border-blue-300 pt-3 mt-3">
                       <div class="flex justify-between items-center">
