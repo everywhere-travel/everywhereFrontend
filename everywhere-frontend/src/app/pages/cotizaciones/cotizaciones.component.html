@@ -307,7 +307,8 @@
             {{ editandoCotizacion ? 'Editar Cotización' : 'Nueva Cotización' }}
           </h2>
           <p class="text-white/90 mt-1">
-            {{ editandoCotizacion? 'Modifica los datos de la cotización' : 'Completa la información para crear la cotización'}}
+            {{ editandoCotizacion? 'Modifica los datos de la cotización' : 'Completa la información para crear la
+            cotización'}}
           </p>
         </div>
         <button (click)="cerrarFormulario()" class="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200">
@@ -933,7 +934,8 @@
                           [class]="isGrupoSeleccionado(gi)
                             ? 'bg-everywhere-primary border-everywhere-primary shadow-lg'
                             : 'bg-white border-gray-300 hover:border-everywhere-primary'"
-                          [title]="isGrupoSeleccionado(gi) ? 'Grupo seleccionado - Click para deseleccionar' : 'Click para seleccionar este grupo'" [id]="'grupo-' + gi">
+                          [title]="isGrupoSeleccionado(gi) ? 'Grupo seleccionado - Click para deseleccionar' : 'Click para seleccionar este grupo'"
+                          [id]="'grupo-' + gi">
 
                           <!-- Círculo interno cuando está seleccionado -->
                           <div *ngIf="isGrupoSeleccionado(gi)"
@@ -1708,12 +1710,12 @@
       <!-- Botones de acción -->
       <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
         <div class="flex flex-col sm:flex-row gap-4 justify-end">
-          <button type="button" (click)="cerrarModalVer()"
+          <button type="button" (click)="navegarADetalle(cotizacionCompleta.id)"
             class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-semibold flex items-center justify-center space-x-2">
-            <i class="fas fa-times"></i>
-            <span>Cerrar</span>
+            <i class="fas fa-eye"></i>
+            <span>Ver Detalle</span>
           </button>
-          <button type="button" (click)="editarDesdeModa()"
+          <button type="button" (click)="navegarADetalle(cotizacionCompleta.id, true)"
             class="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold shadow-lg flex items-center justify-center space-x-2">
             <i class="fas fa-edit"></i>
             <span>Editar Cotización</span>

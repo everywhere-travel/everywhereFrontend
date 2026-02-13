@@ -277,13 +277,13 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         icon: 'fa-eye',
         label: 'Ver',
         color: 'green',
-        handler: (item: CotizacionTabla) => this.mostrarModalVerCotizacion(item.cotizacionOriginal),
+        handler: (item: CotizacionTabla) => this.navegarADetalle(item.cotizacionOriginal.id),
       },
       {
         icon: 'fa-edit',
         label: 'Editar',
         color: 'blue',
-        handler: (item: CotizacionTabla) => this.mostrarFormularioEditar(item.cotizacionOriginal),
+        handler: (item: CotizacionTabla) => this.navegarADetalle(item.cotizacionOriginal.id, true),
       },
       {
         icon: 'fa-file-word',
@@ -317,7 +317,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     trackByKey: 'id',
   };
 
-  constructor(private menuConfigService: MenuConfigService) {}
+  constructor(private menuConfigService: MenuConfigService) { }
 
   ngOnInit(): void {
     this.sidebarMenuItems = this.menuConfigService.getMenuItems('/cotizaciones');
@@ -903,6 +903,22 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.mostrarModalVer = false;
     this.cotizacionCompleta = null;
     this.isLoading = false;
+  }
+
+  // Método para navegar al detalle de la cotización
+  navegarADetalle(cotizacionId: number | undefined, modoEdicion: boolean = false): void {
+    if (!cotizacionId) {
+      this.showError('ID de cotización no válido');
+      return;
+    }
+
+    if (modoEdicion) {
+      this.router.navigate(['/cotizaciones/detalle', cotizacionId], {
+        queryParams: { modo: 'editar' }
+      });
+    } else {
+      this.router.navigate(['/cotizaciones/detalle', cotizacionId]);
+    }
   }
 
   // Método para obtener subtotal de una categoría
@@ -2806,7 +2822,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           this.filterCotizaciones();
         }
       })
-      .catch((error) => {})
+      .catch((error) => { })
       .finally(() => {
         this.loadingPersonas.delete(personaId);
       });
