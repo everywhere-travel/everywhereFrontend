@@ -530,7 +530,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     this.liquidacionId = Number(idParam);
     this.loadLiquidacion(this.liquidacionId);
-  } private loadLiquidacion(id: number): void {
+  } 
+  
+  private loadLiquidacion(id: number): void {
     this.isLoading = true;
     this.error = null;
 
