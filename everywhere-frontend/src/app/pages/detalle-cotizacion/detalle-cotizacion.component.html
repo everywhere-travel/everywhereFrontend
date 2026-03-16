@@ -270,7 +270,7 @@
                                         </label>
                                         <div
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm">
-                                            {{ formatDate(cotizacion.fechaSalida) || 'No especifica'}}
+                                            {{ formatDateTime(cotizacion.fechaSalida) || 'No especifica'}}
                                         </div>
                                     </div>
 
@@ -281,7 +281,7 @@
                                         </label>
                                         <div
                                             class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 text-sm">
-                                            {{ formatDate(cotizacion.fechaRegreso) || 'No especifica' }}
+                                            {{ formatDateTime(cotizacion.fechaRegreso) || 'No especifica' }}
                                         </div>
                                     </div>
                                 </div>
@@ -435,8 +435,8 @@
                                         <div class="flex items-center">
                                             <div class="relative w-6 h-6 rounded-full border-2 transition-all duration-200"
                                                 [class]="isGrupoSeleccionadoEnVisualizacion(gi)
-                                ? 'bg-everywhere-primary border-everywhere-primary shadow-lg'
-                                : 'bg-white border-gray-300'"
+                        ? 'bg-everywhere-primary border-everywhere-primary shadow-lg'
+                        : 'bg-white border-gray-300'"
                                                 [title]="isGrupoSeleccionadoEnVisualizacion(gi) ? 'Grupo seleccionado en esta cotización' : 'Grupo no seleccionado'">
 
                                                 <!-- Círculo interno cuando está seleccionado -->
@@ -586,12 +586,22 @@
                     </div>
                 </div>
 
+                <!-- Botones de acción -->
+                <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <div class="flex flex-col sm:flex-row gap-4 justify-end">
+                        <button type="button" (click)="navegarADetalle(cotizacion.id, true)"
+                            class="px-8 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold shadow-lg flex items-center justify-center space-x-2">
+                            <i class="fas fa-edit"></i>
+                            <span>Editar Cotización</span>
+                        </button>
+                    </div>
+                </div>
+
             </div>
-            <!-- END VIEW MODE -->
 
             <!-- EDIT MODE: Full edit functionality -->
             <div *ngIf="modoEdicion" class="p-6">
-                <form [formGroup]="cotizacionForm" (ngSubmit)="guardarCambios()">
+                <form [formGroup]="cotizacionForm" (ngSubmit)="onSubmitCotizacion()">
                     <!-- Información Básica -->
                     <div class="mb-6">
                         <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-200">
@@ -621,7 +631,15 @@
                                         <span class="text-red-500">*</span>
                                     </label>
                                     <input type="datetime-local" formControlName="fechaEmision"
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaEmision')" />
+                                    <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaEmision')"
+                                        class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                                        <p class="text-sm text-red-600 flex items-center">
+                                            <i class="fas fa-exclamation-circle mr-2"></i>
+                                            La fecha de emisión es requerida
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <!-- Fecha de Vencimiento -->
@@ -631,7 +649,15 @@
                                         <span class="text-red-500">*</span>
                                     </label>
                                     <input type="datetime-local" formControlName="fechaVencimiento"
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        [class.border-red-300]="isFieldInvalid(cotizacionForm, 'fechaVencimiento')" />
+                                    <div *ngIf="isFieldInvalid(cotizacionForm, 'fechaVencimiento')"
+                                        class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                                        <p class="text-sm text-red-600 flex items-center">
+                                            <i class="fas fa-exclamation-circle mr-2"></i>
+                                            La fecha de vencimiento es requerida
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <!-- Estado de Cotización -->
@@ -640,12 +666,20 @@
                                         Estado de Cotización
                                     </label>
                                     <select formControlName="estadoCotizacionId"
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        [class.border-red-300]="isFieldInvalid(cotizacionForm, 'estadoCotizacionId')">
                                         <option value="">Seleccionar estado</option>
                                         <option *ngFor="let estado of estadosCotizacion" [value]="estado.id">
                                             {{ estado.descripcion }}
                                         </option>
                                     </select>
+                                    <div *ngIf="isFieldInvalid(cotizacionForm, 'estadoCotizacionId')"
+                                        class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                                        <p class="text-sm text-red-600 flex items-center">
+                                            <i class="fas fa-exclamation-circle mr-2"></i>
+                                            {{ getFieldError(cotizacionForm, 'estadoCotizacionId') }}
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <!-- Sucursal -->
@@ -654,12 +688,20 @@
                                         Sucursal
                                     </label>
                                     <select formControlName="sucursalId"
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        [class.border-red-300]="isFieldInvalid(cotizacionForm, 'sucursalId')">
                                         <option value="">Seleccionar sucursal</option>
                                         <option *ngFor="let sucursal of sucursales" [value]="sucursal.id">
                                             {{ sucursal.descripcion }}
                                         </option>
                                     </select>
+                                    <div *ngIf="isFieldInvalid(cotizacionForm, 'sucursalId')"
+                                        class="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                                        <p class="text-sm text-red-600 flex items-center">
+                                            <i class="fas fa-exclamation-circle mr-2"></i>
+                                            {{ getFieldError(cotizacionForm, 'sucursalId') }}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -680,46 +722,48 @@
                                     <span class="text-red-500 ml-1">*</span>
                                 </h3>
 
-                                <!-- Cliente ya seleccionado/existente -->
-                                <div *ngIf="!cambiandoCliente && cotizacion.personas"
+                                <!-- Cliente ya seleccionado -->
+                                <div *ngIf="clienteSeleccionado"
                                     class="bg-white border-2 border-black-200 rounded-xl p-2">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center space-x-4">
                                             <div
                                                 class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                                <i class="fas fa-user text-green-600 text-lg"></i>
+                                                <lucide-icon name="circle-user-round"
+                                                    class="text-green-600 text-lg"></lucide-icon>
                                             </div>
                                             <div>
                                                 <p class="font-semibold text-gray-900 text-base">
-                                                    {{ getPersonaDisplayName(cotizacion.personas.id) }}
+                                                    {{ getSelectedClienteName() }}
                                                 </p>
                                                 <p class="text-sm text-gray-500 flex items-center mt-1">
                                                     <i class="fas fa-tag mr-1"></i>
-                                                    Cliente
+                                                    {{ getClienteType(clienteSeleccionado) }}
                                                 </p>
                                             </div>
                                         </div>
-                                        <button type="button" (click)="cambiarCliente()"
+                                        <button type="button" (click)="resetClienteSeleccionado()"
                                             class="px-4 py-2 text-everywhere-primary hover:bg-everywhere-primary/10 rounded-lg transition-colors duration-200 flex items-center space-x-2">
-                                            <i class="fas fa-refresh-ccw w-5 h-5"></i>
+                                            <lucide-icon name="refresh-ccw" class="w-5 h-5"></lucide-icon>
                                             <span class="text-sm font-medium">Cambiar</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 <!-- Búsqueda simple de cliente -->
-                                <div *ngIf="cambiandoCliente" class="space-y-3">
+                                <div *ngIf="!clienteSeleccionado" class="space-y-3">
                                     <div class="relative">
                                         <div
                                             class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <i class="fas fa-search text-gray-400"></i>
                                         </div>
-                                        <input type="text" [(ngModel)]="clienteSearch"
-                                            [ngModelOptions]="{standalone: true}" (input)="filtrarClientes()"
+                                        <input type="text" [formControl]="clienteSearchControl"
                                             placeholder="Buscar cliente por nombre, DNI, RUC..."
                                             class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:border-everywhere-primary focus:ring-2 focus:ring-everywhere-primary/20 transition-all duration-200 bg-gray-50 focus:bg-white"
+                                            [class.border-red-300]="isFieldInvalid(cotizacionForm, 'personaId')"
                                             autocomplete="off" />
-                                        <button *ngIf="clienteSearch" (click)="clearClienteSearch()" type="button"
+                                        <button *ngIf="clienteSearchControl.value" (click)="clearClienteSearch()"
+                                            type="button"
                                             class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
                                             <i class="fas fa-times"></i>
                                         </button>
@@ -730,10 +774,19 @@
                                         class="bg-white border border-gray-200 rounded-lg overflow-hidden h-80 flex flex-col">
                                         <!-- Lista deslizable de clientes - SIEMPRE VISIBLE -->
                                         <div class="flex-1 overflow-y-auto">
+                                            <!-- Indicador de búsqueda si está activa -->
+                                            <div *ngIf="buscandoClientes"
+                                                class="flex items-center justify-center py-2 bg-gray-50 border-b">
+                                                <div class="flex items-center space-x-2 text-everywhere-primary">
+                                                    <i class="fas fa-spinner fa-spin text-xs"></i>
+                                                    <span class="text-xs">Buscando...</span>
+                                                </div>
+                                            </div>
+
                                             <!-- Resultados encontrados -->
-                                            <div *ngFor="let persona of personasFiltradas; let i = index"
+                                            <div *ngFor="let persona of personasEncontradas; let i = index"
                                                 class="border-b border-gray-100 last:border-b-0 hover:bg-everywhere-primary/5 cursor-pointer transition-colors"
-                                                (click)="seleccionarClienteDetalle(persona)">
+                                                (click)="seleccionarCliente(persona)">
                                                 <div class="p-3 flex items-center justify-between">
                                                     <div class="flex items-center space-x-3 flex-1 min-w-0">
                                                         <!-- Avatar del cliente -->
@@ -761,7 +814,7 @@
                                             </div>
 
                                             <!-- Estado cuando no hay clientes -->
-                                            <div *ngIf="personasFiltradas.length === 0"
+                                            <div *ngIf="personasEncontradas.length === 0"
                                                 class="text-center py-8 bg-gray-50">
                                                 <div class="flex flex-col items-center space-y-3">
                                                     <div
@@ -774,7 +827,7 @@
                                                         </p>
                                                         <p class="text-xs text-gray-500 mt-1">
                                                             {{
-                                                            clienteSearch
+                                                            clienteSearchControl.value
                                                             ? 'Intenta con otros términos'
                                                             : 'No hay clientes registrados'
                                                             }}
@@ -785,6 +838,14 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div *ngIf="isFieldInvalid(cotizacionForm, 'personaId')"
+                                class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <p class="text-sm text-red-600 flex items-center">
+                                    <i class="fas fa-exclamation-circle mr-2"></i>
+                                    {{ getFieldError(cotizacionForm, 'personaId') }}
+                                </p>
                             </div>
                         </div>
 
@@ -909,34 +970,45 @@
                                     class="w-8 h-8 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center mr-3">
                                     <i class="fas fa-boxes text-white text-sm"></i>
                                 </div>
-                                Productos Fijos
+                                Productos
                             </h3>
 
-                            <!-- Tabla de productos fijos -->
+                            <!-- Formulario para agregar producto -->
                             <div class="bg-white rounded-xl p-6 border border-purple-100">
-                                <!-- Header row -->
-                                <div class="grid gap-3 items-end mb-4"
-                                    style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
-                                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                                <div>
+                                    <div class="grid gap-3 items-end"
+                                        style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Precio
+                                                Unitario</label>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Comisión</label>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Total</label>
+                                        </div>
+                                        <div class="text-center">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Acciones</label>
+                                        </div>
                                     </div>
-                                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-                                    </div>
-                                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-                                    </div>
-                                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-                                    </div>
-                                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Precio
-                                            Unit.</label></div>
-                                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Comisión</label>
-                                    </div>
-                                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Total</label></div>
-                                    <div class="text-center"><label
-                                            class="block text-sm font-medium text-gray-700 mb-1">Acciones</label></div>
                                 </div>
-
-                                <!-- Existing products -->
-                                <div *ngFor="let detalle of detallesFijos; let i = index" class="mb-2">
-                                    <div class="grid gap-3 items-center"
+                                <div *ngFor="let detalle of detallesFijos; let i = index">
+                                    <div class="grid gap-3 items-end"
                                         style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                                         <!-- Proveedor -->
                                         <div>
@@ -950,6 +1022,7 @@
                                                 </option>
                                             </select>
                                         </div>
+
                                         <!-- Producto -->
                                         <div>
                                             <select [value]="detalle.producto?.id || ''"
@@ -962,6 +1035,7 @@
                                                 </option>
                                             </select>
                                         </div>
+
                                         <!-- Cantidad -->
                                         <div>
                                             <input type="number" [value]="detalle.cantidad"
@@ -969,20 +1043,23 @@
                                                 min="1"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
                                         </div>
+
                                         <!-- Descripción -->
                                         <div>
                                             <textarea [value]="detalle.descripcion"
                                                 (input)="onProductoChange(i, 'descripcion', $any($event.target).value)"
                                                 placeholder="Descripción" rows="1"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-y max-h-[200px]"></textarea>
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-y max-h-[200px] leading-tight align-middle"></textarea>
                                         </div>
-                                        <!-- Precio -->
+
+                                        <!-- Precio Unitario -->
                                         <div>
                                             <input type="number" [value]="detalle.precioHistorico"
                                                 (input)="onProductoChange(i, 'precioHistorico', $any($event.target).value)"
                                                 step="0.01" min="0"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
                                         </div>
+
                                         <!-- Comisión -->
                                         <div>
                                             <input type="number" [value]="detalle.comision"
@@ -990,27 +1067,30 @@
                                                 step="0.01" min="0"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
                                         </div>
+
                                         <!-- Total -->
                                         <div>
                                             <div
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-purple-600 bg-purple-50 text-center">
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm font-semibold text-purple-600 bg-purple-50 text-center">
                                                 ${{ detalle.total | number : '1.2-2' }}
                                             </div>
                                         </div>
+
                                         <!-- Acciones -->
                                         <div class="text-center">
                                             <button type="button" (click)="eliminarDetalleFijo(i)"
-                                                class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors">
+                                                class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors duration-200">
                                                 <i class="fas fa-trash text-xs"></i>
                                             </button>
                                         </div>
                                     </div>
+                                    <div class="my-2"></div>
                                 </div>
-
-                                <!-- Form to add new product -->
-                                <div [formGroup]="detalleForm" class="mt-4">
+                                <div [formGroup]="detalleForm">
+                                    <!-- Una sola fila con todos los campos -->
                                     <div class="grid gap-3 items-end"
                                         style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                        <!-- Proveedor -->
                                         <div>
                                             <select formControlName="proveedorId"
                                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
@@ -1020,46 +1100,432 @@
                                                 </option>
                                             </select>
                                         </div>
+
+                                        <!-- Producto -->
                                         <div>
                                             <select formControlName="productoId"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                                                [class.border-red-300]="isFieldInvalid(detalleForm, 'productoId')">
                                                 <option value="">Seleccionar</option>
                                                 <option *ngFor="let producto of productos" [value]="producto.id">
                                                     {{ producto.tipo }}
                                                 </option>
                                             </select>
                                         </div>
+
+                                        <!-- Cantidad -->
                                         <div>
                                             <input type="number" formControlName="cantidad" min="1" placeholder="1"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                                                [class.border-red-300]="isFieldInvalid(detalleForm, 'cantidad')" />
                                         </div>
+
+                                        <!-- Descripción -->
                                         <div>
                                             <textarea formControlName="descripcion"
                                                 placeholder="Descripción del producto" rows="1"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-y max-h-[200px]"></textarea>
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-y max-h-[200px] overflow-hidden leading-tight align-middle"></textarea>
                                         </div>
+
+                                        <!-- Precio Unitario -->
                                         <div>
                                             <input type="number" formControlName="precioHistorico" step="0.01" min="0"
                                                 placeholder="0.00"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                                                [class.border-red-300]="isFieldInvalid(detalleForm, 'precioHistorico')" />
                                         </div>
+
+                                        <!-- Comision -->
                                         <div>
                                             <input type="number" formControlName="comision" step="0.01" min="0"
                                                 placeholder="0.00"
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" />
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                                                [class.border-red-300]="isFieldInvalid(detalleForm, 'comision')" />
                                         </div>
+
+                                        <!-- Total -->
                                         <div>
-                                            <div
-                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-medium text-gray-700 text-center">
-                                                $0.00
-                                            </div>
+                                            <input type="text"
+                                                [value]="calcularTotalDetalle() | currency : 'USD' : 'symbol' : '1.2-2'"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-medium text-gray-700 text-center"
+                                                readonly />
                                         </div>
+
+                                        <!-- Botón Agregar -->
                                         <div class="text-center">
                                             <button type="button" (click)="agregarDetalleFijo()"
-                                                class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-lg hover:from-purple-600 hover:to-violet-700 transition-all">
+                                                class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-600 text-white rounded-lg hover:from-purple-600 hover:to-violet-700 transition-all duration-200 text-sm font-medium">
                                                 <i class="fas fa-plus"></i>
                                             </button>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+                    </div>
+
+                    <!-- Total Productos Fijos -->
+                    <div *ngIf="detallesFijos.length > 0" class="mt-2 mb-6 flex justify-end">
+                        <div class="bg-everywhere-primary/10 px-4 py-2 rounded-lg">
+                            <span class="text-sm font-medium text-gray-700">
+                                Tarifa Productos:
+                                <span class="font-bold text-everywhere-primary">
+                                    ${{ calcularTotalFijos() | number : '1.2-2' }} USD
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Grupos de Hoteles -->
+                    <div class="mb-4">
+                        <div
+                            class="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-4 border border-orange-200">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-r from-orange-500 to-amber-600 rounded-xl flex items-center justify-center mr-3">
+                                    <i class="fas fa-hotel text-white text-sm"></i>
+                                </div>
+                                Grupos de Hoteles
+                            </h3>
+
+                            <!-- Crear nuevo grupo -->
+                            <div class="bg-white rounded-xl p-4 mb-4 border border-orange-100">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-md font-semibold text-gray-800 flex items-center">
+                                        <div
+                                            class="w-6 h-6 bg-orange-100 rounded-lg flex items-center justify-center mr-2">
+                                            <i class="fas fa-plus text-orange-600 text-xs"></i>
+                                        </div>
+                                        Crear Nuevo Grupo
+                                    </h4>
+
+                                    <!-- Botón para gestionar grupos existentes -->
+                                    <button type="button" (click)="mostrarVistaGestionGrupos()"
+                                        class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all duration-200 text-sm font-medium flex items-center space-x-2">
+                                        <i class="fas fa-cogs"></i>
+                                        <span>Gestionar Categorías</span>
+                                    </button>
+                                </div>
+                                <div>
+                                    <div [formGroup]="grupoHotelForm" class="flex gap-3 items-end">
+                                        <div class="flex-1">
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+                                            <select formControlName="categoria"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm">
+                                                <option value="">Seleccionar categoría</option>
+                                                <option *ngFor="let categoria of getCategoriasDisponibles()"
+                                                    [value]="categoria.id">
+                                                    {{ categoria.nombre }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="flex-shrink-0">
+                                            <button type="button" (click)="crearGrupoHotel()"
+                                                class="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-lg hover:from-orange-600 hover:to-amber-700 transition-all duration-200 text-sm font-medium flex items-center space-x-2">
+                                                <i class="fas fa-plus text-xs"></i>
+                                                <span>Crear Grupo</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div *ngFor="let grupo of gruposHoteles; let gi = index" class="mb-4 mt-4">
+                                    <div class="border border-gray-200 rounded-xl overflow-hidden">
+                                        <div class="bg-gray-50 px-3 py-2 flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <!-- Botón de selección única del grupo -->
+                                                <div class="flex items-center">
+                                                    <button type="button" (click)="seleccionarGrupoUnico(gi)"
+                                                        class="relative w-6 h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-everywhere-primary focus:ring-offset-1"
+                                                        [class]="isGrupoSeleccionado(gi)
+                            ? 'bg-everywhere-primary border-everywhere-primary shadow-lg'
+                            : 'bg-white border-gray-300 hover:border-everywhere-primary'"
+                                                        [title]="isGrupoSeleccionado(gi) ? 'Grupo seleccionado - Click para deseleccionar' : 'Click para seleccionar este grupo'"
+                                                        [id]="'grupo-' + gi">
+
+                                                        <!-- Círculo interno cuando está seleccionado -->
+                                                        <div *ngIf="isGrupoSeleccionado(gi)"
+                                                            class="absolute inset-1 bg-white rounded-full animate-in zoom-in duration-200">
+                                                        </div>
+
+                                                        <!-- Icono de check cuando está seleccionado -->
+                                                        <i *ngIf="isGrupoSeleccionado(gi)"
+                                                            class="fas fa-check absolute inset-0 flex items-center justify-center text-everywhere-primary text-xs">
+                                                        </i>
+                                                    </button>
+                                                    <label [for]="'grupo-' + gi" class="sr-only">Seleccionar grupo
+                                                        único</label>
+                                                </div>
+
+                                                <h4 class="font-medium text-gray-900">Grupo {{ grupo.categoria.nombre }}
+                                                </h4>
+
+                                                <!-- Indicador de selección -->
+                                                <span *ngIf="isGrupoSeleccionado(gi)"
+                                                    class="text-xs bg-green-500 text-white px-3 py-1 rounded-full font-medium shadow-sm animate-in slide-in-from-right duration-300">
+                                                    <i class="fas fa-check-circle mr-1"></i>
+                                                    Grupo Seleccionado
+                                                </span>
+                                            </div>
+                                            <div class="flex items-center gap-4">
+                                                <span class="text-sm font-medium text-everywhere-primary">
+                                                    Total: ${{ grupo.total | number : '1.2-2' }} USD
+                                                </span>
+                                                <button type="button" (click)="eliminarGrupoHotel(gi)"
+                                                    class="text-red-600 hover:text-red-900">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Productos del grupo con diseño moderno -->
+                                        <div class="p-3 bg-white border-t border-gray-200">
+                                            <div class="bg-white rounded-xl border border-gray-200">
+                                                <!-- Header row -->
+                                                <div class="grid gap-3 items-end p-3 border-b border-gray-100 bg-gray-50"
+                                                    style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                                    <div>
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 mb-1">Precio
+                                                            Unitario</label>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 mb-1">Comisión</label>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 mb-1">Total</label>
+                                                    </div>
+                                                    <div class="text-center">
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 mb-1">Acciones</label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Existing products as editable rows -->
+                                                <div *ngFor="let detalle of grupo.detalles; let di = index"
+                                                    class="p-3 last:border-b-0">
+                                                    <div class="grid gap-3 items-center"
+                                                        style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                                        <!-- Proveedor -->
+                                                        <div>
+                                                            <select [value]="detalle.proveedor?.id || ''"
+                                                                (change)="onGrupoProductoChange(gi, di, 'proveedorId', $any($event.target).value)"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm">
+                                                                <option value="">Sin proveedor</option>
+                                                                <option *ngFor="let proveedor of proveedores"
+                                                                    [value]="proveedor.id"
+                                                                    [selected]="proveedor.id === detalle.proveedor?.id">
+                                                                    {{ proveedor.nombre }}
+                                                                </option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Tipo -->
+                                                        <div>
+                                                            <select [value]="detalle.producto?.id || ''"
+                                                                (change)="onGrupoProductoChange(gi, di, 'productoId', $any($event.target).value)"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm">
+                                                                <option value="">Seleccionar</option>
+                                                                <option *ngFor="let producto of productos"
+                                                                    [value]="producto.id"
+                                                                    [selected]="producto.id === detalle.producto?.id">
+                                                                    {{ producto.tipo }}
+                                                                </option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Cantidad -->
+                                                        <div>
+                                                            <input type="number" [value]="detalle.cantidad"
+                                                                (input)="onGrupoProductoChange(gi, di, 'cantidad', $any($event.target).value); recalcularTotalDetalleGrupo(gi, di)"
+                                                                min="1"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
+                                                        </div>
+
+                                                        <!-- Descripción -->
+                                                        <div>
+                                                            <input type="text" [value]="detalle.descripcion"
+                                                                (input)="onGrupoProductoChange(gi, di, 'descripcion', $any($event.target).value)"
+                                                                placeholder="Descripción"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
+                                                        </div>
+
+                                                        <!-- Precio Unitario -->
+                                                        <div>
+                                                            <input type="number" [value]="detalle.precioHistorico"
+                                                                (input)="onGrupoProductoChange(gi, di, 'precioHistorico', $any($event.target).value); recalcularTotalDetalleGrupo(gi, di)"
+                                                                step="0.01" min="0"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
+                                                        </div>
+
+                                                        <!-- Comisión -->
+                                                        <div>
+                                                            <input type="number" [value]="detalle.comision"
+                                                                (input)="onGrupoProductoChange(gi, di, 'comision', $any($event.target).value); recalcularTotalDetalleGrupo(gi, di)"
+                                                                step="0.01" min="0"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
+                                                        </div>
+
+                                                        <!-- Total -->
+                                                        <div>
+                                                            <div
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-orange-600 bg-orange-50 text-center">
+                                                                ${{ detalle.total | number : '1.2-2' }}
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Acciones -->
+                                                        <div class="text-center">
+                                                            <button type="button"
+                                                                (click)="eliminarDetalleDeGrupo(gi, di)"
+                                                                class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors duration-200">
+                                                                <i class="fas fa-trash text-xs"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- New product form row -->
+                                                <div class="p-3 bg-gray-50/50" [formGroup]="detalleGrupoForm">
+                                                    <div class="grid gap-3 items-end"
+                                                        style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                                        <!-- Proveedor -->
+                                                        <div>
+                                                            <select formControlName="proveedorId"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm">
+                                                                <option value="">Opcional</option>
+                                                                <option *ngFor="let proveedor of proveedores"
+                                                                    [value]="proveedor.id">
+                                                                    {{ proveedor.nombre }}
+                                                                </option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Producto -->
+                                                        <div>
+                                                            <select formControlName="productoId"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                                                                [class.border-red-300]="isFieldInvalid(detalleGrupoForm, 'productoId')">
+                                                                <option value="">Seleccionar</option>
+                                                                <option *ngFor="let producto of productos"
+                                                                    [value]="producto.id">
+                                                                    {{ producto.tipo }}
+                                                                </option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Cantidad -->
+                                                        <div>
+                                                            <input type="number" formControlName="cantidad" min="1"
+                                                                placeholder="1"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                                                                [class.border-red-300]="isFieldInvalid(detalleGrupoForm, 'cantidad')" />
+                                                        </div>
+
+                                                        <!-- Descripción -->
+                                                        <div>
+                                                            <input type="text" formControlName="descripcion"
+                                                                placeholder="Descripción"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
+                                                        </div>
+
+                                                        <!-- Precio Unitario -->
+                                                        <div>
+                                                            <input type="number" formControlName="precioHistorico"
+                                                                step="0.01" min="0" placeholder="0.00"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+                                                                [class.border-red-300]="isFieldInvalid(detalleGrupoForm, 'precioHistorico')" />
+                                                        </div>
+
+                                                        <!-- Comisión -->
+                                                        <div>
+                                                            <input type="number" formControlName="comision" step="0.01"
+                                                                min="0" placeholder="0.00"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm" />
+                                                        </div>
+
+                                                        <!-- Total -->
+                                                        <div>
+                                                            <input type="text"
+                                                                [value]="calcularTotalDetalleGrupo() | currency : 'USD' : 'symbol' : '1.2-2'"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-medium text-gray-700 text-center"
+                                                                readonly />
+                                                        </div>
+
+                                                        <!-- Botón Agregar -->
+                                                        <div class="text-center">
+                                                            <button type="button" (click)="agregarDetalleAGrupo(gi)"
+                                                                class="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-lg hover:from-orange-600 hover:to-amber-700 transition-all duration-200 text-sm font-medium">
+                                                                <i class="fas fa-plus"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumen de Cotización -->
+                    <div class="mb-6">
+                        <div
+                            class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-200">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center mr-3">
+                                    <i class="fas fa-calculator text-white text-sm"></i>
+                                </div>
+                                Resumen de Cotización
+                            </h3>
+
+                            <div class="bg-white rounded-xl p-6 border border-emerald-100">
+                                <div class="space-y-4">
+                                    <!-- Tarifa Productos Fijos -->
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                        <span class="text-gray-700 font-medium">Tarifa Productos:</span>
+                                        <span class="font-semibold text-gray-900">${{ calcularTotalFijos() | number : '1.2-2' }} USD</span>
+                                    </div>
+
+                                    <!-- Tarifas por Grupo -->
+                                    <div *ngFor="let grupo of gruposHoteles"
+                                        class="flex justify-between items-center py-2 border-b border-gray-100">
+                                        <span class="text-gray-700 font-medium">Tarifa Grupo {{ grupo.categoria.nombre
+                                            }}:</span>
+                                        <span class="font-semibold text-gray-900">${{ grupo.total | number : '1.2-2' }} USD</span>
+                                    </div>
+
+                                    <!-- Cotización más económica -->
+                                    <div
+                                        class="flex justify-between items-center py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg px-4 border border-emerald-200">
+                                        <span class="font-semibold text-gray-900 text-lg">Cotización más
+                                            económica:</span>
+                                        <span class="font-bold text-emerald-600 text-2xl">
+                                            ${{ calcularCotizacionEconomica() | number : '1.2-2' }} USD
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -1085,23 +1551,216 @@
                     <!-- Botones de acción -->
                     <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
                         <div class="flex flex-col sm:flex-row gap-4 justify-end">
-                            <button type="button" (click)="cancelarEdicion()"
-                                class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-semibold flex items-center justify-center space-x-2">
-                                <i class="fas fa-times"></i>
-                                <span>Cancelar</span>
-                            </button>
-                            <button type="submit"
-                                class="px-8 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white rounded-xl hover:from-[#BF4968] hover:to-[#A04057] transition-all duration-200 font-semibold shadow-lg flex items-center justify-center space-x-2">
-                                <i class="fas fa-save"></i>
-                                <span>Guardar Cambios</span>
+                            <button type="submit" [disabled]="cotizacionForm.invalid || isLoading"
+                                class="px-8 py-3 bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white rounded-xl hover:from-[#BF4968] hover:to-[#A04057] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-lg flex items-center justify-center space-x-2">
+                                <span *ngIf="!isLoading" class="flex items-center space-x-2">
+                                    <i class="fas fa-save"></i>
+                                    <span>{{ editandoCotizacion ? 'Actualizar' : 'Crear' }} Cotización</span>
+                                </span>
+                                <span *ngIf="isLoading" class="flex items-center space-x-2">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Guardando...</span>
+                                </span>
                             </button>
                         </div>
                     </div>
                 </form>
             </div>
-            <!-- END EDIT MODE -->
+        </div>
+    </div>
+</div>
 
+<!-- Modal para Gestión de Categorías -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+    *ngIf="mostrarGestionGrupos" (click)="cerrarVistaGestionGrupos()">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        (click)="$event.stopPropagation()">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-4 rounded-t-2xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-tags mr-2"></i>
+                        Gestión de Categorías
+                    </h2>
+                    <p class="text-white/90 text-sm mt-1">
+                        Administra las categorías disponibles para los grupos de hoteles
+                    </p>
+                </div>
+                <button (click)="cerrarVistaGestionGrupos()"
+                    class="p-2 hover:bg-white/20 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+        </div>
 
+        <!-- Modal Body -->
+        <div class="p-4">
+            <!-- Formulario para crear nueva categoría -->
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-4 border border-green-200">
+                <h3 class="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                    <i class="fas fa-plus-circle text-green-600 mr-2"></i>
+                    Crear Nueva Categoría
+                </h3>
+
+                <div class="space-y-3" [formGroup]="nuevaCategoriaForm">
+                    <div class="grid grid-cols-1 gap-4">
+                        <!-- Nombre de la categoría -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Nombre de la Categoría *
+                            </label>
+                            <input type="text" formControlName="nombre" placeholder="Ej: Económico, VIP, Premium..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                [class.border-red-500]="nuevaCategoriaForm.get('nombre')?.invalid && nuevaCategoriaForm.get('nombre')?.touched" />
+                            <div *ngIf=" nuevaCategoriaForm.get('nombre')?.invalid && nuevaCategoriaForm.get('nombre')?.touched"
+                                class="text-red-500 text-sm mt-1">
+                                El nombre de la categoría es requerido (mínimo 3 caracteres)
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Descripción opcional -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Descripción (Opcional)
+                        </label>
+                        <textarea formControlName="descripcion" placeholder="Describe esta categoría de hoteles..."
+                            rows="1"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none">
+            </textarea>
+                    </div>
+
+                    <!-- Botones del formulario -->
+                    <div class="flex gap-2">
+                        <button type="button" (click)="crearNuevaCategoria()"
+                            [disabled]="nuevaCategoriaForm.invalid || creandoCategoria"
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center text-sm">
+                            <i *ngIf="!creandoCategoria" class="fas fa-plus mr-1 text-xs"></i>
+                            <i *ngIf="creandoCategoria" class="fas fa-spinner fa-spin mr-1 text-xs"></i>
+                            {{ creandoCategoria ? 'Creando...' : 'Crear Categoría' }}
+                        </button>
+                        <button type="button" (click)="cleanFormNewCategory()"
+                            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors duration-200 flex items-center text-sm">
+                            <i class="fas fa-eraser mr-1 text-xs"></i>
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado vacío -->
+            <div *ngIf="categorias.length === 0" class="text-center py-8">
+                <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-tags text-blue-600 text-lg"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">No hay categorías creadas</h3>
+                <p class="text-gray-600 text-sm mb-4">Crea categorías para organizar los grupos de hoteles</p>
+            </div>
+
+            <!-- Tabla de categorías -->
+            <div *ngIf="categorias.length > 0" class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                    <h3 class="text-md font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-list text-gray-600 mr-2"></i>
+                        Lista de Categorías ({{ categorias.length }})
+                    </h3>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    ID
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Nombre
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Creación
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Última Act.
+                                </th>
+                                <th
+                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Acciones
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr *ngFor="let categoria of categorias; let i = index"
+                                class="hover:bg-gray-50 transition-colors duration-200"
+                                [class.bg-yellow-50]="categoriaEditandose === i">
+                                <!-- ID -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ categoria.id }}
+                                </td>
+
+                                <!-- Nombre (editable) -->
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div *ngIf="categoriaEditandose !== i">
+                                        <div class="text-sm font-medium text-gray-900">{{ categoria.nombre }}</div>
+                                    </div>
+                                    <div *ngIf="categoriaEditandose === i">
+                                        <input type="text" [(ngModel)]="categoria.nombre"
+                                            class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                                            placeholder="Nombre de la categoría" />
+                                    </div>
+                                </td>
+
+                                <!-- Fecha de creación -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                    {{ formatearFecha(categoria.creado) }}
+                                </td>
+
+                                <!-- Fecha de actualización -->
+                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                    {{ formatearFecha(categoria.actualizado) }}
+                                </td>
+
+                                <!-- Acciones -->
+                                <td class="px-4 py-3 whitespace-nowrap text-center">
+                                    <div class="flex items-center justify-center space-x-1">
+                                        <!-- Botones cuando NO está editando -->
+                                        <div *ngIf="categoriaEditandose !== i" class="flex space-x-1">
+                                            <button (click)="editarCategoria(i)"
+                                                class="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors duration-200"
+                                                title="Editar categoría">
+                                                <i class="fas fa-edit text-xs"></i>
+                                            </button>
+                                            <button (click)="confirmarEliminarCategoria(i)"
+                                                class="p-1 text-red-600 hover:bg-red-50 rounded transition-colors duration-200"
+                                                title="Eliminar categoría">
+                                                <i class="fas fa-trash text-xs"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Botones cuando SÍ está editando -->
+                                        <div *ngIf="categoriaEditandose === i" class="flex space-x-1">
+                                            <button (click)="guardarEdicionCategoria(i)"
+                                                class="p-1 text-green-600 hover:bg-green-50 rounded transition-colors duration-200"
+                                                title="Guardar cambios">
+                                                <i class="fas fa-check text-xs"></i>
+                                            </button>
+                                            <button (click)="cancelarEdicionCategoria(i)"
+                                                class="p-1 text-gray-600 hover:bg-gray-50 rounded transition-colors duration-200"
+                                                title="Cancelar edición">
+                                                <i class="fas fa-times text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>

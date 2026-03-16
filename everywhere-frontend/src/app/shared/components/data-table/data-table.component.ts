@@ -98,19 +98,14 @@ export class DataTableComponent<T = any> implements OnInit, OnChanges, DoCheck {
 
     // ===== FILTERING AND SORTING =====
     private applyFiltersAndPagination(): void {
-        console.log('🔍 applyFiltersAndPagination called');
         if (!this.config || !this.config.data) {
-            console.log('❌ No config or data');
             this.filteredData = [];
             this.paginatedData = [];
             return;
         }
 
-        console.log('📊 Config data length:', this.config.data.length);
-
         // 1. Filter
         this.filteredData = this.filterData();
-        console.log('📋 Filtered data length:', this.filteredData.length);
 
         // 2. Sort
         if (this.state.sortColumn && this.state.sortDirection) {
@@ -123,8 +118,6 @@ export class DataTableComponent<T = any> implements OnInit, OnChanges, DoCheck {
         } else {
             this.paginatedData = this.filteredData;
         }
-
-        console.log('📄 Paginated data length:', this.paginatedData.length);
 
         // Update selection state
         this.updateSelectionState();
