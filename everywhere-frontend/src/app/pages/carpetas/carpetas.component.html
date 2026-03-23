@@ -30,7 +30,7 @@
             </div>
           </div>
 
-          <!-- View Mode Selector -->
+          <!-- View Mode Selector
           <div class="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
             <button (click)="cambiarModoVista('breadcrumb')"
               class="px-4 py-2 text-sm font-medium rounded-md transition-all duration-200"
@@ -48,7 +48,7 @@
               title="Mostrar todas las carpetas como árbol">
               <i class="fas fa-sitemap mr-2"></i>Vista Árbol
             </button>
-          </div>
+          </div>-->
 
           <!-- Action Buttons -->
           <div class="flex items-center gap-2">
@@ -110,9 +110,7 @@
 
           <!-- Breadcrumb Bar -->
           <div class="bg-white border-b border-gray-200 px-6 py-3">
-            <div class="flex items-center gap-2 text-sm">
-              <i class="fas fa-map-marker-alt text-gray-400"></i>
-
+            <div class="flex items-center gap-2 text-sm"> 
               <!-- Navigation Controls -->
               <div class="flex items-center gap-2 mr-4">
                 <button (click)="navegarAtrasDual()" [disabled]="breadcrumbPath.length <= 1"
