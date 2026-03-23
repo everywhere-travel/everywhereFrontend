@@ -962,11 +962,12 @@ export class CarpetasComponent implements OnInit {
     if (!this.carpetaActual || !this.tipoDocumentoSeleccionado) return;
 
     this.loading = true;
+    const tipo = this.tipoDocumentoSeleccionado;
     try {
-      const docId = this.tipoDocumentoSeleccionado === 'documento-cobranza' ? Number(documento.id) : documento.id;
+      const docId = tipo === 'documento-cobranza' ? Number(documento.id) : documento.id;
       const carpetaId = this.carpetaActual.id!;
 
-      switch (this.tipoDocumentoSeleccionado) {
+      switch (tipo) {
         case 'liquidacion':
           await this.liquidacionService.updateCarpeta(docId, carpetaId).toPromise();
           break;
@@ -984,6 +985,10 @@ export class CarpetasComponent implements OnInit {
       this.mostrarExito('Documento asociado exitosamente');
       this.cerrarModalSelector();
       await this.cargarDocumentosDeCarpeta(carpetaId);
+
+      if (tipo === 'cotizacion') {
+        this.router.navigate([`/cotizaciones/detalle/${docId}`]);
+      }
     } catch (error) {
       console.error('Error al asociar documento:', error);
       this.mostrarError('Error al asociar documento');
