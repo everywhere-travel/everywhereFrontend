@@ -530,8 +530,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     this.liquidacionId = Number(idParam);
     this.loadLiquidacion(this.liquidacionId);
-  } 
-  
+  }
+
   private loadLiquidacion(id: number): void {
     this.isLoading = true;
     this.error = null;
@@ -541,30 +541,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     const subscription = this.liquidacionService.getLiquidacionConDetalles(id)
       .pipe(
-        tap(liquidacionConDetalles => {
-          if (!liquidacionConDetalles) {
-            throw new Error('Liquidación no encontrada');
-          }
-
-          // Si no tiene cotización, intentar cargar desde getLiquidacionById
-          if (!liquidacionConDetalles.cotizacion?.personas?.id) {
-            // Hacer una segunda llamada para obtener la información básica con cotización
-            this.liquidacionService.getLiquidacionById(id).subscribe({
-              next: (liquidacionBasica) => {
-                if (liquidacionBasica.cotizacion?.personas?.id) {
-                  // Combinar los datos: usar detalles de ConDetalles pero cotización de getId
-                  this.liquidacion = {
-                    ...liquidacionConDetalles,
-                    cotizacion: liquidacionBasica.cotizacion
-                  };
-                  this.loadClienteInfo(liquidacionBasica.cotizacion.personas.id);
-                }
-              },
-              error: () => {
-              }
-            });
-          }
-        }),
         catchError(error => {
           console.error('Error al cargar liquidación:', error);
           this.error = 'Error al cargar la liquidación. Por favor, intente nuevamente.';
@@ -576,25 +552,48 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe(liquidacion => {
-        if (liquidacion) {
-          this.liquidacion = liquidacion;
+        if (!liquidacion) return;
+
+        const applyLiquidacion = (liq: LiquidacionConDetallesResponse) => {
+          this.liquidacion = liq;
 
           // Inicializar el formulario (ya incluye carga de estado temporal)
           this.initializeForm();
 
           // Cargar observaciones de la liquidación
-          this.cargarObservacionesLiquidacion(liquidacion.id);
+          this.cargarObservacionesLiquidacion(liq.id);
 
           // Cargar pagos PAX de la liquidación
-          this.loadPagosPax(liquidacion.id);
+          this.loadPagosPax(liq.id);
 
           // Extraer viajeros únicos de los detalles
           this.extraerViajerosDeDetalles();
 
           // Cargar información del cliente si existe cotización
-          if (liquidacion?.cotizacion?.personas?.id) {
-            this.loadClienteInfo(liquidacion.cotizacion.personas.id);
+          if (liq.cotizacion?.personas?.id) {
+            this.loadClienteInfo(liq.cotizacion.personas.id);
           }
+        };
+
+        // Si la cotización/persona no viene en ConDetalles, traerla desde getLiquidacionById
+        if (!liquidacion.cotizacion?.personas?.id) {
+          this.liquidacionService.getLiquidacionById(id).subscribe({
+            next: (liquidacionBasica) => {
+              if (liquidacionBasica?.cotizacion) {
+                applyLiquidacion({
+                  ...liquidacion,
+                  cotizacion: liquidacionBasica.cotizacion
+                });
+              } else {
+                applyLiquidacion(liquidacion);
+              }
+            },
+            error: () => {
+              applyLiquidacion(liquidacion);
+            }
+          });
+        } else {
+          applyLiquidacion(liquidacion);
         }
       });
 
