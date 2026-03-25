@@ -25,6 +25,12 @@ export class MenuConfigService {
             route: '/dashboard'
         },
         {
+            id: 'profile',
+            title: 'Perfil',
+            icon: 'fas fa-user-circle',
+            route: '/profile'
+        },
+        {
             id: 'clientes',
             title: 'Clientes',
             icon: 'fas fa-address-book',

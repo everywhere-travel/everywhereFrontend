@@ -48,6 +48,16 @@ export class AuthServiceService {
     return this.currentUserSubject.value?.id || null;
   }
 
+  updateCurrentUserName(name: string): void {
+    const current = this.currentUserSubject.value;
+    if (!current) {
+      return;
+    }
+    const updated = { ...current, name };
+    this.storageService.setAuthData(updated);
+    this.currentUserSubject.next(updated);
+  }
+
   hasPermission(moduleKey: string, action: 'READ' | 'CREATE' | 'UPDATE' | 'DELETE'): boolean {
     return this.currentUserSubject.value?.permissions?.[moduleKey]?.includes(action) || false;
   }

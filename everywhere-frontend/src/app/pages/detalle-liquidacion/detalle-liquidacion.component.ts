@@ -8,7 +8,7 @@ import { catchError, finalize, tap } from 'rxjs/operators';
 // Services
 import { LiquidacionService } from '../../core/service/Liquidacion/liquidacion.service';
 import { LoadingService } from '../../core/service/loading.service';
-import { AuthorizationService } from '../../core/service/authorization.service';
+import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
@@ -56,12 +56,6 @@ import { ViajeroResponse, ViajeroConPersonaNatural } from '../../shared/models/V
 // Components
 import { SidebarComponent, SidebarMenuItem } from '../../shared/components/sidebar/sidebar.component';
 
-// Interfaces
-interface ExtendedSidebarMenuItem extends SidebarMenuItem {
-  moduleKey?: string;
-  children?: ExtendedSidebarMenuItem[];
-}
-
 @Component({
   selector: 'app-detalle-liquidacion',
   standalone: true,
@@ -86,7 +80,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private liquidacionService = inject(LiquidacionService);
   private loadingService = inject(LoadingService);
-  private authService = inject(AuthorizationService);
+  private menuConfigService = inject(MenuConfigService);
   private personaService = inject(PersonaService);
   private personaNaturalService = inject(PersonaNaturalService);
   private personaJuridicaService = inject(PersonaJuridicaService);
@@ -152,128 +146,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private cambiosGuardados = false;
   private saveDebounceTimer: any;
 
-  // Sidebar Configuration
-  private allSidebarMenuItems: ExtendedSidebarMenuItem[] = [
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      icon: 'fas fa-chart-pie',
-      route: '/dashboard'
-    },
-
-    {
-      id: 'clientes',
-      title: 'Clientes',
-      icon: 'fas fa-address-book',
-      route: '/personas',
-      moduleKey: 'PERSONAS'
-    },
-    {
-      id: 'cotizaciones',
-      title: 'Cotizaciones',
-      icon: 'fas fa-file-invoice',
-      route: '/cotizaciones',
-      moduleKey: 'COTIZACIONES'
-    },
-    {
-      id: 'liquidaciones',
-      title: 'Liquidaciones',
-      icon: 'fas fa-credit-card',
-      route: '/liquidaciones',
-      active: true,
-      moduleKey: 'LIQUIDACIONES'
-    },
-    {
-      id: 'documentos',
-      title: 'Documentos de clientes',
-      icon: 'fas fa-file-alt',
-      route: '/documentos',
-      moduleKey: 'DOCUMENTOS'
-    },
-    {
-      id: 'documentos-cobranza',
-      title: 'Documentos de Cobranza',
-      icon: 'fas fa-file-contract',
-      route: '/documentos-cobranza',
-      moduleKey: 'DOCUMENTOS_COBRANZA'
-    },
-    {
-      id: 'categorias',
-      title: 'Gestion de Categorias',
-      icon: 'fas fa-box',
-      children: [
-        {
-          id: 'categorias-persona',
-          title: 'Categorias de Clientes',
-          icon: 'fas fa-users',
-          route: '/categorias-persona',
-          moduleKey: 'CATEGORIA_PERSONAS'
-        },
-        {
-          id: 'categorias-producto',
-          title: 'Categorias de Producto',
-          icon: 'fas fa-list',
-          route: '/categorias',
-        },
-        {
-          id: 'estado-cotizacion',
-          title: 'Estado de Cotización',
-          icon: 'fas fa-clipboard-check',
-          route: '/estado-cotizacion',
-          moduleKey: 'COTIZACIONES'
-        },
-        {
-          id: 'forma-pago',
-          title: 'Forma de Pago',
-          icon: 'fas fa-credit-card',
-          route: '/formas-pago',
-          moduleKey: 'FORMA_PAGO'
-        }
-      ]
-    },
-    {
-      id: 'recursos',
-      title: 'Recursos',
-      icon: 'fas fa-box',
-      children: [
-        {
-          id: 'productos',
-          title: 'Productos',
-          icon: 'fas fa-cube',
-          route: '/productos',
-          moduleKey: 'PRODUCTOS'
-        },
-        {
-          id: 'proveedores',
-          title: 'Proveedores',
-          icon: 'fas fa-truck',
-          route: '/proveedores',
-          moduleKey: 'PROVEEDORES'
-        },
-        {
-          id: 'operadores',
-          title: 'Operadores',
-          icon: 'fas fa-headset',
-          route: '/operadores',
-          moduleKey: 'OPERADOR'
-        }
-      ]
-    },
-    {
-      id: 'organización',
-      title: 'Organización',
-      icon: 'fas fa-sitemap',
-      children: [
-        {
-          id: 'sucursales',
-          title: 'Sucursales',
-          icon: 'fas fa-building',
-          route: '/sucursales',
-          moduleKey: 'SUCURSALES'
-        }
-      ]
-    }
-  ];
   private subscriptions = new Subscription();
 
   constructor() {
@@ -1343,44 +1215,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Sidebar methods
   private initializeSidebar(): void {
-    this.sidebarMenuItems = this.filterSidebarItems(this.allSidebarMenuItems);
-  }
-
-  private filterSidebarItems(items: ExtendedSidebarMenuItem[]): ExtendedSidebarMenuItem[] {
-    const currentUser = this.authService.getCurrentUser();
-
-    if (!currentUser) {
-      return [];
-    }
-
-    // Obtener el rol del usuario
-    const currentRole = this.authService.getCurrentRole();
-
-    // Si el usuario es admin o no tiene rol, mostrar todo
-    if (this.authService.isAdmin() || !currentRole) {
-      return items;
-    }
-
-    return items.filter(item => {
-      // Si tiene moduleKey, verificar si el usuario tiene acceso a ese módulo
-      if (item.moduleKey) {
-        return currentRole.modules.includes(item.moduleKey);
-      }
-
-      // Si no tiene moduleKey pero tiene children, verificar si algún hijo tiene permisos
-      if (item.children && item.children.length > 0) {
-        const filteredChildren = this.filterSidebarItems(item.children);
-        if (filteredChildren.length > 0) {
-          // Actualizar el item con solo los children filtrados
-          item.children = filteredChildren;
-          return true;
-        }
-        return false;
-      }
-
-      // Si no tiene moduleKey ni children, mostrar por defecto (como Dashboard)
-      return true;
-    });
+    this.sidebarMenuItems = this.menuConfigService.getMenuItemsWithActiveRoute();
   }
 
   onToggleSidebar(): void {

@@ -362,8 +362,9 @@
                         <div class="bg-white rounded-xl border border-purple-100 overflow-hidden">
                             <!-- Header -->
                             <div class="grid gap-3 items-center p-3 border-b border-gray-100 bg-gray-50"
-                                style="grid-template-columns: 0.6fr 0.6fr 80px 2.3fr 100px 100px 100px;">
+                                style="grid-template-columns: 0.6fr 0.6fr 0.6fr 80px 2.3fr 100px 100px 100px;">
                                 <div class="text-sm font-medium text-gray-700">Proveedor</div>
+                                <div class="text-sm font-medium text-gray-700">Operador</div>
                                 <div class="text-sm font-medium text-gray-700">Producto</div>
                                 <div class="text-sm font-medium text-gray-700">Cantidad</div>
                                 <div class="text-sm font-medium text-gray-700">Descripción</div>
@@ -376,10 +377,14 @@
                             <div *ngFor="let detalle of getDetallesByCategoria(1)"
                                 class="p-3 border-b border-gray-100 last:border-b-0">
                                 <div class="grid gap-3 items-center"
-                                    style="grid-template-columns: 0.6fr 0.6fr 80px 2.3fr 100px 100px 100px;">
+                                    style="grid-template-columns: 0.6fr 0.6fr 0.6fr 80px 2.3fr 100px 100px 100px;">
                                     <!-- Proveedor -->
                                     <div class="text-sm text-gray-900">
                                         {{ detalle.proveedor?.nombre || 'Sin proveedor' }}
+                                    </div>
+                                    <!-- Operador -->
+                                    <div class="text-sm text-gray-900">
+                                        {{ detalle.operador?.nombre || 'Sin operador' }}
                                     </div>
                                     <!-- Producto -->
                                     <div class="text-sm text-gray-900">
@@ -472,8 +477,9 @@
                                 <div class="bg-white">
                                     <!-- Header de tabla -->
                                     <div class="grid gap-3 items-center p-3 border-b border-gray-100 bg-gray-50"
-                                        style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px;">
+                                        style="grid-template-columns: 1fr 1fr 1fr 80px 1.5fr 100px 100px 100px;">
                                         <div class="text-sm font-medium text-gray-700">Proveedor</div>
+                                        <div class="text-sm font-medium text-gray-700">Operador</div>
                                         <div class="text-sm font-medium text-gray-700">Producto</div>
                                         <div class="text-sm font-medium text-gray-700">Cantidad</div>
                                         <div class="text-sm font-medium text-gray-700">Descripción</div>
@@ -486,10 +492,14 @@
                                     <div *ngFor="let detalle of categoria.detalles"
                                         class="p-3 border-b border-gray-100 last:border-b-0">
                                         <div class="grid gap-3 items-center"
-                                            style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px;">
+                                            style="grid-template-columns: 1fr 1fr 1fr 80px 1.5fr 100px 100px 100px;">
                                             <!-- Proveedor -->
                                             <div class="text-sm text-gray-900">
                                                 {{ detalle.proveedor?.nombre || 'Sin proveedor' }}
+                                            </div>
+                                            <!-- Operador -->
+                                            <div class="text-sm text-gray-900">
+                                                {{ detalle.operador?.nombre || 'Sin operador' }}
                                             </div>
                                             <!-- Producto -->
                                             <div class="text-sm text-gray-900">
@@ -977,10 +987,14 @@
                             <div class="bg-white rounded-xl p-6 border border-purple-100">
                                 <div>
                                     <div class="grid gap-3 items-end"
-                                        style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                        style="grid-template-columns: 1fr 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                                         <div>
                                             <label
                                                 class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 mb-1">Operador</label>
                                         </div>
                                         <div>
                                             <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
@@ -1009,7 +1023,7 @@
                                 </div>
                                 <div *ngFor="let detalle of detallesFijos; let i = index">
                                     <div class="grid gap-3 items-end"
-                                        style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                        style="grid-template-columns: 1fr 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                                         <!-- Proveedor -->
                                         <div>
                                             <select [value]="detalle.proveedor?.id || ''"
@@ -1019,6 +1033,19 @@
                                                 <option *ngFor="let proveedor of proveedores" [value]="proveedor.id"
                                                     [selected]="proveedor.id === detalle.proveedor?.id">
                                                     {{ proveedor.nombre }}
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Operador -->
+                                        <div>
+                                            <select [value]="detalle.operador?.id || ''"
+                                                (change)="onProductoChange(i, 'operadorId', $any($event.target).value)"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                                                <option value="">Sin operador</option>
+                                                <option *ngFor="let operador of operadores" [value]="operador.id"
+                                                    [selected]="operador.id === detalle.operador?.id">
+                                                    {{ operador.nombre }}
                                                 </option>
                                             </select>
                                         </div>
@@ -1089,7 +1116,7 @@
                                 <div [formGroup]="detalleForm">
                                     <!-- Una sola fila con todos los campos -->
                                     <div class="grid gap-3 items-end"
-                                        style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                        style="grid-template-columns: 1fr 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                                         <!-- Proveedor -->
                                         <div>
                                             <select formControlName="proveedorId"
@@ -1097,6 +1124,17 @@
                                                 <option value="">Opcional</option>
                                                 <option *ngFor="let proveedor of proveedores" [value]="proveedor.id">
                                                     {{ proveedor.nombre }}
+                                                </option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Operador -->
+                                        <div>
+                                            <select formControlName="operadorId"
+                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm">
+                                                <option value="">Opcional</option>
+                                                <option *ngFor="let operador of operadores" [value]="operador.id">
+                                                    {{ operador.nombre }}
                                                 </option>
                                             </select>
                                         </div>
@@ -1286,10 +1324,14 @@
                                             <div class="bg-white rounded-xl border border-gray-200">
                                                 <!-- Header row -->
                                                 <div class="grid gap-3 items-end p-3 border-b border-gray-100 bg-gray-50"
-                                                    style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                                    style="grid-template-columns: 1fr 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                                                     <div>
                                                         <label
                                                             class="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 mb-1">Operador</label>
                                                     </div>
                                                     <div>
                                                         <label
@@ -1326,7 +1368,7 @@
                                                 <div *ngFor="let detalle of grupo.detalles; let di = index"
                                                     class="p-3 last:border-b-0">
                                                     <div class="grid gap-3 items-center"
-                                                        style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                                        style="grid-template-columns: 1fr 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                                                         <!-- Proveedor -->
                                                         <div>
                                                             <select [value]="detalle.proveedor?.id || ''"
@@ -1337,6 +1379,20 @@
                                                                     [value]="proveedor.id"
                                                                     [selected]="proveedor.id === detalle.proveedor?.id">
                                                                     {{ proveedor.nombre }}
+                                                                </option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Operador -->
+                                                        <div>
+                                                            <select [value]="detalle.operador?.id || ''"
+                                                                (change)="onGrupoProductoChange(gi, di, 'operadorId', $any($event.target).value)"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm">
+                                                                <option value="">Sin operador</option>
+                                                                <option *ngFor="let operador of operadores"
+                                                                    [value]="operador.id"
+                                                                    [selected]="operador.id === detalle.operador?.id">
+                                                                    {{ operador.nombre }}
                                                                 </option>
                                                             </select>
                                                         </div>
@@ -1409,7 +1465,7 @@
                                                 <!-- New product form row -->
                                                 <div class="p-3 bg-gray-50/50" [formGroup]="detalleGrupoForm">
                                                     <div class="grid gap-3 items-end"
-                                                        style="grid-template-columns: 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
+                                                        style="grid-template-columns: 1fr 1fr 1fr 80px 1.5fr 100px 100px 100px 80px;">
                                                         <!-- Proveedor -->
                                                         <div>
                                                             <select formControlName="proveedorId"
@@ -1418,6 +1474,18 @@
                                                                 <option *ngFor="let proveedor of proveedores"
                                                                     [value]="proveedor.id">
                                                                     {{ proveedor.nombre }}
+                                                                </option>
+                                                            </select>
+                                                        </div>
+
+                                                        <!-- Operador -->
+                                                        <div>
+                                                            <select formControlName="operadorId"
+                                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm">
+                                                                <option value="">Opcional</option>
+                                                                <option *ngFor="let operador of operadores"
+                                                                    [value]="operador.id">
+                                                                    {{ operador.nombre }}
                                                                 </option>
                                                             </select>
                                                         </div>
