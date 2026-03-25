@@ -18,6 +18,7 @@ import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { ProductoService } from '../../core/service/Producto/producto.service';
 import { ProveedorService } from '../../core/service/Proveedor/proveedor.service';
 import { CategoriaService } from '../../core/service/Categoria/categoria.service';
+import { OperadorService } from '../../core/service/Operador/operador.service';
 
 import { personaDisplay } from '../../shared/models/Persona/persona.model';
 
@@ -40,6 +41,7 @@ import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { CategoriaResponse } from '../../shared/models/Categoria/categoria.model';
 import { CategoriaRequest } from '../../shared/models/Categoria/categoria.model';
+import { OperadorResponse } from '../../shared/models/Operador/operador.model';
 
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 
@@ -47,6 +49,7 @@ interface DetalleCotizacionTemp {
     id?: number;
     proveedor?: ProveedorResponse | null;
     producto?: ProductoResponse;
+    operador?: OperadorResponse | null;
     categoria: CategoriaResponse | number; // Puede ser objeto o id
     descripcion: string;
     precioHistorico: number;
@@ -103,6 +106,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     private productoService = inject(ProductoService);
     private proveedorService = inject(ProveedorService);
     private categoriaService = inject(CategoriaService);
+    private operadorService = inject(OperadorService);
 
     // ===== DATA =====
     detallesFijos: DetalleCotizacionTemp[] = [];
@@ -116,6 +120,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     formasPago: FormaPagoResponse[] = [];
     productos: ProductoResponse[] = [];
     proveedores: ProveedorResponse[] = [];
+    operadores: OperadorResponse[] = [];
 
     // ===== FORMS =====
     nuevaCategoriaForm!: FormGroup;
@@ -235,6 +240,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         // Detalle form para productos fijos
         this.detalleForm = this.fb.group({
             proveedorId: [''],
+            operadorId: [''],
             nuevoProveedor: [''],
             productoId: ['', [Validators.required]],
             descripcion: [''],
@@ -247,6 +253,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         // Detalle form para grupos de hoteles
         this.detalleGrupoForm = this.fb.group({
             proveedorId: [''],
+            operadorId: [''],
             nuevoProveedor: [''],
             productoId: ['', [Validators.required]],
             descripcion: [''],
@@ -271,6 +278,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             this.loadProductos(),
             this.loadProveedores(),
             this.loadCategorias(),
+            this.loadOperadores(),
         ]).catch(() => {
             // Los errores individuales ya se manejan en cada método
         });
@@ -356,6 +364,14 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             this.proveedores = (await this.proveedorService.findAllProveedor().toPromise()) || [];
         } catch (error) {
             this.proveedores = [];
+        }
+    }
+
+    private async loadOperadores(): Promise<void> {
+        try {
+            this.operadores = (await this.operadorService.findAllOperador().toPromise()) || [];
+        } catch (error) {
+            this.operadores = [];
         }
     }
 
@@ -911,6 +927,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         }
 
         const productoId = detalle.producto?.id;
+        const operadorId = detalle.operador?.id;
         const request: DetalleCotizacionRequest = {
             cantidad: detalle.cantidad || 1, // Default 1
             unidad: detalle.unidad || 1, // Default 1
@@ -919,6 +936,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             categoriaId: categoria, // Enviar categoriaId al backend
             productoId: productoId, // Enviar productoId si existe
             proveedorId: proveedorId, // Enviar proveedorId si existe
+            operadorId: operadorId, // Enviar operadorId si existe
             comision: detalle.comision || 0, // Default 0
             precioHistorico: detalle.precioHistorico || 0, // Default 0
             seleccionado: detalle.seleccionado || false, // Campo de selección
@@ -950,6 +968,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         }
         const productoId = detalle.producto?.id;
         const proveedorId = detalle.proveedor?.id;
+        const operadorId = detalle.operador?.id;
 
         const request: DetalleCotizacionRequest = {
             cantidad: detalle.cantidad || 1,
@@ -959,6 +978,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             categoriaId: categoriaId,
             productoId: productoId,
             proveedorId: proveedorId,
+            operadorId: operadorId,
             comision: detalle.comision || 0,
             precioHistorico: detalle.precioHistorico || 0,
             seleccionado: detalle.seleccionado || false, // Campo de selección
@@ -1024,6 +1044,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                 id: detalle.id,
                 proveedor: detalle.proveedor,
                 producto: detalle.producto,
+                operador: detalle.operador || null,
                 categoria: detalle.categoria?.id || 1,
                 descripcion: detalle.descripcion || 'Sin descripción',
                 precioHistorico: detalle.precioHistorico || 0,
@@ -1539,6 +1560,11 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                         ? this.proveedores.find((p) => p.id === Number(value)) || null
                         : null;
                     break;
+                case 'operadorId':
+                    detalle.operador = value
+                        ? this.operadores.find((o) => o.id === Number(value)) || null
+                        : null;
+                    break;
                 case 'productoId':
                     detalle.producto = value ? this.productos.find((p) => p.id === Number(value)) : undefined;
                     break;
@@ -1613,6 +1639,12 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             producto = this.productos.find((p) => p.id === productoId) || null;
         }
 
+        let operador = null;
+        if (formValue.operadorId) {
+            const operadorId = Number(formValue.operadorId);
+            operador = this.operadores.find((o) => o.id === operadorId) || null;
+        }
+
         // Validar que tengamos al menos un producto
         if (!producto) {
             this.errorMessage = 'Error: No se pudo encontrar el producto seleccionado';
@@ -1629,6 +1661,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         const nuevoDetalle: DetalleCotizacionTemp = {
             proveedor,
             producto,
+            operador,
             categoria: 1, // Productos fijos siempre categoria 1
             descripcion,
             precioHistorico,
@@ -1645,6 +1678,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         // Limpiar TODOS los campos del formulario después de agregar
         this.detalleForm.patchValue({
             proveedorId: '', // Limpiar proveedor
+            operadorId: '', // Limpiar operador
             productoId: '', // Limpiar producto
             descripcion: '', // Limpiar descripción
             precioHistorico: 0, // Limpiar precio
@@ -1802,6 +1836,11 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                             ? this.proveedores.find((p) => p.id === Number(value)) || null
                             : null;
                         break;
+                    case 'operadorId':
+                        detalle.operador = value
+                            ? this.operadores.find((o) => o.id === Number(value)) || null
+                            : null;
+                        break;
                     case 'productoId':
                         detalle.producto = value
                             ? this.productos.find((p) => p.id === Number(value))
@@ -1881,6 +1920,12 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             } as ProveedorResponse;
         }
 
+        let operador: OperadorResponse | null = null;
+        if (formValue.operadorId) {
+            const operadorId = Number(formValue.operadorId);
+            operador = this.operadores.find((o) => o.id === operadorId) || null;
+        }
+
         const producto = this.productos.find((p) => p.id === Number(formValue.productoId));
         const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
         const precioHistorico = formValue.precioHistorico || 0;
@@ -1891,6 +1936,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         const nuevoDetalle: DetalleCotizacionTemp = {
             proveedor,
             producto,
+            operador,
             categoria: grupo.categoria.id ?? 1,
             descripcion,
             precioHistorico,
@@ -1912,6 +1958,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             unidad: 1,
             precioHistorico: 0,
             comision: 0, // Resetear comisión también
+            operadorId: '',
         });
     }
 

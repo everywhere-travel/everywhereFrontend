@@ -2,6 +2,7 @@ import { CotizacionResponse } from './cotizacion.model'
 import { ProductoResponse } from '../Producto/producto.model';
 import { ProveedorResponse } from '../Proveedor/proveedor.model';
 import { CategoriaResponse } from '../Categoria/categoria.model';
+import { OperadorResponse } from '../Operador/operador.model';
 
 
 /**
@@ -19,6 +20,7 @@ export interface DetalleCotizacionRequest {
   categoriaId?: number;      // Para compatibilidad con backend DTO
   productoId?: number;       // ✅ ID de producto (enviado en el payload)
   proveedorId?: number;      // ✅ ID de proveedor (enviado en el payload)
+  operadorId?: number;       // ✅ ID de operador (enviado en el payload)
 }
 
 /**
@@ -36,6 +38,7 @@ export interface DetalleCotizacionResponse {
   cotizacion?: CotizacionResponse
   producto?: ProductoResponse
   proveedor?: ProveedorResponse
+  operador?: OperadorResponse
   categoria?: CategoriaResponse        // ✅ Cambio: categoriaId → categoria (objeto)
   comision?: number
   precioHistorico?: number
@@ -55,4 +58,5 @@ export interface DetalleCotizacionSimpleDTO{
   categoria?: CategoriaResponse;
   producto?: ProductoResponse;
   proveedor?: ProveedorResponse;
+  operador?: OperadorResponse;
 }

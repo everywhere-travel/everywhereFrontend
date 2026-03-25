@@ -10,10 +10,12 @@ import { LiquidacionService } from '../../core/service/Liquidacion/liquidacion.s
 import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
 import { ReciboService } from '../../core/service/Recibo/recibo.service';
 import { DocumentoCobranzaService } from '../../core/service/DocumentoCobranza/DocumentoCobranza.service';
+import { PersonaService } from '../../core/service/persona/persona.service';
 import { LiquidacionResponse } from '../../shared/models/Liquidacion/liquidacion.model';
 import { CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
 import { ReciboResponseDTO } from '../../shared/models/Recibo/recibo.model';
 import { DocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
+import { personaDisplay } from '../../shared/models/Persona/persona.model';
 
 // Interface para la tabla de carpetas
 export interface CarpetaTabla {
@@ -123,6 +125,13 @@ export class CarpetasComponent implements OnInit {
   searchDocumento = '';
   loadingDocumentosDisponibles = false;
 
+  // Modal de desasociacion
+  mostrarModalDesasociar = false;
+  documentoADesasociar: DocumentoAsociado | null = null;
+
+  // Cache de nombres de clientes
+  private clientesCache: { [id: number]: personaDisplay } = {};
+
   // Action menu control
   showActionMenu: number | null = null;
   showQuickActions: number | null = null;
@@ -139,7 +148,8 @@ export class CarpetasComponent implements OnInit {
     private liquidacionService: LiquidacionService,
     private cotizacionService: CotizacionService,
     private reciboService: ReciboService,
-    private documentoCobranzaService: DocumentoCobranzaService
+    private documentoCobranzaService: DocumentoCobranzaService,
+    private personaService: PersonaService
   ) {
     this.initializeForms();
   }
@@ -933,6 +943,10 @@ export class CarpetasComponent implements OnInit {
           break;
       }
 
+      if (tipo === 'liquidacion' || tipo === 'cotizacion') {
+        await this.completarClienteNombre(docs, tipo);
+      }
+
       this.documentosDisponibles = docs;
       this.documentosFiltrados = [...docs];
     } catch (error) {
@@ -953,7 +967,8 @@ export class CarpetasComponent implements OnInit {
     const search = this.searchDocumento.toLowerCase();
     this.documentosFiltrados = this.documentosDisponibles.filter(doc => {
       const numero = this.getDocumentoNumero(doc).toLowerCase();
-      return numero.includes(search);
+      const cliente = this.getDocumentoClienteNombre(doc).toLowerCase();
+      return numero.includes(search) || cliente.includes(search);
     });
   }
 
@@ -999,36 +1014,48 @@ export class CarpetasComponent implements OnInit {
 
   /** Desasociar documento de la carpeta */
   async desasociarDocumento(documento: DocumentoAsociado): Promise<void> {
-    if (confirm('¿Desasociar este documento de la carpeta?')) {
-      this.loading = true;
-      try {
-        const docId = documento.tipo === 'documento-cobranza' ? Number(documento.id) : documento.id;
+    this.documentoADesasociar = documento;
+    this.mostrarModalDesasociar = true;
+  }
 
-        switch (documento.tipo) {
-          case 'liquidacion':
-            await this.liquidacionService.updateCarpeta(docId, null).toPromise();
-            break;
-          case 'cotizacion':
-            await this.cotizacionService.updateCarpeta(docId, null).toPromise();
-            break;
-          case 'recibo':
-            await this.reciboService.updateCarpeta(docId, null).toPromise();
-            break;
-          case 'documento-cobranza':
-            await this.documentoCobranzaService.updateCarpeta(docId, null).toPromise();
-            break;
-        }
+  cerrarModalDesasociar(): void {
+    this.mostrarModalDesasociar = false;
+    this.documentoADesasociar = null;
+  }
 
-        this.mostrarExito('Documento desasociado exitosamente');
-        if (this.carpetaActual?.id) {
-          await this.cargarDocumentosDeCarpeta(this.carpetaActual.id);
-        }
-      } catch (error) {
-        console.error('Error al desasociar documento:', error);
-        this.mostrarError('Error al desasociar documento');
-      } finally {
-        this.loading = false;
+  async confirmarDesasociarDocumento(): Promise<void> {
+    if (!this.documentoADesasociar) return;
+
+    this.loading = true;
+    try {
+      const documento = this.documentoADesasociar;
+      const docId = documento.tipo === 'documento-cobranza' ? Number(documento.id) : documento.id;
+
+      switch (documento.tipo) {
+        case 'liquidacion':
+          await this.liquidacionService.updateCarpeta(docId, null).toPromise();
+          break;
+        case 'cotizacion':
+          await this.cotizacionService.updateCarpeta(docId, null).toPromise();
+          break;
+        case 'recibo':
+          await this.reciboService.updateCarpeta(docId, null).toPromise();
+          break;
+        case 'documento-cobranza':
+          await this.documentoCobranzaService.updateCarpeta(docId, null).toPromise();
+          break;
       }
+
+      this.mostrarExito('Documento desasociado exitosamente');
+      if (this.carpetaActual?.id) {
+        await this.cargarDocumentosDeCarpeta(this.carpetaActual.id);
+      }
+      this.cerrarModalDesasociar();
+    } catch (error) {
+      console.error('Error al desasociar documento:', error);
+      this.mostrarError('Error al desasociar documento');
+    } finally {
+      this.loading = false;
     }
   }
 
@@ -1140,6 +1167,9 @@ export class CarpetasComponent implements OnInit {
     if (doc.serie && doc.correlativo) {
       return `${doc.serie}-${doc.correlativo}`;
     }
+    if (doc.numero) {
+      return doc.numero;
+    }
     if (doc.codigoCotizacion) {
       return doc.codigoCotizacion;
     }
@@ -1147,6 +1177,58 @@ export class CarpetasComponent implements OnInit {
   }
 
   getDocumentoFecha(doc: any): string {
-    return doc.fechaEmision || doc.createdAt || '';
+    return doc.fechaEmision || doc.fechaCompra || doc.creado || doc.createdAt || '';
+  }
+
+  getDocumentoClienteNombre(doc: any): string {
+    return (
+      doc.clienteNombre ||
+      doc.personaJuridicaRazonSocial ||
+      doc.razonSocial ||
+      ''
+    );
+  }
+
+  private async completarClienteNombre(docs: any[], tipo: TipoDocumento): Promise<void> {
+    const personaIds = Array.from(
+      new Set(
+        docs
+          .map((doc) => this.getPersonaIdFromDoc(doc, tipo))
+          .filter((id): id is number => typeof id === 'number' && id > 0)
+      )
+    );
+
+    if (personaIds.length === 0) return;
+
+    await Promise.all(
+      personaIds.map(async (id) => {
+        if (this.clientesCache[id]) return;
+        try {
+          const cliente = await this.personaService.findPersonaNaturalOrJuridicaById(id).toPromise();
+          if (cliente) {
+            this.clientesCache[id] = cliente;
+          }
+        } catch (error) {
+          // Ignorar errores individuales
+        }
+      })
+    );
+
+    docs.forEach((doc) => {
+      const personaId = this.getPersonaIdFromDoc(doc, tipo);
+      if (personaId && this.clientesCache[personaId]) {
+        doc.clienteNombre = this.clientesCache[personaId].nombre || doc.clienteNombre;
+      }
+    });
+  }
+
+  private getPersonaIdFromDoc(doc: any, tipo: TipoDocumento): number | null {
+    if (tipo === 'cotizacion') {
+      return doc.personas?.id ?? doc.personaId ?? null;
+    }
+    if (tipo === 'liquidacion') {
+      return doc.cotizacion?.personas?.id ?? doc.personaId ?? null;
+    }
+    return null;
   }
 }

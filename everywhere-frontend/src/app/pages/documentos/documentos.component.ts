@@ -127,7 +127,7 @@ export class DocumentosComponent implements OnInit {
         icon: 'fa-calendar-check',
         sortable: true,
         width: '150px',
-        render: (item) => this.formatDate(item.actualizado)
+        render: (item) => this.formatDate(item.actualizado || item.creado)
       }
     ],
     enableSearch: true,
@@ -144,13 +144,13 @@ export class DocumentosComponent implements OnInit {
         label: 'Editar',
         color: 'blue',
         handler: (item) => this.editarDocumento(item)
-      },
+      },/*
       {
         icon: 'fa-toggle-on',
         label: 'Cambiar Estado',
         color: 'yellow',
         handler: (item) => this.onCardAction(item)
-      },
+      },*/
       {
         icon: 'fa-trash',
         label: 'Eliminar',
@@ -212,7 +212,7 @@ export class DocumentosComponent implements OnInit {
           descripcion: doc.descripcion || '',
           estado: doc.estado,
           creado: doc.creado,
-          actualizado: doc.actualizado
+          actualizado: doc.actualizado || doc.creado
         }));
         this.totalDocumentos = this.documentos.length;
         // Actualizar la configuración del DataTable con los nuevos datos

@@ -1,4 +1,4 @@
 export const environment = {
     production : true,
-    baseURL : "https://api.eddyacv.dev/api/v1"
+    baseURL : "http://api.eddyacv.dev/api/v1"
 };

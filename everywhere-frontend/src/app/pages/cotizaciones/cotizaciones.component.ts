@@ -3103,11 +3103,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     if (!persona) return 'Cliente';
     // Si es personaDisplay (modelo unificado)
     if ('tipo' in persona && 'nombre' in persona) {
-      // LIMPIAR el nombre si contiene "null" como texto
       const nombreLimpio = persona.nombre
-        .split(' ')
-        .filter((parte) => parte && parte !== 'null' && parte !== 'undefined')
-        .join(' ')
+        .replace(/null|undefined/gi, '')
+        .replace(/\s+/g, ' ')
         .trim();
       return nombreLimpio || 'Sin nombre';
     }
@@ -3122,8 +3120,8 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
       // Construir nombre completo solo con valores que existan y no sean 'null' como string
       const partes = [nombres, apellidoPaterno, apellidoMaterno]
-        .map((parte) => String(parte || '').trim())
-        .filter((parte) => parte && parte !== 'null' && parte !== 'undefined');
+        .map((parte) => String(parte || '').replace(/null|undefined/gi, '').trim())
+        .filter((parte) => parte);
 
       const resultado = partes.join(' ').trim() || 'Sin nombre';
       return resultado;
@@ -3150,18 +3148,24 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
     // Si es personaDisplay
     if ('tipo' in persona && 'nombre' in persona) {
-      return persona.nombre;
+      return persona.nombre.replace(/null|undefined/gi, '').replace(/\s+/g, ' ').trim();
     }
     // Compatibilidad con modelos antiguos (soporta apellidosPaterno/apellidosMaterno)
     if ('nombres' in persona) {
-      const nombres = (persona as any).nombres || '';
-      const apellidoPaterno = (persona as any).apellidosPaterno || '';
-      const apellidoMaterno = (persona as any).apellidosMaterno || '';
+      const nombres = ((persona as any).nombres || '').toString();
+      const apellidoPaterno = ((persona as any).apellidosPaterno || '').toString();
+      const apellidoMaterno = ((persona as any).apellidosMaterno || '').toString();
 
-      const partesNombre = [nombres, apellidoPaterno, apellidoMaterno].filter(
-        (parte) => parte && parte !== 'null',
+      const clean = (value: string) => value.replace(/null|undefined/gi, '').trim();
+
+      const nombreLimpio = clean(nombres);
+      const apellidoPaternoLimpio = clean(apellidoPaterno);
+      const apellidoMaternoLimpio = clean(apellidoMaterno);
+
+      const partesNombre = [nombreLimpio, apellidoPaternoLimpio, apellidoMaternoLimpio].filter(
+        (parte) => parte,
       );
-      return partesNombre.join(' ').trim() || 'Sin nombre';
+      return partesNombre.join(' ').replace(/\s+/g, ' ').trim() || 'Sin nombre';
     }
     // Si es PersonaJuridica
     if ('razonSocial' in persona) {

@@ -536,6 +536,15 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         }
       });
 
+      // Recalcular tabla para reflejar los nombres cargados despues
+      if (clientesValidos.length > 0) {
+        this.liquidacionesTabla = this.convertToLiquidacionTabla(this.liquidaciones);
+        this.tableConfig = {
+          ...this.tableConfig,
+          data: this.liquidacionesTabla
+        };
+      }
+
     } catch (error) {
 
     }
