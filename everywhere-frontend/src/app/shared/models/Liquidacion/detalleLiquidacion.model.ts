@@ -7,9 +7,13 @@ import { LiquidacionResponse } from './liquidacion.model'
 export interface DetalleLiquidacionResponse {
   id: number
   ticket?: string
+  documentoCobro?: string
   costoTicket?: number
   cargoServicio?: number
   valorVenta?: number
+  feeEmision?: string
+  documentoFee?: string
+  comision?: string
   facturaCompra?: string
   boletaPasajero?: string
   montoDescuento?: number
@@ -29,9 +33,13 @@ export interface DetalleLiquidacionResponse {
 export interface DetalleLiquidacionRequest {
   liquidacionId?: number    // Requerido para creación (se agrega automáticamente en servicio)
   ticket?: string
+  documentoCobro?: string
   costoTicket?: number
   cargoServicio?: number
   valorVenta?: number
+  feeEmision?: string
+  documentoFee?: string
+  comision?: string
   facturaCompra?: string
   boletaPasajero?: string
   montoDescuento?: number
@@ -48,9 +56,13 @@ export interface DetalleLiquidacionRequest {
 export interface DetalleLiquidacionSimple{
   id: number
   ticket?: string
+  documentoCobro?: string
   costoTicket?: number
   cargoServicio?: number
   valorVenta?: number
+  feeEmision?: string
+  documentoFee?: string
+  comision?: string
   facturaCompra?: string
   boletaPasajero?: string
   montoDescuento?: number
@@ -66,9 +78,13 @@ export interface DetalleLiquidacionSimple{
 export interface DetalleLiquidacionSinLiquidacion{
   id: number
   ticket?: string
+  documentoCobro?: string
   costoTicket?: number
   cargoServicio?: number
   valorVenta?: number
+  feeEmision?: string
+  documentoFee?: string
+  comision?: string
   facturaCompra?: string
   boletaPasajero?: string
   montoDescuento?: number
