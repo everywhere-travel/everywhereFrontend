@@ -14,6 +14,7 @@ import { PersonaNaturalService } from '../../core/service/natural/persona-natura
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
 import { FormaPagoService } from '../../core/service/FormaPago/forma-pago.service';
 import { EstadoCotizacionService } from '../../core/service/EstadoCotizacion/estado-cotizacion.service';
+import { HistorialCotizacionService } from '../../core/service/HistorialCotizacion/historial-cotizacion.service';
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { ProductoService } from '../../core/service/Producto/producto.service';
 import { ProveedorService } from '../../core/service/Proveedor/proveedor.service';
@@ -36,6 +37,7 @@ import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatur
 import { PersonaJuridicaResponse } from '../../shared/models/Persona/personaJuridica.models';
 import { FormaPagoResponse } from '../../shared/models/FormaPago/formaPago.model';
 import { EstadoCotizacionResponse } from '../../shared/models/Cotizacion/estadoCotizacion.model';
+import { HistorialCotizacionSimple } from '../../shared/models/Cotizacion/historialCotizacion.model';
 import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 import { ProductoResponse } from '../../shared/models/Producto/producto.model';
 import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
@@ -102,6 +104,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     private personaJuridicaService = inject(PersonaJuridicaService);
     private formaPagoService = inject(FormaPagoService);
     private estadoCotizacionService = inject(EstadoCotizacionService);
+    private historialCotizacionService = inject(HistorialCotizacionService);
     private sucursalService = inject(SucursalService);
     private productoService = inject(ProductoService);
     private proveedorService = inject(ProveedorService);
@@ -121,6 +124,8 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     productos: ProductoResponse[] = [];
     proveedores: ProveedorResponse[] = [];
     operadores: OperadorResponse[] = [];
+    historialCotizacion: HistorialCotizacionSimple[] = [];
+    historialCotizacionLoading = false;
 
     // ===== FORMS =====
     nuevaCategoriaForm!: FormGroup;
@@ -140,6 +145,8 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     modoEdicion = false;
     grupoSeleccionadoId: number | null = null;
     editandoCotizacion = false;
+    seccionDestino: string | null = null;
+    mostrarPanelHistorial = false;
 
     // ===== MESSAGES =====
     errorMessage: string = '';
@@ -204,7 +211,9 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
         // Verificar si viene en modo edición
         const modoParam = this.route.snapshot.queryParamMap.get('modo');
+        this.seccionDestino = this.route.snapshot.queryParamMap.get('seccion');
         this.modoEdicion = modoParam === 'editar';
+        this.mostrarPanelHistorial = this.seccionDestino === 'historial';
 
         this.cotizacionId = Number(idParam);
         this.editandoCotizacion = this.modoEdicion;
@@ -991,6 +1000,9 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     private loadCotizacion(id: number): void {
         this.isLoading = true;
         this.error = null;
+        this.historialCotizacion = [];
+
+        this.loadHistorialCotizacion(id);
 
         // Mostrar loading global
         this.loadingService.setLoading(true);
@@ -1029,6 +1041,35 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                 }
             });
 
+
+        this.subscriptions.add(subscription);
+    }
+
+    openHistorialDrawer(): void {
+        this.mostrarPanelHistorial = true;
+    }
+
+    closeHistorialDrawer(): void {
+        this.mostrarPanelHistorial = false;
+    }
+
+    private loadHistorialCotizacion(cotizacionId: number): void {
+        this.historialCotizacionLoading = true;
+
+        const subscription = this.historialCotizacionService
+            .findByCotizacionId(cotizacionId)
+            .pipe(
+                catchError((error) => {
+                    console.error('Error al cargar historial de cotización:', error);
+                    return of([] as HistorialCotizacionSimple[]);
+                }),
+                finalize(() => {
+                    this.historialCotizacionLoading = false;
+                }),
+            )
+            .subscribe((historial) => {
+                this.historialCotizacion = historial || [];
+            });
 
         this.subscriptions.add(subscription);
     }
@@ -1486,6 +1527,43 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             default:
                 return 'bg-gray-100 text-gray-800';
         }
+    }
+
+    getHistorialEstadoBadgeClass(estadoDescripcion: string | undefined): string {
+        if (!estadoDescripcion) {
+            return 'bg-gray-100 text-gray-800';
+        }
+
+        const descripcion = estadoDescripcion.toLowerCase();
+        if (descripcion.includes('aprob')) {
+            return 'bg-green-100 text-green-800';
+        }
+
+        if (descripcion.includes('pend')) {
+            return 'bg-yellow-100 text-yellow-800';
+        }
+
+        if (descripcion.includes('rechaz') || descripcion.includes('anulad')) {
+            return 'bg-red-100 text-red-800';
+        }
+
+        if (descripcion.includes('cerrad') || descripcion.includes('ganad') || descripcion.includes('venta')) {
+            return 'bg-blue-100 text-blue-800';
+        }
+
+        return 'bg-gray-100 text-gray-800';
+    }
+
+    getHistorialUsuario(item: HistorialCotizacionSimple): string {
+        if (item.usuarioNombre && item.usuarioNombre.trim()) {
+            return item.usuarioNombre;
+        }
+
+        if (item.usuarioEmail && item.usuarioEmail.trim()) {
+            return item.usuarioEmail;
+        }
+
+        return 'Usuario no identificado';
     }
 
     getPersonaDisplayName(personaId: number): string {
