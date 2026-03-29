@@ -62,9 +62,13 @@ interface DetalleLiquidacionTemp {
   operador?: OperadorResponse;
   viajero?: ViajeroConPersonaNatural;
   ticket?: string;
+  documentoCobro?: string;
   costoTicket?: number;
   cargoServicio?: number;
   valorVenta?: number;
+  feeEmision?: string;
+  documentoFee?: string;
+  comision?: string;
   facturaCompra?: string;
   boletaPasajero?: string;
   montoDescuento?: number;
@@ -302,6 +306,17 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     }, 3000);
   }
 
+  private sanitizeText(value: unknown): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    const text = String(value).trim();
+    if (text === 'undefined' || text === 'null') {
+      return '';
+    }
+    return text;
+  }
+
   hideMessages(): void {
     this.showErrorMessage = false;
     this.showSuccessMessage = false;
@@ -327,9 +342,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       operadorId: [''],
       viajeroId: [''],
       ticket: [''],
+      documentoCobro: [''],
       costoTicket: [0, [Validators.min(0)]],
       cargoServicio: [0, [Validators.min(0)]],
       valorVenta: [0, [Validators.min(0)]],
+      feeEmision: [''],
+      documentoFee: [''],
+      comision: [''],
       facturaCompra: [''],
       boletaPasajero: [''],
       montoDescuento: [0, [Validators.min(0)]],
@@ -723,9 +742,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         operador: detalle.operador,
         viajero: detalle.viajero,
         ticket: detalle.ticket,
+        documentoCobro: detalle.documentoCobro,
         costoTicket: detalle.costoTicket,
         cargoServicio: detalle.cargoServicio,
         valorVenta: detalle.valorVenta,
+        feeEmision: detalle.feeEmision,
+        documentoFee: detalle.documentoFee,
+        comision: detalle.comision,
         facturaCompra: detalle.facturaCompra,
         boletaPasajero: detalle.boletaPasajero,
         montoDescuento: detalle.montoDescuento,
@@ -993,12 +1016,16 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         productoId: detalle.producto?.id || undefined,
         proveedorId: detalle.proveedor?.id || undefined,
         operadorId: detalle.operador?.id || undefined,
-        ticket: detalle.ticket || '',
+        ticket: this.sanitizeText(detalle.ticket),
+        documentoCobro: this.sanitizeText(detalle.documentoCobro),
         costoTicket: detalle.costoTicket || 0,
         cargoServicio: detalle.cargoServicio || 0,
         valorVenta: detalle.valorVenta || 0,
-        facturaCompra: detalle.facturaCompra || '',
-        boletaPasajero: detalle.boletaPasajero || '',
+        feeEmision: this.sanitizeText(detalle.feeEmision),
+        documentoFee: this.sanitizeText(detalle.documentoFee),
+        comision: this.sanitizeText(detalle.comision),
+        facturaCompra: this.sanitizeText(detalle.facturaCompra),
+        boletaPasajero: this.sanitizeText(detalle.boletaPasajero),
         montoDescuento: detalle.montoDescuento || 0,
         pagoPaxUSD: detalle.pagoPaxUSD || 0,
         pagoPaxPEN: detalle.pagoPaxPEN || 0
@@ -1017,8 +1044,11 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         costoTicket: detalle.costoTicket || 0,
         cargoServicio: detalle.cargoServicio || 0,
         valorVenta: detalle.valorVenta || 0,
-        facturaCompra: detalle.facturaCompra || '',
-        boletaPasajero: detalle.boletaPasajero || '',
+        feeEmision: this.sanitizeText(detalle.feeEmision),
+        documentoFee: this.sanitizeText(detalle.documentoFee),
+        comision: this.sanitizeText(detalle.comision),
+        facturaCompra: this.sanitizeText(detalle.facturaCompra),
+        boletaPasajero: this.sanitizeText(detalle.boletaPasajero),
         montoDescuento: detalle.montoDescuento || 0,
         pagoPaxUSD: detalle.pagoPaxUSD || 0,
         pagoPaxPEN: detalle.pagoPaxPEN || 0,
@@ -1026,7 +1056,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         productoId: detalle.producto?.id || undefined,
         proveedorId: detalle.proveedor?.id || undefined,
         operadorId: detalle.operador?.id || undefined,
-        ticket: detalle.ticket || ''
+        ticket: this.sanitizeText(detalle.ticket),
+        documentoCobro: this.sanitizeText(detalle.documentoCobro)
       };
       await this.detalleLiquidacionService.updateDetalleLiquidacion(detalle.id, detalleRequest).toPromise();
     } catch (error) {

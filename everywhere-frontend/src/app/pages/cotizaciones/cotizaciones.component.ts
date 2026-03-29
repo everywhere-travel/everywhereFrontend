@@ -280,6 +280,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         handler: (item: CotizacionTabla) => this.navegarADetalle(item.cotizacionOriginal.id),
       },
       {
+        icon: 'fa-history',
+        label: 'Historial',
+        color: 'blue',
+        handler: (item: CotizacionTabla) => this.navegarAHistorial(item.cotizacionOriginal.id),
+      },
+      {
         icon: 'fa-edit',
         label: 'Editar',
         color: 'blue',
@@ -919,6 +925,17 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     } else {
       this.router.navigate(['/cotizaciones/detalle', cotizacionId]);
     }
+  }
+
+  navegarAHistorial(cotizacionId: number | undefined): void {
+    if (!cotizacionId) {
+      this.showError('ID de cotización no válido');
+      return;
+    }
+
+    this.router.navigate(['/cotizaciones/detalle', cotizacionId], {
+      queryParams: { seccion: 'historial' }
+    });
   }
 
   // Método para obtener subtotal de una categoría

@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy } from '@
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subscription, of } from 'rxjs';
-import { catchError, finalize, tap } from 'rxjs/operators';
+import { Subscription, of, from } from 'rxjs';
+import { catchError, finalize, tap, switchMap } from 'rxjs/operators';
 
 // Services
 import { LiquidacionService } from '../../core/service/Liquidacion/liquidacion.service';
@@ -165,9 +165,13 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       proveedorId: [''],
       operadorId: [''],
       ticket: [''],
+      documentoCobro: [''],
       costoTicket: [0],
       cargoServicio: [0],
       valorVenta: [0],
+      feeEmision: [''],
+      documentoFee: [''],
+      comision: [''],
       facturaCompra: [''],
       boletaPasajero: [''],
       montoDescuento: [0]
@@ -285,12 +289,16 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
             const detalleOriginal = this.liquidacion!.detalles![index];
 
             // Restaurar campos editables
-            detalleOriginal.ticket = detalleEstado.ticket || '';
+            detalleOriginal.ticket = this.sanitizeText(detalleEstado.ticket);
+            detalleOriginal.documentoCobro = this.sanitizeText(detalleEstado.documentoCobro);
             detalleOriginal.costoTicket = detalleEstado.costoTicket || 0;
             detalleOriginal.cargoServicio = detalleEstado.cargoServicio || 0;
             detalleOriginal.valorVenta = detalleEstado.valorVenta || 0;
-            detalleOriginal.facturaCompra = detalleEstado.facturaCompra || '';
-            detalleOriginal.boletaPasajero = detalleEstado.boletaPasajero || '';
+            detalleOriginal.feeEmision = this.sanitizeText(detalleEstado.feeEmision);
+            detalleOriginal.documentoFee = this.sanitizeText(detalleEstado.documentoFee);
+            detalleOriginal.comision = this.sanitizeText(detalleEstado.comision);
+            detalleOriginal.facturaCompra = this.sanitizeText(detalleEstado.facturaCompra);
+            detalleOriginal.boletaPasajero = this.sanitizeText(detalleEstado.boletaPasajero);
             detalleOriginal.montoDescuento = detalleEstado.montoDescuento || 0;
 
             // Restaurar relaciones si están presentes
@@ -983,81 +991,15 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       cotizacionId: this.liquidacion?.cotizacion?.id
     };
 
-    // Primero guardar la liquidación principal
+    // Guardar la liquidación principal y luego persistir todos los detalles de forma secuencial
     const saveSubscription = this.liquidacionService.updateLiquidacion(this.liquidacionId, liquidacionRequest)
       .pipe(
-        tap(liquidacionResponse => {
-          // 0. ELIMINAR detalles marcados para eliminación
-          if (this.detallesEliminados.length > 0) {
-            // Limpiar la lista de detalles eliminados
-            this.detallesEliminados = [];
-          }
-
-          // 1. ACTUALIZAR detalles originales existentes
-          if (this.liquidacion?.detalles) {
-            this.liquidacion.detalles.forEach(detalle => {
-              if (detalle.id) {
-                // Crear request para detalle existente
-                const detalleRequest: DetalleLiquidacionRequest = {
-                  viajeroId: detalle.viajero?.id,
-                  productoId: detalle.producto?.id,
-                  proveedorId: detalle.proveedor?.id,
-                  operadorId: detalle.operador?.id,
-                  ticket: detalle.ticket || '',
-                  costoTicket: detalle.costoTicket || 0,
-                  cargoServicio: detalle.cargoServicio || 0,
-                  valorVenta: detalle.valorVenta || 0,
-                  facturaCompra: detalle.facturaCompra || '',
-                  boletaPasajero: detalle.boletaPasajero || '',
-                  montoDescuento: detalle.montoDescuento || 0,
-                  liquidacionId: this.liquidacionId!
-                };
-
-                // Actualizar detalle existente
-                this.detalleLiquidacionService.updateDetalleLiquidacion(detalle.id, detalleRequest)
-                  .subscribe({
-                    next: (response) => {
-                      // Detalle actualizado exitosamente
-                    },
-                    error: (error) => {
-                      console.error(`Error al actualizar detalle ${detalle.id}:`, error);
-                    }
-                  });
-              }
-            });
-          }
-
-          // 2. CREAR detalles fijos nuevos
-          this.detallesFijos.forEach(detalle => {
-            if (detalle.viajeroId || detalle.productoId) {
-              // Agregar liquidacionId al detalle
-              const detalleConLiquidacion = {
-                ...detalle,
-                liquidacionId: this.liquidacionId!
-              };
-
-              this.detalleLiquidacionService.createDetalleLiquidacion(this.liquidacionId!, detalleConLiquidacion)
-                .subscribe({
-                  next: (detalleResponse) => {
-                    // Detalle fijo creado exitosamente
-                  },
-                  error: (error) => {
-                    console.error('Error al crear detalle fijo:', error);
-                  }
-                });
-            }
-          });
-
-          // 3. Procesar pagos PAX (crear, actualizar, eliminar)
-          this.procesarPagosPax(this.liquidacionId!).then(() => {
-            // Marcar que los cambios fueron guardados
-            this.cambiosGuardados = true;
-            // Finalizar guardado
-            this.limpiarEstadoTemporal();
-            this.recargarDatos();
-          }).catch(error => {
-            console.error('Error al procesar pagos PAX:', error);
-          });
+        switchMap(() => from(this.guardarDetallesLiquidacion(this.liquidacionId!))),
+        switchMap(() => from(this.procesarPagosPax(this.liquidacionId!))),
+        tap(() => {
+          this.cambiosGuardados = true;
+          this.limpiarEstadoTemporal();
+          this.recargarDatos();
         }),
         catchError(error => {
           console.error('Error al guardar la liquidación:', error);
@@ -1072,6 +1014,109 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       .subscribe();
 
     this.subscriptions.add(saveSubscription);
+  }
+
+  private buildDetalleRequestFromExistente(detalle: DetalleLiquidacionResponse, liquidacionId: number): DetalleLiquidacionRequest {
+    return {
+      viajeroId: detalle.viajero?.id,
+      productoId: detalle.producto?.id,
+      proveedorId: detalle.proveedor?.id,
+      operadorId: detalle.operador?.id,
+      ticket: this.sanitizeText(detalle.ticket),
+      documentoCobro: this.sanitizeText(detalle.documentoCobro),
+      costoTicket: detalle.costoTicket || 0,
+      cargoServicio: detalle.cargoServicio || 0,
+      valorVenta: detalle.valorVenta || 0,
+      feeEmision: this.sanitizeText(detalle.feeEmision),
+      documentoFee: this.sanitizeText(detalle.documentoFee),
+      comision: this.sanitizeText(detalle.comision),
+      facturaCompra: this.sanitizeText(detalle.facturaCompra),
+      boletaPasajero: this.sanitizeText(detalle.boletaPasajero),
+      montoDescuento: detalle.montoDescuento || 0,
+      liquidacionId: liquidacionId
+    };
+  }
+
+  private buildDetalleRequestFromFijo(detalle: DetalleLiquidacionRequest, liquidacionId: number): DetalleLiquidacionRequest {
+    return {
+      viajeroId: detalle.viajeroId,
+      productoId: detalle.productoId,
+      proveedorId: detalle.proveedorId,
+      operadorId: detalle.operadorId,
+      ticket: this.sanitizeText(detalle.ticket),
+      documentoCobro: this.sanitizeText(detalle.documentoCobro),
+      costoTicket: Number(detalle.costoTicket) || 0,
+      cargoServicio: Number(detalle.cargoServicio) || 0,
+      valorVenta: Number(detalle.valorVenta) || 0,
+      feeEmision: this.sanitizeText(detalle.feeEmision),
+      documentoFee: this.sanitizeText(detalle.documentoFee),
+      comision: this.sanitizeText(detalle.comision),
+      facturaCompra: this.sanitizeText(detalle.facturaCompra),
+      boletaPasajero: this.sanitizeText(detalle.boletaPasajero),
+      montoDescuento: Number(detalle.montoDescuento) || 0,
+      liquidacionId: liquidacionId
+    };
+  }
+
+  private hasDetalleContenido(detalle: DetalleLiquidacionRequest): boolean {
+    return Boolean(
+      detalle.viajeroId ||
+      detalle.productoId ||
+      detalle.proveedorId ||
+      detalle.operadorId ||
+      this.sanitizeText(detalle.ticket) ||
+      this.sanitizeText(detalle.documentoCobro) ||
+      this.sanitizeText(detalle.feeEmision) ||
+      this.sanitizeText(detalle.documentoFee) ||
+      this.sanitizeText(detalle.comision) ||
+      this.sanitizeText(detalle.facturaCompra) ||
+      this.sanitizeText(detalle.boletaPasajero) ||
+      (Number(detalle.costoTicket) || 0) > 0 ||
+      (Number(detalle.cargoServicio) || 0) > 0 ||
+      (Number(detalle.valorVenta) || 0) > 0 ||
+      (Number(detalle.montoDescuento) || 0) > 0
+    );
+  }
+
+  private async guardarDetallesLiquidacion(liquidacionId: number): Promise<void> {
+    // 0) Eliminar detalles marcados
+    if (this.detallesEliminados.length > 0) {
+      const deletePromises = this.detallesEliminados.map(id =>
+        this.detalleLiquidacionService.deleteDetalleLiquidacion(id).toPromise()
+      );
+      await Promise.all(deletePromises);
+      this.detallesEliminados = [];
+    }
+
+    // 1) Actualizar detalles existentes
+    const updatePromises: Array<Promise<any>> = [];
+    if (this.liquidacion?.detalles) {
+      this.liquidacion.detalles.forEach(detalle => {
+        if (detalle.id) {
+          const detalleRequest = this.buildDetalleRequestFromExistente(detalle, liquidacionId);
+          updatePromises.push(
+            this.detalleLiquidacionService.updateDetalleLiquidacion(detalle.id, detalleRequest).toPromise()
+          );
+        }
+      });
+    }
+    if (updatePromises.length > 0) {
+      await Promise.all(updatePromises);
+    }
+
+    // 2) Crear detalles nuevos
+    const createPromises: Array<Promise<any>> = [];
+    this.detallesFijos.forEach(detalle => {
+      if (this.hasDetalleContenido(detalle)) {
+        const detalleRequest = this.buildDetalleRequestFromFijo(detalle, liquidacionId);
+        createPromises.push(
+          this.detalleLiquidacionService.createDetalleLiquidacion(liquidacionId, detalleRequest).toPromise()
+        );
+      }
+    });
+    if (createPromises.length > 0) {
+      await Promise.all(createPromises);
+    }
   }
 
   /**
@@ -1139,12 +1184,16 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       productoId: formValue.productoId ? Number(formValue.productoId) : undefined,
       proveedorId: formValue.proveedorId ? Number(formValue.proveedorId) : undefined,
       operadorId: formValue.operadorId ? Number(formValue.operadorId) : undefined,
-      ticket: formValue.ticket || '',
+      ticket: this.sanitizeText(formValue.ticket),
+      documentoCobro: this.sanitizeText(formValue.documentoCobro),
       costoTicket: Number(formValue.costoTicket) || 0,
       cargoServicio: Number(formValue.cargoServicio) || 0,
       valorVenta: Number(formValue.valorVenta) || 0,
-      facturaCompra: formValue.facturaCompra || '',
-      boletaPasajero: formValue.boletaPasajero || '',
+      feeEmision: this.sanitizeText(formValue.feeEmision),
+      documentoFee: this.sanitizeText(formValue.documentoFee),
+      comision: this.sanitizeText(formValue.comision),
+      facturaCompra: this.sanitizeText(formValue.facturaCompra),
+      boletaPasajero: this.sanitizeText(formValue.boletaPasajero),
       montoDescuento: Number(formValue.montoDescuento) || 0
     };
 
@@ -1233,6 +1282,17 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     return detalle.id;
   }
 
+  private sanitizeText(value: unknown): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    const text = String(value).trim();
+    if (text === 'undefined' || text === 'null') {
+      return '';
+    }
+    return text;
+  }
+
   // trackBy para detalles fijos (que son temporales y no tienen ID)
   trackByIndex(index: number): number {
     return index;
@@ -1257,7 +1317,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           detalle.operadorId = value ? Number(value) : undefined;
           break;
         case 'ticket':
-          detalle.ticket = value || '';
+          detalle.ticket = this.sanitizeText(value);
+          break;
+        case 'documentoCobro':
+          detalle.documentoCobro = this.sanitizeText(value);
           break;
         case 'costoTicket':
           detalle.costoTicket = value ? Number(value) : 0;
@@ -1272,11 +1335,20 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           // Calcular automáticamente el cargo por servicio
           this.calcularCargoServicio(detalle);
           break;
+        case 'feeEmision':
+          detalle.feeEmision = this.sanitizeText(value);
+          break;
+        case 'documentoFee':
+          detalle.documentoFee = this.sanitizeText(value);
+          break;
+        case 'comision':
+          detalle.comision = this.sanitizeText(value);
+          break;
         case 'facturaCompra':
-          detalle.facturaCompra = value || '';
+          detalle.facturaCompra = this.sanitizeText(value);
           break;
         case 'boletaPasajero':
-          detalle.boletaPasajero = value || '';
+          detalle.boletaPasajero = this.sanitizeText(value);
           break;
         case 'montoDescuento':
           detalle.montoDescuento = value ? Number(value) : 0;
@@ -1335,7 +1407,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           }
           break;
         case 'ticket':
-          detalle.ticket = value || '';
+          detalle.ticket = this.sanitizeText(value);
+          break;
+        case 'documentoCobro':
+          detalle.documentoCobro = this.sanitizeText(value);
           break;
         case 'costoTicket':
           detalle.costoTicket = value ? Number(value) : 0;
@@ -1350,11 +1425,20 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           // Calcular automáticamente el cargo por servicio
           this.calcularCargoServicio(detalle);
           break;
+        case 'feeEmision':
+          detalle.feeEmision = this.sanitizeText(value);
+          break;
+        case 'documentoFee':
+          detalle.documentoFee = this.sanitizeText(value);
+          break;
+        case 'comision':
+          detalle.comision = this.sanitizeText(value);
+          break;
         case 'facturaCompra':
-          detalle.facturaCompra = value || '';
+          detalle.facturaCompra = this.sanitizeText(value);
           break;
         case 'boletaPasajero':
-          detalle.boletaPasajero = value || '';
+          detalle.boletaPasajero = this.sanitizeText(value);
           break;
         case 'montoDescuento':
           detalle.montoDescuento = value ? Number(value) : 0;
