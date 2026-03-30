@@ -39,6 +39,12 @@ export class LiquidacionService {
     return this.http.get<LiquidacionConDetallesResponse>(`${this.apiUrl}/${id}/con-detalles`);
   }
 
+  generarExcel(liquidacionId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${liquidacionId}/generar-excel`, {
+      responseType: 'blob'
+    });
+  }
+
   deleteLiquidacion(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
       tap(() => this.cacheService.invalidateModule('liquidaciones'))
