@@ -104,6 +104,12 @@
                 <span class="hidden sm:inline">Actualizar</span>
               </button>
 
+              <button (click)="descargarLiquidacionExcel()" [disabled]="descargandoExcel"
+                class="px-6 py-3 bg-emerald-500/90 backdrop-blur-sm rounded-xl border border-emerald-300/70 hover:bg-emerald-500 transition-all flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                <i class="fas" [ngClass]="descargandoExcel ? 'fa-spinner fa-spin' : 'fa-file-excel'"></i>
+                <span class="hidden sm:inline">{{ descargandoExcel ? 'Descargando...' : 'Exportar Excel' }}</span>
+              </button>
+
               <!-- Botones según el modo -->
               <div *ngIf="!modoEdicion">
                 <button (click)="irAEditarLiquidacion()"
