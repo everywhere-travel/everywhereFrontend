@@ -280,12 +280,6 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         handler: (item: CotizacionTabla) => this.navegarADetalle(item.cotizacionOriginal.id),
       },
       {
-        icon: 'fa-history',
-        label: 'Historial',
-        color: 'blue',
-        handler: (item: CotizacionTabla) => this.navegarAHistorial(item.cotizacionOriginal.id),
-      },
-      {
         icon: 'fa-edit',
         label: 'Editar',
         color: 'blue',
@@ -296,6 +290,12 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         label: 'Word',
         color: 'indigo',
         handler: (item: CotizacionTabla) => this.descargarWord(item.cotizacionOriginal),
+      },
+      {
+        icon: 'fa-history',
+        label: 'Historial',
+        color: 'blue',
+        handler: (item: CotizacionTabla) => this.navegarAHistorial(item.cotizacionOriginal.id),
       },
       {
         icon: 'fa-trash',

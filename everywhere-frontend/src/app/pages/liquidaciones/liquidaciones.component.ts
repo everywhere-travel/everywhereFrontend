@@ -172,6 +172,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   // Data arrays for table
   liquidacionesTabla: LiquidacionTabla[] = [];
+  descargandoExcelIds: Set<number> = new Set();
 
   tableConfig: DataTableConfig<LiquidacionTabla> = {
     data: [],
@@ -259,6 +260,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         label: 'Editar',
         color: 'blue',
         handler: (item) => this.mostrarFormularioEditar(this.getLiquidacionById(item.id)!)
+      },
+      {
+        icon: 'fa-file-excel',
+        label: 'Descargar Excel',
+        color: 'indigo',
+        handler: (item) => this.descargarLiquidacionExcel(item.id, item.numeroLiquidacion),
+        disabled: (item) => this.descargandoExcelIds.has(item.id)
       },
       {
         icon: 'fa-trash',
@@ -893,6 +901,37 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   trackByDetalle(index: number, detalle: DetalleLiquidacionResponse): number {
     return detalle.id;
+  }
+
+  private descargarLiquidacionExcel(liquidacionId: number, numeroLiquidacion?: string): void {
+    if (this.descargandoExcelIds.has(liquidacionId)) {
+      return;
+    }
+
+    this.descargandoExcelIds.add(liquidacionId);
+
+    const nombreBase = (numeroLiquidacion || `Liquidacion_${liquidacionId}`)
+      .toString()
+      .trim()
+      .replace(/[\\/:*?"<>|]+/g, '_');
+
+    this.liquidacionService.generarExcel(liquidacionId).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${nombreBase || `Liquidacion_${liquidacionId}`}.xlsx`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        this.showError('No se pudo descargar el Excel de la liquidación');
+        this.descargandoExcelIds.delete(liquidacionId);
+      },
+      complete: () => {
+        this.descargandoExcelIds.delete(liquidacionId);
+      }
+    });
   }
 
   mostrarModalVerLiquidacion(liquidacion: LiquidacionResponse): void {

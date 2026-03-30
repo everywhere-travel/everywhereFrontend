@@ -121,6 +121,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   error: string | null = null;
   sidebarCollapsed = false;
   modoEdicion = false; // Nueva propiedad para controlar modo edición
+  descargandoExcel = false;
 
   // Sidebar State
   sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
@@ -552,6 +553,44 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   // Navigation methods
   volverALiquidaciones(): void {
     this.router.navigate(['/liquidaciones']);
+  }
+
+  descargarLiquidacionExcel(): void {
+    if (!this.liquidacionId || this.descargandoExcel) {
+      return;
+    }
+
+    this.descargandoExcel = true;
+
+    const nombreBase = (this.liquidacion?.numero || `Liquidacion_${this.liquidacionId}`)
+      .toString()
+      .trim()
+      .replace(/[\\/:*?"<>|]+/g, '_');
+
+    const subscription = this.liquidacionService.generarExcel(this.liquidacionId)
+      .pipe(
+        catchError(error => {
+          console.error('Error al descargar el Excel de la liquidación:', error);
+          return of(null);
+        }),
+        finalize(() => {
+          this.descargandoExcel = false;
+        })
+      )
+      .subscribe(blob => {
+        if (!blob) {
+          return;
+        }
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${nombreBase || `Liquidacion_${this.liquidacionId}`}.xlsx`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      });
+
+    this.subscriptions.add(subscription);
   }
 
   irAEditarLiquidacion(): void {
