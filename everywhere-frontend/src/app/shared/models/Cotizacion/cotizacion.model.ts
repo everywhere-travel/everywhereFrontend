@@ -11,6 +11,7 @@ import { DetalleCotizacionSimpleDTO } from '../Cotizacion/detalleCotizacion.mode
  * Todos los campos son opcionales ya que usamos PATCH para actualizaciones
  */
 export interface CotizacionRequest {
+  nombreCotizacion?: string
   cantAdultos?: number
   cantNinos?: number
   fechaVencimiento?: string
@@ -30,6 +31,7 @@ export type CotizacionPatchRequest = Partial<CotizacionRequest>
 
 export interface CotizacionResponse {
   id: number
+  nombreCotizacion?: string
   codigoCotizacion: string
   cantAdultos?: number
   cantNinos?: number
@@ -53,6 +55,7 @@ export interface CotizacionResponse {
 
 export interface CotizacionConDetallesResponseDTO {
   id: number
+  nombreCotizacion?: string
   codigoCotizacion: string
   cantAdultos?: number
   cantNinos?: number
