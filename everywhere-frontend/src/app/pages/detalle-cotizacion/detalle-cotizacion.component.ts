@@ -225,6 +225,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         // Cotización form
         this.cotizacionForm = this.fb.group({
             codigoCotizacion: [{ value: '', disabled: true }],
+            nombreCotizacion: [''],
             personaId: ['', [Validators.required]],
             fechaEmision: ['', [Validators.required]],
             fechaVencimiento: ['', [Validators.required]],
@@ -607,6 +608,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     private async populateFormFromCotizacion(cotizacion: CotizacionConDetallesResponseDTO): Promise<void> {
         this.cotizacionForm.patchValue({
             codigoCotizacion: cotizacion.codigoCotizacion,
+            nombreCotizacion: cotizacion.nombreCotizacion || '',
             personaId: cotizacion.personas?.id,
             fechaEmision: cotizacion.fechaEmision
                 ? this.formatDateTimeLocal(new Date(cotizacion.fechaEmision))
@@ -750,6 +752,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                 const cantNinos = this.normalizeCount(formValue.cantNinos, 0);
 
                 const cotizacionRequest: CotizacionRequest = {
+                    nombreCotizacion: formValue.nombreCotizacion || '',
                     cantAdultos: cantAdultos,
                     cantNinos: cantNinos,
                     fechaVencimiento: formValue.fechaVencimiento,
@@ -831,6 +834,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
         // Campos a comparar para el PATCH
         const fieldsToCheck: (keyof CotizacionRequest)[] = [
+            'nombreCotizacion',
             'origenDestino',
             'fechaSalida',
             'fechaRegreso',

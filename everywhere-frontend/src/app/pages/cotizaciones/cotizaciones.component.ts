@@ -74,6 +74,7 @@ interface GrupoHotelTemp {
 export interface CotizacionTabla {
   id: number;
   codigoCotizacion: string;
+  nombreCotizacion: string;
   cliente: string;
   clienteId: number;
   fechaEmision: string;
@@ -265,7 +266,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       },
     ],
     enableSearch: true,
-    searchPlaceholder: 'Buscar por código, cliente...',
+    searchPlaceholder: 'Buscar por código, nombre o cliente...',
     enableSelection: true,
     enablePagination: true,
     enableViewSwitcher: true,
@@ -380,6 +381,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Cotización form
     this.cotizacionForm = this.fb.group({
       codigoCotizacion: [{ value: '', disabled: true }],
+      nombreCotizacion: [''],
       personaId: ['', [Validators.required]],
       fechaEmision: ['', [Validators.required]],
       fechaVencimiento: ['', [Validators.required]],
@@ -466,6 +468,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Re-crear el formulario con validadores originales
     this.cotizacionForm = this.fb.group({
       codigoCotizacion: [{ value: '', disabled: true }],
+      nombreCotizacion: [''],
       personaId: ['', [Validators.required]],
       fechaEmision: ['', [Validators.required]],
       fechaVencimiento: ['', [Validators.required]],
@@ -767,6 +770,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.filteredCotizaciones = this.cotizaciones.filter((cotizacion) => {
         return (
           cotizacion.codigoCotizacion?.toLowerCase().includes(term) ||
+          (cotizacion.nombreCotizacion || '').toLowerCase().includes(term) ||
           this.getPersonaDisplayName(cotizacion.personas?.id || 0)
             .toLowerCase()
             .includes(term) ||
@@ -784,6 +788,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.cotizacionesTabla = this.filteredCotizaciones.map((c) => ({
       id: c.id,
       codigoCotizacion: c.codigoCotizacion || '',
+      nombreCotizacion: c.nombreCotizacion || 'Sin nombre',
       cliente: this.getPersonaDisplayName(c.personas?.id || 0),
       clienteId: c.personas?.id || 0,
       fechaEmision: c.fechaEmision || '',
@@ -1013,6 +1018,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private resetForm(): void {
     // CORRECCIÓN: Damos valores iniciales a todos los campos del formulario
     this.cotizacionForm.reset({
+      nombreCotizacion: '',
       personaId: '',
       estadoCotizacionId: '',
       sucursalId: '',
@@ -1136,6 +1142,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     // Poblar formulario principal
     this.cotizacionForm.patchValue({
       codigoCotizacion: cotizacion.codigoCotizacion,
+      nombreCotizacion: cotizacion.nombreCotizacion || '',
       personaId: cotizacion.personas?.id,
       fechaEmision: cotizacion.fechaEmision
         ? this.formatDateTimeLocal(new Date(cotizacion.fechaEmision))
@@ -1257,6 +1264,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private async loadCotizacionForEdit(cotizacion: CotizacionResponse): Promise<void> {
     this.cotizacionForm.patchValue({
       codigoCotizacion: cotizacion.codigoCotizacion,
+      nombreCotizacion: cotizacion.nombreCotizacion || '',
       personaId: cotizacion.personas?.id,
       fechaEmision: cotizacion.fechaEmision
         ? this.formatDateTimeLocal(new Date(cotizacion.fechaEmision))
@@ -2371,6 +2379,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       } else {
         // ===== CREATE con POST (creación completa) =====
         const cotizacionRequest: CotizacionRequest = {
+          nombreCotizacion: formValue.nombreCotizacion || '',
           cantAdultos: formValue.cantAdultos ?? 1,
           cantNinos: formValue.cantNinos ?? 0,
           fechaVencimiento: formValue.fechaVencimiento,
@@ -2439,6 +2448,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
     // Campos a comparar para el PATCH
     const fieldsToCheck: (keyof CotizacionRequest)[] = [
+      'nombreCotizacion',
       'origenDestino',
       'fechaSalida',
       'fechaRegreso',
