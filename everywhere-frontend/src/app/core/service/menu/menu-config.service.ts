@@ -29,7 +29,7 @@ export class MenuConfigService {
             title: 'Perfil',
             icon: 'fas fa-user-circle',
             route: '/profile'
-        },
+        },/*
         {
             id: 'clientes',
             title: 'Clientes',
@@ -78,7 +78,7 @@ export class MenuConfigService {
                     moduleKey: 'RECIBOS'
                 },
             ]
-        },
+        },*/
         {
             id: 'categorias',
             title: 'Gestion de Categorias',
