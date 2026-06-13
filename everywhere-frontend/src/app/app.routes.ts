@@ -62,6 +62,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'usuarios',
+    loadComponent: () =>
+      import('./pages/usuarios/usuarios.component').then(m => m.UsuariosComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'sucursales',
     loadComponent: () =>
       import('./pages/sucursales/sucursales.component').then(m => m.SucursalesComponent),
@@ -163,6 +169,12 @@ export const routes: Routes = [
     path: 'recibos/detalle/:id',
     loadComponent: () =>
       import('./pages/detalle-recibo/detalle-recibo.component').then(m => m.DetalleReciboComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'roles',
+    loadComponent: () =>
+      import('./pages/roles/roles.component').then(m => m.RolesComponent),
     canActivate: [authGuard]
   },
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' },

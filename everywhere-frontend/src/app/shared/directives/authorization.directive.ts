@@ -1,81 +1,18 @@
-import { Directive, Input, TemplateRef, ViewContainerRef, OnInit, OnDestroy } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Directive, Input, TemplateRef, ViewContainerRef, OnInit, OnDestroy, OnChanges } from '@angular/core';
 import { AuthorizationService } from '../../core/service/authorization.service';
-import { Module, Permission } from '../models/role.model';
+import { ActionKey } from '../models/role.model';
 
-@Directive({
-  selector: '[appHasPermission]',
-  standalone: true
-})
-export class HasPermissionDirective implements OnInit, OnDestroy {
-  @Input() appHasPermission!: Permission;
-  
-  private subscription: Subscription = new Subscription();
-
-  constructor(
-    private templateRef: TemplateRef<any>,
-    private viewContainer: ViewContainerRef,
-    private authorizationService: AuthorizationService
-  ) {}
-
-  ngOnInit() {
-    this.updateView();
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
-  }
-
-  private updateView() {
-    if (this.authorizationService.hasPermission(this.appHasPermission)) {
-      this.viewContainer.createEmbeddedView(this.templateRef);
-    } else {
-      this.viewContainer.clear();
-    }
-  }
-}
-
-@Directive({
-  selector: '[appHasModuleAccess]',
-  standalone: true
-})
-export class HasModuleAccessDirective implements OnInit, OnDestroy {
-  @Input() appHasModuleAccess!: Module;
-  
-  private subscription: Subscription = new Subscription();
-
-  constructor(
-    private templateRef: TemplateRef<any>,
-    private viewContainer: ViewContainerRef,
-    private authorizationService: AuthorizationService
-  ) {}
-
-  ngOnInit() {
-    this.updateView();
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
-  }
-
-  private updateView() {
-    if (this.authorizationService.hasModuleAccess(this.appHasModuleAccess)) {
-      this.viewContainer.createEmbeddedView(this.templateRef);
-    } else {
-      this.viewContainer.clear();
-    }
-  }
-}
-
+/**
+ * [appCanAccess]="'CLIENTES'" [appCanAccessAction]="'READ'"
+ * Muestra el elemento si el usuario tiene ese permiso sobre ese módulo.
+ */
 @Directive({
   selector: '[appCanAccess]',
   standalone: true
 })
-export class CanAccessDirective implements OnInit, OnDestroy {
-  @Input() appCanAccessModule!: Module;
-  @Input() appCanAccessPermission: Permission = Permission.READ;
-  
-  private subscription: Subscription = new Subscription();
+export class CanAccessDirective implements OnInit, OnChanges {
+  @Input() appCanAccess!: string;                        // Módulo: "CLIENTES", "COTIZACIONES", etc.
+  @Input() appCanAccessAction: ActionKey = 'READ';       // Acción (default: READ)
 
   constructor(
     private templateRef: TemplateRef<any>,
@@ -83,29 +20,30 @@ export class CanAccessDirective implements OnInit, OnDestroy {
     private authorizationService: AuthorizationService
   ) {}
 
-  ngOnInit() {
-    this.updateView();
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
-  }
+  ngOnInit() { this.updateView(); }
+  ngOnChanges() { this.updateView(); }
 
   private updateView() {
-    if (this.authorizationService.canAccess(this.appCanAccessModule, this.appCanAccessPermission)) {
-      this.viewContainer.createEmbeddedView(this.templateRef);
+    if (this.authorizationService.canAccess(this.appCanAccess, this.appCanAccessAction)) {
+      if (this.viewContainer.length === 0) {
+        this.viewContainer.createEmbeddedView(this.templateRef);
+      }
     } else {
       this.viewContainer.clear();
     }
   }
 }
 
+/**
+ * [appHasModuleAccess]="'CLIENTES'"
+ * Muestra el elemento si el usuario tiene acceso de lectura al módulo.
+ */
 @Directive({
-  selector: '[appIsAdmin]',
+  selector: '[appHasModuleAccess]',
   standalone: true
 })
-export class IsAdminDirective implements OnInit, OnDestroy {
-  private subscription: Subscription = new Subscription();
+export class HasModuleAccessDirective implements OnInit, OnChanges {
+  @Input() appHasModuleAccess!: string;
 
   constructor(
     private templateRef: TemplateRef<any>,
@@ -113,15 +51,36 @@ export class IsAdminDirective implements OnInit, OnDestroy {
     private authorizationService: AuthorizationService
   ) {}
 
-  ngOnInit() {
-    this.updateView();
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
-  }
+  ngOnInit() { this.updateView(); }
+  ngOnChanges() { this.updateView(); }
 
   private updateView() {
+    if (this.authorizationService.hasModuleAccess(this.appHasModuleAccess)) {
+      if (this.viewContainer.length === 0) {
+        this.viewContainer.createEmbeddedView(this.templateRef);
+      }
+    } else {
+      this.viewContainer.clear();
+    }
+  }
+}
+
+/**
+ * [appIsAdmin]
+ * Muestra el elemento solo si el usuario es administrador (ALL_MODULES:DELETE).
+ */
+@Directive({
+  selector: '[appIsAdmin]',
+  standalone: true
+})
+export class IsAdminDirective implements OnInit {
+  constructor(
+    private templateRef: TemplateRef<any>,
+    private viewContainer: ViewContainerRef,
+    private authorizationService: AuthorizationService
+  ) {}
+
+  ngOnInit() {
     if (this.authorizationService.isAdmin()) {
       this.viewContainer.createEmbeddedView(this.templateRef);
     } else {
@@ -130,14 +89,16 @@ export class IsAdminDirective implements OnInit, OnDestroy {
   }
 }
 
+/**
+ * [appHasRole]="'GERENTE'" o [appHasRole]="['ADMIN', 'SISTEMAS']"
+ * Muestra el elemento si el usuario tiene uno de esos roles.
+ */
 @Directive({
   selector: '[appHasRole]',
   standalone: true
 })
-export class HasRoleDirective implements OnInit, OnDestroy {
+export class HasRoleDirective implements OnInit {
   @Input() appHasRole!: string | string[];
-  
-  private subscription: Subscription = new Subscription();
 
   constructor(
     private templateRef: TemplateRef<any>,
@@ -146,14 +107,6 @@ export class HasRoleDirective implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.updateView();
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
-  }
-
-  private updateView() {
     const currentUser = this.authorizationService.getCurrentUser();
     if (!currentUser) {
       this.viewContainer.clear();
@@ -161,7 +114,7 @@ export class HasRoleDirective implements OnInit, OnDestroy {
     }
 
     const rolesToCheck = Array.isArray(this.appHasRole) ? this.appHasRole : [this.appHasRole];
-    const hasRole = rolesToCheck.includes(currentUser.role);
+    const hasRole = rolesToCheck.some(r => r.toUpperCase() === currentUser.role?.toUpperCase());
 
     if (hasRole) {
       this.viewContainer.createEmbeddedView(this.templateRef);
@@ -170,3 +123,6 @@ export class HasRoleDirective implements OnInit, OnDestroy {
     }
   }
 }
+
+// Re-export alias para compatibilidad con código que use HasPermissionDirective
+export { CanAccessDirective as HasPermissionDirective };

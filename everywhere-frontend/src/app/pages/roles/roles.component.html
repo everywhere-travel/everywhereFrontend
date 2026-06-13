@@ -1,0 +1,205 @@
+<div class="roles-page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">
+        <span class="material-icons">security</span>
+        Roles y Permisos
+      </h1>
+      <p class="page-subtitle">Administra roles de usuario y sus permisos de acceso</p>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  @if (errorMsg()) {
+    <div class="alert alert-error">
+      <span class="material-icons">error</span>
+      {{ errorMsg() }}
+    </div>
+  }
+  @if (successMsg()) {
+    <div class="alert alert-success">
+      <span class="material-icons">check_circle</span>
+      {{ successMsg() }}
+    </div>
+  }
+
+  <div class="content-grid">
+
+    <!-- Panel Izquierdo: Roles -->
+    <div class="panel panel-roles">
+      <div class="panel-header">
+        <h2>Roles</h2>
+        <button class="btn btn-primary btn-sm" (click)="openCreateRole()">
+          <span class="material-icons">add</span> Nuevo Rol
+        </button>
+      </div>
+
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <span>Cargando roles...</span>
+        </div>
+      } @else {
+        <div class="roles-list">
+          @for (role of roles(); track role.id) {
+            <div class="role-card" [class.selected]="selectedRole()?.id === role.id"
+                 (click)="selectRole(role)">
+              <div class="role-info">
+                <span class="role-name">{{ role.name }}</span>
+                <span class="perm-count">{{ role.permissions.length }} permisos</span>
+              </div>
+              <div class="role-actions" (click)="$event.stopPropagation()">
+                <button class="icon-btn edit" (click)="openEditRole(role)" title="Editar">
+                  <span class="material-icons">edit</span>
+                </button>
+                <button class="icon-btn delete" (click)="deleteRole(role.id)" title="Eliminar">
+                  <span class="material-icons">delete</span>
+                </button>
+              </div>
+            </div>
+          }
+          @empty {
+            <div class="empty-state">
+              <span class="material-icons">group_off</span>
+              <p>No hay roles creados</p>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Panel Central: Permisos del rol seleccionado -->
+    <div class="panel panel-assignment">
+      @if (selectedRole()) {
+        <div class="panel-header">
+          <h2>Permisos de <strong>{{ selectedRole()!.name }}</strong></h2>
+          <span class="badge">{{ selectedRole()!.permissions.length }} asignados</span>
+        </div>
+
+        <div class="permission-groups">
+          @for (group of groupPermsByModule(); track group.module) {
+            <div class="perm-group">
+              <h3 class="module-label">{{ group.module }}</h3>
+              <div class="perm-chips">
+                @for (perm of group.perms; track perm.id) {
+                  <label class="perm-chip" [class.active]="roleHasPerm(perm.name)">
+                    <input type="checkbox"
+                           [checked]="roleHasPerm(perm.name)"
+                           (change)="togglePermission(perm)" />
+                    <span class="chip-label">{{ perm.name.split(':')[1] }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state centered">
+          <span class="material-icons">touch_app</span>
+          <p>Selecciona un rol para ver y editar sus permisos</p>
+        </div>
+      }
+    </div>
+
+    <!-- Panel Derecho: Catálogo de permisos -->
+    <div class="panel panel-permissions">
+      <div class="panel-header">
+        <h2>Catálogo de Permisos</h2>
+        <button class="btn btn-secondary btn-sm" (click)="openCreatePerm()">
+          <span class="material-icons">add</span> Nuevo
+        </button>
+      </div>
+
+      <div class="perm-catalog">
+        @for (group of groupPermsByModule(); track group.module) {
+          <div class="perm-group-catalog">
+            <span class="module-tag">{{ group.module }}</span>
+            @for (perm of group.perms; track perm.id) {
+              <div class="perm-item">
+                <div class="perm-details">
+                  <code class="perm-code">{{ perm.name }}</code>
+                  @if (perm.description) {
+                    <span class="perm-desc">{{ perm.description }}</span>
+                  }
+                </div>
+                <button class="icon-btn delete sm" (click)="deletePerm(perm.id)" title="Eliminar">
+                  <span class="material-icons">close</span>
+                </button>
+              </div>
+            }
+          </div>
+        }
+        @if (permissions().length === 0) {
+          <div class="empty-state">
+            <span class="material-icons">lock_open</span>
+            <p>Sin permisos definidos</p>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div><!-- end content-grid -->
+</div>
+
+<!-- Modal: Crear/Editar Rol -->
+@if (showRoleModal()) {
+  <div class="modal-overlay" (click)="closeRoleModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ isEditingRole() ? 'Editar Rol' : 'Nuevo Rol' }}</h3>
+        <button class="modal-close" (click)="closeRoleModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form [formGroup]="roleForm" (ngSubmit)="saveRole()" class="modal-body">
+        <div class="form-group">
+          <label>Nombre del rol</label>
+          <input type="text" formControlName="name" placeholder="ej: VENTAS_SENIOR"
+                 class="form-input" />
+          @if (roleForm.get('name')?.invalid && roleForm.get('name')?.touched) {
+            <span class="field-error">El nombre es obligatorio (mínimo 2 caracteres)</span>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" (click)="closeRoleModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="roleForm.invalid">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal: Crear Permiso -->
+@if (showPermModal()) {
+  <div class="modal-overlay" (click)="closePermModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Nuevo Permiso</h3>
+        <button class="modal-close" (click)="closePermModal()">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <form [formGroup]="permForm" (ngSubmit)="savePerm()" class="modal-body">
+        <div class="form-group">
+          <label>Nombre <small>(formato MODULO:ACCION)</small></label>
+          <input type="text" formControlName="name" placeholder="ej: CLIENTES:READ"
+                 class="form-input" style="text-transform:uppercase" />
+          @if (permForm.get('name')?.invalid && permForm.get('name')?.touched) {
+            <span class="field-error">Debe seguir el formato MODULO:ACCION (solo mayúsculas y guiones bajos)</span>
+          }
+        </div>
+        <div class="form-group">
+          <label>Descripción <small>(opcional)</small></label>
+          <input type="text" formControlName="description" placeholder="ej: Ver clientes"
+                 class="form-input" />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" (click)="closePermModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="permForm.invalid">Crear</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

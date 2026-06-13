@@ -123,27 +123,7 @@ export class PersonasComponent implements OnInit {
       const personasTabla: PersonaTabla[] = [];
 
       if (naturales) {
-        // Cargar documentos para cada persona natural
-        const naturalesConDocumentos = await Promise.all(
-          naturales.map(async natural => {
-            try {
-              const documentos = await this.detalleDocumentoService.findByPersonaNaturalId(natural.id).toPromise();
-              return {
-                natural,
-                documentos: documentos?.map(doc => ({
-                  numero: doc.numero || '',
-                  tipo: doc.documento?.tipo || '',
-                  origen: doc.origen || ''
-                })) || []
-              };
-            } catch (error) {
-              console.error(`Error al cargar documentos para persona ${natural.id}:`, error);
-              return { natural, documentos: [] };
-            }
-          })
-        );
-
-        naturalesConDocumentos.forEach(({ natural, documentos }) => {
+        naturales.forEach(natural => {
           personasTabla.push({
             id: natural.id,
             tipo: 'natural',
@@ -155,7 +135,7 @@ export class PersonasComponent implements OnInit {
             email: natural.persona?.correos?.[0]?.email,
             telefono: natural.persona?.telefonos?.[0]?.numero,
             direccion: natural.persona?.direccion,
-            documentos: documentos
+            documentos: [] // Se cargan solo si es necesario
           });
         });
       }

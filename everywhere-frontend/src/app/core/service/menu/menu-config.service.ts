@@ -9,9 +9,6 @@ export interface ExtendedSidebarMenuItem extends SidebarMenuItem {
     children?: ExtendedSidebarMenuItem[];
 }
 
-interface UserPermissions {
-    [key: string]: boolean | any;
-}
 
 @Injectable({
     providedIn: 'root'
@@ -149,6 +146,13 @@ export class MenuConfigService {
             ]
         },
         {
+            id: 'usuarios-root',
+            title: 'Usuarios y Roles',
+            icon: 'fas fa-users-cog',
+            route: '/usuarios',
+            moduleKey: 'USUARIOS'
+        },
+        {
             id: 'organización',
             title: 'Organización',
             icon: 'fas fa-sitemap',
@@ -210,9 +214,8 @@ export class MenuConfigService {
      *
      * @returns User permissions object
      */
-    private getUserPermissions(): UserPermissions {
-        const authData = this.authService.getUser();
-        return authData?.permissions || {};
+    private getUserPermissions(): string[] {
+        return this.authService.getUser()?.permissions ?? [];
     }
 
     /**
@@ -223,14 +226,23 @@ export class MenuConfigService {
      * @param userPermissions - User permissions object
      * @returns Filtered menu items
      */
-    private filterByPermissions(userPermissions: UserPermissions): ExtendedSidebarMenuItem[] {
-        // If user has all modules permission, return all menu items
-        if (userPermissions['ALL_MODULES']) {
+    private filterByPermissions(userPermissions: string[]): ExtendedSidebarMenuItem[] {
+        // Si tiene ALL_MODULES, mostrar todos los items
+        if (userPermissions.some(p => p.startsWith('ALL_MODULES:'))) {
             return this.deepClone(this.ALL_MENU_ITEMS);
         }
 
-        // Otherwise, filter based on specific permissions
-        return this.filterMenuItems(this.ALL_MENU_ITEMS, userPermissions);
+        // Extraer los módulos accesibles del array de permisos
+        const accessibleModules = new Set(userPermissions.map(p => p.split(':')[0]));
+
+        // Bootstrapping para roles de gerencia/sistemas
+        const userRole = this.authService.getUser()?.role?.toUpperCase();
+        if (userRole === 'GERENTE' || userRole === 'SISTEMAS' || userRole === 'ADMIN' || userRole === 'ADMINISTRAR' || userRole === 'ROLE_ADMIN') {
+            accessibleModules.add('USUARIOS');
+            accessibleModules.add('ROLES');
+        }
+
+        return this.filterMenuItems(this.ALL_MENU_ITEMS, accessibleModules);
     }
 
     /**
@@ -247,11 +259,11 @@ export class MenuConfigService {
      */
     private filterMenuItems(
         items: ExtendedSidebarMenuItem[],
-        userPermissions: UserPermissions
+        accessibleModules: Set<string>
     ): ExtendedSidebarMenuItem[] {
         return items
-            .filter(item => this.shouldShowItem(item, userPermissions))
-            .map(item => this.filterItemChildren(item, userPermissions))
+            .filter(item => this.shouldShowItem(item, accessibleModules))
+            .map(item => this.filterItemChildren(item, accessibleModules))
             .filter(item => this.hasVisibleContent(item));
     }
 
@@ -264,32 +276,14 @@ export class MenuConfigService {
      */
     private shouldShowItem(
         item: ExtendedSidebarMenuItem,
-        userPermissions: UserPermissions
+        accessibleModules: Set<string>
     ): boolean {
-        // Dashboard is always visible
-        if (item.id === 'dashboard') {
-            return true;
-        }
-
-        // Items without moduleKey are processed based on children
-        if (!item.moduleKey) {
-            return true;
-        }
-
-        // Items with moduleKey require permission
-        return this.hasPermission(item.moduleKey, userPermissions);
+        if (item.id === 'dashboard' || item.id === 'profile') return true;
+        if (!item.moduleKey) return true;
+        return accessibleModules.has(item.moduleKey);
     }
 
-    /**
-     * Check if user has a specific permission
-     *
-     * @param moduleKey - Module key to check
-     * @param userPermissions - User permissions
-     * @returns True if user has permission
-     */
-    private hasPermission(moduleKey: string, userPermissions: UserPermissions): boolean {
-        return Object.keys(userPermissions).includes(moduleKey);
-    }
+    // Eliminado: hasPermission ya no se usa como método separado, se integró en shouldShowItem
 
     /**
      * Filter children of a menu item
@@ -300,17 +294,14 @@ export class MenuConfigService {
      */
     private filterItemChildren(
         item: ExtendedSidebarMenuItem,
-        userPermissions: UserPermissions
+        accessibleModules: Set<string>
     ): ExtendedSidebarMenuItem {
         if (!item.children || item.children.length === 0) {
             return { ...item };
         }
-
-        const filteredChildren = this.filterMenuItems(item.children, userPermissions);
-
         return {
             ...item,
-            children: filteredChildren
+            children: this.filterMenuItems(item.children, accessibleModules)
         };
     }
 

@@ -60,7 +60,8 @@ export class DashboardComponent implements OnInit {
     { title: 'Recibos', description: 'Gestiona aquellos generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/recibos', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTOS_COBRANZA' },
     { title: 'Categorias', description: 'Gestiona las categorías de clientes', icon: 'fas fa-file-invoice-dollar', route: '/categorias-persona', iconType: 'categorias-persona', action: { text: 'Gestionar' }, moduleKey: 'CATEGORIAS_CLIENTES' },
     { title: 'Recursos', description: 'Gestión de recursos', icon: 'fas fa-box', route: '/productos', iconType: 'recursos', action: { text: 'Administrar' }, moduleKey: 'PRODUCTOS' },
-    { title: 'Organización', description: 'Gestión de organización', icon: 'fas fa-file-alt', route: '/sucursales', iconType: 'sucursales', action: { text: 'Administrar' }, moduleKey: 'SUCURSALES' }
+    { title: 'Organización', description: 'Gestión de organización', icon: 'fas fa-file-alt', route: '/sucursales', iconType: 'sucursales', action: { text: 'Administrar' }, moduleKey: 'SUCURSALES' },
+    { title: 'Usuarios', description: 'Gestión de accesos y roles', icon: 'fas fa-users-cog', route: '/usuarios', iconType: 'sucursales', action: { text: 'Administrar' }, moduleKey: 'USUARIOS' }
   ];
 
   constructor(
@@ -78,7 +79,6 @@ export class DashboardComponent implements OnInit {
     const authData = this.authService.getUser();
     const userName = authData?.name || 'Administrador';
     const userRole = this.getRoleDisplayName(authData?.role || 'ADMIN');
-    const userPermissions = authData?.permissions || {};
 
     // Header
     this.headerData.userData = { name: userName, role: userRole };
@@ -87,14 +87,19 @@ export class DashboardComponent implements OnInit {
     this.welcomeData.title = `¡Bienvenido, ${userName}!`;
     this.welcomeData.subtitle = `Hoy es ${this.getCurrentTime()} - Gestiona tu negocio desde aquí`;
 
-    // Filtrar módulos según permisos
-    // Si tiene ALL_MODULES, mostrar todos los módulos, sino filtrar por permisos específicos
-    if (userPermissions['ALL_MODULES']) {
+    // Filtrar módulos según permisos del nuevo formato ["MODULO:ACCION", ...]
+    const userPermissions = authData?.permissions ?? [];
+    const hasAllModules = userPermissions.some((p: string) => p.startsWith('ALL_MODULES:'));
+
+    if (hasAllModules) {
       // El usuario tiene acceso a todos los módulos, no filtrar
       this.modules = this.modules;
     } else {
-      // Filtrar solo los módulos para los que tiene permisos específicos
-      this.modules = this.modules.filter(m => m.moduleKey && Object.keys(userPermissions).includes(m.moduleKey));
+      // Extraer módulos accesibles desde los permisos planos
+      const accessibleModules = new Set(
+        userPermissions.map((p: string) => p.split(':')[0])
+      );
+      this.modules = this.modules.filter(m => m.moduleKey && accessibleModules.has(m.moduleKey));
     }
   }
 

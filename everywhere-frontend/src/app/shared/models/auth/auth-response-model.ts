@@ -3,7 +3,6 @@ export interface AuthResponse {
   token: string;
   name: string;
   role: string;
-  permissions: {
-    [module: string]: Array<'READ' | 'CREATE' | 'UPDATE' | 'DELETE'>;
-  };
+  // Nuevo formato: ["CLIENTES:READ", "COTIZACIONES:CREATE", "ALL_MODULES:DELETE", ...]
+  permissions: string[];
 }

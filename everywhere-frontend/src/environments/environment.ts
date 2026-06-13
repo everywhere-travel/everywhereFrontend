@@ -1,4 +1,4 @@
 export const environment = {
-    production : false,
-    baseURL : "https://taller-integrador-api.eddyacv.dev/api/v1"
+    production : true,
+    baseURL : "http://localhost:8080/api/v1"
 };

@@ -1,0 +1,243 @@
+<!-- Layout con Sidebar -->
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+  <!-- Sidebar -->
+  <app-sidebar [menuItems]="sidebarMenuItems" [isCollapsed]="sidebarCollapsed"
+    (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()"></app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
+      </div>
+      <div class="max-w-full mx-auto px-6 py-6 relative z-10 flex justify-between items-center">
+        <!-- Mobile Menu Button -->
+        <button (click)="onToggleSidebar()"
+          class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+          <i class="fas fa-bars text-white"></i>
+        </button>
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+            <i class="fas fa-users text-2xl text-white"></i>
+          </div>
+          <div>
+            <h1 class="text-4xl font-bold text-white leading-tight">Gestión de Usuarios</h1>
+            <p class="text-xl opacity-90 mt-2 text-white">Administra usuarios, roles y permisos</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 z-10">
+          <button *ngIf="activeTab === 'usuarios'" (click)="abrirModalCrearUsuario()"
+            class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+            <i class="fas fa-plus"></i>
+            Nuevo Usuario
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Area -->
+    <main class="max-w-full mx-auto px-6 py-6 space-y-6">
+
+        <!-- Tabs -->
+        <div class="flex gap-4 border-b border-gray-200 mb-6">
+          <button (click)="switchTab('usuarios')"
+            [ngClass]="{'border-b-2 border-blue-600 text-blue-600': activeTab === 'usuarios', 'text-gray-500': activeTab !== 'usuarios'}"
+            class="pb-2 px-1 text-sm font-medium hover:text-blue-600 transition-colors">
+            Usuarios
+          </button>
+          <button (click)="switchTab('roles')"
+            [ngClass]="{'border-b-2 border-blue-600 text-blue-600': activeTab === 'roles', 'text-gray-500': activeTab !== 'roles'}"
+            class="pb-2 px-1 text-sm font-medium hover:text-blue-600 transition-colors">
+            Roles y Permisos
+          </button>
+        </div>
+
+        <!-- Loader -->
+        <div *ngIf="loading" class="flex justify-center items-center py-12">
+          <i class="fas fa-spinner fa-spin text-3xl text-blue-600"></i>
+        </div>
+
+        <!-- Tab 1: Usuarios -->
+        <div *ngIf="activeTab === 'usuarios' && !loading">
+          <!-- Search box -->
+          <div class="mb-4 relative max-w-md">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <i class="fas fa-search text-gray-400"></i>
+            </div>
+            <input type="text" [(ngModel)]="searchTermUsuarios" placeholder="Buscar por nombre, email o rol..."
+              class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+          </div>
+
+          <!-- Tabla de Usuarios -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sucursal</th>
+                  <th scope="col" class="relative px-6 py-3"><span class="sr-only">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr *ngFor="let user of filteredUsuarios" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+                        {{ user.nombre.charAt(0) | uppercase }}
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">{{ user.nombre }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ user.email }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      {{ user.roleName }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ user.sucursalName }}
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button (click)="editarUsuario(user)" class="text-indigo-600 hover:text-indigo-900 mr-4" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button (click)="eliminarUsuario(user.id)" class="text-red-600 hover:text-red-900" title="Eliminar">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredUsuarios.length === 0">
+                  <td colspan="5" class="px-6 py-8 text-center text-gray-500">No se encontraron usuarios</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Roles y Permisos -->
+        <div *ngIf="activeTab === 'roles' && !loading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Columna 1: Lista de Roles -->
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+              <h3 class="text-sm font-semibold text-gray-700">Roles</h3>
+            </div>
+            <ul class="divide-y divide-gray-200">
+              <li *ngFor="let role of roles" 
+                  (click)="seleccionarRole(role)"
+                  [ngClass]="{'bg-blue-50 border-l-4 border-blue-600': roleSeleccionado?.id === role.id, 'hover:bg-gray-50 border-l-4 border-transparent': roleSeleccionado?.id !== role.id}"
+                  class="cursor-pointer transition-colors">
+                <div class="px-4 py-4 flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">{{ role.name }}</p>
+                    <p class="text-xs text-gray-500">{{ role.permissions.length }} permisos</p>
+                  </div>
+                  <i class="fas fa-chevron-right text-gray-400"></i>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Columna 2: Permisos del Rol Seleccionado -->
+          <div class="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div *ngIf="roleSeleccionado" class="h-full flex flex-col">
+              <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                <h3 class="text-sm font-semibold text-gray-700">Permisos para: <span class="text-blue-600">{{ roleSeleccionado.name }}</span></h3>
+              </div>
+              <div class="p-4 flex-1 overflow-y-auto max-h-[500px]">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div *ngFor="let permiso of permisos" class="relative flex items-start border p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center h-5">
+                      <input [id]="'perm_' + permiso.id" type="checkbox" 
+                             [checked]="hasPermissionChecked(permiso.id)"
+                             (change)="togglePermission(permiso)"
+                             class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded cursor-pointer">
+                    </div>
+                    <div class="ml-3 text-sm">
+                      <label [for]="'perm_' + permiso.id" class="font-medium text-gray-700 cursor-pointer">{{ permiso.name }}</label>
+                      <p class="text-gray-500 text-xs mt-1">{{ permiso.description || 'Sin descripción' }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="!roleSeleccionado" class="h-full flex flex-col items-center justify-center py-12 text-gray-500">
+              <i class="fas fa-shield-alt text-5xl text-gray-300 mb-4"></i>
+              <p>Selecciona un rol para gestionar sus permisos</p>
+            </div>
+          </div>
+        </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modal Crear/Editar Usuario -->
+<div *ngIf="mostrarModalUsuario" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" (click)="cerrarModalUsuario()"></div>
+
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+      <h3 class="text-lg font-semibold text-gray-900">
+        {{ editandoUsuario ? 'Editar Usuario' : 'Nuevo Usuario' }}
+      </h3>
+      <button (click)="cerrarModalUsuario()" class="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="usuarioForm" (ngSubmit)="guardarUsuario()">
+      <div class="px-6 py-4 space-y-4">
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre Completo <span class="text-red-500">*</span></label>
+          <input type="text" formControlName="nombre" class="w-full rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 bg-gray-50 focus:bg-white transition-colors" placeholder="Ej. Juan Pérez">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+          <input type="email" formControlName="email" class="w-full rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 bg-gray-50 focus:bg-white transition-colors" placeholder="juan@ejemplo.com">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña <span *ngIf="!editandoUsuario" class="text-red-500">*</span></label>
+          <input type="password" formControlName="password" class="w-full rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 bg-gray-50 focus:bg-white transition-colors" placeholder="{{ editandoUsuario ? 'Dejar vacío para no cambiar' : 'Si dejas vacío será 123456' }}">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Rol <span class="text-red-500">*</span></label>
+          <select formControlName="roleId" class="w-full rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 bg-gray-50 focus:bg-white transition-colors">
+            <option value="">Seleccione un rol</option>
+            <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Sucursal (Opcional)</label>
+          <select formControlName="sucursalId" class="w-full rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 bg-gray-50 focus:bg-white transition-colors">
+            <option value="">Sin sucursal</option>
+            <option *ngFor="let suc of sucursales" [value]="suc.id">{{ suc.descripcion }}</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-2xl">
+        <button type="button" (click)="cerrarModalUsuario()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" [disabled]="loading || usuarioForm.invalid" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm">
+          <i *ngIf="loading" class="fas fa-spinner fa-spin"></i>
+          {{ editandoUsuario ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

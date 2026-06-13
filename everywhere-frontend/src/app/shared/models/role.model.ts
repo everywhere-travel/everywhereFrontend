@@ -1,92 +1,114 @@
-export interface Role {
+// =========================================================
+//  role.model.ts — Modelos dinámicos de roles y permisos
+//  Los permisos ahora vienen de la BD (formato MODULO:ACCION)
+//  y ya NO dependen de enums hardcodeados en el frontend.
+// =========================================================
+
+/**
+ * Interfaz de un Rol tal como lo devuelve el backend
+ */
+export interface RoleResponse {
   id: number;
   name: string;
-  permissions: string[];
-  modules: string[];
+  permissions: string[]; // ["CLIENTES:READ", "ALL_MODULES:DELETE", ...]
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export enum RoleType {
-  ADMIN = 'ADMIN',
-  VENTAS_ADMIN = 'VENTAS_ADMIN',
-  VENTAS_JUNIOR = 'VENTAS_JUNIOR',
-  ADMINISTRACION_ADMIN = 'ADMINISTRACION_ADMIN',
-  ADMINISTRACION_JUNIOR = 'ADMINISTRACION_JUNIOR',
-  SISTEMAS = 'SISTEMAS',
-  CONTABILIDAD_ADMIN = 'CONTABILIDAD_ADMIN',
-  CONTABILIDAD_JUNIOR = 'CONTABILIDAD_JUNIOR'
+/**
+ * Interfaz de un Permiso individual
+ */
+export interface PermissionResponse {
+  id: number;
+  name: string;        // "CLIENTES:READ"
+  description?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export enum Permission {
-  READ = 'READ',
-  CREATE = 'CREATE',
-  UPDATE = 'UPDATE',
-  DELETE = 'DELETE'
+export interface RoleRequest {
+  name: string;
 }
 
-export enum Module {
-  COTIZACIONES = 'COTIZACIONES',
-  PERSONAS = 'PERSONAS',
-  CATEGORIA_PERSONAS = 'CATEGORIA_PERSONAS',
-  LIQUIDACIONES = 'LIQUIDACIONES',
-  VIAJEROS = 'VIAJEROS',
-  SISTEMA = 'SISTEMA',
-  CONTABILIDAD = 'CONTABILIDAD',
-  ADMINISTRACION = 'ADMINISTRACION',
-  VENTAS = 'VENTAS',
-  USUARIOS = 'USUARIOS',
-  PRODUCTOS = 'PRODUCTOS',
-  PROVEEDORES = 'PROVEEDORES',
-  SUCURSALES = 'SUCURSALES',
-  DOCUMENTOS_COBRANZA = 'DOCUMENTOS_COBRANZA'
+export interface PermissionRequest {
+  name: string;        // Debe seguir el formato "MODULO:ACCION"
+  description?: string;
 }
 
-export const ROLES_DEFINITION: { [key in RoleType]: Role } = {
-  [RoleType.ADMIN]: {
-    id: 1,
-    name: 'ADMIN',
-    permissions: ['READ', 'CREATE', 'UPDATE', 'DELETE'],
-    modules: ['CATEGORIA_PERSONAS', 'COTIZACIONES', 'PERSONAS', 'LIQUIDACIONES', 'VIAJEROS', 'SISTEMA', 'CONTABILIDAD', 'ADMINISTRACION', 'VENTAS', 'USUARIOS', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES', 'DOCUMENTOS_COBRANZA']
-  },
-  [RoleType.VENTAS_ADMIN]: {
-    id: 2,
-    name: 'VENTAS_ADMIN',
-    permissions: ['READ', 'CREATE', 'UPDATE', 'DELETE'],
-    modules: ['COTIZACIONES', 'PERSONAS', 'VIAJEROS', 'DOCUMENTOS_COBRANZA']
-  },
-  [RoleType.VENTAS_JUNIOR]: {
-    id: 3,
-    name: 'VENTAS_JUNIOR',
-    permissions: ['READ', 'CREATE', 'UPDATE'],
-    modules: ['COTIZACIONES', 'PERSONAS', 'VIAJEROS', 'DOCUMENTOS_COBRANZA']
-  },
-  [RoleType.ADMINISTRACION_ADMIN]: {
-    id: 4,
-    name: 'ADMINISTRACION_ADMIN',
-    permissions: ['READ', 'UPDATE'],
-    modules: ['COTIZACIONES', 'PERSONAS', 'VIAJEROS', 'LIQUIDACIONES', 'CONTABILIDAD', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES', 'DOCUMENTOS_COBRANZA']
-  },
-  [RoleType.ADMINISTRACION_JUNIOR]: {
-    id: 5,
-    name: 'ADMINISTRACION_JUNIOR',
-    permissions: ['READ', 'UPDATE'],
-    modules: ['COTIZACIONES', 'PERSONAS', 'VIAJEROS', 'CONTABILIDAD', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES', 'DOCUMENTOS_COBRANZA']
-  },
-  [RoleType.SISTEMAS]: {
-    id: 6,
-    name: 'SISTEMAS',
-    permissions: ['READ', 'CREATE', 'UPDATE', 'DELETE'],
-    modules: ['CATEGORIA_PERSONAS', 'COTIZACIONES', 'PERSONAS', 'LIQUIDACIONES', 'VIAJEROS', 'SISTEMA', 'CONTABILIDAD', 'ADMINISTRACION', 'VENTAS', 'USUARIOS', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES', 'DOCUMENTOS_COBRANZA']
-  },
-  [RoleType.CONTABILIDAD_ADMIN]: {
-    id: 7,
-    name: 'CONTABILIDAD_ADMIN',
-    permissions: ['READ', 'CREATE', 'UPDATE'],
-    modules: ['COTIZACIONES', 'PERSONAS', 'LIQUIDACIONES', 'VIAJEROS', 'CONTABILIDAD', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES', 'DOCUMENTOS_COBRANZA']
-  },
-  [RoleType.CONTABILIDAD_JUNIOR]: {
-    id: 8,
-    name: 'CONTABILIDAD_JUNIOR',
-    permissions: ['READ', 'CREATE', 'UPDATE'],
-    modules: ['COTIZACIONES', 'PERSONAS', 'LIQUIDACIONES', 'VIAJEROS', 'CONTABILIDAD', 'PRODUCTOS', 'PROVEEDORES', 'SUCURSALES', 'DOCUMENTOS_COBRANZA']
-  }
-};
+// =========================================================
+//  Helpers para trabajar con los permisos planos del backend
+// =========================================================
+
+/**
+ * Verifica si una lista de permisos planos incluye acceso a un módulo+acción.
+ * Soporta el comodín ALL_MODULES.
+ *
+ * @param permissions  Lista de strings tipo "MODULO:ACCION" del AuthResponse
+ * @param module       Nombre del módulo (ej: "CLIENTES")
+ * @param action       Acción requerida (ej: "READ")
+ */
+export function hasPermission(
+  permissions: string[],
+  module: string,
+  action: 'READ' | 'CREATE' | 'UPDATE' | 'DELETE'
+): boolean {
+  if (!permissions || permissions.length === 0) return false;
+  const wildcard = `ALL_MODULES:${action}`;
+  const specific = `${module}:${action}`;
+  return permissions.includes(wildcard) || permissions.includes(specific);
+}
+
+/**
+ * Obtiene todos los módulos accesibles para un conjunto de permisos.
+ * Extrae la parte antes de ":" de cada permiso.
+ */
+export function getAccessibleModules(permissions: string[]): string[] {
+  if (!permissions || permissions.length === 0) return [];
+
+  const modules = new Set<string>();
+  permissions.forEach(p => {
+    const [mod] = p.split(':');
+    if (mod && mod !== 'ALL_MODULES') {
+      modules.add(mod);
+    }
+  });
+  return Array.from(modules);
+}
+
+/**
+ * Verifica si los permisos otorgan acceso de admin
+ * (tener ALL_MODULES:DELETE implica acceso total)
+ */
+export function isAdminPermissions(permissions: string[]): boolean {
+  return permissions?.includes('ALL_MODULES:DELETE') ?? false;
+}
+
+// =========================================================
+//  Módulos del sistema — usados en el menú y guards
+//  Deben coincidir con los módulos del backend (@RequirePermission)
+// =========================================================
+export const MODULE = {
+  CLIENTES:          'CLIENTES',
+  VIAJEROS:          'VIAJEROS',
+  VIAJEROS_FREC:     'VIAJEROS_FREC',
+  COTIZACIONES:      'COTIZACIONES',
+  RECIBOS:           'RECIBOS',
+  LIQUIDACIONES:     'LIQUIDACIONES',
+  PRODUCTOS:         'PRODUCTOS',
+  PROVEEDORES:       'PROVEEDORES',
+  OPERADOR:          'OPERADOR',
+  CARPETA:           'CARPETA',
+  PERSONAS:          'PERSONAS',
+  ALL_MODULES:       'ALL_MODULES',
+} as const;
+
+export type ModuleKey = typeof MODULE[keyof typeof MODULE];
+
+export const ACTION = {
+  READ:   'READ',
+  CREATE: 'CREATE',
+  UPDATE: 'UPDATE',
+  DELETE: 'DELETE',
+} as const;
+
+export type ActionKey = typeof ACTION[keyof typeof ACTION];

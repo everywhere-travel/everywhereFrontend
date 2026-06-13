@@ -404,22 +404,32 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   private loadInitialData(): void {
     this.isLoading = true;
 
-    // Cargar datos básicos para liquidaciones
+    // Ejecutar loadLiquidaciones y loadPersonas en paralelo para mayor velocidad.
+    // Los demás catálogos (proveedores, viajeros, etc.) se cargan en segundo plano
+    // porque solo se necesitan al momento de abrir el formulario de Crear/Editar.
     Promise.all([
       this.loadPersonas(),
+      this.loadLiquidaciones()
+    ]).then(() => {
+      // Una vez tenemos las liquidaciones y las personas (clientes básicos), 
+      // actualizamos la tabla para asegurar que los nombres se rendericen.
+      if (this.liquidaciones.length > 0) {
+        this.liquidacionesTabla = this.convertToLiquidacionTabla(this.liquidaciones);
+        this.tableConfig = { ...this.tableConfig, data: this.liquidacionesTabla };
+      }
+      return this.findAndLoadMissingClients();
+    }).finally(() => {
+      this.isLoading = false;
+    });
+
+    // Cargar catálogos pesados en segundo plano sin bloquear la pantalla inicial
+    Promise.all([
       this.loadFormasPago(),
       this.loadProductos(),
       this.loadProveedores(),
       this.loadOperadores(),
       this.loadViajeros()
-    ]).then(() => {
-      return this.loadLiquidaciones();
-    }).then(() => {
-      // Después de cargar liquidaciones, verificar y cargar clientes faltantes
-      return this.findAndLoadMissingClients();
-    }).finally(() => {
-      this.isLoading = false;
-    });
+    ]).catch(console.error);
   }
 
   private async loadLiquidaciones(): Promise<void> {

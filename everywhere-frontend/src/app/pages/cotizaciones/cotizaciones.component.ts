@@ -524,27 +524,33 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private loadInitialData(): void {
     this.isLoading = true;
 
-    // Usar el MISMO orden que liquidaciones: personas PRIMERO
+    // Ejecutar loadCotizaciones y loadPersonas en paralelo para mayor velocidad.
+    // Los demás catálogos se cargan en segundo plano
     Promise.all([
       this.loadPersonas(),
-      this.loadFormasPago(),
-      this.loadEstadosCotizacion(),
-      this.loadSucursales(),
-      this.loadProductos(),
-      this.loadProveedores(),
-      this.loadCategorias(),
+      this.loadCotizaciones()
     ])
       .then(() => {
-        // Cargar cotizaciones AL FINAL
-        return this.loadCotizaciones();
-      })
-      .then(() => {
+        // Re-filtrar para asegurar que los nombres de cliente carguen en la tabla
+        if (this.cotizaciones.length > 0) {
+          this.filterCotizaciones();
+        }
         // Después de cargar cotizaciones, verificar y cargar clientes faltantes
         return this.findAndLoadMissingClients();
       })
       .finally(() => {
         this.isLoading = false;
       });
+
+    // Cargar catálogos pesados en segundo plano sin bloquear la pantalla inicial
+    Promise.all([
+      this.loadFormasPago(),
+      this.loadEstadosCotizacion(),
+      this.loadSucursales(),
+      this.loadProductos(),
+      this.loadProveedores(),
+      this.loadCategorias()
+    ]).catch(console.error);
   }
 
   private async loadCotizaciones(): Promise<void> {
@@ -687,6 +693,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           }
         }
       });
+
+      // Recalcular tabla para reflejar los nombres cargados despues
+      if (clientesValidos.length > 0) {
+        this.filterCotizaciones();
+      }
     } catch (error) {
       // Error silencioso para no saturar la consola
     }

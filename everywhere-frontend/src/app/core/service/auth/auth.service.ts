@@ -5,6 +5,7 @@ import { StorageService } from '../storage.service';
 import { AuthRequest } from '../../../shared/models/auth/auth-request-model';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { AuthResponse } from '../../../shared/models/auth/auth-response-model';
+import { hasPermission } from '../../../shared/models/role.model';
 
 @Injectable({
   providedIn: 'root'
@@ -22,14 +23,14 @@ export class AuthServiceService {
     return this.http.post<AuthResponse>(`${this.baseURL}/login`, authRequest).pipe(
       tap(response => {
         this.storageService.setAuthData(response);
-        this.currentUserSubject.next(response); // Actualizamos el observable
+        this.currentUserSubject.next(response);
       })
     );
   }
 
   logout(): void {
     this.storageService.clearAuthData();
-    this.currentUserSubject.next(null); // Emitimos null al hacer logout
+    this.currentUserSubject.next(null);
   }
 
   isAuthenticated(): boolean {
@@ -58,7 +59,19 @@ export class AuthServiceService {
     this.currentUserSubject.next(updated);
   }
 
-  hasPermission(moduleKey: string, action: 'READ' | 'CREATE' | 'UPDATE' | 'DELETE'): boolean {
-    return this.currentUserSubject.value?.permissions?.[moduleKey]?.includes(action) || false;
+  /**
+   * Verifica si el usuario tiene permiso para un módulo+acción.
+   * Usa el nuevo formato plano: "MODULO:ACCION"
+   */
+  hasPermission(module: string, action: 'READ' | 'CREATE' | 'UPDATE' | 'DELETE'): boolean {
+    const permissions = this.currentUserSubject.value?.permissions ?? [];
+    return hasPermission(permissions, module, action);
+  }
+
+  /**
+   * Obtiene todos los permisos del usuario actual
+   */
+  getPermissions(): string[] {
+    return this.currentUserSubject.value?.permissions ?? [];
   }
 }

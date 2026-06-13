@@ -1,14 +1,20 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
-import { Role, RoleType, Permission, Module, ROLES_DEFINITION } from '../../shared/models/role.model';
 import { AuthServiceService } from './auth/auth.service';
 import { AuthResponse } from '../../shared/models/auth/auth-response-model';
+import {
+  hasPermission,
+  isAdminPermissions,
+  getAccessibleModules,
+  MODULE,
+  ModuleKey,
+  ActionKey
+} from '../../shared/models/role.model';
 
-export interface User {
+export interface CurrentUser {
   id: number;
-  email: string;
   name: string;
-  role: RoleType;
+  role: string;
+  permissions: string[];
 }
 
 @Injectable({
@@ -17,169 +23,130 @@ export interface User {
 export class AuthorizationService {
   private authService = inject(AuthServiceService);
 
-  constructor() {}
+  // ----------------------------------------------------------------
+  //  Datos del usuario actual
+  // ----------------------------------------------------------------
 
-  /**
-   * Obtiene el usuario actual del servicio de autenticación
-   */
-  getCurrentUser(): User | null {
+  getCurrentUser(): CurrentUser | null {
     const authData = this.authService.getUser();
-    if (!authData) {
-      return null;
-    }
+    if (!authData) return null;
 
     return {
-      id: authData.id,
-      email: '', // Si necesitas email, agrégalo al AuthResponse
-      name: authData.name,
-      role: authData.role as RoleType
+      id:          authData.id,
+      name:        authData.name,
+      role:        authData.role,
+      permissions: authData.permissions ?? []
     };
   }
 
   /**
-   * Obtiene el rol actual del usuario
+   * Permisos del usuario en formato plano: ["CLIENTES:READ", ...]
    */
-  getCurrentRole(): Role | null {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser || !currentUser.role) {
-      return null;
+  getPermissions(): string[] {
+    return this.authService.getPermissions();
+  }
+
+  // ----------------------------------------------------------------
+  //  Verificación de permisos (nuevo formato MODULO:ACCION)
+  // ----------------------------------------------------------------
+
+  /**
+   * Verifica si el usuario puede realizar una acción sobre un módulo.
+   *
+   * @param module  Nombre del módulo — usa MODULE.xxx para evitar typos
+   * @param action  "READ" | "CREATE" | "UPDATE" | "DELETE"
+   *
+   * @example
+   *   authorizationService.canAccess(MODULE.CLIENTES, 'READ')
+   *   authorizationService.canAccess('COTIZACIONES', 'DELETE')
+   */
+  canAccess(module: string, action: ActionKey): boolean {
+    const permissions = this.getPermissions();
+    return hasPermission(permissions, module, action);
+  }
+
+  /**
+   * Alias de canAccess para compatibilidad con código existente
+   */
+  hasPermission(module: string, action: ActionKey = 'READ'): boolean {
+    return this.canAccess(module, action);
+  }
+
+  /**
+   * Verifica si el usuario tiene acceso de lectura a un módulo
+   */
+  hasModuleAccess(module: string): boolean {
+    return this.canAccess(module, 'READ');
+  }
+
+  /**
+   * Obtiene todos los módulos a los que el usuario tiene acceso de lectura
+   */
+  getAccessibleModules(): string[] {
+    const permissions = this.getPermissions();
+
+    // Si tiene ALL_MODULES, tiene acceso a todos los módulos conocidos
+    if (permissions.some(p => p.startsWith('ALL_MODULES:'))) {
+      return Object.values(MODULE);
     }
-    
-    const roleDefinition = ROLES_DEFINITION[currentUser.role];
-    return roleDefinition || null;
+
+    return getAccessibleModules(permissions);
   }
 
-  /**
-   * Verifica si el usuario tiene un permiso específico
-   */
-  hasPermission(permission: Permission): boolean {
-    const role = this.getCurrentRole();
-    if (!role) {
-      return false;
-    }
-    return role.permissions.includes(permission);
-  }
+  // ----------------------------------------------------------------
+  //  Checks de roles especiales
+  // ----------------------------------------------------------------
 
   /**
-   * Verifica si el usuario tiene acceso a un módulo específico
-   */
-  hasModuleAccess(module: Module): boolean {
-    const role = this.getCurrentRole();
-    if (!role) {
-      return false;
-    }
-    return role.modules.includes(module);
-  }
-
-  /**
-   * Verifica si el usuario puede realizar una acción específica en un módulo
-   */
-  canAccess(module: Module, permission: Permission): boolean {
-    return this.hasModuleAccess(module) && this.hasPermission(permission);
-  }
-
-  /**
-   * Obtiene todos los módulos a los que el usuario tiene acceso
-   */
-  getAccessibleModules(): Module[] {
-    const role = this.getCurrentRole();
-    if (!role) {
-      return [];
-    }
-    return role.modules as Module[];
-  }
-
-  /**
-   * Obtiene todos los permisos del usuario
-   */
-  getUserPermissions(): Permission[] {
-    const role = this.getCurrentRole();
-    if (!role) {
-      return [];
-    }
-    return role.permissions as Permission[];
-  }
-
-  /**
-   * Verifica si el usuario es administrador
+   * Admin = tiene permiso ALL_MODULES:DELETE (acceso total)
    */
   isAdmin(): boolean {
-    const currentUser = this.getCurrentUser();
-    return currentUser?.role === RoleType.ADMIN || currentUser?.role === RoleType.SISTEMAS;
+    return isAdminPermissions(this.getPermissions());
   }
 
-  /**
-   * Verifica si el usuario tiene rol de ventas
-   */
-  isSalesRole(): boolean {
-    const currentUser = this.getCurrentUser();
-    return currentUser?.role === RoleType.VENTAS_ADMIN || currentUser?.role === RoleType.VENTAS_JUNIOR;
-  }
-
-  /**
-   * Verifica si el usuario tiene rol de administración
-   */
-  isAdminRole(): boolean {
-    const currentUser = this.getCurrentUser();
-    return currentUser?.role === RoleType.ADMINISTRACION_ADMIN || currentUser?.role === RoleType.ADMINISTRACION_JUNIOR;
-  }
-
-  /**
-   * Verifica si el usuario tiene rol de contabilidad
-   */
-  isAccountingRole(): boolean {
-    const currentUser = this.getCurrentUser();
-    return currentUser?.role === RoleType.CONTABILIDAD_ADMIN || currentUser?.role === RoleType.CONTABILIDAD_JUNIOR;
-  }
-
-  /**
-   * Verifica si el usuario está autenticado
-   */
   isAuthenticated(): boolean {
     return this.authService.isAuthenticated();
   }
 
-  /**
-   * Limpia los datos del usuario (para logout)
-   */
   clearUser(): void {
     this.authService.logout();
   }
 
-  /**
-   * Obtiene una configuración de menú filtrada basada en los permisos del usuario
-   */
+  // ----------------------------------------------------------------
+  //  Menú dinámico filtrado por permisos del usuario
+  // ----------------------------------------------------------------
+
   getFilteredMenuItems(): MenuItemConfig[] {
-    const accessibleModules = this.getAccessibleModules();
-    
     return MENU_ITEMS.filter(item => {
-      // Si es un item principal sin módulo específico, verificar si tiene subitems accesibles
       if (item.children) {
-        const accessibleChildren = item.children.filter(child => 
-          !child.requiredModule || accessibleModules.includes(child.requiredModule)
+        const accessibleChildren = item.children.filter(child =>
+          !child.requiredModule || this.hasModuleAccess(child.requiredModule)
         );
         return accessibleChildren.length > 0;
       }
-      
-      // Si es un item simple, verificar acceso al módulo
-      return !item.requiredModule || accessibleModules.includes(item.requiredModule);
+      return !item.requiredModule || this.hasModuleAccess(item.requiredModule);
     }).map(item => ({
       ...item,
-      children: item.children ? item.children.filter(child => 
-        !child.requiredModule || accessibleModules.includes(child.requiredModule)
-      ) : undefined
+      children: item.children
+        ? item.children.filter(child =>
+            !child.requiredModule || this.hasModuleAccess(child.requiredModule)
+          )
+        : undefined
     }));
   }
 }
 
-// Configuración del menú con los módulos requeridos
+// ----------------------------------------------------------------
+//  Configuración del menú
+// ----------------------------------------------------------------
+
 export interface MenuItemConfig {
   id: string;
   label: string;
   route?: string;
   icon?: string;
-  requiredModule?: Module;
-  requiredPermission?: Permission;
+  requiredModule?: string;   // Módulo requerido para ver el item
+  requiredAction?: ActionKey; // Acción requerida (por defecto READ)
   children?: MenuItemConfig[];
 }
 
@@ -189,104 +156,90 @@ export const MENU_ITEMS: MenuItemConfig[] = [
     label: 'Dashboard',
     route: '/dashboard',
     icon: 'dashboard'
+    // Sin requiredModule → siempre visible para usuarios autenticados
   },
   {
     id: 'cotizaciones',
     label: 'Cotizaciones',
     route: '/cotizaciones',
     icon: 'quote',
-    requiredModule: Module.COTIZACIONES
+    requiredModule: MODULE.COTIZACIONES
   },
   {
     id: 'personas',
     label: 'Clientes',
     route: '/personas',
     icon: 'people',
-    requiredModule: Module.PERSONAS
+    requiredModule: MODULE.CLIENTES
   },
   {
     id: 'viajeros',
     label: 'Viajeros',
     route: '/viajero',
     icon: 'flight',
-    requiredModule: Module.VIAJEROS
+    requiredModule: MODULE.VIAJEROS
   },
   {
     id: 'viajeros-frecuentes',
     label: 'Viajeros Frecuentes',
     route: '/viajero-frecuente',
     icon: 'flight_takeoff',
-    requiredModule: Module.VIAJEROS
+    requiredModule: MODULE.VIAJEROS_FREC
   },
   {
     id: 'liquidaciones',
     label: 'Liquidaciones',
     route: '/liquidaciones',
     icon: 'payment',
-    requiredModule: Module.LIQUIDACIONES
+    requiredModule: MODULE.LIQUIDACIONES
   },
   {
     id: 'productos',
     label: 'Productos',
     route: '/productos',
     icon: 'inventory',
-    requiredModule: Module.PRODUCTOS
+    requiredModule: MODULE.PRODUCTOS
   },
   {
     id: 'proveedores',
     label: 'Proveedores',
     route: '/proveedor',
     icon: 'business',
-    requiredModule: Module.PROVEEDORES
+    requiredModule: MODULE.PROVEEDORES
   },
   {
     id: 'operadores',
     label: 'Operadores',
     route: '/operadores',
     icon: 'support_agent',
-    requiredModule: Module.SISTEMA
+    requiredModule: MODULE.OPERADOR
+  },
+  {
+    id: 'carpetas',
+    label: 'Carpetas',
+    route: '/carpetas',
+    icon: 'folder',
+    requiredModule: MODULE.CARPETA
   },
   {
     id: 'administracion',
     label: 'Administración',
     icon: 'admin_panel_settings',
-    requiredModule: Module.ADMINISTRACION,
+    requiredModule: MODULE.ALL_MODULES,  // Solo visible para admins
     children: [
-      {
-        id: 'usuarios',
-        label: 'Usuarios',
-        route: '/usuarios',
-        icon: 'person_add',
-        requiredModule: Module.USUARIOS
-      },
       {
         id: 'sucursales',
         label: 'Sucursales',
         route: '/sucursales',
         icon: 'business',
-        requiredModule: Module.SUCURSALES
-      }
-    ]
-  },
-  {
-    id: 'contabilidad',
-    label: 'Contabilidad',
-    icon: 'account_balance',
-    requiredModule: Module.CONTABILIDAD,
-    children: [
-      {
-        id: 'reportes',
-        label: 'Reportes',
-        route: '/reportes',
-        icon: 'assessment',
-        requiredModule: Module.CONTABILIDAD
+        requiredModule: MODULE.ALL_MODULES
       },
       {
-        id: 'estadisticas',
-        label: 'Estadísticas',
-        route: '/estadistica',
-        icon: 'analytics',
-        requiredModule: Module.CONTABILIDAD
+        id: 'roles',
+        label: 'Roles y Permisos',
+        route: '/roles',
+        icon: 'security',
+        requiredModule: MODULE.ALL_MODULES
       }
     ]
   }

@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthServiceService } from '../../../core/service/auth/auth.service';
-import { Module, Permission } from '../../models/role.model';
 
 @Component({
   selector: 'app-navbar',
