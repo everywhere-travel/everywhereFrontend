@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { SucursalRequest, SucursalResponse} from '../../../shared/models/Sucursal/sucursal.model';
 import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
@@ -43,4 +44,10 @@ export class SucursalService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+
+  getDropdownSucursales(): Observable<SucursalResponse[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/dropdown`).pipe(
+      map(items => items.map(i => ({ id: i.id, descripcion: i.nombre } as any)))
+    );
+  }
 }

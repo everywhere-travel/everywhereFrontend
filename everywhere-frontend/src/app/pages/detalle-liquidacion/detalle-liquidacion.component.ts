@@ -424,7 +424,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       .pipe(
         catchError(error => {
           console.error('Error al cargar liquidación:', error);
-          this.error = 'Error al cargar la liquidación. Por favor, intente nuevamente.';
+          if (!(error as any).isHandledGlobally) {
+            this.error = 'Error al cargar la liquidación. Por favor, intente nuevamente.';
+          }
           return of(null);
         }),
         finalize(() => {
@@ -483,7 +485,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   private loadSelectOptions(): void {
     // Cargar productos
-    const productosSubscription = this.productoService.getAllProductos()
+    const productosSubscription = this.productoService.getDropdownProductos()
       .pipe(
         catchError(error => {
           console.error('Error al cargar productos:', error);
@@ -495,7 +497,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       });
 
     // Cargar formas de pago
-    const formasPagoSubscription = this.formaPagoService.getAllFormasPago()
+    const formasPagoSubscription = this.formaPagoService.getDropdownFormasPago()
       .pipe(
         catchError(() => {
           return of([]);
@@ -506,7 +508,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       });
 
     // Cargar proveedores
-    const proveedoresSubscription = this.proveedorService.findAllProveedor()
+    const proveedoresSubscription = this.proveedorService.getDropdownProveedores()
       .pipe(
         catchError(() => {
           return of([]);
@@ -517,7 +519,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       });
 
     // Cargar operadores
-    const operadoresSubscription = this.operadorService.findAllOperador()
+    const operadoresSubscription = this.operadorService.getDropdownOperadores()
       .pipe(
         catchError(() => {
           return of([]);
@@ -1042,7 +1044,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         }),
         catchError(error => {
           console.error('Error al guardar la liquidación:', error);
-          this.error = 'Error al guardar los cambios. Por favor, intente nuevamente.';
+          if (!(error as any).isHandledGlobally) {
+            this.error = 'Error al guardar los cambios. Por favor, intente nuevamente.';
+          }
           return of(null);
         }),
         finalize(() => {
@@ -1686,7 +1690,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     const producto = this.productos.find(p => p.id === productoId);
     if (producto) {
-      return producto.tipo;
+      return producto.descripcion;
     }
 
     return 'Producto no encontrado';
@@ -1891,3 +1895,4 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     }
   }
 }
+

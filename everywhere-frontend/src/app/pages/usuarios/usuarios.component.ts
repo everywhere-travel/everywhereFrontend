@@ -27,6 +27,7 @@ export interface UsuarioTabla {
   roleName: string;
   sucursalId?: number;
   sucursalName: string;
+  estado: boolean;
 }
 
 @Component({
@@ -140,7 +141,8 @@ export class UsuariosComponent implements OnInit {
       roleId: u.role?.id || 0,
       roleName: u.role?.name || 'Sin rol',
       sucursalId: u.sucursal?.id,
-      sucursalName: u.sucursal?.descripcion || 'Sin sucursal'
+      sucursalName: u.sucursal?.descripcion || 'Sin sucursal',
+      estado: u.estado ?? true
     }));
   }
 
@@ -259,6 +261,21 @@ export class UsuariosComponent implements OnInit {
           console.error('Error eliminando usuario', err);
           this.loading = false;
           alert('Error al eliminar usuario');
+        }
+      });
+    }
+  }
+
+  toggleEstadoUsuario(id: number, currentEstado: boolean): void {
+    const accion = currentEstado ? 'deshabilitar' : 'habilitar';
+    if (confirm(`¿Estás seguro de que deseas ${accion} este usuario?`)) {
+      this.loading = true;
+      this.userService.toggleUserStatus(id).subscribe({
+        next: () => this.loadUsuarios(),
+        error: (err) => {
+          console.error('Error cambiando estado del usuario', err);
+          this.loading = false;
+          alert('Error al cambiar el estado del usuario');
         }
       });
     }

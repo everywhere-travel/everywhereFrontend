@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { EstadoCotizacionResponse, EstadoCotizacionRequest } from '../../../shared/models/Cotizacion/estadoCotizacion.model';
 import { environment } from '../../../../environments/environment';
 
@@ -31,5 +32,11 @@ export class EstadoCotizacionService {
 
   deleteByIdEstadoCotizacion(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getDropdownEstadosCotizacion(): Observable<EstadoCotizacionResponse[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/dropdown`).pipe(
+      map(items => items.map(i => ({ id: i.id, descripcion: i.nombre } as any)))
+    );
   }
 }

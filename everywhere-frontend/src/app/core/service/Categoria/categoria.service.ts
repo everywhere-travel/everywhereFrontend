@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { CategoriaRequest, CategoriaResponse } from '../../../shared/models/Categoria/categoria.model';
 import { environment } from '../../../../environments/environment';
 
@@ -31,5 +32,11 @@ export class CategoriaService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getDropdownCategorias(): Observable<CategoriaResponse[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/dropdown`).pipe(
+      map(items => items.map(i => ({ id: i.id, nombre: i.nombre } as any)))
+    );
   }
 }
