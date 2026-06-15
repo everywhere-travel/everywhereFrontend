@@ -131,7 +131,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   cotizacionSeleccionada: CotizacionResponse | null = null;
   searchCotizacion = '';
 
-  // Estadísticas
+  // Estad├¡sticas
   totalLiquidaciones = 0;
 
   // ===== MESSAGES =====
@@ -179,7 +179,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     columns: [
       {
         key: 'numeroLiquidacion',
-        header: 'N° Liquidación',
+        header: 'N┬░ Liquidaci├│n',
         icon: 'fa-hashtag',
         sortable: true,
         width: '140px',
@@ -187,7 +187,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       },
       {
         key: 'numeroCotizacion',
-        header: 'N° Cotización',
+        header: 'N┬░ Cotizaci├│n',
         icon: 'fa-file-invoice',
         sortable: true,
         width: '140px',
@@ -241,7 +241,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       }
     ],
     enableSearch: true,
-    searchPlaceholder: 'Buscar por número, cotización, cliente, destino...',
+    searchPlaceholder: 'Buscar por n├║mero, cotizaci├│n, cliente, destino...',
     enableSelection: true,
     enablePagination: true,
     enableViewSwitcher: true,
@@ -331,7 +331,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   private initializeForms(): void {
-    // Liquidación form
+    // Liquidaci├│n form
     this.liquidacionForm = this.fb.group({
       numero: [''],
       cotizacionId: [''],
@@ -343,7 +343,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       observaciones: ['']
     });
 
-    // Detalle form para detalles de liquidación
+    // Detalle form para detalles de liquidaci├│n
     this.detalleForm = this.fb.group({
       proveedorId: [''],
       productoId: ['', [Validators.required]],
@@ -379,13 +379,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
     this.clienteSearchSubscription = this.clienteSearchControl.valueChanges
       .pipe(
-        debounceTime(300), // Reducido para respuesta más rápida
+        debounceTime(300), // Reducido para respuesta m├ís r├ípida
         distinctUntilChanged(),
         switchMap(searchTerm => {
           this.buscandoClientes = true;
           const termino = searchTerm?.trim() || '';
 
-          // Si no hay término de búsqueda, mostrar todos los clientes
+          // Si no hay t├®rmino de b├║squeda, mostrar todos los clientes
           const resultados = this.todosLosClientes.filter(persona =>
             this.getPersonaDisplayName(persona.id || 0).toLowerCase().includes(termino)
           );
@@ -405,13 +405,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     // Ejecutar loadLiquidaciones y loadPersonas en paralelo para mayor velocidad.
-    // Los demás catálogos (proveedores, viajeros, etc.) se cargan en segundo plano
+    // Los dem├ís cat├ílogos (proveedores, viajeros, etc.) se cargan en segundo plano
     // porque solo se necesitan al momento de abrir el formulario de Crear/Editar.
     Promise.all([
       this.loadPersonas(),
       this.loadLiquidaciones()
     ]).then(() => {
-      // Una vez tenemos las liquidaciones y las personas (clientes básicos), 
+      // Una vez tenemos las liquidaciones y las personas (clientes b├ísicos), 
       // actualizamos la tabla para asegurar que los nombres se rendericen.
       if (this.liquidaciones.length > 0) {
         this.liquidacionesTabla = this.convertToLiquidacionTabla(this.liquidaciones);
@@ -422,7 +422,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.isLoading = false;
     });
 
-    // Cargar catálogos pesados en segundo plano sin bloquear la pantalla inicial
+    // Cargar cat├ílogos pesados en segundo plano sin bloquear la pantalla inicial
     Promise.all([
       this.loadFormasPago(),
       this.loadProductos(),
@@ -448,7 +448,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         data: this.liquidacionesTabla
       };
     } catch (error) {
-      this.showError('Error al cargar las liquidaciones. Por favor, recargue la página.');
+      this.showError('Error al cargar las liquidaciones. Por favor, recargue la p├ígina.');
       this.liquidaciones = [];
       this.liquidacionesTabla = [];
     } finally {
@@ -510,11 +510,11 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Busca y carga clientes que aparecen en liquidaciones pero no están en el cache
+   * Busca y carga clientes que aparecen en liquidaciones pero no est├ín en el cache
    */
   private async findAndLoadMissingClients(): Promise<void> {
     try {
-      // Obtener IDs únicos de personas desde las liquidaciones cargadas
+      // Obtener IDs ├║nicos de personas desde las liquidaciones cargadas
       const personaIdsEnLiquidaciones = new Set<number>();
       this.liquidaciones.forEach(liquidacion => {
         if (liquidacion.cotizacion?.personas?.id) {
@@ -522,7 +522,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         }
       });
 
-      // Encontrar IDs que están en liquidaciones pero NO en cache
+      // Encontrar IDs que est├ín en liquidaciones pero NO en cache
       const idsEnCache = new Set(Object.keys(this.personasCache).map(id => parseInt(id)));
       const idsFaltantes = Array.from(personaIdsEnLiquidaciones).filter(id => !idsEnCache.has(id));
 
@@ -530,7 +530,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         return;
       }
 
-      // Cargar información para cada cliente faltante usando el endpoint correcto
+      // Cargar informaci├│n para cada cliente faltante usando el endpoint correcto
       const clientesFaltantes = await Promise.all(
         idsFaltantes.map(async (personaId) => {
           try {
@@ -542,12 +542,12 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         })
       );
 
-      // Agregar clientes válidos al cache y listas
+      // Agregar clientes v├ílidos al cache y listas
       const clientesValidos = clientesFaltantes.filter(c => c !== null) as any[];
 
       clientesValidos.forEach(cliente => {
         if (cliente.id) {
-          // Agregar al cache - mejorar datos para clientes "genéricos"
+          // Agregar al cache - mejorar datos para clientes "gen├®ricos"
           const esGenerico = cliente.tipo === 'GENERICA' || !cliente.identificador;
 
           this.personasCache[cliente.id] = {
@@ -564,7 +564,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
             this.personasDisplayMap[cliente.id] = esGenerico ? `Cliente ID: ${cliente.id} (Sin datos)` : cached.nombre;
           }
 
-          // Agregar a las listas para búsqueda (solo si no es genérico)
+          // Agregar a las listas para b├║squeda (solo si no es gen├®rico)
           if (!esGenerico) {
             this.personas.push(cliente);
             this.todosLosClientes.push(cliente);
@@ -589,7 +589,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   private async loadFormasPago(): Promise<void> {
     try {
-      this.formasPago = await this.formaPagoService.getAllFormasPago().toPromise() || [];
+      this.formasPago = await this.formaPagoService.getDropdownFormasPago().toPromise() || [];
     } catch (error) {
       this.showError('Error al cargar las formas de pago.');
       this.formasPago = [];
@@ -598,7 +598,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   private async loadProductos(): Promise<void> {
     try {
-      this.productos = await this.productoService.getAllProductos().toPromise() || [];
+      this.productos = await this.productoService.getDropdownProductos().toPromise() || [];
     } catch (error) {
       this.productos = [];
     }
@@ -606,7 +606,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   private async loadProveedores(): Promise<void> {
     try {
-      this.proveedores = await this.proveedorService.findAllProveedor().toPromise() || [];
+      this.proveedores = await this.proveedorService.getDropdownProveedores().toPromise() || [];
     } catch (error) {
       this.proveedores = [];
     }
@@ -614,7 +614,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   private async loadOperadores(): Promise<void> {
     try {
-      this.operadores = await this.operadorService.findAllOperador().toPromise() || [];
+      this.operadores = await this.operadorService.getDropdownOperadores().toPromise() || [];
     } catch (error) {
       this.operadores = [];
     }
@@ -644,10 +644,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     try {
       this.isGenerating = true;
 
-      // Cargar cotizaciones para selección
+      // Cargar cotizaciones para selecci├│n
       await this.loadCotizaciones();
 
-      // Mostrar modal de selección de cotizaciones
+      // Mostrar modal de selecci├│n de cotizaciones
       this.mostrarModalCotizaciones = true;
 
     } catch (error) {
@@ -659,7 +659,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   async mostrarFormularioEditar(liquidacion: LiquidacionResponse): Promise<void> {
-    // Navegar al componente de detalle en modo edición
+    // Navegar al componente de detalle en modo edici├│n
     this.router.navigate(['/liquidaciones/detalle', liquidacion.id], {
       queryParams: { modo: 'editar' }
     });
@@ -682,7 +682,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.mostrarFormulario = true;
 
     } catch (error) {
-      this.showError('Error al cargar el formulario de edición');
+      this.showError('Error al cargar el formulario de edici├│n');
     } finally {
       // Se asegura de que el indicador de carga se oculte, incluso si hay un error
       this.isLoading = false;
@@ -727,7 +727,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     this.clienteSearchControl.setValue('', { emitEvent: false });
   }
 
-  // Método simplificado para popular el formulario de liquidación
+  // M├®todo simplificado para popular el formulario de liquidaci├│n
   private async populateLiquidacionForm(liquidacion: LiquidacionResponse): Promise<void> {
     try {
       this.liquidacionForm.patchValue({
@@ -746,7 +746,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
       this.mostrarFormulario = true;
     } catch (error) {
-      this.showError('Error al cargar los datos de la liquidación');
+      this.showError('Error al cargar los datos de la liquidaci├│n');
     }
   }
 
@@ -775,7 +775,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         isTemporary: false
       }));
     } catch (error) {
-      this.showError('Error al cargar los detalles de la liquidación');
+      this.showError('Error al cargar los detalles de la liquidaci├│n');
     }
   }
 
@@ -786,14 +786,14 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     return `${year}-${month}-${day}`;
   }
 
-  // Función para calcular el total en tiempo real del formulario de detalle
+  // Funci├│n para calcular el total en tiempo real del formulario de detalle
   calcularTotalDetalle(): number {
     const cantidad = this.detalleForm.get('cantidad')?.value || 0;
     const precioUnitario = this.detalleForm.get('precioHistorico')?.value || 0;
     return cantidad * precioUnitario;
   }
 
-  // Detalle cotización methods (Productos Fijos)
+  // Detalle cotizaci├│n methods (Productos Fijos)
   agregarDetalleFijo(): void {
 
     if (this.detalleForm.invalid) {
@@ -824,7 +824,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const descripcion = formValue.descripcion?.trim() || 'Sin descripción';
+    const descripcion = formValue.descripcion?.trim() || 'Sin descripci├│n';
     const precioHistorico = Number(formValue.precioHistorico) || 0;
     const comision = Number(formValue.comision) || 0;
     const cantidad = Number(formValue.cantidad) || 1;
@@ -865,14 +865,14 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         return `Este campo es requerido`;
       }
       if (field.errors['min']) {
-        return `El valor mínimo es ${field.errors['min'].min}`;
+        return `El valor m├¡nimo es ${field.errors['min'].min}`;
       }
     }
     return '';
   }
 
   getPersonaDisplayName(personaId: number): string {
-    // Usar solo datos en cache para evitar llamadas HTTP cíclicas
+    // Usar solo datos en cache para evitar llamadas HTTP c├¡clicas
     if (!personaId || personaId === 0) {
       return 'Sin cliente';
     }
@@ -882,8 +882,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       return this.personasDisplayMap[personaId];
     }
 
-    // Si no está en cache, retornar texto temporal
-    // NO hacer llamadas HTTP desde aquí para evitar loops infinitos
+    // Si no est├í en cache, retornar texto temporal
+    // NO hacer llamadas HTTP desde aqu├¡ para evitar loops infinitos
     return 'Cliente no encontrado';
   }
 
@@ -896,7 +896,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     return `${day}/${month}/${year}`;
   }
 
-  // ===== MÉTODOS PARA LIQUIDACIONES =====
+  // ===== M├ëTODOS PARA LIQUIDACIONES =====
   getTotalLiquidaciones(): number {
     return this.liquidaciones.length;
   }
@@ -935,7 +935,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         window.URL.revokeObjectURL(url);
       },
       error: () => {
-        this.showError('No se pudo descargar el Excel de la liquidación');
+        this.showError('No se pudo descargar el Excel de la liquidaci├│n');
         this.descargandoExcelIds.delete(liquidacionId);
       },
       complete: () => {
@@ -953,13 +953,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     this.isLoading = true;
 
     try {
-      // Cargar liquidación con detalles
+      // Cargar liquidaci├│n con detalles
       const liquidacionConDetalles = await this.liquidacionService.getLiquidacionById(liquidacion.id).toPromise();
       this.liquidacionCompleta = liquidacionConDetalles || null;
       this.mostrarModalVer = true;
     } catch (error) {
-      console.error('Error al cargar detalles de liquidación:', error);
-      this.showError('Error al cargar los detalles de la liquidación');
+      console.error('Error al cargar detalles de liquidaci├│n:', error);
+      this.showError('Error al cargar los detalles de la liquidaci├│n');
     } finally {
       this.isLoading = false;
     }
@@ -970,13 +970,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
     try {
       await this.liquidacionService.deleteLiquidacion(id).toPromise();
-      this.showSuccess('Liquidación eliminada exitosamente');
+      this.showSuccess('Liquidaci├│n eliminada exitosamente');
       await this.loadLiquidaciones();
     } catch (error: any) {
       const errorMessage = error?.error?.detail ||    // RFC 7807 format
         error?.error?.message ||     // Custom format
         error?.message ||             // Error object
-        'Error al eliminar la liquidación';
+        'Error al eliminar la liquidaci├│n';
       this.showError(errorMessage);
     } finally {
       this.isLoading = false;
@@ -993,7 +993,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
     try {
       const formValue = this.liquidacionForm.value;
-      // Preparar el request de liquidación
+      // Preparar el request de liquidaci├│n
       const liquidacionRequest: LiquidacionRequest = {
         numero: formValue.numero || '',
         fechaCompra: formValue.fechaCompra,
@@ -1006,25 +1006,25 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       let liquidacionResponse: LiquidacionResponse;
 
       if (this.editandoLiquidacion && this.liquidacionEditandoId) {
-        // Actualizar liquidación existente
+        // Actualizar liquidaci├│n existente
         const updateResult = await this.liquidacionService.updateLiquidacion(this.liquidacionEditandoId, liquidacionRequest).toPromise();
-        if (!updateResult) throw new Error('Failed to update liquidación');
+        if (!updateResult) throw new Error('Failed to update liquidaci├│n');
         liquidacionResponse = updateResult;
       } else {
-        // Crear nueva liquidación
+        // Crear nueva liquidaci├│n
         const createResult = await this.liquidacionService.createLiquidacion(liquidacionRequest).toPromise();
-        if (!createResult) throw new Error('Failed to create liquidación');
+        if (!createResult) throw new Error('Failed to create liquidaci├│n');
         liquidacionResponse = createResult;
       }
 
-      // Procesar detalles de liquidación si existen
+      // Procesar detalles de liquidaci├│n si existen
       if (this.detalles.length > 0) {
         await this.procesarDetallesLiquidacion(liquidacionResponse.id);
       }
 
       const successMessage = this.editandoLiquidacion
-        ? 'Liquidación actualizada exitosamente!'
-        : 'Liquidación creada exitosamente!';
+        ? 'Liquidaci├│n actualizada exitosamente!'
+        : 'Liquidaci├│n creada exitosamente!';
       this.showSuccess(successMessage);
 
       await this.loadLiquidaciones();
@@ -1033,7 +1033,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       const errorMessage = error?.error?.detail ||    // RFC 7807 format
         error?.error?.message ||     // Custom format
         error?.message ||             // Error object
-        'Error al guardar la liquidación. Por favor, verifique los datos e intente nuevamente.';
+        'Error al guardar la liquidaci├│n. Por favor, verifique los datos e intente nuevamente.';
       this.showError(errorMessage);
     } finally {
       this.isLoading = false;
@@ -1148,7 +1148,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
       await this.crearLiquidacionDesdeCotizacion(cotizacion);
     } catch (error) {
-      this.showError('Error al procesar la cotización seleccionada: ' + (error as any)?.message || 'Error desconocido');
+      this.showError('Error al procesar la cotizaci├│n seleccionada: ' + (error as any)?.message || 'Error desconocido');
     } finally {
       this.isLoading = false;
     }
@@ -1160,7 +1160,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.mostrarModalCotizaciones = false;
       this.cotizacionSeleccionada = null;
 
-      // Mapear datos de cotización a liquidación
+      // Mapear datos de cotizaci├│n a liquidaci├│n
       const liquidacionRequest: LiquidacionRequest = {
         cotizacionId: cotizacion.id,
         fechaCompra: cotizacion.fechaEmision ? this.formatDateForInput(new Date(cotizacion.fechaEmision)) : undefined,
@@ -1169,10 +1169,10 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         formaPagoId: cotizacion.formaPago?.id
       };
 
-      // Crear la liquidación
+      // Crear la liquidaci├│n
       const nuevaLiquidacion = await this.liquidacionService.createLiquidacionConCotizacion(cotizacion.id, liquidacionRequest).toPromise();
 
-      if (!nuevaLiquidacion) throw new Error('Error al crear la liquidación');
+      if (!nuevaLiquidacion) throw new Error('Error al crear la liquidaci├│n');
 
       this.mostrarModalCotizaciones = false;
       this.cotizacionSeleccionada = null;
@@ -1180,9 +1180,9 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       await this.loadLiquidaciones();
       await this.mostrarFormularioEditar(nuevaLiquidacion);
 
-      this.showSuccess('Liquidación creada exitosamente desde la cotización');
+      this.showSuccess('Liquidaci├│n creada exitosamente desde la cotizaci├│n');
     } catch (error) {
-      this.showError('Error al crear la liquidación desde la cotización: ' + (error as any)?.message || 'Error desconocido');
+      this.showError('Error al crear la liquidaci├│n desde la cotizaci├│n: ' + (error as any)?.message || 'Error desconocido');
       throw error;
     }
   }

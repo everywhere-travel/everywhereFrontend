@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { DocumentoRequest, DocumentoResponse } from '../../../shared/models/Documento/documento.model'; // Asegúrate que la ruta sea correcta
 import { environment } from '../../../../environments/environment';
 
@@ -30,5 +31,11 @@ export class DocumentoService {
 
   deleteDocumento(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getDropdownDocumentos(): Observable<DocumentoResponse[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/dropdown`).pipe(
+      map(items => items.map(i => ({ id: i.id, tipo: i.nombre } as any)))
+    );
   }
 }
