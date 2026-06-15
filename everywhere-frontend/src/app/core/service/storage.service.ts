@@ -9,16 +9,16 @@ export class StorageService {
     constructor() {}
 
     setAuthData(data:AuthResponse):void {
-        localStorage.setItem(this.authKey,JSON.stringify(data))
+        sessionStorage.setItem(this.authKey,JSON.stringify(data))
     }
 
     getAuthData(): AuthResponse | null{
-        const data = localStorage.getItem(this.authKey);
+        const data = sessionStorage.getItem(this.authKey);
         return data ? JSON.parse(data) as AuthResponse : null;
     }
 
     clearAuthData():void {
-        localStorage.removeItem(this.authKey);
+        sessionStorage.removeItem(this.authKey);
     }
 
 }
