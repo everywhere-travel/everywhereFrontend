@@ -9,6 +9,7 @@ export interface UsuarioResponse {
   sucursal: SucursalResponse | null;
   creado?: string;
   actualizado?: string;
+  estado?: boolean;
 }
 
 export interface UsuarioRequest {

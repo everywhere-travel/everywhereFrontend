@@ -35,4 +35,8 @@ export class UserService {
   deleteUser(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
+
+  toggleUserStatus(id: number): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/${id}/toggle-status`, {});
+  }
 }

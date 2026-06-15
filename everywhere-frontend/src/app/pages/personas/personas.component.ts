@@ -339,6 +339,10 @@ export class PersonasComponent implements OnInit {
 
   // Manejo de errores
   private mostrarError(title: string, error: any): void {
+    if (error && (error as any).isHandledGlobally) {
+      return;
+    }
+    
     let message = 'Ha ocurrido un error inesperado.';
 
     // Extraer mensaje del backend si existe

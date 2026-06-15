@@ -705,7 +705,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadFormasPago(): Promise<void> {
     try {
-      this.formasPago = (await this.formaPagoService.getAllFormasPago().toPromise()) || [];
+      this.formasPago = (await this.formaPagoService.getDropdownFormasPago().toPromise()) || [];
     } catch (error) {
       this.showError('Error al cargar las formas de pago.');
       this.formasPago = [];
@@ -715,7 +715,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private async loadEstadosCotizacion(): Promise<void> {
     try {
       this.estadosCotizacion =
-        (await this.estadoCotizacionService.getAllEstadosCotizacion().toPromise()) || [];
+        (await this.estadoCotizacionService.getDropdownEstadosCotizacion().toPromise()) || [];
     } catch (error) {
       this.estadosCotizacion = [];
     }
@@ -723,7 +723,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadSucursales(): Promise<void> {
     try {
-      this.sucursales = (await this.sucursalService.findAllSucursal().toPromise()) || [];
+      this.sucursales = (await this.sucursalService.getDropdownSucursales().toPromise()) || [];
     } catch (error) {
       this.sucursales = [];
     }
@@ -731,7 +731,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadProductos(): Promise<void> {
     try {
-      this.productos = (await this.productoService.getAllProductos().toPromise()) || [];
+      this.productos = (await this.productoService.getDropdownProductos().toPromise()) || [];
     } catch (error) {
       this.productos = [];
     }
@@ -739,7 +739,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
 
   private async loadProveedores(): Promise<void> {
     try {
-      this.proveedores = (await this.proveedorService.findAllProveedor().toPromise()) || [];
+      this.proveedores = (await this.proveedorService.getDropdownProveedores().toPromise()) || [];
     } catch (error) {
       this.proveedores = [];
     }
@@ -748,7 +748,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private async loadCategorias(): Promise<void> {
     try {
       this.categorias = [];
-      const response = await this.categoriaService.findAll().toPromise();
+      const response = await this.categoriaService.getDropdownCategorias().toPromise();
       this.categorias = response || [];
     } catch (error) {
       this.categorias = [];
@@ -3251,3 +3251,4 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.totalCotizaciones = this.cotizaciones.length;
   }
 }
+
