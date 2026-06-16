@@ -8,6 +8,7 @@ import { ProveedorService } from '../../core/service/Proveedor/proveedor.service
 import { ProveedorColaboradorService } from '../../core/service/Proveedor/proveedor-colaborador.service';
 import { ProveedorContactoService } from '../../core/service/Proveedor/proveedor-contacto.service';
 import { ProveedorGrupoContactoService } from '../../core/service/Proveedor/proveedor-grupo-contacto.service';
+import { EmailService } from '../../core/service/Email/email.service';
 import { ProveedorRequest, ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { ProveedorColaboradorRequest, ProveedorColaboradorResponse } from '../../shared/models/Proveedor/proveedor-colaborador.model';
 import { ProveedorContactoRequest, ProveedorContactoResponse } from '../../shared/models/Proveedor/proveedor-contacto.model';
@@ -63,6 +64,12 @@ export class DetalleProveedorComponent implements OnInit {
     isLoading = false;
     error: string | null = null;
 
+    // Email
+    mostrarModalCorreo = false;
+    loadingCorreo = false;
+    emailForm!: FormGroup;
+    contactoSeleccionadoParaCorreo: ProveedorContactoResponse | null = null;
+
     // Confirmation modal
     showConfirmation = false;
     confirmationConfig: ConfirmationConfig = {
@@ -117,6 +124,7 @@ export class DetalleProveedorComponent implements OnInit {
         private colaboradorService: ProveedorColaboradorService,
         private contactoService: ProveedorContactoService,
         private grupoContactoService: ProveedorGrupoContactoService,
+        private emailService: EmailService,
         private menuConfigService: MenuConfigService,
         private cdr: ChangeDetectorRef
     ) {
@@ -162,6 +170,12 @@ export class DetalleProveedorComponent implements OnInit {
         this.grupoContactoForm = this.fb.group({
             nombre: ['', Validators.required],
             descripcion: ['']
+        });
+
+        this.emailForm = this.fb.group({
+            to: ['', [Validators.required, Validators.email]],
+            subject: ['', [Validators.required]],
+            body: ['', [Validators.required]]
         });
     }
 
@@ -366,6 +380,42 @@ export class DetalleProveedorComponent implements OnInit {
             this.contactoService.delete(contacto.id).subscribe({
                 next: () => this.loadContactos(),
                 error: (error) => console.error('Error deleting contacto:', error)
+            });
+        }
+    }
+
+    // =================================================================
+    // EMAIL
+    // =================================================================
+    abrirModalCorreo(contacto: ProveedorContactoResponse): void {
+        this.contactoSeleccionadoParaCorreo = contacto;
+        this.emailForm.reset();
+        this.emailForm.patchValue({
+            to: contacto.email
+        });
+        this.mostrarModalCorreo = true;
+    }
+
+    cerrarModalCorreo(): void {
+        this.mostrarModalCorreo = false;
+        this.contactoSeleccionadoParaCorreo = null;
+        this.emailForm.reset();
+    }
+
+    enviarCorreo(): void {
+        if (this.emailForm.valid) {
+            this.loadingCorreo = true;
+            this.emailService.sendEmail(this.emailForm.value).subscribe({
+                next: () => {
+                    this.loadingCorreo = false;
+                    this.cerrarModalCorreo();
+                    this.mostrarMensajeExito('Correo enviado exitosamente.');
+                },
+                error: (error) => {
+                    this.loadingCorreo = false;
+                    const errorMessage = error?.error?.detail || error?.error?.message || error?.message || 'Error al enviar el correo';
+                    this.mostrarMensajeError('Error al enviar el correo', errorMessage);
+                }
             });
         }
     }
