@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpContext } from '@angular/common/http';
+import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
 import { Observable, tap } from 'rxjs';
 import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO, SaldoDocumentoCobranzaDTO } from '../../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import { environment } from '../../../../environments/environment';
