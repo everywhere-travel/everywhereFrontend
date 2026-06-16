@@ -140,6 +140,13 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   showErrorMessage: boolean = false;
   showSuccessMessage: boolean = false;
 
+  // ===== PAGINATION STATE =====
+  currentPage = 1;
+  pageSize = 10;
+  sortColumn = 'id';
+  sortDirection = 'desc';
+  searchTerm = '';
+
   // ===== SELECTION STATE =====
   liquidacionSeleccionada: LiquidacionConDetallesResponse | null = null;
   liquidacionCompleta: LiquidacionConDetallesResponse | null = null;
@@ -246,6 +253,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     enablePagination: true,
     enableViewSwitcher: true,
     enableSorting: true,
+    serverSidePagination: true,
+    totalServerItems: 0,
     itemsPerPage: 10,
     pageSizeOptions: [5, 10, 25, 50],
     actions: [
@@ -404,25 +413,15 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   private loadInitialData(): void {
     this.isLoading = true;
 
-    // Ejecutar loadLiquidaciones y loadPersonas en paralelo para mayor velocidad.
-    // Los dem├ís cat├ílogos (proveedores, viajeros, etc.) se cargan en segundo plano
-    // porque solo se necesitan al momento de abrir el formulario de Crear/Editar.
+    // Ejecutar loadLiquidaciones y loadPersonas en paralelo
     Promise.all([
       this.loadPersonas(),
       this.loadLiquidaciones()
-    ]).then(() => {
-      // Una vez tenemos las liquidaciones y las personas (clientes b├ísicos), 
-      // actualizamos la tabla para asegurar que los nombres se rendericen.
-      if (this.liquidaciones.length > 0) {
-        this.liquidacionesTabla = this.convertToLiquidacionTabla(this.liquidaciones);
-        this.tableConfig = { ...this.tableConfig, data: this.liquidacionesTabla };
-      }
-      return this.findAndLoadMissingClients();
-    }).finally(() => {
+    ]).finally(() => {
       this.isLoading = false;
     });
 
-    // Cargar cat├ílogos pesados en segundo plano sin bloquear la pantalla inicial
+    // Cargar cat├ílogos pesados en segundo plano
     Promise.all([
       this.loadFormasPago(),
       this.loadProductos(),
@@ -432,21 +431,55 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     ]).catch(console.error);
   }
 
+  // ===== EVENTOS DE TABLA SERVER-SIDE =====
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.loadLiquidaciones();
+  }
+
+  onSortChange(sort: { column: string, direction: 'asc' | 'desc' | null }): void {
+    if (sort.direction) {
+      this.sortColumn = sort.column;
+      this.sortDirection = sort.direction;
+    } else {
+      this.sortColumn = 'id';
+      this.sortDirection = 'desc';
+    }
+    this.loadLiquidaciones();
+  }
+
+  onSearchChange(term: string): void {
+    this.searchTerm = term;
+    this.currentPage = 1;
+    this.loadLiquidaciones();
+  }
+
   private async loadLiquidaciones(): Promise<void> {
     try {
       this.loading = true;
       this.isLoading = true;
 
-      this.liquidaciones = await this.liquidacionService.getAllLiquidaciones().toPromise() || [];
-
-      // Convertir a LiquidacionTabla
-      this.liquidacionesTabla = this.convertToLiquidacionTabla(this.liquidaciones);
-
-      // Actualizar tableConfig.data
-      this.tableConfig = {
-        ...this.tableConfig,
-        data: this.liquidacionesTabla
-      };
+      // Restamos 1 porque Spring Boot page index es 0-based
+      const response = await this.liquidacionService.getLiquidacionesPage(
+        this.currentPage - 1, 
+        this.pageSize, 
+        this.sortColumn, 
+        this.sortDirection
+      ).toPromise();
+      
+      if (response) {
+        this.liquidaciones = response.content || [];
+        this.liquidacionesTabla = this.convertToLiquidacionTabla(this.liquidaciones);
+        
+        this.tableConfig = {
+          ...this.tableConfig,
+          data: this.liquidacionesTabla,
+          totalServerItems: response.totalElements
+        };
+        
+        // Cargamos los clientes faltantes solo para la pagina actual (max 10)
+        await this.findAndLoadMissingClients();
+      }
     } catch (error) {
       this.showError('Error al cargar las liquidaciones. Por favor, recargue la p├ígina.');
       this.liquidaciones = [];

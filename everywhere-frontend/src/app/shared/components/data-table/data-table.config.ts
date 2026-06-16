@@ -122,6 +122,17 @@ export interface DataTableConfig<T = any> {
 
     // ===== PAGINACIÓN =====
     /**
+     * Habilitar paginación desde el servidor. Si es true, el componente asume que 'data' ya está paginada
+     * y utilizará 'totalServerItems' para calcular las páginas en lugar de la longitud de 'data'.
+     * @default false
+     */
+    serverSidePagination?: boolean;
+
+    /**
+     * Total de elementos en el servidor (requerido si serverSidePagination es true)
+     */
+    totalServerItems?: number;
+    /**
      * Número de items por página
      * @default 10
      */

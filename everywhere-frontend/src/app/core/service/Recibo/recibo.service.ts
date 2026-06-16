@@ -1,10 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpContext } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { ReciboResponseDTO, ReciboUpdateDTO } from '../../../shared/models/Recibo/recibo.model';
 import { environment } from '../../../../environments/environment';
 import { CacheService } from '../cache.service';
-import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
 
 @Injectable({
   providedIn: 'root'
@@ -35,13 +34,11 @@ export class ReciboService {
   }
 
   getAllRecibos(): Observable<ReciboResponseDTO[]> {
-    const context = new HttpContext().set(BYPASS_CACHE, true);
-    return this.http.get<ReciboResponseDTO[]>(this.apiUrl, { context });
+    return this.http.get<ReciboResponseDTO[]>(this.apiUrl);
   }
 
   getReciboById(id: number): Observable<ReciboResponseDTO> {
-    const context = new HttpContext().set(BYPASS_CACHE, true);
-    return this.http.get<ReciboResponseDTO>(`${this.apiUrl}/${id}`, { context });
+    return this.http.get<ReciboResponseDTO>(`${this.apiUrl}/${id}`);
   }
 
   updateRecibo(id: number, updateDTO: ReciboUpdateDTO): Observable<ReciboResponseDTO> {
