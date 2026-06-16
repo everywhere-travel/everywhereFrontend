@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth/auth.guard';
 import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
+import { AdminGuard } from './core/guards/authorization.guard';
 import { ProveedorComponent } from './pages/proveedor/proveedor.component';
 import { OperadoresComponent } from './pages/operadores/operadores.component';
 import { CategoriaPersonaComponent } from './pages/categoria-persona/categoria-persona.component';
@@ -65,13 +66,13 @@ export const routes: Routes = [
     path: 'usuarios',
     loadComponent: () =>
       import('./pages/usuarios/usuarios.component').then(m => m.UsuariosComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   {
     path: 'sucursales',
     loadComponent: () =>
       import('./pages/sucursales/sucursales.component').then(m => m.SucursalesComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   {
     path: 'liquidaciones',
@@ -89,45 +90,45 @@ export const routes: Routes = [
     path: 'productos',
     loadComponent: () =>
       import('./pages/productos/productos.component').then(m => m.ProductosComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   {
     path: 'estado-cotizacion',
     component: EstadoCotizacionComponent,
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   {
     path: 'formas-pago',
     loadComponent: () =>
       import('./pages/forma-pago/forma-pago.component').then(m => m.FormaPagoComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   {
     path: 'categorias',
     loadComponent: () =>
       import('./pages/categorias/categorias.component').then(m => m.CategoriasComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   {
     path: 'proveedores',
     component: ProveedorComponent,
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   {
     path: 'proveedores/detalle/:id',
     loadComponent: () =>
       import('./pages/detalle-proveedor/detalle-proveedor.component').then(m => m.DetalleProveedorComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   {
     path: 'categorias-persona',
     component: CategoriaPersonaComponent,
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   {
     path: 'operadores',
     component: OperadoresComponent,
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   {
     path: 'estadisticas',
@@ -181,7 +182,7 @@ export const routes: Routes = [
     path: 'roles',
     loadComponent: () =>
       import('./pages/roles/roles.component').then(m => m.RolesComponent),
-    canActivate: [authGuard]
+    canActivate: [authGuard, AdminGuard]
   },
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/auth/login' }

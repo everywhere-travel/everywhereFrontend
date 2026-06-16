@@ -32,14 +32,14 @@ export class MenuConfigService {
             title: 'Clientes',
             icon: 'fas fa-address-book',
             route: '/personas',
-            moduleKey: 'PERSONAS'
+            moduleKey: 'CLIENTES'
         },
         {
             id: 'carpetas',
             title: 'Carpetas',
             icon: 'fas fa-folder',
             route: '/carpetas',
-            moduleKey: 'CARPETAS'
+            moduleKey: 'CARPETA'
         },
         {
             id: 'cotizaciones',
@@ -93,34 +93,35 @@ export class MenuConfigService {
                     title: 'Categorias de Clientes',
                     icon: 'fas fa-users',
                     route: '/categorias-persona',
-                    moduleKey: 'CATEGORIA_PERSONAS'
+                    moduleKey: 'CATEGORIA_CLIENTE'
                 },
                 {
                     id: 'documentos',
                     title: 'Documentos de clientes',
                     icon: 'fas fa-file-alt',
                     route: '/documentos',
-                    moduleKey: 'DOCUMENTOS'
+                    moduleKey: 'DOCUMENTO_CLIENTE'
                 },
                 {
                     id: 'categorias-producto',
                     title: 'Categorias de Producto',
                     icon: 'fas fa-list',
-                    route: '/categorias'
+                    route: '/categorias',
+                    moduleKey: 'CATEGORIA_PRODUCTO'
                 },
                 {
                     id: 'estado-cotizacion',
                     title: 'Estado de Cotización',
                     icon: 'fas fa-clipboard-check',
                     route: '/estado-cotizacion',
-                    moduleKey: 'COTIZACIONES'
+                    moduleKey: 'ESTADO_COTIZACION'
                 },
                 {
                     id: 'forma-pago',
                     title: 'Forma de Pago',
                     icon: 'fas fa-credit-card',
                     route: '/formas-pago',
-                    moduleKey: 'FORMA_PAGO'
+                    moduleKey: 'FORMA-PAGO'
                 }
             ]
         },

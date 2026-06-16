@@ -99,7 +99,12 @@
 
     <!-- Main Content -->
     <main class="max-w-full mx-auto px-6 py-6">
-      <app-data-table [config]="tableConfig" [isLoading]="isLoading">
+      <app-data-table 
+        [config]="tableConfig" 
+        [isLoading]="isLoading"
+        (pageChange)="onPageChange($event)"
+        (sortChange)="onSortChange($event)"
+        (searchChange)="onSearchChange($event)">
       </app-data-table>
     </main>
   </div>

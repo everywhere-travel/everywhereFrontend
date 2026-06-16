@@ -27,6 +27,16 @@ export interface UsuarioTabla {
   roleName: string;
   sucursalId?: number;
   sucursalName: string;
+  estado: boolean;
+}
+
+export interface PermissionMatrixRow {
+  module: string;
+  read?: PermissionResponse;
+  create?: PermissionResponse;
+  update?: PermissionResponse;
+  delete?: PermissionResponse;
+  other: PermissionResponse[];
 }
 
 @Component({
@@ -67,6 +77,7 @@ export class UsuariosComponent implements OnInit {
   // Role Modal / Permissions Management
   roleSeleccionado: RoleResponse | null = null;
   roleSeleccionadoPermisos: Set<number> = new Set();
+  permissionMatrix: PermissionMatrixRow[] = [];
   
   // Filtros
   searchTermUsuarios = '';
@@ -104,11 +115,12 @@ export class UsuariosComponent implements OnInit {
     Promise.all([
       this.roleService.getAll().toPromise().catch(() => []),
       this.permissionService.getAll().toPromise().catch(() => []),
-      this.sucursalService.findAllSucursal().toPromise().catch(() => [])
+      this.sucursalService.getDropdownSucursales().toPromise().catch(() => [])
     ]).then(([rolesRes, permisosRes, sucursalesRes]) => {
       this.roles = rolesRes || [];
       this.permisos = permisosRes || [];
       this.sucursales = sucursalesRes || [];
+      this.buildPermissionMatrix();
       this.loadUsuarios();
     }).catch(err => {
       console.error('Error inesperado', err);
@@ -140,7 +152,8 @@ export class UsuariosComponent implements OnInit {
       roleId: u.role?.id || 0,
       roleName: u.role?.name || 'Sin rol',
       sucursalId: u.sucursal?.id,
-      sucursalName: u.sucursal?.descripcion || 'Sin sucursal'
+      sucursalName: u.sucursal?.descripcion || 'Sin sucursal',
+      estado: u.estado ?? true
     }));
   }
 
@@ -171,6 +184,43 @@ export class UsuariosComponent implements OnInit {
 
   switchTab(tab: 'usuarios' | 'roles'): void {
     this.activeTab = tab;
+  }
+
+  // ==========================================
+  // Permisos Matrix Builder
+  // ==========================================
+  private buildPermissionMatrix(): void {
+    const matrixMap = new Map<string, PermissionMatrixRow>();
+
+    this.permisos.forEach(p => {
+      const parts = p.name.split(':');
+      if (parts.length >= 2) {
+        const module = parts[0];
+        const action = parts.slice(1).join(':');
+
+        if (!matrixMap.has(module)) {
+          matrixMap.set(module, { module, other: [] });
+        }
+
+        const row = matrixMap.get(module)!;
+
+        switch (action) {
+          case 'READ': row.read = p; break;
+          case 'CREATE': row.create = p; break;
+          case 'UPDATE': row.update = p; break;
+          case 'DELETE': row.delete = p; break;
+          default: row.other.push(p); break;
+        }
+      }
+    });
+
+    this.permissionMatrix = Array.from(matrixMap.values());
+  }
+
+  formatModuleName(moduleName: string): string {
+    return moduleName.replace(/_/g, ' ')
+                     .replace(/-/g, ' ')
+                     .replace(/\b\w/g, l => l.toUpperCase());
   }
 
   // ==========================================
@@ -259,6 +309,21 @@ export class UsuariosComponent implements OnInit {
           console.error('Error eliminando usuario', err);
           this.loading = false;
           alert('Error al eliminar usuario');
+        }
+      });
+    }
+  }
+
+  toggleEstadoUsuario(id: number, currentEstado: boolean): void {
+    const accion = currentEstado ? 'deshabilitar' : 'habilitar';
+    if (confirm(`¿Estás seguro de que deseas ${accion} este usuario?`)) {
+      this.loading = true;
+      this.userService.toggleUserStatus(id).subscribe({
+        next: () => this.loadUsuarios(),
+        error: (err) => {
+          console.error('Error cambiando estado del usuario', err);
+          this.loading = false;
+          alert('Error al cambiar el estado del usuario');
         }
       });
     }

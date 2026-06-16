@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { ProductoRequest, ProductoResponse } from '../../../shared/models/Producto/producto.model';
 import { environment } from '../../../../environments/environment';
 
@@ -35,5 +36,11 @@ export class ProductoService {
 
   getByCodigoProducto(codigo: string): Observable<ProductoResponse> {
     return this.http.get<ProductoResponse>(`${this.apiUrl}/codigo/${codigo}`);
+  }
+
+  getDropdownProductos(): Observable<ProductoResponse[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/dropdown`).pipe(
+      map(items => items.map(i => ({ id: i.id, descripcion: i.nombre } as any)))
+    );
   }
 }

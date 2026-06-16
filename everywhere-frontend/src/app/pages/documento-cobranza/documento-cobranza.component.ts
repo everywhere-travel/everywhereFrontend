@@ -763,3 +763,4 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.personaJuridicaSeleccionada = null;
   }
 }
+
