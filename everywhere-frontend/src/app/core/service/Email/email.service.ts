@@ -12,7 +12,7 @@ export class EmailService {
 
   constructor(private http: HttpClient) { }
 
-  sendEmail(request: EmailRequestDTO): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/send`, request);
+  sendEmail(formData: FormData): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/send`, formData);
   }
 }

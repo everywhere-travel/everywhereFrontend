@@ -64,11 +64,11 @@ export class DetalleProveedorComponent implements OnInit {
     isLoading = false;
     error: string | null = null;
 
-    // Email
     mostrarModalCorreo = false;
     loadingCorreo = false;
     emailForm!: FormGroup;
     contactoSeleccionadoParaCorreo: ProveedorContactoResponse | null = null;
+    archivosAdjuntos: File[] = [];
 
     // Confirmation modal
     showConfirmation = false;
@@ -173,7 +173,9 @@ export class DetalleProveedorComponent implements OnInit {
         });
 
         this.emailForm = this.fb.group({
-            to: ['', [Validators.required, Validators.email]],
+            to: ['', [Validators.required]],
+            cc: [''],
+            bcc: [''],
             subject: ['', [Validators.required]],
             body: ['', [Validators.required]]
         });
@@ -390,6 +392,7 @@ export class DetalleProveedorComponent implements OnInit {
     abrirModalCorreo(contacto: ProveedorContactoResponse): void {
         this.contactoSeleccionadoParaCorreo = contacto;
         this.emailForm.reset();
+        this.archivosAdjuntos = [];
         this.emailForm.patchValue({
             to: contacto.email
         });
@@ -400,12 +403,38 @@ export class DetalleProveedorComponent implements OnInit {
         this.mostrarModalCorreo = false;
         this.contactoSeleccionadoParaCorreo = null;
         this.emailForm.reset();
+        this.archivosAdjuntos = [];
+    }
+
+    onFileSelected(event: any): void {
+        if (event.target.files && event.target.files.length > 0) {
+            for (let i = 0; i < event.target.files.length; i++) {
+                this.archivosAdjuntos.push(event.target.files[i]);
+            }
+        }
+        // Limpiar input
+        event.target.value = '';
+    }
+
+    removerArchivo(index: number): void {
+        this.archivosAdjuntos.splice(index, 1);
     }
 
     enviarCorreo(): void {
         if (this.emailForm.valid) {
             this.loadingCorreo = true;
-            this.emailService.sendEmail(this.emailForm.value).subscribe({
+            
+            const formData = new FormData();
+            
+            formData.append('email', new Blob([JSON.stringify(this.emailForm.value)], {
+                type: 'application/json'
+            }));
+            
+            this.archivosAdjuntos.forEach((file) => {
+                formData.append('files', file);
+            });
+
+            this.emailService.sendEmail(formData).subscribe({
                 next: () => {
                     this.loadingCorreo = false;
                     this.cerrarModalCorreo();
