@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { Subscription, of } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -375,38 +375,59 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   private setupClienteSearch(): void {
-    // Asegurar que tenemos la lista completa de clientes
-    if (this.personas.length > 0) {
-      this.todosLosClientes = [...this.personas];
-    }
-
-    // Mostrar todos los clientes inicialmente
-    this.personasEncontradas = [...this.todosLosClientes];
+    // Inicializar vacio y no mostrando carga
+    this.personasEncontradas = [];
     this.buscandoClientes = false;
 
     this.clienteSearchSubscription?.unsubscribe();
 
     this.clienteSearchSubscription = this.clienteSearchControl.valueChanges
       .pipe(
-        debounceTime(300), // Reducido para respuesta m├ís r├ípida
+        debounceTime(400), 
         distinctUntilChanged(),
-        switchMap(searchTerm => {
+        switchMap((searchTerm) => {
           this.buscandoClientes = true;
           const termino = searchTerm?.trim() || '';
 
-          // Si no hay t├®rmino de b├║squeda, mostrar todos los clientes
-          const resultados = this.todosLosClientes.filter(persona =>
-            this.getPersonaDisplayName(persona.id || 0).toLowerCase().includes(termino)
+          // Consultar a la BD (incluso si está vacío, trae los primeros 10)
+          return this.personaService.getPersonasPage(0, 10, 'id', 'desc', termino ? termino : undefined).pipe(
+            catchError((err: any) => {
+              console.error('Error al buscar clientes:', err);
+              return of({ content: [] });
+            })
           );
-          this.personasEncontradas = resultados;
-          this.buscandoClientes = false;
-          return of(null);
-        })
+        }),
       )
       .subscribe({
+        next: (response: any) => {
+          if (response && response.content) {
+            // Mapear PersonaTablaDTO a personaDisplay o la estructura esperada
+            this.personasEncontradas = response.content.map((dto: any) => ({
+              id: dto.id,
+              tipo: dto.tipo,
+              identificador: dto.documento || '',
+              nombre: dto.nombre || 'Sin nombre',
+              // Add ruc/documento fields so that loadPersonas mapper works if necessary
+              ruc: dto.tipo === 'JURIDICA' ? dto.documento : undefined,
+              documento: dto.tipo === 'NATURAL' ? dto.documento : undefined,
+            }));
+            
+            // Actualizar el cache interno para que no salga "Cliente no encontrado" luego
+            this.personasEncontradas.forEach((p: any) => {
+              this.personasCache[p.id] = {
+                id: p.id,
+                identificador: p.identificador,
+                nombre: p.nombre,
+                tipo: p.tipo
+              };
+              this.personasDisplayMap[p.id] = p.nombre;
+            });
+          }
+          this.buscandoClientes = false;
+        },
         error: (err) => {
           this.buscandoClientes = false;
-        }
+        },
       });
   }
 
@@ -426,8 +447,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       this.loadFormasPago(),
       this.loadProductos(),
       this.loadProveedores(),
-      this.loadOperadores(),
-      this.loadViajeros()
+      this.loadOperadores()
     ]).catch(console.error);
   }
 
@@ -523,10 +543,24 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         const personaId = persona.persona?.id || persona.id;
 
         if (personaId) {
+          // Helper to sanitize "null" strings
+          const safeStr = (val: any) => {
+            if (!val) return '';
+            const str = String(val).trim();
+            return str.toLowerCase() === 'null' ? '' : str;
+          };
+          
+          const nombres = safeStr(persona.nombres);
+          const apePaterno = safeStr(persona.apellidosPaterno);
+          const apeMaterno = safeStr(persona.apellidosMaterno);
+          
+          const apellidos = `${apePaterno} ${apeMaterno}`.trim();
+          const nombreCompleto = `${nombres} ${apellidos}`.trim();
+          
           this.personasCache[personaId] = {
             id: personaId,
             identificador: persona.ruc || persona.documento || persona.cedula || '',
-            nombre: persona.razonSocial || `${persona.nombres || ''} ${persona.apellidosPaterno || ''} ${persona.apellidosMaterno || ''}`.trim() || 'Sin nombre',
+            nombre: persona.razonSocial || nombreCompleto || 'Sin nombre',
             tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
           };
           // Solo mostrar el nombre del cliente (sin documento)
@@ -591,11 +625,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
           };
 
           const cached = this.personasCache[cliente.id];
-          if (cached.identificador) {
-            this.personasDisplayMap[cliente.id] = `${cached.tipo === 'JURIDICA' ? 'RUC' : cached.tipo === 'NATURAL' ? 'DNI' : 'DOC'}: ${cached.identificador} - ${cached.nombre}`;
-          } else {
-            this.personasDisplayMap[cliente.id] = esGenerico ? `Cliente ID: ${cliente.id} (Sin datos)` : cached.nombre;
-          }
+          this.personasDisplayMap[cliente.id] = cached.nombre;
 
           // Agregar a las listas para b├║squeda (solo si no es gen├®rico)
           if (!esGenerico) {
@@ -653,13 +683,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async loadViajeros(): Promise<void> {
-    try {
-      this.viajeros = await this.viajeroService.findAll().toPromise() || [];
-    } catch (error) {
-      this.viajeros = [];
-    }
-  }
 
   // Sidebar methods
   onToggleSidebar(): void {
