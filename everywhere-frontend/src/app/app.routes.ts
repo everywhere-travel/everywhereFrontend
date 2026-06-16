@@ -172,6 +172,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'asientos-contables',
+    loadComponent: () =>
+      import('./pages/asiento-contable/asiento-contable').then(m => m.AsientoContable),
+    canActivate: [authGuard]
+  },
+  {
     path: 'roles',
     loadComponent: () =>
       import('./pages/roles/roles.component').then(m => m.RolesComponent),

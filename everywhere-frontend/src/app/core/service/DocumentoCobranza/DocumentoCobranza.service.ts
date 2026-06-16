@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpContext } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO } from '../../../shared/models/DocumetnoCobranza/documentoCobranza.model';
+import { DocumentoCobranzaDTO, DocumentoCobranzaResponseDTO, DocumentoCobranzaUpdateDTO, SaldoDocumentoCobranzaDTO } from '../../../shared/models/DocumetnoCobranza/documentoCobranza.model';
 import { environment } from '../../../../environments/environment';
 import { CacheService } from '../cache.service';
 import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
@@ -77,6 +77,14 @@ export class DocumentoCobranzaService {
     }
     return this.http.patch<DocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}/carpeta`, null, { params }).pipe(
       tap(() => this.cacheService.invalidateModule('documentos-cobranza'))
+    );
+  }
+
+  getSaldo(documentoCobranzaId: number): Observable<SaldoDocumentoCobranzaDTO> {
+    const context = new HttpContext().set(BYPASS_CACHE, true);
+    return this.http.get<SaldoDocumentoCobranzaDTO>(
+      `${this.apiUrl}/${documentoCobranzaId}/saldo`,
+      { context }
     );
   }
 }
