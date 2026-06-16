@@ -44,6 +44,8 @@ interface PagoPaxTemp {
   detalle?: string;
   formaPagoId?: number;
   formaPago?: FormaPagoResponse;
+  proveedorId?: number;
+  proveedor?: ProveedorResponse;
   creado?: string;
   actualizado?: string;
   isTemporary?: boolean; // true si es nuevo y no está en BD
@@ -183,7 +185,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       monto: [0],
       moneda: ['USD'], // USD por defecto
       detalle: [''],
-      formaPagoId: [null]
+      formaPagoId: [null],
+      proveedorId: [null]
     });
 
     // Suscribirse a cambios en costoTicket y valorVenta para calcular automáticamente cargoServicio
@@ -815,6 +818,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           detalle: pago.detalle,
           formaPagoId: pago.formaPago?.id,
           formaPago: pago.formaPago,
+          proveedorId: pago.proveedor?.id,
+          proveedor: pago.proveedor,
           creado: pago.creado,
           actualizado: pago.actualizado,
           isTemporary: false
@@ -834,7 +839,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       monto: 0,
       moneda: 'USD', // USD por defecto
       detalle: '',
-      formaPagoId: null
+      formaPagoId: null,
+      proveedorId: null
     });
   }
 
@@ -848,6 +854,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     const formaPagoId = this.pagoPaxForm.value.formaPagoId;
     const formaPago = formaPagoId ? this.formasPago.find(fp => fp.id === formaPagoId) : undefined;
+    
+    const proveedorId = this.pagoPaxForm.value.proveedorId;
+    const proveedor = proveedorId ? this.proveedores.find(p => p.id === proveedorId) : undefined;
 
     const nuevoPagoPax: PagoPaxTemp = {
       monto: this.pagoPaxForm.value.monto,
@@ -855,6 +864,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       detalle: this.pagoPaxForm.value.detalle,
       formaPagoId: formaPagoId,
       formaPago: formaPago,
+      proveedorId: proveedorId,
+      proveedor: proveedor,
       isTemporary: true // Marca como temporal (no guardado en BD)
     };
 
@@ -878,7 +889,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       monto: pago.monto,
       moneda: pago.moneda || 'USD',
       detalle: pago.detalle || '',
-      formaPagoId: pago.formaPagoId || null
+      formaPagoId: pago.formaPagoId || null,
+      proveedorId: pago.proveedorId || null
     });
   }
 
@@ -893,6 +905,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     const formaPagoId = this.pagoPaxForm.value.formaPagoId;
     const formaPago = formaPagoId ? this.formasPago.find(fp => fp.id === formaPagoId) : undefined;
 
+    const proveedorId = this.pagoPaxForm.value.proveedorId;
+    const proveedor = proveedorId ? this.proveedores.find(p => p.id === proveedorId) : undefined;
+
     // Actualizar el pago en el array local
     this.pagosPax[this.pagoPaxEditandoIndex] = {
       ...this.pagosPax[this.pagoPaxEditandoIndex],
@@ -900,7 +915,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       moneda: this.pagoPaxForm.value.moneda || 'USD',
       detalle: this.pagoPaxForm.value.detalle,
       formaPagoId: formaPagoId,
-      formaPago: formaPago
+      formaPago: formaPago,
+      proveedorId: proveedorId,
+      proveedor: proveedor
     };
 
     this.cerrarFormularioPagoPax();
@@ -938,7 +955,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       monto: 0,
       moneda: 'USD', // USD por defecto
       detalle: '',
-      formaPagoId: null
+      formaPagoId: null,
+      proveedorId: null
     });
   }
 
@@ -1183,7 +1201,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           moneda: pago.moneda,
           detalle: pago.detalle,
           liquidacionId: liquidacionId,
-          formaPagoId: pago.formaPagoId!
+          formaPagoId: pago.formaPagoId!,
+          proveedorId: pago.proveedorId!
         };
 
         if (pago.id && !pago.isTemporary) {

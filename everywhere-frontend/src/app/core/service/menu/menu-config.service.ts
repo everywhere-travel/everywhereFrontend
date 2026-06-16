@@ -74,6 +74,13 @@ export class MenuConfigService {
                     route: '/recibos',
                     moduleKey: 'RECIBOS'
                 },
+                {
+                    id: 'asientos-contables',
+                    title: 'Asientos Contables',
+                    icon: 'fas fa-book-open',
+                    route: '/asientos-contables',
+                    moduleKey: 'DOCUMENTOS_COBRANZA'
+                },
             ]
         },
         {

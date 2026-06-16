@@ -380,7 +380,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       codigoCotizacion: doc.codigoCotizacion || 'Sin cotización',
       clienteNombre: doc.clienteNombre || 'Sin nombre',
       fechaEmision: this.formatDate(doc.fechaEmision),
-      moneda: doc.moneda || 'PEN',
+      moneda: doc.moneda || 'USD',
       fileVenta: doc.fileVenta || 'Sin file',
       createdAt: this.formatDateTime(doc.createdAt),
       updatedAt: this.formatDateTime(doc.updatedAt),
@@ -656,10 +656,10 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   formatCurrency(amount: number | undefined): string {
-    if (amount === undefined || amount === null) return 'S/ 0.00';
-    return new Intl.NumberFormat('es-PE', {
+    if (amount === undefined || amount === null) return '$ 0.00';
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'PEN',
+      currency: 'USD',
     }).format(amount);
   }
 
