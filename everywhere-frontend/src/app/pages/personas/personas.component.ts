@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
+import { PersonaService } from '../../core/service/persona/persona.service';
 import { DetalleDocumentoService } from '../../core/service/DetalleDocumento/detalle-documento.service';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 import { ClienteDetailModalComponent, DocumentoCliente } from './../../shared/components/cliente/cliente-detail-modal/cliente-detail-modal.component';
@@ -58,6 +59,15 @@ export class PersonasComponent implements OnInit {
     totalJuridicas: 0
   };
 
+  // Paginación Server-Side
+  currentPage = 1;
+  pageSize = 10;
+  sortColumn = 'id';
+  sortDirection = 'desc';
+  searchTerm = '';
+  typeFilter = 'todos';
+  totalServerItems = 0;
+
   // Modales
   mostrarModalDetalles: boolean = false;
   mostrarModalSeleccionTipo: boolean = false;
@@ -86,6 +96,7 @@ export class PersonasComponent implements OnInit {
   constructor(
     private personaNaturalService: PersonaNaturalService,
     private personaJuridicaService: PersonaJuridicaService,
+    private personaService: PersonaService,
     private detalleDocumentoService: DetalleDocumentoService,
     private router: Router,
     private menuConfigService: MenuConfigService
@@ -94,6 +105,19 @@ export class PersonasComponent implements OnInit {
   ngOnInit(): void {
     this.sidebarMenuItems = this.menuConfigService.getMenuItems('/personas');
     this.loadPersonas();
+    this.loadStats();
+  }
+
+  async loadStats(): Promise<void> {
+    try {
+      const stats = await this.personaService.getPersonaStats().toPromise();
+      if (stats) {
+        this.estadisticas.totalNaturales = stats.totalNaturales;
+        this.estadisticas.totalJuridicas = stats.totalJuridicas;
+      }
+    } catch (error) {
+      console.error('Error cargando stats de personas:', error);
+    }
   }
 
   // ============ SIDEBAR ============ 
@@ -113,53 +137,23 @@ export class PersonasComponent implements OnInit {
   async loadPersonas(): Promise<void> {
     try {
       this.isLoading = true;
-      this.modoVistaDocumentos = false; // Limpiar modo búsqueda por documento
+      this.modoVistaDocumentos = false;
 
-      const [naturales, juridicas] = await Promise.all([
-        this.personaNaturalService.findAll().toPromise(),
-        this.personaJuridicaService.findAll().toPromise()
-      ]);
+      // Paginación base 0 en Spring Boot
+      const response = await this.personaService.getPersonasPage(
+        this.currentPage - 1, 
+        this.pageSize, 
+        this.sortColumn, 
+        this.sortDirection,
+        this.searchTerm,
+        this.typeFilter
+      ).toPromise();
 
-      const personasTabla: PersonaTabla[] = [];
-
-      if (naturales) {
-        naturales.forEach(natural => {
-          personasTabla.push({
-            id: natural.id,
-            tipo: 'natural',
-            nombre: `${natural.nombres || ''} ${natural.apellidosPaterno || ''} ${natural.apellidosMaterno || ''}`.trim(),
-            nombres: natural.nombres,
-            apellidosPaterno: natural.apellidosPaterno || '',
-            apellidosMaterno: natural.apellidosMaterno || '',
-            documento: natural.documento || '',
-            email: natural.persona?.correos?.[0]?.email,
-            telefono: natural.persona?.telefonos?.[0]?.numero,
-            direccion: natural.persona?.direccion,
-            documentos: [] // Se cargan solo si es necesario
-          });
-        });
+      if (response && response.content) {
+        this.personas = response.content as PersonaTabla[];
+        this.personasOriginales = [...this.personas];
+        this.totalServerItems = response.totalElements;
       }
-
-      if (juridicas) {
-        juridicas.forEach(juridica => {
-          personasTabla.push({
-            id: juridica.id,
-            tipo: 'juridica',
-            nombre: juridica.razonSocial || '',
-            apellidosPaterno: '',
-            razonSocial: juridica.razonSocial,
-            documento: juridica.ruc || '',
-            ruc: juridica.ruc,
-            email: juridica.persona?.correos?.[0]?.email,
-            telefono: juridica.persona?.telefonos?.[0]?.numero,
-            direccion: juridica.persona?.direccion
-          });
-        });
-      }
-
-      this.personas = personasTabla;
-      this.personasOriginales = [...personasTabla];
-      this.calcularEstadisticas();
 
     } catch (error) {
       console.error('Error al cargar personas:', error);
@@ -168,9 +162,24 @@ export class PersonasComponent implements OnInit {
     }
   }
 
-  private calcularEstadisticas(): void {
-    this.estadisticas.totalNaturales = this.personas.filter(p => p.tipo === 'natural').length;
-    this.estadisticas.totalJuridicas = this.personas.filter(p => p.tipo === 'juridica').length;
+  // ============ EVENTOS PAGINACIÓN SERVER-SIDE ============
+
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.loadPersonas();
+  }
+
+  onSortChange(sort: { column: string, direction: 'asc' | 'desc' }): void {
+    this.sortColumn = sort.column;
+    this.sortDirection = sort.direction;
+    this.loadPersonas();
+  }
+
+  onFilterChange(filter: { searchTerm: string, typeFilter: string }): void {
+    this.searchTerm = filter.searchTerm;
+    this.typeFilter = filter.typeFilter;
+    this.currentPage = 1;
+    this.loadPersonas();
   }
 
   // ============ MODALES ============
@@ -375,7 +384,6 @@ export class PersonasComponent implements OnInit {
     if (!numero || numero.trim().length === 0) {
       this.modoVistaDocumentos = false;
       this.personas = [...this.personasOriginales];
-      this.calcularEstadisticas();
       return;
     }
 
@@ -383,35 +391,46 @@ export class PersonasComponent implements OnInit {
     this.modoVistaDocumentos = false; // Ocultar banner hasta que termine la búsqueda
     
     this.detalleDocumentoService.buscarPorNumeroDocumento(numero).subscribe({
-      next: (resultados) => {
-        // Convertir resultados de documentos a formato PersonaTabla
+      next: async (resultados) => {
         const personasDesdeDocumentos: PersonaTabla[] = [];
         
-        resultados.forEach(doc => {
-          doc.personas.forEach(persona => {
-            // Buscar los datos completos de la persona en la lista original
-            const personaCompleta = this.personasOriginales.find(p => p.id === persona.personaId);
-            
-            if (personaCompleta) {
-              // Usar los datos de la persona pero mostrar el documento buscado
-              personasDesdeDocumentos.push({
-                ...personaCompleta,
-                documento: doc.numeroDocumento,
-                // Agregar info del tipo de documento para mostrarlo
-                documentos: [{
-                  numero: doc.numeroDocumento,
-                  tipo: doc.tipoDocumento,
-                  origen: ''
-                }]
-              });
+        for (const doc of resultados) {
+          for (const persona of doc.personas) {
+            try {
+              // Obtenemos los datos básicos (nombre, tipo, identificador)
+              const displayInfo = await this.personaService.findPersonaNaturalOrJuridicaById(persona.personaId).toPromise();
+              // Obtenemos datos de contacto (direccion, correos, telefonos)
+              const contactInfo = await this.personaService.findById(persona.personaId).toPromise();
+              
+              if (displayInfo && contactInfo) {
+                const tipo = displayInfo.tipo.toLowerCase() as 'natural' | 'juridica';
+                
+                personasDesdeDocumentos.push({
+                  id: displayInfo.id,
+                  tipo: tipo,
+                  nombre: displayInfo.nombre,
+                  documento: tipo === 'natural' ? displayInfo.identificador : '',
+                  ruc: tipo === 'juridica' ? displayInfo.identificador : '',
+                  email: contactInfo.correos && contactInfo.correos.length > 0 ? contactInfo.correos[0].email : '',
+                  telefono: contactInfo.telefonos && contactInfo.telefonos.length > 0 ? contactInfo.telefonos[0].numero : '',
+                  direccion: contactInfo.direccion,
+                  // Info extra del tipo de documento para mostrarlo en el banner
+                  documentos: [{
+                    numero: doc.numeroDocumento,
+                    tipo: doc.tipoDocumento,
+                    origen: ''
+                  }]
+                });
+              }
+            } catch (err) {
+              console.error('Error obteniendo detalles de la persona con ID:', persona.personaId, err);
             }
-          });
-        });
+          }
+        }
         
         this.personas = personasDesdeDocumentos;
+        this.totalServerItems = personasDesdeDocumentos.length;
         this.modoVistaDocumentos = true; // Mostrar banner solo si hay resultados
-        this.estadisticas.totalNaturales = personasDesdeDocumentos.filter(p => p.tipo === 'natural').length;
-        this.estadisticas.totalJuridicas = personasDesdeDocumentos.filter(p => p.tipo === 'juridica').length;
         this.isLoading = false;
       },
       error: (error) => {
@@ -426,6 +445,5 @@ export class PersonasComponent implements OnInit {
   onVolverAVistaNormal(): void {
     this.modoVistaDocumentos = false;
     this.personas = [...this.personasOriginales];
-    this.calcularEstadisticas();
   }
 }

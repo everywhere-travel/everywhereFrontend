@@ -94,7 +94,8 @@ function isCacheableUrl(url: string): boolean {
     '/personas',
     '/liquidaciones',
     '/cotizaciones',
-    '/documentos-cobranza'
+    '/documentos-cobranza',
+    '/recibos'
   ];
 
   return cacheableModules.some(module => url.includes(module));
@@ -118,7 +119,6 @@ function invalidateCacheForUrl(url: string, cacheService: CacheService): void {
   for (const [pattern, module] of Object.entries(moduleMap)) {
     if (url.includes(pattern)) {
       cacheService.invalidateModule(module);
-      console.log(`[CacheInterceptor] 🗑️ Caché invalidada para el módulo: ${module}`);
       break;
     }
   }

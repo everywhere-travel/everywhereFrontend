@@ -8,7 +8,6 @@
   <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
     <!-- Messages Section -->
     <div class="fixed top-4 right-4 z-50 space-y-2">
-      <!-- Success Message -->
       <div *ngIf="showSuccessMessage"
         class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
         <i class="fas fa-check-circle text-xl"></i>
@@ -18,7 +17,6 @@
         </button>
       </div>
 
-      <!-- Error Message -->
       <div *ngIf="showErrorMessage"
         class="bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
         <i class="fas fa-exclamation-triangle text-xl"></i>
@@ -36,7 +34,6 @@
       </div>
 
       <div class="max-w-full mx-auto px-6 py-6 relative z-10">
-        <!-- Mobile Menu Button -->
         <button (click)="onToggleSidebar()"
           class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
           <i class="fas fa-bars text-xl"></i>
@@ -47,12 +44,12 @@
           <div class="flex-1">
             <div class="flex items-center gap-4 mb-4">
               <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                <i class="fas fa-file-contract text-2xl"></i>
+                <i class="fas fa-receipt text-2xl"></i>
               </div>
               <div>
                 <h1 class="text-4xl font-bold">Gestión de Recibos</h1>
                 <p class="text-xl opacity-90 mt-2">
-                  Administra y genera Recibos de manera eficiente
+                  Registra pagos parciales o totales por cada documento de cobranza
                 </p>
               </div>
             </div>
@@ -62,12 +59,12 @@
               <div
                 class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
                 <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
-                  <i class="fas fa-file-contract text-white text-xl"></i>
+                  <i class="fas fa-file-invoice-dollar text-white text-xl"></i>
                 </div>
                 <div>
-                  <div class="text-2xl font-bold">{{ getTotalRecibos() }}</div>
+                  <div class="text-2xl font-bold">{{ getTotalDocumentos() }}</div>
                   <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
-                    Recibo{{ getTotalRecibos() === 1 ? '' : 's' }} Total{{ getTotalRecibos() === 1 ? '' : 'es'}}
+                    Documentos de Cobranza
                   </div>
                 </div>
               </div>
@@ -75,12 +72,25 @@
               <div
                 class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
                 <div class="w-14 h-14 bg-blue-500 rounded-xl flex items-center justify-center">
-                  <i class="fas fa-plus text-white text-xl"></i>
+                  <i class="fas fa-receipt text-white text-xl"></i>
                 </div>
                 <div>
-                  <div class="text-2xl font-bold">{{ getCotizacionesDisponibles() }}</div>
+                  <div class="text-2xl font-bold">{{ getTotalRecibos() }}</div>
                   <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
-                    Cotizaciones Disponibles
+                    Recibos Emitidos
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-orange-500 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-clock text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ getDocumentosPendientes() }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Con Saldo Pendiente
                   </div>
                 </div>
               </div>
@@ -89,13 +99,13 @@
 
           <!-- Header Action -->
           <div class="z-10">
-            <button (click)="mostrarFormularioCrear()" [disabled]="isLoading"
+            <button (click)="actualizarDatos()" [disabled]="isLoading"
               class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed">
               <div
                 class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
               </div>
-              <i class="fas fa-plus text-lg" [class.fa-spin]="isLoading"></i>
-              <span>{{ isLoading ? 'Cargando...' : 'Nuevo Documento' }}</span>
+              <i class="fas fa-sync-alt text-lg" [class.fa-spin]="isLoading"></i>
+              <span>{{ isLoading ? 'Cargando...' : 'Actualizar' }}</span>
             </button>
           </div>
         </div>
@@ -103,24 +113,253 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-full mx-auto px-6 py-6"> 
-      <app-data-table [config]="tableConfig" [isLoading]="isLoading">
-      </app-data-table>
+    <main class="max-w-full mx-auto px-6 py-6">
+
+      <!-- Search Bar -->
+      <div class="mb-6" [formGroup]="searchForm">
+        <div class="relative max-w-md">
+
+          <input type="text" formControlName="searchTerm" placeholder="Buscar por número, cliente, cotización..."
+            class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent bg-white shadow-sm">
+
+          <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+
+          <button *ngIf="searchTerm" type="button" (click)="clearSearch()"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="flex items-center justify-center py-20">
+        <div class="text-center">
+          <i class="fas fa-spinner fa-spin text-4xl text-everywhere-primary mb-4"></i>
+          <p class="text-gray-600 text-lg">Cargando documentos de cobranza...</p>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!isLoading && filteredDocumentos.length === 0" class="text-center py-20">
+        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i class="fas fa-file-invoice text-gray-400 text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">No se encontraron documentos</h3>
+        <p class="text-gray-600">No hay documentos de cobranza que coincidan con tu búsqueda.</p>
+      </div>
+
+      <!-- Documentos de Cobranza List -->
+      <div *ngIf="!isLoading && filteredDocumentos.length > 0" class="space-y-4">
+        <div *ngFor="let item of filteredDocumentos; trackBy: trackByDocumento"
+          class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md">
+
+          <!-- Document Header (clickable to expand) -->
+          <div (click)="toggleDocumento(item)"
+            class="p-5 cursor-pointer hover:bg-gray-50 transition-colors duration-200">
+            <div class="flex items-center justify-between">
+              <!-- Left side: Document info -->
+              <div class="flex items-center gap-4 flex-1">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center"
+                  [class.bg-green-100]="(item.documento.saldoPendiente ?? 0) <= 0"
+                  [class.bg-red-100]="(item.documento.saldoPendiente ?? 0) > 0">
+                  <i class="fas fa-file-invoice-dollar text-xl"
+                    [class.text-green-600]="(item.documento.saldoPendiente ?? 0) <= 0"
+                    [class.text-red-600]="(item.documento.saldoPendiente ?? 0) > 0"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-3 flex-wrap">
+                    <h3 class="font-bold text-gray-900 text-lg">{{ getNumeroDocumento(item.documento) }}</h3>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide"
+                      [ngClass]="getSaldoBadgeClass(item.documento.saldoPendiente)">
+                      {{ getSaldoLabel(item.documento.saldoPendiente) }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-4 mt-1 text-sm text-gray-600 flex-wrap">
+                    <span *ngIf="item.documento.clienteNombre">
+                      <i class="fas fa-user mr-1"></i>{{ item.documento.clienteNombre }}
+                    </span>
+                    <span *ngIf="item.documento.codigoCotizacion">
+                      <i class="fas fa-hashtag mr-1"></i>{{ item.documento.codigoCotizacion }}
+                    </span>
+                    <span *ngIf="item.documento.fechaEmision">
+                      <i class="fas fa-calendar mr-1"></i>{{ formatDate(item.documento.fechaEmision) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right side: Saldo info + expand -->
+              <div class="flex items-center gap-6">
+                <!-- Saldo Info -->
+                <div class="hidden md:flex items-center gap-6 text-sm">
+                  <div class="text-right">
+                    <div class="text-gray-500 text-xs uppercase font-medium">Deuda</div>
+                    <div class="font-bold text-gray-900">{{ formatCurrency(item.documento.totalDeuda,
+                      item.documento.moneda) }}</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-gray-500 text-xs uppercase font-medium">Pagado</div>
+                    <div class="font-bold text-green-600">{{ formatCurrency(item.documento.totalPagado,
+                      item.documento.moneda) }}</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-gray-500 text-xs uppercase font-medium">Saldo</div>
+                    <div class="font-bold" [ngClass]="getSaldoClass(item.documento.saldoPendiente)">
+                      {{ formatCurrency(item.documento.saldoPendiente, item.documento.moneda) }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Progress bar (mini) -->
+                <div class="hidden lg:block w-24">
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="h-2 rounded-full transition-all duration-500"
+                      [class.bg-green-500]="getProgressPercent(item.documento) >= 100"
+                      [class.bg-blue-500]="getProgressPercent(item.documento) < 100 && getProgressPercent(item.documento) > 0"
+                      [class.bg-gray-300]="getProgressPercent(item.documento) === 0"
+                      [style.width.%]="getProgressPercent(item.documento)">
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500 text-center mt-1">{{ getProgressPercent(item.documento) }}%</div>
+                </div>
+
+                <!-- Expand icon -->
+                <div class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors">
+                  <i class="fas fa-chevron-down text-gray-400 transition-transform duration-300"
+                    [class.rotate-180]="item.expanded"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mobile Saldo Info (visible only on small screens) -->
+            <div class="md:hidden mt-3 grid grid-cols-3 gap-2 text-sm">
+              <div class="bg-gray-50 rounded-lg p-2 text-center">
+                <div class="text-gray-500 text-xs">Deuda</div>
+                <div class="font-bold text-gray-900 text-xs">{{ formatCurrency(item.documento.totalDeuda,
+                  item.documento.moneda) }}</div>
+              </div>
+              <div class="bg-gray-50 rounded-lg p-2 text-center">
+                <div class="text-gray-500 text-xs">Pagado</div>
+                <div class="font-bold text-green-600 text-xs">{{ formatCurrency(item.documento.totalPagado,
+                  item.documento.moneda) }}</div>
+              </div>
+              <div class="bg-gray-50 rounded-lg p-2 text-center">
+                <div class="text-gray-500 text-xs">Saldo</div>
+                <div class="font-bold text-xs" [ngClass]="getSaldoClass(item.documento.saldoPendiente)">
+                  {{ formatCurrency(item.documento.saldoPendiente, item.documento.moneda) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expanded Section: Recibos -->
+          <div *ngIf="item.expanded" class="border-t border-gray-200 bg-gray-50">
+
+            <!-- Loading recibos -->
+            <div *ngIf="item.loadingRecibos" class="flex items-center justify-center py-8">
+              <i class="fas fa-spinner fa-spin text-2xl text-everywhere-primary mr-3"></i>
+              <span class="text-gray-600">Cargando recibos...</span>
+            </div>
+
+            <!-- Recibos Content -->
+            <div *ngIf="!item.loadingRecibos" class="p-5">
+              <!-- Action bar -->
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="font-semibold text-gray-700 flex items-center gap-2">
+                  <i class="fas fa-receipt text-everywhere-primary"></i>
+                  Recibos ({{ item.recibos.length }})
+                </h4>
+                <button *ngIf="(item.documento.saldoPendiente ?? 0) > 0"
+                  (click)="abrirModalCrearRecibo(item.documento); $event.stopPropagation()"
+                  class="px-4 py-2 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white rounded-xl text-sm font-semibold hover:shadow-lg transition-all duration-200 flex items-center gap-2">
+                  <i class="fas fa-plus"></i>
+                  Agregar Pago
+                </button>
+              </div>
+
+              <!-- No recibos -->
+              <div *ngIf="item.recibos.length === 0"
+                class="text-center py-8 bg-white rounded-xl border border-dashed border-gray-300">
+                <i class="fas fa-receipt text-gray-300 text-3xl mb-3"></i>
+                <p class="text-gray-500 mb-3">No hay recibos registrados para este documento</p>
+                <button *ngIf="(item.documento.saldoPendiente ?? 0) > 0"
+                  (click)="abrirModalCrearRecibo(item.documento); $event.stopPropagation()"
+                  class="px-4 py-2 bg-everywhere-primary text-white rounded-lg text-sm font-medium hover:bg-everywhere-primary/90 transition-colors inline-flex items-center gap-2">
+                  <i class="fas fa-plus"></i>
+                  Registrar primer pago
+                </button>
+              </div>
+
+              <!-- Recibos List -->
+              <div *ngIf="item.recibos.length > 0" class="space-y-3">
+                <div *ngFor="let recibo of item.recibos; trackBy: trackByRecibo"
+                  class="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-all duration-200">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                      <div
+                        class="w-10 h-10 bg-everywhere-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-receipt text-everywhere-primary"></i>
+                      </div>
+                      <div class="min-w-0">
+                        <div class="font-semibold text-gray-900">{{ getNumeroRecibo(recibo) }}</div>
+                        <div class="flex items-center gap-3 mt-1 text-sm text-gray-500 flex-wrap">
+                          <span *ngIf="recibo.fechaEmision">
+                            <i class="fas fa-calendar mr-1"></i>{{ formatDate(recibo.fechaEmision) }}
+                          </span>
+                          <span *ngIf="recibo.formaPagoDescripcion">
+                            <i class="fas fa-credit-card mr-1"></i>{{ recibo.formaPagoDescripcion }}
+                          </span>
+                          <span *ngIf="recibo.sucursalDescripcion">
+                            <i class="fas fa-building mr-1"></i>{{ recibo.sucursalDescripcion }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                      <button (click)="verDetalleRecibo(recibo); $event.stopPropagation()" title="Ver detalle"
+                        class="w-9 h-9 flex items-center justify-center rounded-lg text-green-600 hover:bg-green-50 transition-colors">
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button (click)="editarRecibo(recibo); $event.stopPropagation()" title="Editar"
+                        class="w-9 h-9 flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition-colors">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button (click)="verPDF(recibo); $event.stopPropagation()" title="Ver PDF"
+                        class="w-9 h-9 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-file-pdf"></i>
+                      </button>
+                      <button (click)="descargarPDF(recibo); $event.stopPropagation()" title="Descargar PDF"
+                        class="w-9 h-9 flex items-center justify-center rounded-lg text-purple-600 hover:bg-purple-50 transition-colors">
+                        <i class="fas fa-download"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
-  <!-- Modal de Opciones de Creación (Persona Jurídica y Sucursal) -->
-  <div *ngIf="mostrarFormulario && cotizacionSeleccionada"
+  <!-- Modal de Creación de Recibo -->
+  <div *ngIf="mostrarModalCrearRecibo && documentoSeleccionado"
     class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
       <!-- Header -->
       <div class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white p-6">
         <div class="flex items-center justify-between">
           <div>
-            <h2 class="text-2xl font-bold">Configurar recibo</h2>
-            <p class="text-white/80 mt-1">Cotización: {{ cotizacionSeleccionada.codigoCotizacion }}</p>
+            <h2 class="text-2xl font-bold">Registrar Pago</h2>
+            <p class="text-white/80 mt-1">Documento: {{ getNumeroDocumento(documentoSeleccionado) }}</p>
+            <p class="text-white/60 text-sm mt-1">
+              Saldo pendiente: {{ formatCurrency(documentoSeleccionado.saldoPendiente, documentoSeleccionado.moneda) }}
+            </p>
           </div>
-          <button (click)="cerrarFormulario()"
+          <button (click)="cerrarModalCrearRecibo()"
             class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
             <i class="fas fa-times text-xl"></i>
           </button>
@@ -129,6 +368,25 @@
 
       <!-- Contenido -->
       <div class="p-6 overflow-y-auto max-h-[60vh] space-y-6">
+
+        <!-- Monto a Pagar -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-3">
+            <i class="fas fa-money-bill-wave mr-2 text-everywhere-primary"></i>
+            Monto a Pagar ({{ documentoSeleccionado.moneda || 'USD' }}) <span class="text-red-500">*</span>
+          </label>
+          <input type="number" [(ngModel)]="montoPago"
+            class="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent bg-white shadow-sm"
+            [class.border-red-500]="montoPago && !isMontoValido()"
+            [class.focus:ring-red-500]="montoPago && !isMontoValido()"
+            placeholder="Ingrese el monto">
+          <p *ngIf="montoPago && !isMontoValido()" class="text-sm text-red-500 mt-2 font-medium">
+            <i class="fas fa-exclamation-triangle mr-1"></i> El monto debe ser mayor a 0 y menor o igual al saldo pendiente.
+          </p>
+          <p *ngIf="!montoPago || isMontoValido()" class="text-sm text-gray-500 mt-2">
+            Deje el valor por defecto si desea pagar la totalidad del saldo pendiente.
+          </p>
+        </div>
 
         <!-- Selección de Sucursal -->
         <div>
@@ -165,7 +423,6 @@
             Facturar a nombre de (Opcional)
           </label>
 
-          <!-- Opción: Usar datos personales -->
           <div (click)="usarDatosPersonales()"
             class="p-4 border rounded-lg cursor-pointer transition-all duration-200 mb-2"
             [class.border-everywhere-primary]="!personaJuridicaSeleccionada"
@@ -184,7 +441,6 @@
             </div>
           </div>
 
-          <!-- Lista de Personas Jurídicas -->
           <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-xl p-2">
             <div *ngFor="let naturalJuridico of personasJuridicas" (click)="seleccionarPersonaJuridica(naturalJuridico)"
               class="p-3 border rounded-lg cursor-pointer transition-all duration-200"
@@ -214,13 +470,9 @@
             <div class="text-sm text-blue-900">
               <p class="font-semibold mb-1">Información importante:</p>
               <ul class="list-disc list-inside space-y-1">
-                <li>La sucursal es obligatoria</li>
-                <li *ngIf="personasJuridicas.length > 0">
-                  Si seleccionas una empresa, el documento mostrará su RUC y razón social
-                </li>
-                <li *ngIf="personasJuridicas.length > 0">
-                  Si no seleccionas empresa, se usará el DNI y nombre personal
-                </li>
+                <li>El recibo se creará como un pago asociado a este documento de cobranza</li>
+                <li>Los detalles del documento de cobranza se copiarán al recibo</li>
+                <li>Se generará automáticamente un asiento contable (Caja/Banco vs Clientes)</li>
               </ul>
             </div>
           </div>
@@ -230,95 +482,14 @@
       <!-- Footer -->
       <div class="border-t border-gray-200 p-6">
         <div class="flex items-center justify-end gap-3">
-          <button (click)="cerrarFormulario()"
+          <button (click)="cerrarModalCrearRecibo()"
             class="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
             Cancelar
           </button>
-          <button (click)="confirmarCreacionDocumento()" [disabled]="!sucursalSeleccionada || isLoading"
+          <button (click)="confirmarCreacionRecibo()" [disabled]="!sucursalSeleccionada || isLoading || !isMontoValido()"
             class="px-6 py-3 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             <i class="fas" [class.fa-spinner]="isLoading" [class.fa-spin]="isLoading" [class.fa-check]="!isLoading"></i>
-            <span>{{ isLoading ? 'Creando...' : 'Crear Documento' }}</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal de Selección de Cotizaciones -->
-  <div *ngIf="mostrarModalCotizaciones"
-    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-      <!-- Header del Modal -->
-      <div class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-2xl font-bold">Seleccionar Cotización</h2>
-            <p class="text-white/80 mt-1">Elige una cotización para crear el recibo</p>
-          </div>
-          <button (click)="cancelarSeleccionCotizacion()"
-            class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
-            <i class="fas fa-times text-xl"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Contenido del Modal -->
-      <div class="p-6 overflow-y-auto max-h-[60vh]">
-        <!-- Búsqueda -->
-        <div class="mb-6">
-          <div class="relative">
-            <input type="text" [(ngModel)]="searchCotizacion" (input)="filterCotizaciones()"
-              placeholder="Buscar cotización por código o cliente..."
-              class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent">
-            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-          </div>
-        </div>
-
-        <!-- Lista de Cotizaciones -->
-        <div class="space-y-3" *ngIf="cotizacionesFiltradas.length > 0">
-          <div *ngFor="let cotizacion of cotizacionesFiltradas" (click)="seleccionarCotizacion(cotizacion)"
-            class="p-4 border border-gray-200 rounded-xl hover:border-everywhere-primary hover:bg-everywhere-primary/5 cursor-pointer transition-all duration-200 group">
-            <div class="flex items-center justify-between">
-              <div class="flex-1">
-                <div class="flex items-center gap-4">
-                  <div
-                    class="w-12 h-12 bg-everywhere-primary/10 rounded-xl flex items-center justify-center group-hover:bg-everywhere-primary/20 transition-colors">
-                    <i class="fas fa-file-invoice text-everywhere-primary"></i>
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-gray-900">{{ cotizacion.codigoCotizacion || 'Sin código' }}</h3>
-                    <p class="text-gray-600">{{ getPersonaDisplayName(cotizacion) }}</p>
-                    <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
-                      <span><i class="fas fa-calendar mr-1"></i>{{ formatDate(cotizacion.fechaEmision) }}</span>
-                      <span><i class="fas fa-map-marker-alt mr-1"></i>{{ cotizacion.origenDestino || 'Sin destino'
-                        }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="text-everywhere-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                <i class="fas fa-arrow-right text-xl"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Estado vacío -->
-        <div *ngIf="cotizacionesFiltradas.length === 0" class="text-center py-12">
-          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <i class="fas fa-search text-gray-400 text-xl"></i>
-          </div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">No se encontraron cotizaciones</h3>
-          <p class="text-gray-600">No hay cotizaciones disponibles o que coincidan con tu búsqueda.</p>
-        </div>
-      </div>
-
-      <!-- Footer del Modal -->
-      <div class="border-t border-gray-200 p-6">
-        <div class="flex items-center justify-end gap-3">
-          <button (click)="cancelarSeleccionCotizacion()"
-            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
-            Cancelar
+            <span>{{ isLoading ? 'Creando...' : 'Registrar Pago' }}</span>
           </button>
         </div>
       </div>

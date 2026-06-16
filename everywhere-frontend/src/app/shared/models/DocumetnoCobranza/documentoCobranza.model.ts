@@ -73,6 +73,11 @@ export interface DocumentoCobranzaResponseDTO {
   // Información de DetalleDocumento (si fue seleccionado un documento personal)
   detalleDocumentoId?: number;
 
+  // Información de saldo
+  totalDeuda?: number;
+  totalPagado?: number;
+  saldoPendiente?: number;
+
   // Campos de auditoría
   createdAt?: string; // ISO string format for LocalDateTime
   updatedAt?: string; // ISO string format for LocalDateTime
@@ -88,4 +93,13 @@ export interface DocumentoCobranzaUpdateDTO {
   sucursalId?: number;
   personaJuridicaId?: number;
   formaPagoId?: number;
+}
+
+// DTO para el saldo de un Documento de Cobranza
+export interface SaldoDocumentoCobranzaDTO {
+  documentoCobranzaId?: number;
+  documentoCobranzaNumero?: string;
+  totalDeuda?: number;
+  totalPagado?: number;
+  saldoPendiente?: number;
 }

@@ -1,0 +1,309 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+  <!-- Sidebar Component -->
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()">
+  </app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+    <!-- Messages Section -->
+    <div class="fixed top-4 right-4 z-50 space-y-2">
+      <div *ngIf="showSuccessMessage"
+        class="bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
+        <i class="fas fa-check-circle text-xl"></i>
+        <span>{{ successMessage }}</span>
+        <button (click)="hideMessages()" class="ml-4 hover:text-green-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div *ngIf="showErrorMessage"
+        class="bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in">
+        <i class="fas fa-exclamation-triangle text-xl"></i>
+        <span>{{ errorMessage }}</span>
+        <button (click)="hideMessages()" class="ml-4 hover:text-red-200">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Header Section -->
+    <header
+      class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
+      </div>
+
+      <div class="max-w-full mx-auto px-6 py-6 relative z-10">
+        <button (click)="onToggleSidebar()"
+          class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
+          <i class="fas fa-bars text-xl"></i>
+        </button>
+
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+          <!-- Header Info -->
+          <div class="flex-1">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                <i class="fas fa-book-open text-2xl"></i>
+              </div>
+              <div>
+                <h1 class="text-4xl font-bold">Asientos Contables</h1>
+                <p class="text-xl opacity-90 mt-2">
+                  Registro e historial de movimientos contables de la empresa
+                </p>
+              </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!isLoading">
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
+                  <i class="fas fa-file-invoice text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ getTotalAsientos() }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Total Asientos
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-check-circle text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ getAsientosActivos() }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Asientos Activos
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-14 h-14 bg-red-500 rounded-xl flex items-center justify-center">
+                  <i class="fas fa-ban text-white text-xl"></i>
+                </div>
+                <div>
+                  <div class="text-2xl font-bold">{{ getAsientosAnulados() }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">
+                    Anulados
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header Action -->
+          <div class="z-10">
+            <button (click)="actualizarDatos()" [disabled]="isLoading"
+              class="bg-white text-everywhere-primary hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed">
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-transparent via-blue-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
+              </div>
+              <i class="fas fa-sync-alt text-lg" [class.fa-spin]="isLoading"></i>
+              <span>{{ isLoading ? 'Cargando...' : 'Actualizar' }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-full mx-auto px-6 py-6">
+
+      <!-- Search Bar -->
+      <div class="mb-6" [formGroup]="searchForm">
+        <div class="relative max-w-md">
+          <input type="text" formControlName="searchTerm" placeholder="Buscar por origen o ID..."
+            class="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent bg-white shadow-sm">
+          <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <button *ngIf="searchTerm" type="button" (click)="clearSearch()"
+            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <app-data-table [config]="tableConfig">
+        </app-data-table>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal: Ver Detalle del Asiento Contable -->
+  <div *ngIf="mostrarModalVer && asientoSeleccionado"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div
+      class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-fade-in">
+
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white p-6 flex-shrink-0">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+              <i class="fas fa-book-open text-xl text-white"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold">Asiento Contable {{ getNumeroAsiento(asientoSeleccionado.id) }}</h2>
+              <p class="text-white/80 mt-1 flex items-center gap-3">
+                <span><i class="fas fa-calendar mr-1"></i> {{ formatDate(asientoSeleccionado.fecha) }}</span>
+                <span *ngIf="asientoSeleccionado.anulado"
+                  class="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">ANULADO</span>
+                <span *ngIf="!asientoSeleccionado.anulado"
+                  class="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-bold">ACTIVO</span>
+              </p>
+            </div>
+          </div>
+          <button (click)="cerrarModalVer()"
+            class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="p-6 overflow-y-auto flex-1 bg-gray-50">
+
+        <!-- General Info Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Información del Origen</h3>
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center gap-2 text-gray-800">
+                <i class="fas fa-file-invoice text-gray-400 w-5"></i>
+                <span class="font-medium">Tipo:</span> {{ asientoSeleccionado.origen || 'N/A' }}
+              </div>
+              <div class="flex items-center gap-2 text-gray-800">
+                <i class="fas fa-hashtag text-gray-400 w-5"></i>
+                <span class="font-medium">ID Origen:</span> {{ asientoSeleccionado.origenId || 'N/A' }}
+              </div>
+              <div class="flex items-center gap-2 text-gray-800">
+                <i class="fas fa-cogs text-gray-400 w-5"></i>
+                <span class="font-medium">Generado Automáticamente:</span> {{
+                asientoSeleccionado.generadoAutomaticamente ? 'Sí' : 'No' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Detalles del Asiento</h3>
+            <div class="flex flex-col gap-2">
+              <div class="flex items-center gap-2 text-gray-800">
+                <i class="fas fa-align-left text-gray-400 w-5"></i>
+                <span class="font-medium">Glosa:</span> {{ asientoSeleccionado.glosa || 'Sin glosa' }}
+              </div>
+              <div class="flex items-center gap-2 text-gray-800">
+                <i class="fas fa-coins text-gray-400 w-5"></i>
+                <span class="font-medium">Moneda:</span> USD
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cuentas Contables Table -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
+          <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+            <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+              <i class="fas fa-list text-everywhere-primary"></i> Detalle de Cuentas Contables
+            </h3>
+            <span class="text-sm text-gray-500">{{ asientoSeleccionado.detalles?.length || 0 }} registros</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-gray-50 text-gray-600 font-semibold border-b border-gray-200">
+                <tr>
+                  <th class="px-6 py-3">Código de Cuenta</th>
+                  <th class="px-6 py-3">Nombre de Cuenta</th>
+                  <th class="px-6 py-3 text-right">Debe</th>
+                  <th class="px-6 py-3 text-right">Haber</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr *ngFor="let det of asientoSeleccionado.detalles" class="hover:bg-gray-50 transition-colors">
+                  <td class="px-6 py-3 font-medium text-gray-900">{{ det.cuentaCodigo || 'N/A' }}</td>
+                  <td class="px-6 py-3 text-gray-700">{{ det.cuentaNombre || 'N/A' }}</td>
+                  <td class="px-6 py-3 text-right font-medium" [class.text-gray-400]="(det.debe || 0) === 0">
+                    {{ (det.debe || 0) > 0 ? formatCurrency(det.debe, asientoSeleccionado.moneda) : '-' }}
+                  </td>
+                  <td class="px-6 py-3 text-right font-medium" [class.text-gray-400]="(det.haber || 0) === 0">
+                    {{ (det.haber || 0) > 0 ? formatCurrency(det.haber, asientoSeleccionado.moneda) : '-' }}
+                  </td>
+                </tr>
+                <tr *ngIf="!asientoSeleccionado.detalles || asientoSeleccionado.detalles.length === 0">
+                  <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                    No se encontraron detalles para este asiento contable.
+                  </td>
+                </tr>
+              </tbody>
+              <!-- Totales Footer -->
+              <tfoot class="bg-gray-50 border-t border-gray-200 font-bold text-gray-800">
+                <tr>
+                  <td colspan="2" class="px-6 py-4 text-right uppercase text-xs tracking-wider">Totales Cuadrados:</td>
+                  <td class="px-6 py-4 text-right text-green-700">
+                    {{ formatCurrency(asientoSeleccionado.totalDebe, asientoSeleccionado.moneda) }}
+                  </td>
+                  <td class="px-6 py-4 text-right text-blue-700">
+                    {{ formatCurrency(asientoSeleccionado.totalHaber, asientoSeleccionado.moneda) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="border-t border-gray-200 p-6 bg-white">
+        <div class="flex items-center justify-end">
+          <button (click)="cerrarModalVer()"
+            class="px-6 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-semibold transition-colors flex items-center gap-2">
+            <i class="fas fa-check"></i> Cerrar
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Anular Asiento Contable -->
+  <div *ngIf="mostrarModalAnular && asientoSeleccionado"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-fade-in">
+
+      <div class="p-6 text-center">
+        <div
+          class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-2">¿Anular Asiento Contable?</h3>
+        <p class="text-gray-600 mb-6">
+          Estás a punto de anular el Asiento Contable <strong>{{ getNumeroAsiento(asientoSeleccionado.id) }}</strong>.
+          Esta acción registrará el asiento como anulado pero no lo eliminará del sistema.
+        </p>
+
+        <div class="flex gap-3 justify-center">
+          <button (click)="cerrarModalAnular()"
+            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold transition-colors w-full">
+            Cancelar
+          </button>
+          <button (click)="anularAsiento()" [disabled]="isLoading"
+            class="px-6 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 font-semibold transition-colors w-full flex items-center justify-center gap-2 disabled:opacity-50">
+            <i class="fas" [class.fa-spinner]="isLoading" [class.fa-spin]="isLoading" [class.fa-ban]="!isLoading"></i>
+            <span>{{ isLoading ? 'Anulando...' : 'Sí, anular' }}</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>

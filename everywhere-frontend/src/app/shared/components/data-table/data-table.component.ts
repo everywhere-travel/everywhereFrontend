@@ -104,19 +104,25 @@ export class DataTableComponent<T = any> implements OnInit, OnChanges, DoCheck {
             return;
         }
 
-        // 1. Filter
-        this.filteredData = this.filterData();
-
-        // 2. Sort
-        if (this.state.sortColumn && this.state.sortDirection) {
-            this.filteredData = this.sortData(this.filteredData);
-        }
-
-        // 3. Paginate
-        if (this.config.enablePagination !== false) {
-            this.paginatedData = this.paginateData(this.filteredData);
+        if (this.config.serverSidePagination) {
+            // En paginación server-side, la data ya viene filtrada, ordenada y paginada
+            this.filteredData = [...this.config.data];
+            this.paginatedData = [...this.config.data];
         } else {
-            this.paginatedData = this.filteredData;
+            // 1. Filter
+            this.filteredData = this.filterData();
+
+            // 2. Sort
+            if (this.state.sortColumn && this.state.sortDirection) {
+                this.filteredData = this.sortData(this.filteredData);
+            }
+
+            // 3. Paginate
+            if (this.config.enablePagination !== false) {
+                this.paginatedData = this.paginateData(this.filteredData);
+            } else {
+                this.paginatedData = this.filteredData;
+            }
         }
 
         // Update selection state
@@ -198,11 +204,16 @@ export class DataTableComponent<T = any> implements OnInit, OnChanges, DoCheck {
 
     // ===== PAGINATION =====
     get totalPages(): number {
-        return Math.ceil(this.filteredData.length / this.state.itemsPerPage);
+        const total = this.config?.serverSidePagination && this.config.totalServerItems !== undefined
+            ? this.config.totalServerItems
+            : this.filteredData.length;
+        return Math.ceil(total / this.state.itemsPerPage);
     }
 
     get totalItems(): number {
-        return this.filteredData.length;
+        return this.config?.serverSidePagination && this.config.totalServerItems !== undefined
+            ? this.config.totalServerItems
+            : this.filteredData.length;
     }
 
     goToPage(page: number): void {

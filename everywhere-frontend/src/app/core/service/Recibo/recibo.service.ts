@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpContext } from '@angular/common/http';
+import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
 import { Observable, tap } from 'rxjs';
 import { ReciboResponseDTO, ReciboUpdateDTO } from '../../../shared/models/Recibo/recibo.model';
 import { environment } from '../../../../environments/environment';
 import { CacheService } from '../cache.service';
-import { BYPASS_CACHE } from '../../interceptos/cache.interceptor';
 
 @Injectable({
   providedIn: 'root'
@@ -16,17 +16,26 @@ export class ReciboService {
   constructor(private http: HttpClient) { }
 
   createRecibo(
-    cotizacionId: number,
+    documentoCobranzaId: number,
     personaJuridicaId?: number,
-    sucursalId?: number
+    sucursalId?: number,
+    montoPago?: number
   ): Observable<ReciboResponseDTO> {
-    let params = new HttpParams().set('cotizacionId', cotizacionId.toString());
+    let params = new HttpParams().set(
+      'documentoCobranzaId',
+      documentoCobranzaId.toString()
+    );
 
     if (personaJuridicaId) {
       params = params.set('personaJuridicaId', personaJuridicaId.toString());
     }
+
     if (sucursalId) {
       params = params.set('sucursalId', sucursalId.toString());
+    }
+
+    if (montoPago) {
+      params = params.set('montoPago', montoPago.toString());
     }
 
     return this.http.post<ReciboResponseDTO>(this.apiUrl, null, { params }).pipe(
@@ -35,13 +44,11 @@ export class ReciboService {
   }
 
   getAllRecibos(): Observable<ReciboResponseDTO[]> {
-    const context = new HttpContext().set(BYPASS_CACHE, true);
-    return this.http.get<ReciboResponseDTO[]>(this.apiUrl, { context });
+    return this.http.get<ReciboResponseDTO[]>(this.apiUrl);
   }
 
   getReciboById(id: number): Observable<ReciboResponseDTO> {
-    const context = new HttpContext().set(BYPASS_CACHE, true);
-    return this.http.get<ReciboResponseDTO>(`${this.apiUrl}/${id}`, { context });
+    return this.http.get<ReciboResponseDTO>(`${this.apiUrl}/${id}`);
   }
 
   updateRecibo(id: number, updateDTO: ReciboUpdateDTO): Observable<ReciboResponseDTO> {
@@ -69,6 +76,28 @@ export class ReciboService {
     }
     return this.http.patch<ReciboResponseDTO>(`${this.apiUrl}/${id}/carpeta`, null, { params }).pipe(
       tap(() => this.cacheService.invalidateModule('recibos'))
+    );
+  }
+
+  getRecibosByDocumentoCobranza(
+    documentoCobranzaId: number
+  ): Observable<ReciboResponseDTO[]> {
+    const context = new HttpContext().set(BYPASS_CACHE, true);
+
+    return this.http.get<ReciboResponseDTO[]>(
+      `${this.apiUrl}/documento-cobranza/${documentoCobranzaId}`,
+      { context }
+    );
+  }
+
+  getRecibosByCotizacion(
+    cotizacionId: number
+  ): Observable<ReciboResponseDTO[]> {
+    const context = new HttpContext().set(BYPASS_CACHE, true);
+
+    return this.http.get<ReciboResponseDTO[]>(
+      `${this.apiUrl}/cotizacion/${cotizacionId}`,
+      { context }
     );
   }
 }
