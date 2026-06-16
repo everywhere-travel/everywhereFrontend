@@ -1,8 +1,9 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProveedorService } from '../../core/service/Proveedor/proveedor.service';
+import { EmailService } from '../../core/service/Email/email.service';
 import { ProveedorRequest, ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
@@ -58,6 +59,11 @@ export class ProveedorComponent implements OnInit {
   editandoProveedor = false;
   proveedorSeleccionado: ProveedorResponse | null = null;
   proveedorAEliminar: ProveedorResponse | null = null;
+
+  // Email
+  mostrarModalCorreo = false;
+  loadingCorreo = false;
+  emailForm!: FormGroup;
 
   // Error modal data
   errorModalData: ErrorModalData | null = null;
@@ -165,6 +171,12 @@ export class ProveedorComponent implements OnInit {
         label: 'Eliminar',
         color: 'red',
         handler: (item) => this.confirmarEliminar(this.proveedores.find(p => p.id === item.id)!)
+      },
+      {
+        icon: 'fa-envelope',
+        label: 'Enviar Correo',
+        color: 'purple',
+        handler: (item) => this.abrirModalCorreo(item)
       }
     ],
     emptyMessage: 'No se encontraron proveedores',
@@ -177,6 +189,7 @@ export class ProveedorComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private proveedorService: ProveedorService,
+    private emailService: EmailService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private errorHandler: ErrorHandlerService,
@@ -207,6 +220,11 @@ export class ProveedorComponent implements OnInit {
   private initializeForms(): void {
     this.proveedorForm = this.fb.group({
       nombre: ['']
+    });
+    this.emailForm = this.fb.group({
+      to: ['', [Validators.required, Validators.email]],
+      subject: ['', [Validators.required]],
+      body: ['', [Validators.required]]
     });
   }
 
@@ -381,6 +399,37 @@ export class ProveedorComponent implements OnInit {
     this.editandoProveedor = false;
     this.proveedorSeleccionado = null;
     this.proveedorForm.reset();
+  }
+
+  // Correo
+  abrirModalCorreo(proveedor: ProveedorTabla): void {
+    const p = this.proveedores.find(x => x.id === proveedor.id);
+    this.proveedorSeleccionado = p || null;
+    this.emailForm.reset();
+    this.mostrarModalCorreo = true;
+  }
+
+  cerrarModalCorreo(): void {
+    this.mostrarModalCorreo = false;
+    this.emailForm.reset();
+  }
+
+  enviarCorreo(): void {
+    if (this.emailForm.valid) {
+      this.loadingCorreo = true;
+      this.emailService.sendEmail(this.emailForm.value).subscribe({
+        next: () => {
+          this.loadingCorreo = false;
+          this.cerrarModalCorreo();
+          this.showSuccess('Correo enviado exitosamente.');
+        },
+        error: (error) => {
+          this.loadingCorreo = false;
+          const errorMessage = error?.error?.detail || error?.error?.message || error?.message || 'Error al enviar el correo';
+          this.showError(errorMessage);
+        }
+      });
+    }
   }
 
   updateSelectionState(): void {
