@@ -42,9 +42,9 @@
                   <i class="fas fa-users text-white text-xl"></i>
                 </div>
                 <div>
-                  <div class="text-2xl font-bold">{{ personas.length }}</div>
-                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Cliente{{ personas.length === 1 ?
-                    '' : 's' }} Total{{ personas.length === 1 ? '' : 'es' }}</div>
+                  <div class="text-2xl font-bold">{{ totalServerItems }}</div>
+                  <div class="text-sm opacity-90 uppercase font-medium tracking-wide">Cliente{{ totalServerItems === 1 ?
+                    '' : 's' }} Total{{ totalServerItems === 1 ? '' : 'es' }}</div>
                 </div>
               </div>
 
@@ -107,7 +107,16 @@
       </div>
 
       <!-- Tabla unificada -->
-      <app-cliente-table [clientes]="personas" [isLoading]="isLoading" [modoBusquedaDocumento]="modoVistaDocumentos"
+      <app-cliente-table 
+        [clientes]="personas" 
+        [isLoading]="isLoading" 
+        [modoBusquedaDocumento]="modoVistaDocumentos"
+        [serverSidePagination]="true"
+        [totalServerItems]="totalServerItems"
+        [estadisticas]="estadisticas"
+        (pageChange)="onPageChange($event)"
+        (sortChange)="onSortChange($event)"
+        (filterChange)="onFilterChange($event)"
         (verCliente)="onVerCliente($event)"
         (editarCliente)="onEditarCliente($event)" 
         (eliminarCliente)="onEliminarCliente($event)"

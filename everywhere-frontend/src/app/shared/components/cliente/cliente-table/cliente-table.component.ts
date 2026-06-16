@@ -30,6 +30,9 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   @Input() clientes: PersonaTabla[] = [];
   @Input() isLoading: boolean = false;
   @Input() modoBusquedaDocumento: boolean = false;
+  @Input() serverSidePagination: boolean = false;
+  @Input() totalServerItems: number = 0;
+  @Input() estadisticas: { totalNaturales: number, totalJuridicas: number } = { totalNaturales: 0, totalJuridicas: 0 };
 
   // Outputs
   @Output() verCliente = new EventEmitter<PersonaTabla>();
@@ -38,14 +41,19 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   @Output() eliminarMasivo = new EventEmitter<number[]>();
   @Output() refrescar = new EventEmitter<void>();
   @Output() buscarPorDocumento = new EventEmitter<string>();
+  
+  // Eventos Server-Side
+  @Output() pageChange = new EventEmitter<number>();
+  @Output() sortChange = new EventEmitter<{ column: string, direction: 'asc' | 'desc' }>();
+  @Output() filterChange = new EventEmitter<{ searchTerm: string, typeFilter: string }>();
 
   // Estado interno
   currentView: 'table' | 'cards' | 'list' = 'table';
   searchQuery: string = '';
   searchType: 'nombre' | 'documento' = 'nombre';
   filtroTipo: 'todos' | 'natural' | 'juridica' = 'todos';
-  sortColumn: string = 'nombre';
-  sortDirection: 'asc' | 'desc' = 'asc';
+  sortColumn: string = 'id';
+  sortDirection: 'asc' | 'desc' = 'desc';
 
   // Selección múltiple
   selectedItems: number[] = [];
@@ -78,6 +86,11 @@ export class ClienteTableComponent implements OnInit, OnChanges {
 
   // ===== FILTROS Y BÚSQUEDA =====
   aplicarFiltros(): void {
+    if (this.serverSidePagination) {
+      this.clientesFiltrados = [...this.clientes];
+      return;
+    }
+
     let resultado = [...this.clientes];
 
     // Filtro por tipo
@@ -107,6 +120,11 @@ export class ClienteTableComponent implements OnInit, OnChanges {
       return;
     }
 
+    if (this.serverSidePagination) {
+      this.filterChange.emit({ searchTerm: this.searchQuery, typeFilter: this.filtroTipo });
+      return;
+    }
+
     // Solo aplicar filtros locales si está en modo nombre
     this.aplicarFiltros();
   }
@@ -118,8 +136,12 @@ export class ClienteTableComponent implements OnInit, OnChanges {
   }
 
   onKeyDownSearch(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && this.searchType === 'documento') {
-      this.ejecutarBusquedaDocumento();
+    if (event.key === 'Enter') {
+      if (this.searchType === 'documento') {
+        this.ejecutarBusquedaDocumento();
+      } else {
+        this.onSearchChange();
+      }
     }
   }
 
@@ -144,20 +166,29 @@ export class ClienteTableComponent implements OnInit, OnChanges {
 
   clearSearch(): void {
     this.searchQuery = '';
-    this.aplicarFiltros();
+    if (this.serverSidePagination) {
+      this.filterChange.emit({ searchTerm: this.searchQuery, typeFilter: this.filtroTipo });
+    } else {
+      this.aplicarFiltros();
+    }
   }
 
   aplicarFiltroTipo(tipo: string): void {
     this.filtroTipo = tipo as 'todos' | 'natural' | 'juridica';
     this.currentPage = 1;
     this.clearSelection();
-    this.aplicarFiltros();
+    this.onSearchChange();
   }
 
   clearAllFilters(): void {
     this.searchQuery = '';
     this.filtroTipo = 'todos';
-    this.aplicarFiltros();
+    this.searchType = 'nombre'; // Volver al modo por defecto para ver todos
+    if (this.serverSidePagination) {
+      this.filterChange.emit({ searchTerm: this.searchQuery, typeFilter: this.filtroTipo });
+    } else {
+      this.aplicarFiltros();
+    }
   }
 
   // ===== ORDENAMIENTO =====
@@ -168,6 +199,12 @@ export class ClienteTableComponent implements OnInit, OnChanges {
       this.sortColumn = column;
       this.sortDirection = 'asc';
     }
+
+    if (this.serverSidePagination) {
+      this.sortChange.emit({ column: this.sortColumn, direction: this.sortDirection });
+      return;
+    }
+
     this.aplicarOrdenamiento();
   }
 
@@ -282,6 +319,9 @@ export class ClienteTableComponent implements OnInit, OnChanges {
 
   // ===== PAGINACIÓN =====
   get paginatedClientes(): PersonaTabla[] {
+    if (this.serverSidePagination) {
+      return this.clientesFiltrados;
+    }
     const itemsPorPagina = Number(this.itemsPerPage);
     const start = (this.currentPage - 1) * itemsPorPagina;
     const end = start + itemsPorPagina;
@@ -290,17 +330,23 @@ export class ClienteTableComponent implements OnInit, OnChanges {
 
   get totalPages(): number {
     const itemsPorPagina = Number(this.itemsPerPage);
+    if (this.serverSidePagination) {
+      return Math.ceil(this.totalServerItems / itemsPorPagina);
+    }
     return Math.ceil(this.clientesFiltrados.length / itemsPorPagina);
   }
 
   get totalItems(): number {
-    return this.clientesFiltrados.length;
+    return this.serverSidePagination ? this.totalServerItems : this.clientesFiltrados.length;
   }
 
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
       this.actualizarEstadoSeleccion();
+      if (this.serverSidePagination) {
+        this.pageChange.emit(this.currentPage);
+      }
     }
   }
 
@@ -353,11 +399,4 @@ export class ClienteTableComponent implements OnInit, OnChanges {
     return cliente.id;
   }
 
-  // Estadísticas
-  get estadisticas() {
-    return {
-      totalNaturales: this.clientes.filter(c => c.tipo === 'natural').length,
-      totalJuridicas: this.clientes.filter(c => c.tipo === 'juridica').length
-    };
-  }
 }
