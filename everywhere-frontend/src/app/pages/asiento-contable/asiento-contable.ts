@@ -145,13 +145,6 @@ export class AsientoContable implements OnInit, OnDestroy {
         label: 'Ver Detalle',
         color: 'blue',
         handler: (item) => this.verDetalleAsiento(item)
-      },
-      {
-        icon: 'fa-ban',
-        label: 'Anular',
-        color: 'red',
-        handler: (item) => this.confirmarAnular(item),
-        show: (item) => !item.anulado
       }
     ],
     emptyMessage: 'No se encontraron asientos contables',

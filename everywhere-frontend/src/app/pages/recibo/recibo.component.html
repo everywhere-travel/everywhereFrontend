@@ -377,8 +377,13 @@
           </label>
           <input type="number" [(ngModel)]="montoPago"
             class="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent bg-white shadow-sm"
+            [class.border-red-500]="montoPago && !isMontoValido()"
+            [class.focus:ring-red-500]="montoPago && !isMontoValido()"
             placeholder="Ingrese el monto">
-          <p class="text-sm text-gray-500 mt-2">
+          <p *ngIf="montoPago && !isMontoValido()" class="text-sm text-red-500 mt-2 font-medium">
+            <i class="fas fa-exclamation-triangle mr-1"></i> El monto debe ser mayor a 0 y menor o igual al saldo pendiente.
+          </p>
+          <p *ngIf="!montoPago || isMontoValido()" class="text-sm text-gray-500 mt-2">
             Deje el valor por defecto si desea pagar la totalidad del saldo pendiente.
           </p>
         </div>
@@ -481,7 +486,7 @@
             class="px-6 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
             Cancelar
           </button>
-          <button (click)="confirmarCreacionRecibo()" [disabled]="!sucursalSeleccionada || isLoading"
+          <button (click)="confirmarCreacionRecibo()" [disabled]="!sucursalSeleccionada || isLoading || !isMontoValido()"
             class="px-6 py-3 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary text-white rounded-xl font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
             <i class="fas" [class.fa-spinner]="isLoading" [class.fa-spin]="isLoading" [class.fa-check]="!isLoading"></i>
             <span>{{ isLoading ? 'Creando...' : 'Registrar Pago' }}</span>

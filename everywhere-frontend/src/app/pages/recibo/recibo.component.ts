@@ -277,6 +277,14 @@ export class ReciboComponent implements OnInit, OnDestroy {
     this.montoPago = null;
   }
 
+  isMontoValido(): boolean {
+    if (!this.documentoSeleccionado || this.montoPago === null || this.montoPago === undefined) {
+      return false; // monto nulo no es válido
+    }
+    const maximoPagar = this.documentoSeleccionado.saldoPendiente || this.documentoSeleccionado.totalDeuda || 0;
+    return this.montoPago > 0 && this.montoPago <= maximoPagar;
+  }
+
   async confirmarCreacionRecibo(): Promise<void> {
     if (!this.documentoSeleccionado?.id) {
       this.showError('No se ha seleccionado un documento de cobranza');
