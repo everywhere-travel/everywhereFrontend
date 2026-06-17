@@ -243,8 +243,7 @@ export class ReciboComponent implements OnInit, OnDestroy {
 
     try {
       this.isLoading = true;
-      // Cargar sucursales
-      this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
+      this.sucursales = await this.sucursalService.getDropdownSucursales().toPromise() || [];
 
       // Cargar personas jurídicas si hay persona asociada
       if (documento.personaId) {

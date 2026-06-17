@@ -35,7 +35,7 @@ export class CategoriaService {
   }
 
   getDropdownCategorias(): Observable<CategoriaResponse[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/dropdown`).pipe(
+    return this.http.get<any[]>(this.apiUrl).pipe(
       map(items => items.map(i => ({ id: i.id, nombre: i.nombre } as any)))
     );
   }

@@ -54,4 +54,11 @@ export class PagoPaxService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseURL}/${id}`);
   }
+
+  /**
+   * Guarda o actualiza un lote de pagos pax
+   */
+  saveBatch(liquidacionId: number, requests: PagoPaxRequest[]): Observable<void> {
+    return this.http.post<void>(`${this.baseURL}/liquidacion/${liquidacionId}/batch`, requests);
+  }
 }

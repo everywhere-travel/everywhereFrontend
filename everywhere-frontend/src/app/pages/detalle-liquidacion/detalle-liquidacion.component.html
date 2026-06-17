@@ -5,14 +5,19 @@
   </app-sidebar>
 
   <!-- Main Content Area -->
-  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+  <div class="transition-all duration-300 relative min-h-screen" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
 
-    <!-- Loading Spinner Global -->
-    <div *ngIf="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl p-8 flex flex-col items-center gap-4">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-everywhere-primary"></div>
-        <span class="text-lg font-medium text-gray-700">Cargando liquidación...</span>
-      </div>
+    <!-- Overlay Global de Carga (cuando está cargando la liquidación inicialmente o guardando) -->
+    <div *ngIf="isLoading" class="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center rounded-2xl">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden w-full max-w-md mx-4">
+            <div class="flex flex-col items-center justify-center py-12 px-6">
+                <div class="w-16 h-16 bg-gradient-to-r from-everywhere-primary to-everywhere-secondary rounded-2xl flex items-center justify-center mb-4 shadow-inner">
+                    <i class="fas fa-spinner fa-spin text-white text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 mb-2">{{ isSaving ? 'Guardando cambios...' : 'Cargando liquidación...' }}</h3>
+                <p class="text-gray-600 text-center">{{ isSaving ? 'Por favor espera mientras guardamos la información...' : 'Por favor espera mientras obtenemos los datos...' }}</p>
+            </div>
+        </div>
     </div>
 
     <!-- Error State -->

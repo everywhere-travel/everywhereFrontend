@@ -35,6 +35,18 @@ export class CotizacionService {
     return this.http.get<CotizacionResponse[]>(this.apiUrl);
   }
 
+  getCotizacionesSinDocumentoCobranza(): Observable<CotizacionResponse[]> {
+    return this.http.get<CotizacionResponse[]>(`${this.apiUrl}/sin-documento-cobranza`);
+  }
+
+  getCotizacionesPage(page: number = 0, size: number = 10, sortColumn: string = 'id', sortDirection: string = 'desc'): Observable<{content: CotizacionResponse[], totalElements: number, totalPages: number}> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', `${sortColumn},${sortDirection}`);
+    return this.http.get<{content: CotizacionResponse[], totalElements: number, totalPages: number}>(`${this.apiUrl}/page`, { params });
+  }
+
   getCotizacionConDetalles(id: number): Observable<CotizacionConDetallesResponseDTO> {
     return this.http.get<CotizacionConDetallesResponseDTO>(`${this.apiUrl}/${id}/con-detalles`);
   }

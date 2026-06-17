@@ -38,6 +38,14 @@ export class DocumentoCobranzaService {
     return this.http.get<DocumentoCobranzaResponseDTO[]>(this.apiUrl);
   }
 
+  getDocumentosPage(page: number = 0, size: number = 10, sortColumn: string = 'id', sortDirection: string = 'desc'): Observable<{content: DocumentoCobranzaResponseDTO[], totalElements: number, totalPages: number}> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', `${sortColumn},${sortDirection}`);
+    return this.http.get<{content: DocumentoCobranzaResponseDTO[], totalElements: number, totalPages: number}>(`${this.apiUrl}/page`, { params });
+  }
+
   getDocumentoById(id: number): Observable<DocumentoCobranzaResponseDTO> {
     return this.http.get<DocumentoCobranzaResponseDTO>(`${this.apiUrl}/${id}`);
   }
