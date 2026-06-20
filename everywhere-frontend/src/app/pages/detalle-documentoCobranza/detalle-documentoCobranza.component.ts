@@ -689,7 +689,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
             cantidad: detalle.cantidad,
             descripcion: detalle.descripcion || '',
             precio: detalle.precio,
-            productoId: detalle.productoId || 0,
+            productoId: detalle.productoId || undefined,
             documentoCobranzaId: this.documentoId
           };
 
@@ -703,7 +703,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
           cantidad: detalleFijo.cantidad,
           descripcion: detalleFijo.descripcion || '',
           precio: detalleFijo.precio,
-          productoId: detalleFijo.productoId || 0,
+          productoId: detalleFijo.productoId || undefined,
           documentoCobranzaId: this.documentoId
         };
 
