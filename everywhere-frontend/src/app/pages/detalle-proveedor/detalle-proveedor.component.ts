@@ -407,13 +407,35 @@ export class DetalleProveedorComponent implements OnInit {
     }
 
     onFileSelected(event: any): void {
-        if (event.target.files && event.target.files.length > 0) {
-            for (let i = 0; i < event.target.files.length; i++) {
-                this.archivosAdjuntos.push(event.target.files[i]);
-            }
+        const input = event.target as HTMLInputElement;
+        if (!input.files || input.files.length === 0) return;
+
+        const filesArray = Array.from(input.files);
+        const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
+
+        let currentSize = 0;
+        for (let i = 0; i < this.archivosAdjuntos.length; i++) {
+            currentSize += this.archivosAdjuntos[i].size || 0;
         }
+
+        const archivosPermitidos: File[] = [];
+        for (let i = 0; i < filesArray.length; i++) {
+            const file = filesArray[i];
+            if (currentSize + file.size > MAX_SIZE_BYTES) {
+                this.mostrarMensajeError('Límite excedido', 'El tamaño total de los archivos adjuntos no puede superar los 20MB.');
+                break;
+            }
+            currentSize += file.size;
+            archivosPermitidos.push(file);
+        }
+
+        if (archivosPermitidos.length > 0) {
+            // Empujar los archivos al arreglo existente como en el código original
+            this.archivosAdjuntos.push(...archivosPermitidos);
+        }
+        
         // Limpiar input
-        event.target.value = '';
+        input.value = '';
     }
 
     removerArchivo(index: number): void {
