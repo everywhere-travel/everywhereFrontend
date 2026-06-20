@@ -112,7 +112,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/documentos-cobranza/detalle/:id');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/collection-documents/detalle/:id');
     this.loadDocumentoFromRoute();
     this.loadProductos();
   }
@@ -473,7 +473,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   volverADocumentos(): void {
-    this.router.navigate(['/documentos-cobranza']);
+    this.router.navigate(['/collection-documents']);
   }
 
   recargarDetalles(): void {

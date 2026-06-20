@@ -138,7 +138,7 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/juridico/detalle/:id');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/legal/detalle/:id');
     this.loadPersonaFromRoute();
   }
 
@@ -253,7 +253,7 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
 
   // Navigation methods
   volverAPersonas(): void {
-    this.router.navigate(['/personas']);
+    this.router.navigate(['/people']);
   }
 
   // Tab management
@@ -329,7 +329,7 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
           this.personaId = response.id;
 
           // Actualizar la URL sin recargar el componente
-          this.router.navigate(['/juridico/detalle', response.id], { replaceUrl: true });
+          this.router.navigate(['/legal/detalle', response.id], { replaceUrl: true });
 
           // Cargar los datos de la persona recién creada
           this.loadPersonaData();

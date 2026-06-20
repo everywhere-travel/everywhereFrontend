@@ -79,6 +79,12 @@ export class UsuariosComponent implements OnInit {
   roleSeleccionadoPermisos: Set<number> = new Set();
   permissionMatrix: PermissionMatrixRow[] = [];
   
+  // Role CRUD Modal
+  mostrarModalRol = false;
+  editandoRol = false;
+  rolSeleccionadoIdParaEdicion: number | null = null;
+  rolForm!: FormGroup;
+  
   // Filtros
   searchTermUsuarios = '';
 
@@ -96,7 +102,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/usuarios');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/users');
     this.loadInitialData();
   }
 
@@ -107,6 +113,10 @@ export class UsuariosComponent implements OnInit {
       password: [''], // Opcional, si está vacío se usa "123456" al crear o se ignora al editar
       roleId: ['', Validators.required],
       sucursalId: ['']
+    });
+
+    this.rolForm = this.fb.group({
+      name: ['', [Validators.required, Validators.maxLength(100)]]
     });
   }
 
@@ -392,5 +402,98 @@ export class UsuariosComponent implements OnInit {
 
   hasPermissionChecked(permisoId: number): boolean {
     return this.roleSeleccionadoPermisos.has(permisoId);
+  }
+
+  // ==========================================
+  // Gestión de Roles (CRUD)
+  // ==========================================
+  abrirModalCrearRol(): void {
+    this.editandoRol = false;
+    this.rolSeleccionadoIdParaEdicion = null;
+    this.rolForm.reset({ name: '' });
+    this.mostrarModalRol = true;
+  }
+
+  editarRol(role: RoleResponse, event: Event): void {
+    event.stopPropagation();
+    this.editandoRol = true;
+    this.rolSeleccionadoIdParaEdicion = role.id;
+    this.rolForm.patchValue({ name: role.name });
+    this.mostrarModalRol = true;
+  }
+
+  cerrarModalRol(): void {
+    this.mostrarModalRol = false;
+  }
+
+  guardarRol(): void {
+    if (this.rolForm.invalid) {
+      this.rolForm.markAllAsTouched();
+      return;
+    }
+
+    const request = { name: this.rolForm.value.name.toUpperCase() };
+    this.loading = true;
+
+    if (this.editandoRol && this.rolSeleccionadoIdParaEdicion) {
+      this.roleService.update(this.rolSeleccionadoIdParaEdicion, request).subscribe({
+        next: () => {
+          this.loadRoles();
+          this.cerrarModalRol();
+        },
+        error: (err) => {
+          console.error('Error actualizando rol', err);
+          this.loading = false;
+          alert('Error: ' + (err.error?.message || 'No se pudo actualizar el rol'));
+        }
+      });
+    } else {
+      this.roleService.create(request).subscribe({
+        next: () => {
+          this.loadRoles();
+          this.cerrarModalRol();
+        },
+        error: (err) => {
+          console.error('Error creando rol', err);
+          this.loading = false;
+          alert('Error: ' + (err.error?.message || 'No se pudo crear el rol'));
+        }
+      });
+    }
+  }
+
+  eliminarRol(id: number, event: Event): void {
+    event.stopPropagation();
+    if (confirm('¿Estás seguro de que deseas eliminar este rol? Se perderán sus permisos.')) {
+      this.loading = true;
+      this.roleService.delete(id).subscribe({
+        next: () => {
+          if (this.roleSeleccionado?.id === id) {
+            this.roleSeleccionado = null;
+            this.roleSeleccionadoPermisos.clear();
+          }
+          this.loadRoles();
+        },
+        error: (err) => {
+          console.error('Error eliminando rol', err);
+          this.loading = false;
+          alert('Error al eliminar rol');
+        }
+      });
+    }
+  }
+
+  private loadRoles(): void {
+    this.loading = true;
+    this.roleService.getAll().subscribe({
+      next: (roles) => {
+        this.roles = roles || [];
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error cargando roles', err);
+        this.loading = false;
+      }
+    });
   }
 }

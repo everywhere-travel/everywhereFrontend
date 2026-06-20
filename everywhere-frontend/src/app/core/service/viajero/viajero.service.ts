@@ -50,6 +50,10 @@ export class ViajeroService {
     return this.http.get<ViajeroResponse[]>(`${this.baseURL}/con-persona-natural`);
   }
 
+  getDropdownViajeros(): Observable<{id: number, nombre: string}[]> {
+    return this.http.get<{id: number, nombre: string}[]>(`${this.baseURL}/dropdown`);
+  }
+
  /*
   exportViajeros(viajeroIds: number[]): Observable<ViajeroResponse[]> {
     return this.http.post<ViajeroResponse[]>(`${this.baseURL}/export/json`, viajeroIds);

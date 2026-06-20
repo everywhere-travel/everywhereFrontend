@@ -104,6 +104,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // ===== DATA TABLE CONFIGURATION =====
   documentosTabla: DocumentoCobranzaTabla[] = [];
+  currentPage = 1;
+  pageSize = 10;
+  sortColumn = 'id';
+  sortDirection = 'desc';
+
   tableConfig: DataTableConfig<DocumentoCobranzaTabla> = {
     data: [],
     columns: [
@@ -145,6 +150,8 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     searchPlaceholder: 'Buscar por número, cotización, cliente...',
     enableSelection: true,
     enablePagination: true,
+    serverSidePagination: true,
+    totalServerItems: 0,
     enableViewSwitcher: true,
     enableSorting: true,
     itemsPerPage: 10,
@@ -199,7 +206,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForms();
     this.loadInitialData();
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/documentos-cobranza');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/collection-documents');
   }
 
   ngOnDestroy(): void {
@@ -262,6 +269,29 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ===== EVENTOS DE TABLA SERVER-SIDE =====
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.loadDocumentos();
+  }
+
+  onSortChange(sort: { column: string, direction: 'asc' | 'desc' | null }): void {
+    if (sort.direction) {
+      this.sortColumn = sort.column;
+      this.sortDirection = sort.direction;
+    } else {
+      this.sortColumn = 'id';
+      this.sortDirection = 'desc';
+    }
+    this.loadDocumentos();
+  }
+
+  onSearchChange(term: string): void {
+    this.searchTerm = term;
+    this.currentPage = 1;
+    this.loadDocumentos();
+  }
+
   // ===== DATA LOADING =====
   private async loadDocumentos(setLoading: boolean = false): Promise<void> {
     try {
@@ -270,11 +300,23 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
         this.isLoading = true;
       }
 
-      this.documentos = (await this.documentoCobranzaService.getAllDocumentos().toPromise()) || [];
+      const response = await this.documentoCobranzaService.getDocumentosPage(
+        this.currentPage - 1,
+        this.pageSize,
+        this.sortColumn,
+        this.sortDirection
+      ).toPromise();
 
-      this.filteredDocumentos = [...this.documentos];
-      this.totalItems = this.documentos.length;
-      this.updateTableConfig();
+      if (response) {
+        this.documentos = response.content || [];
+        this.filterDocumentos();
+        
+        this.tableConfig = {
+          ...this.tableConfig,
+          data: this.documentosTabla,
+          totalServerItems: response.totalElements
+        };
+      }
     } catch (error) {
       console.error('Error al cargar documentos:', error);
       this.showError('Error al cargar los documentos de cobranza');
@@ -289,20 +331,8 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   private async loadCotizaciones(): Promise<void> {
     try {
-      const todasLasCotizaciones =
-        (await this.cotizacionService.getAllCotizaciones().toPromise()) || [];
-
-      // Filtrar solo las cotizaciones que no tienen documento de cobranza creado
-      this.cotizaciones = todasLasCotizaciones.filter((cotizacion) => {
-        // Verificar si ya existe un documento de cobranza para esta cotización
-        const yaExisteDocumento = this.documentos.some(
-          (documento) =>
-            documento.cotizacionId === cotizacion.id ||
-            documento.codigoCotizacion === cotizacion.codigoCotizacion,
-        );
-        return !yaExisteDocumento;
-      });
-
+      this.cotizaciones = 
+        (await this.cotizacionService.getCotizacionesSinDocumentoCobranza().toPromise()) || [];
       this.cotizacionesFiltradas = [...this.cotizaciones];
     } catch (error) {
       console.error('Error al cargar cotizaciones:', error);
@@ -406,13 +436,13 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ===== NAVIGATION METHODS =====
   verDetalleDocumento(documento: DocumentoCobranzaResponseDTO): void {
     if (documento.id) {
-      this.router.navigate(['/documentos-cobranza/detalle', documento.id]);
+      this.router.navigate(['/collection-documents/detalle', documento.id]);
     }
   }
 
   editarDocumento(documento: DocumentoCobranzaResponseDTO): void {
     if (documento?.id) {
-      this.router.navigate(['/documentos-cobranza/detalle', documento.id], {
+      this.router.navigate(['/collection-documents/detalle', documento.id], {
         queryParams: { modo: 'editar' }
       });
     }
@@ -595,20 +625,21 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // ===== UTILITY METHODS =====
   getPersonaDisplayName(cotizacion: CotizacionResponse): string {
-    // Intentar obtener el primer email de la persona
-    if (cotizacion.personas?.correos && cotizacion.personas.correos.length > 0) {
-      return cotizacion.personas.correos[0].email;
+    if (cotizacion.personas) {
+      const p: any = cotizacion.personas;
+      if (p.personaJuridica?.razonSocial) {
+        return p.personaJuridica.razonSocial;
+      }
+      if (p.personaNatural) {
+        const pn = p.personaNatural;
+        return `${pn.nombres || ''} ${pn.apellidosPaterno || ''} ${pn.apellidosMaterno || ''}`.trim();
+      }
+      
+      // Fallback si la persona tiene nombre directo (algunos DTOs pueden tenerlo)
+      if (p.nombre || p.razonSocial) {
+        return p.nombre || p.razonSocial;
+      }
     }
-
-    // Si no hay email, intentar mostrar dirección o ID
-    if (cotizacion.personas?.direccion) {
-      return cotizacion.personas.direccion;
-    }
-
-    if (cotizacion.personas?.id) {
-      return `Cliente ID: ${cotizacion.personas.id}`;
-    }
-
     return 'Cliente no especificado';
   }
 
@@ -683,8 +714,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     try {
       this.isLoading = true;
 
-      // Cargar sucursales
-      this.sucursales = (await this.sucursalService.findAllSucursal().toPromise()) || [];
+      this.sucursales = (await this.sucursalService.getDropdownSucursales().toPromise()) || [];
 
       // Obtener personaId de la cotización (ID de tabla 'personas')
       // El backend tiene PersonaNaturalRepository.findByPersonasId() que convierte automáticamente
@@ -733,7 +763,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
           this.showSuccess('Documento de cobranza creado exitosamente');
           this.cerrarFormulario();
           // Redirigir al detalle en modo edición
-          this.router.navigate(['/documentos-cobranza/detalle', documento.id], {
+          this.router.navigate(['/collection-documents/detalle', documento.id], {
             queryParams: { modo: 'editar' }
           });
         },

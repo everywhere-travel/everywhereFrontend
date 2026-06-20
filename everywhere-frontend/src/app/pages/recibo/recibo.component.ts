@@ -87,7 +87,7 @@ export class ReciboComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForms();
     this.loadInitialData();
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/recibos');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/receipts');
   }
 
   ngOnDestroy(): void {
@@ -243,8 +243,7 @@ export class ReciboComponent implements OnInit, OnDestroy {
 
     try {
       this.isLoading = true;
-      // Cargar sucursales
-      this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
+      this.sucursales = await this.sucursalService.getDropdownSucursales().toPromise() || [];
 
       // Cargar personas jurídicas si hay persona asociada
       if (documento.personaId) {
@@ -310,7 +309,7 @@ export class ReciboComponent implements OnInit, OnDestroy {
           // Recargar datos para actualizar saldos
           await this.loadDocumentosConRecibos();
           // Navegar al detalle del recibo en modo edición
-          this.router.navigate(['/recibos/detalle', recibo.id], {
+          this.router.navigate(['/receipts/detalle', recibo.id], {
             queryParams: { modo: 'editar' }
           });
         },
@@ -343,13 +342,13 @@ export class ReciboComponent implements OnInit, OnDestroy {
   // ===== NAVIGATION =====
   verDetalleRecibo(recibo: ReciboResponseDTO): void {
     if (recibo.id) {
-      this.router.navigate(['/recibos/detalle', recibo.id]);
+      this.router.navigate(['/receipts/detalle', recibo.id]);
     }
   }
 
   editarRecibo(recibo: ReciboResponseDTO): void {
     if (recibo?.id) {
-      this.router.navigate(['/recibos/detalle', recibo.id], {
+      this.router.navigate(['/receipts/detalle', recibo.id], {
         queryParams: { modo: 'editar' }
       });
     }

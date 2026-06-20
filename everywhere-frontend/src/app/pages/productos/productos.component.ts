@@ -177,7 +177,7 @@ export class ProductosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/productos');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/products');
     this.loadProductos();
     this.calcularEstadisticas();
   }

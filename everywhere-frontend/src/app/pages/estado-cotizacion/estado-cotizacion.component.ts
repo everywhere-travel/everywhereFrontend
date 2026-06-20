@@ -142,7 +142,7 @@ export class EstadoCotizacionComponent implements OnInit {
   ngOnInit(): void {
     this.loadEstadosCotizacion();
     this.calcularEstadisticas();
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/estado-cotizacion');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/quote-status');
   }
 
   // =================================================================

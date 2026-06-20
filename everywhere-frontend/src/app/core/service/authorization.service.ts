@@ -161,14 +161,14 @@ export const MENU_ITEMS: MenuItemConfig[] = [
   {
     id: 'cotizaciones',
     label: 'Cotizaciones',
-    route: '/cotizaciones',
+    route: '/quotes',
     icon: 'quote',
     requiredModule: MODULE.COTIZACIONES
   },
   {
     id: 'personas',
     label: 'Clientes',
-    route: '/personas',
+    route: '/people',
     icon: 'people',
     requiredModule: MODULE.CLIENTES
   },
@@ -189,35 +189,35 @@ export const MENU_ITEMS: MenuItemConfig[] = [
   {
     id: 'liquidaciones',
     label: 'Liquidaciones',
-    route: '/liquidaciones',
+    route: '/settlements',
     icon: 'payment',
     requiredModule: MODULE.LIQUIDACIONES
   },
   {
     id: 'productos',
     label: 'Productos',
-    route: '/productos',
+    route: '/products',
     icon: 'inventory',
     requiredModule: MODULE.PRODUCTOS
   },
   {
     id: 'proveedores',
     label: 'Proveedores',
-    route: '/proveedor',
+    route: '/suppliers',
     icon: 'business',
     requiredModule: MODULE.PROVEEDORES
   },
   {
     id: 'operadores',
     label: 'Operadores',
-    route: '/operadores',
+    route: '/operators',
     icon: 'support_agent',
     requiredModule: MODULE.OPERADOR
   },
   {
     id: 'carpetas',
     label: 'Carpetas',
-    route: '/carpetas',
+    route: '/folders',
     icon: 'folder',
     requiredModule: MODULE.CARPETA
   },
@@ -230,7 +230,7 @@ export const MENU_ITEMS: MenuItemConfig[] = [
       {
         id: 'sucursales',
         label: 'Sucursales',
-        route: '/sucursales',
+        route: '/branches',
         icon: 'business',
         requiredModule: MODULE.ALL_MODULES
       },

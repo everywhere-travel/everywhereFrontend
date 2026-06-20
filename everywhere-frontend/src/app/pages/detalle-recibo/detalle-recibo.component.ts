@@ -109,7 +109,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/recibos/detalle/:id');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/receipts/detalle/:id');
     this.loadReciboFromRoute();
     this.loadProductos();
   }
@@ -471,7 +471,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
   }
 
   volverARecibos(): void {
-    this.router.navigate(['/recibos']);
+    this.router.navigate(['/receipts']);
   }
 
   recargarDetalles(): void {

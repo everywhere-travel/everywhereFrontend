@@ -183,7 +183,7 @@ export class SucursalesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/sucursales');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/branches');
     this.loadSucursales();
   }
 

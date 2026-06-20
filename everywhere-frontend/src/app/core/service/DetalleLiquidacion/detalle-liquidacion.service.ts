@@ -48,6 +48,14 @@ export class DetalleLiquidacionService {
     );
   }
 
+  saveBatch(liquidacionId: number, requests: DetalleLiquidacionRequest[]): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/liquidacion/${liquidacionId}/batch`, requests).pipe(
+      tap(() => {
+        this.cacheService.invalidatePattern(`/liquidaciones/${liquidacionId}/con-detalles`);
+      })
+    );
+  }
+
   deleteDetalleLiquidacion(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
       tap(() => {

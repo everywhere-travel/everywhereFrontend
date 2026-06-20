@@ -33,6 +33,11 @@
             <i class="fas fa-plus"></i>
             Nuevo Usuario
           </button>
+          <button *ngIf="activeTab === 'roles'" (click)="abrirModalCrearRol()"
+            class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+            <i class="fas fa-plus"></i>
+            Nuevo Rol
+          </button>
         </div>
       </div>
     </header>
@@ -145,15 +150,22 @@
             </div>
             <ul class="divide-y divide-gray-200">
               <li *ngFor="let role of roles" 
-                  (click)="seleccionarRole(role)"
                   [ngClass]="{'bg-blue-50 border-l-4 border-blue-600': roleSeleccionado?.id === role.id, 'hover:bg-gray-50 border-l-4 border-transparent': roleSeleccionado?.id !== role.id}"
-                  class="cursor-pointer transition-colors">
-                <div class="px-4 py-4 flex items-center justify-between">
+                  class="transition-colors group">
+                <div class="px-4 py-4 flex items-center justify-between cursor-pointer" (click)="seleccionarRole(role)">
                   <div>
                     <p class="text-sm font-medium text-gray-900">{{ role.name }}</p>
                     <p class="text-xs text-gray-500">{{ role.permissions.length }} permisos</p>
                   </div>
-                  <i class="fas fa-chevron-right text-gray-400"></i>
+                  <div class="flex items-center gap-3">
+                    <button (click)="editarRol(role, $event)" class="text-indigo-600 hover:text-indigo-900 opacity-0 group-hover:opacity-100 transition-opacity" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button (click)="eliminarRol(role.id, $event)" class="text-red-600 hover:text-red-900 opacity-0 group-hover:opacity-100 transition-opacity" title="Eliminar">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                  </div>
                 </div>
               </li>
             </ul>
@@ -310,3 +322,39 @@
     </form>
   </div>
 </div>
+
+<!-- Modal Crear/Editar Rol -->
+<div *ngIf="mostrarModalRol" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" (click)="cerrarModalRol()"></div>
+
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+      <h3 class="text-lg font-semibold text-gray-900">
+        {{ editandoRol ? 'Editar Rol' : 'Nuevo Rol' }}
+      </h3>
+      <button (click)="cerrarModalRol()" class="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="rolForm" (ngSubmit)="guardarRol()">
+      <div class="px-6 py-4 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Rol <span class="text-red-500">*</span></label>
+          <input type="text" formControlName="name" class="w-full rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 bg-gray-50 focus:bg-white transition-colors" placeholder="Ej. CONTABILIDAD">
+        </div>
+      </div>
+
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-2xl">
+        <button type="button" (click)="cerrarModalRol()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" [disabled]="loading || rolForm.invalid" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm">
+          <i *ngIf="loading" class="fas fa-spinner fa-spin"></i>
+          {{ editandoRol ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

@@ -326,7 +326,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/personas/detalle/:id');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/people/detalle/:id');
     this.loadPersonaFromRoute();
   }
 
@@ -521,7 +521,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
   // Navigation methods
   volverAPersonas(): void {
-    this.router.navigate(['/personas']);
+    this.router.navigate(['/people']);
   }
 
   // Tab management
@@ -663,7 +663,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
                 // Éxito en ambas creaciones
                 this.isCreating = false;
                 this.personaId = personaResponse.id;
-                this.router.navigate(['/personas/detalle', personaResponse.id], { replaceUrl: true });
+                this.router.navigate(['/people/detalle', personaResponse.id], { replaceUrl: true });
                 this.loadPersonaData();
               }),
               catchError(error => {
@@ -676,7 +676,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
             // PersonaNatural se creó sin documento - ESTO ES OK
             this.isCreating = false;
             this.personaId = personaResponse.id;
-            this.router.navigate(['/personas/detalle', personaResponse.id], { replaceUrl: true });
+            this.router.navigate(['/people/detalle', personaResponse.id], { replaceUrl: true });
             this.loadPersonaData();
             return of(null);
           }

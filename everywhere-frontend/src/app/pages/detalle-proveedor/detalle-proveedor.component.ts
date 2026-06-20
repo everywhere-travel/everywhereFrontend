@@ -8,6 +8,7 @@ import { ProveedorService } from '../../core/service/Proveedor/proveedor.service
 import { ProveedorColaboradorService } from '../../core/service/Proveedor/proveedor-colaborador.service';
 import { ProveedorContactoService } from '../../core/service/Proveedor/proveedor-contacto.service';
 import { ProveedorGrupoContactoService } from '../../core/service/Proveedor/proveedor-grupo-contacto.service';
+import { EmailService } from '../../core/service/Email/email.service';
 import { ProveedorRequest, ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model';
 import { ProveedorColaboradorRequest, ProveedorColaboradorResponse } from '../../shared/models/Proveedor/proveedor-colaborador.model';
 import { ProveedorContactoRequest, ProveedorContactoResponse } from '../../shared/models/Proveedor/proveedor-contacto.model';
@@ -63,6 +64,12 @@ export class DetalleProveedorComponent implements OnInit {
     isLoading = false;
     error: string | null = null;
 
+    mostrarModalCorreo = false;
+    loadingCorreo = false;
+    emailForm!: FormGroup;
+    contactoSeleccionadoParaCorreo: ProveedorContactoResponse | null = null;
+    archivosAdjuntos: File[] = [];
+
     // Confirmation modal
     showConfirmation = false;
     confirmationConfig: ConfirmationConfig = {
@@ -117,6 +124,7 @@ export class DetalleProveedorComponent implements OnInit {
         private colaboradorService: ProveedorColaboradorService,
         private contactoService: ProveedorContactoService,
         private grupoContactoService: ProveedorGrupoContactoService,
+        private emailService: EmailService,
         private menuConfigService: MenuConfigService,
         private cdr: ChangeDetectorRef
     ) {
@@ -124,7 +132,7 @@ export class DetalleProveedorComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.sidebarMenuItems = this.menuConfigService.getMenuItems('/proveedores');
+        this.sidebarMenuItems = this.menuConfigService.getMenuItems('/suppliers');
 
         this.route.paramMap.subscribe(params => {
             const id = params.get('id');
@@ -162,6 +170,14 @@ export class DetalleProveedorComponent implements OnInit {
         this.grupoContactoForm = this.fb.group({
             nombre: ['', Validators.required],
             descripcion: ['']
+        });
+
+        this.emailForm = this.fb.group({
+            to: ['', [Validators.required]],
+            cc: [''],
+            bcc: [''],
+            subject: ['', [Validators.required]],
+            body: ['', [Validators.required]]
         });
     }
 
@@ -371,6 +387,91 @@ export class DetalleProveedorComponent implements OnInit {
     }
 
     // =================================================================
+    // EMAIL
+    // =================================================================
+    abrirModalCorreo(contacto: ProveedorContactoResponse): void {
+        this.contactoSeleccionadoParaCorreo = contacto;
+        this.emailForm.reset();
+        this.archivosAdjuntos = [];
+        this.emailForm.patchValue({
+            to: contacto.email
+        });
+        this.mostrarModalCorreo = true;
+    }
+
+    cerrarModalCorreo(): void {
+        this.mostrarModalCorreo = false;
+        this.contactoSeleccionadoParaCorreo = null;
+        this.emailForm.reset();
+        this.archivosAdjuntos = [];
+    }
+
+    onFileSelected(event: any): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files || input.files.length === 0) return;
+
+        const filesArray = Array.from(input.files);
+        const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
+
+        let currentSize = 0;
+        for (let i = 0; i < this.archivosAdjuntos.length; i++) {
+            currentSize += this.archivosAdjuntos[i].size || 0;
+        }
+
+        const archivosPermitidos: File[] = [];
+        for (let i = 0; i < filesArray.length; i++) {
+            const file = filesArray[i];
+            if (currentSize + file.size > MAX_SIZE_BYTES) {
+                this.mostrarMensajeError('Límite excedido', 'El tamaño total de los archivos adjuntos no puede superar los 20MB.');
+                break;
+            }
+            currentSize += file.size;
+            archivosPermitidos.push(file);
+        }
+
+        if (archivosPermitidos.length > 0) {
+            // Empujar los archivos al arreglo existente como en el código original
+            this.archivosAdjuntos.push(...archivosPermitidos);
+        }
+        
+        // Limpiar input
+        input.value = '';
+    }
+
+    removerArchivo(index: number): void {
+        this.archivosAdjuntos.splice(index, 1);
+    }
+
+    enviarCorreo(): void {
+        if (this.emailForm.valid) {
+            this.loadingCorreo = true;
+            
+            const formData = new FormData();
+            
+            formData.append('email', new Blob([JSON.stringify(this.emailForm.value)], {
+                type: 'application/json'
+            }));
+            
+            this.archivosAdjuntos.forEach((file) => {
+                formData.append('files', file);
+            });
+
+            this.emailService.sendEmail(formData).subscribe({
+                next: () => {
+                    this.loadingCorreo = false;
+                    this.cerrarModalCorreo();
+                    this.mostrarMensajeExito('Correo enviado exitosamente.');
+                },
+                error: (error) => {
+                    this.loadingCorreo = false;
+                    const errorMessage = error?.error?.detail || error?.error?.message || error?.message || 'Error al enviar el correo';
+                    this.mostrarMensajeError('Error al enviar el correo', errorMessage);
+                }
+            });
+        }
+    }
+
+    // =================================================================
     // GRUPOS CONTACTO CRUD
     // =================================================================
     abrirModalGrupoContacto(grupo?: ProveedorGrupoContactoResponse): void {
@@ -562,6 +663,6 @@ export class DetalleProveedorComponent implements OnInit {
     // NAVIGATION
     // =================================================================
     volverAProveedores(): void {
-        this.router.navigate(['/proveedores']);
+        this.router.navigate(['/suppliers']);
     }
 }

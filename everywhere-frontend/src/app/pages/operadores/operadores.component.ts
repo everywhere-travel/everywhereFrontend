@@ -139,7 +139,7 @@ export class OperadoresComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/operadores');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/operators');
     this.loadOperadores();
   }
 

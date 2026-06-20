@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormControl, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 import { Subscription, of, firstValueFrom } from 'rxjs';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -327,7 +327,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   constructor(private menuConfigService: MenuConfigService) { }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/cotizaciones');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/quotes');
     this.initializeForms();
     this.loadInitialData();
     this.setupClienteSearch();
@@ -486,35 +486,56 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   }
 
   private setupClienteSearch(): void {
-    // Asegurar que tenemos la lista completa de clientes
-    if (this.personas.length > 0) {
-      this.todosLosClientes = [...this.personas];
-    }
-
-    // Mostrar todos los clientes inicialmente
-    this.personasEncontradas = [...this.todosLosClientes];
+    // Inicializar vacio y no mostrando carga
+    this.personasEncontradas = [];
     this.buscandoClientes = false;
 
     this.clienteSearchSubscription?.unsubscribe();
 
     this.clienteSearchSubscription = this.clienteSearchControl.valueChanges
       .pipe(
-        debounceTime(300), // Reducido para respuesta más rápida
+        debounceTime(400), 
         distinctUntilChanged(),
         switchMap((searchTerm) => {
           this.buscandoClientes = true;
-          const termino = searchTerm?.trim().toLowerCase() || '';
+          const termino = searchTerm?.trim() || '';
 
-          // Si no hay término de búsqueda, mostrar todos los clientes
-          const resultados = this.todosLosClientes.filter((persona) =>
-            this.getClienteDisplayName(persona).toLowerCase().includes(termino),
+          // Consultar a la BD (incluso si está vacío, trae los primeros 10)
+          return this.personaService.getPersonasPage(0, 10, 'id', 'desc', termino ? termino : undefined).pipe(
+            catchError((err: any) => {
+              console.error('Error al buscar clientes:', err);
+              return of({ content: [] });
+            })
           );
-          this.personasEncontradas = resultados;
-          this.buscandoClientes = false;
-          return of(null);
         }),
       )
       .subscribe({
+        next: (response: any) => {
+          if (response && response.content) {
+            // Mapear PersonaTablaDTO a personaDisplay o la estructura esperada
+            this.personasEncontradas = response.content.map((dto: any) => ({
+              id: dto.id,
+              tipo: dto.tipo,
+              identificador: dto.documento || '',
+              nombre: dto.nombre || 'Sin nombre',
+              // Add ruc/documento fields so that getClienteType mapper works si necesario
+              ruc: dto.tipo === 'JURIDICA' ? dto.documento : undefined,
+              documento: dto.tipo === 'NATURAL' ? dto.documento : undefined,
+            }));
+            
+            // Actualizar el cache interno para que no salga "Cliente no encontrado" luego
+            this.personasEncontradas.forEach((p: any) => {
+              this.personasCache[p.id] = {
+                id: p.id,
+                identificador: p.identificador,
+                nombre: p.nombre,
+                tipo: p.tipo
+              };
+              this.personasDisplayMap[p.id] = p.nombre;
+            });
+          }
+          this.buscandoClientes = false;
+        },
         error: (err) => {
           this.buscandoClientes = false;
         },
@@ -597,17 +618,24 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           this.personasCache[personaId] = {
             id: personaId,
             identificador: pj.ruc || '',
-            nombre: pj.razonSocial || 'Sin nombre',
+            nombre: String(pj.razonSocial || '').replace(/null|undefined/gi, '').trim() || 'Sin nombre',
             tipo: 'JURIDICA',
           };
         } else {
           // Persona natural
           const pn = persona as PersonaNaturalResponse;
-          const apellidos = `${pn.apellidosPaterno || ''} ${pn.apellidosMaterno || ''}`.trim();
+          const safeStr = (str: any) => String(str || '').replace(/null|undefined/gi, '').trim();
+          
+          const nombres = safeStr(pn.nombres);
+          const apellidoPaterno = safeStr(pn.apellidosPaterno || (pn as any).apellidoPaterno);
+          const apellidoMaterno = safeStr(pn.apellidosMaterno || (pn as any).apellidoMaterno);
+          
+          const fullName = [nombres, apellidoPaterno, apellidoMaterno].filter(Boolean).join(' ');
+          
           this.personasCache[personaId] = {
             id: personaId,
             identificador: pn.documento || '',
-            nombre: `${pn.nombres || ''} ${apellidos}`.trim() || 'Sin nombre',
+            nombre: fullName || 'Sin nombre',
             tipo: 'NATURAL',
           };
         }
@@ -676,14 +704,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           };
 
           const cached = this.personasCache[cliente.id];
-          if (cached.identificador) {
-            this.personasDisplayMap[cliente.id] =
-              `${cached.tipo === 'JURIDICA' ? 'RUC' : cached.tipo === 'NATURAL' ? 'DNI' : 'DOC'}: ${cached.identificador} - ${cached.nombre}`;
-          } else {
-            this.personasDisplayMap[cliente.id] = esGenerico
-              ? `Cliente ID: ${cliente.id} (Sin datos)`
-              : cached.nombre;
-          }
+          this.personasDisplayMap[cliente.id] = esGenerico
+            ? `Cliente ID: ${cliente.id} (Sin datos)`
+            : cached.nombre;
 
           // Agregar a las listas para búsqueda (solo si no es genérico)
           if (!esGenerico) {
@@ -935,11 +958,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     if (modoEdicion) {
-      this.router.navigate(['/cotizaciones/detalle', cotizacionId], {
+      this.router.navigate(['/quotes/detalle', cotizacionId], {
         queryParams: { modo: 'editar' }
       });
     } else {
-      this.router.navigate(['/cotizaciones/detalle', cotizacionId]);
+      this.router.navigate(['/quotes/detalle', cotizacionId]);
     }
   }
 
@@ -949,7 +972,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.router.navigate(['/cotizaciones/detalle', cotizacionId], {
+    this.router.navigate(['/quotes/detalle', cotizacionId], {
       queryParams: { seccion: 'historial' }
     });
   }
@@ -2477,7 +2500,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       patch.cantNinos = cantNinos;
     }
 
-    // Comparar resto de campos
+    // Comparar resto de campos simples
     fieldsToCheck.forEach((field) => {
       const newValue = formValue[field];
       const originalValue = this.cotizacionOriginal![field as keyof CotizacionResponse];
@@ -2487,6 +2510,36 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         patch[field] = newValue;
       }
     });
+
+    // Comparar personaId (cliente)
+    if (formValue.personaId && this.cotizacionOriginal.personas?.id !== formValue.personaId) {
+      patch.personaId = formValue.personaId;
+    }
+
+    // Comparar counterId
+    if (formValue.counterId && this.cotizacionOriginal.counter?.id !== formValue.counterId) {
+      patch.counterId = formValue.counterId;
+    }
+
+    // Comparar formaPagoId
+    if (formValue.formaPagoId && this.cotizacionOriginal.formaPago?.id !== formValue.formaPagoId) {
+      patch.formaPagoId = formValue.formaPagoId;
+    }
+
+    // Comparar estadoCotizacionId
+    if (formValue.estadoCotizacionId && this.cotizacionOriginal.estadoCotizacion?.id !== formValue.estadoCotizacionId) {
+      patch.estadoCotizacionId = formValue.estadoCotizacionId;
+    }
+
+    // Comparar sucursalId
+    if (formValue.sucursalId && this.cotizacionOriginal.sucursal?.id !== formValue.sucursalId) {
+      patch.sucursalId = formValue.sucursalId;
+    }
+
+    // Comparar carpetaId
+    if (formValue.carpetaId !== undefined && this.cotizacionOriginal.carpeta?.id !== formValue.carpetaId) {
+      patch.carpetaId = formValue.carpetaId;
+    }
 
     return patch;
   }
