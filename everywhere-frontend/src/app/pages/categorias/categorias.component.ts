@@ -146,7 +146,7 @@ export class CategoriasComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/categorias');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/categories');
     this.loadCategorias();
   }
 

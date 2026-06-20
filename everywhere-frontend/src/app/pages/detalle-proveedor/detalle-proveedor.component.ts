@@ -132,7 +132,7 @@ export class DetalleProveedorComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.sidebarMenuItems = this.menuConfigService.getMenuItems('/proveedores');
+        this.sidebarMenuItems = this.menuConfigService.getMenuItems('/suppliers');
 
         this.route.paramMap.subscribe(params => {
             const id = params.get('id');
@@ -663,6 +663,6 @@ export class DetalleProveedorComponent implements OnInit {
     // NAVIGATION
     // =================================================================
     volverAProveedores(): void {
-        this.router.navigate(['/proveedores']);
+        this.router.navigate(['/suppliers']);
     }
 }

@@ -186,7 +186,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     // ===== LIFECYCLE HOOKS =====
     ngOnInit(): void {
-        this.sidebarMenuItems = this.menuConfigService.getMenuItems('/cotizaciones');
+        this.sidebarMenuItems = this.menuConfigService.getMenuItems('/quotes');
         this.initializeForms();
         this.loadCotizacionFromRoute();
         this.loadInitialData();
@@ -496,18 +496,18 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             this.modoEdicion = true;
             this.editandoCotizacion = true;
             this.initializeForm();
-            this.router.navigate(['/cotizaciones/detalle', cotizacionId], {
+            this.router.navigate(['/quotes/detalle', cotizacionId], {
                 queryParams: { modo: 'editar' }
             });
         } else {
-            this.router.navigate(['/cotizaciones/detalle', cotizacionId]);
+            this.router.navigate(['/quotes/detalle', cotizacionId]);
         }
     }
 
 
     // ===== NAVIGATION METHODS =====
     volverACotizaciones(): void {
-        this.router.navigate(['/cotizaciones']);
+        this.router.navigate(['/quotes']);
     }
 
     irAEditarCotizacion(): void {

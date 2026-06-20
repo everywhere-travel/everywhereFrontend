@@ -186,7 +186,7 @@ export class ProveedorComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/proveedores');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/suppliers');
     this.loadProveedores();
     this.calcularEstadisticas();
   }
@@ -303,7 +303,7 @@ export class ProveedorComponent implements OnInit {
 
   editarProveedor(proveedor: ProveedorResponse): void {
     if (proveedor?.id) {
-      this.router.navigate(['/proveedores/detalle', proveedor.id], {
+      this.router.navigate(['/suppliers/detalle', proveedor.id], {
         queryParams: { modo: 'editar'}
       }
       );
@@ -311,7 +311,7 @@ export class ProveedorComponent implements OnInit {
   }
 
   verDetalles(id: number): void {
-    this.router.navigate(['/proveedores/detalle', id]);
+    this.router.navigate(['/suppliers/detalle', id]);
   }
 
   eliminarProveedor(id: number): void {

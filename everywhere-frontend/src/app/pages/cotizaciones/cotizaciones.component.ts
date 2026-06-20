@@ -327,7 +327,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   constructor(private menuConfigService: MenuConfigService) { }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/cotizaciones');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/quotes');
     this.initializeForms();
     this.loadInitialData();
     this.setupClienteSearch();
@@ -958,11 +958,11 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     }
 
     if (modoEdicion) {
-      this.router.navigate(['/cotizaciones/detalle', cotizacionId], {
+      this.router.navigate(['/quotes/detalle', cotizacionId], {
         queryParams: { modo: 'editar' }
       });
     } else {
-      this.router.navigate(['/cotizaciones/detalle', cotizacionId]);
+      this.router.navigate(['/quotes/detalle', cotizacionId]);
     }
   }
 
@@ -972,7 +972,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.router.navigate(['/cotizaciones/detalle', cotizacionId], {
+    this.router.navigate(['/quotes/detalle', cotizacionId], {
       queryParams: { seccion: 'historial' }
     });
   }

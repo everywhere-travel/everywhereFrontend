@@ -155,7 +155,7 @@ export class CarpetasComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/carpetas');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/folders');
     this.inicializarVistaDual();
   }
 

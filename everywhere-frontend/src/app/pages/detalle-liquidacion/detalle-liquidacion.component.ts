@@ -565,7 +565,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Navigation methods
   volverALiquidaciones(): void {
-    this.router.navigate(['/liquidaciones']);
+    this.router.navigate(['/settlements']);
   }
 
   descargarLiquidacionExcel(): void {
@@ -1340,7 +1340,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   irAEditarLiquidacionOld(): void {
     if (this.liquidacionId) {
-      this.router.navigate(['/liquidaciones'], {
+      this.router.navigate(['/settlements'], {
         queryParams: { editId: this.liquidacionId }
       });
     }

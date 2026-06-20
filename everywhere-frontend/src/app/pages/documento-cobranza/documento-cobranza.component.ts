@@ -206,7 +206,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForms();
     this.loadInitialData();
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/documentos-cobranza');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/collection-documents');
   }
 
   ngOnDestroy(): void {
@@ -436,13 +436,13 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ===== NAVIGATION METHODS =====
   verDetalleDocumento(documento: DocumentoCobranzaResponseDTO): void {
     if (documento.id) {
-      this.router.navigate(['/documentos-cobranza/detalle', documento.id]);
+      this.router.navigate(['/collection-documents/detalle', documento.id]);
     }
   }
 
   editarDocumento(documento: DocumentoCobranzaResponseDTO): void {
     if (documento?.id) {
-      this.router.navigate(['/documentos-cobranza/detalle', documento.id], {
+      this.router.navigate(['/collection-documents/detalle', documento.id], {
         queryParams: { modo: 'editar' }
       });
     }
@@ -763,7 +763,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
           this.showSuccess('Documento de cobranza creado exitosamente');
           this.cerrarFormulario();
           // Redirigir al detalle en modo edición
-          this.router.navigate(['/documentos-cobranza/detalle', documento.id], {
+          this.router.navigate(['/collection-documents/detalle', documento.id], {
             queryParams: { modo: 'editar' }
           });
         },

@@ -102,7 +102,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/usuarios');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/users');
     this.loadInitialData();
   }
 

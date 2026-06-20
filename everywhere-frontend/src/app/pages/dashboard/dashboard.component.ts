@@ -53,21 +53,21 @@ export class DashboardComponent implements OnInit {
   };
 
   modules: ModuleCardData[] = [
-    { title: 'Clientes', description: 'Gestión de clientes y proveedores', icon: 'fas fa-users', route: '/personas', iconType: 'clientes', action: { text: 'Ver Clientes' }, moduleKey: 'CLIENTES' },
-    { title: 'Cotizaciones', description: 'Gestiona las cotizaciones de viajes', icon: 'fas fa-file-invoice-dollar', route: '/cotizaciones', iconType: 'cotizaciones', action: { text: 'Gestionar' }, moduleKey: 'COTIZACIONES' },
-    { title: 'Liquidaciones', description: 'Administra las liquidaciones', icon: 'fas fa-calculator', route: '/liquidaciones', iconType: 'liquidaciones', action: { text: 'Procesar' }, moduleKey: 'LIQUIDACIONES' },
-    { title: 'Documentos de Cobranza', description: 'Gestiona aquellos generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/documentos-cobranza', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTOS_COBRANZA' },
+    { title: 'Clientes', description: 'Gestión de clientes y proveedores', icon: 'fas fa-users', route: '/people', iconType: 'clientes', action: { text: 'Ver Clientes' }, moduleKey: 'CLIENTES' },
+    { title: 'Cotizaciones', description: 'Gestiona las cotizaciones de viajes', icon: 'fas fa-file-invoice-dollar', route: '/quotes', iconType: 'cotizaciones', action: { text: 'Gestionar' }, moduleKey: 'COTIZACIONES' },
+    { title: 'Liquidaciones', description: 'Administra las liquidaciones', icon: 'fas fa-calculator', route: '/settlements', iconType: 'liquidaciones', action: { text: 'Procesar' }, moduleKey: 'LIQUIDACIONES' },
+    { title: 'Documentos de Cobranza', description: 'Gestiona aquellos generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/collection-documents', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTOS_COBRANZA' },
 
-    { title: 'Recibos', description: 'Gestiona aquellos generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/recibos', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTOS_COBRANZA' },
-    { title: 'Asientos Contables', description: 'Historial de movimientos contables', icon: 'fas fa-book-open', route: '/asientos-contables', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTOS_COBRANZA' },
-    { title: 'Categorias', description: 'Gestiona las categorías de clientes', icon: 'fas fa-file-invoice-dollar', route: '/categorias-persona', iconType: 'categorias-persona', action: { text: 'Gestionar' }, moduleKey: 'CATEGORIAS_CLIENTES' },
+    { title: 'Recibos', description: 'Gestiona aquellos generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/receipts', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTOS_COBRANZA' },
+    { title: 'Asientos Contables', description: 'Historial de movimientos contables', icon: 'fas fa-book-open', route: '/accounting-entries', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTOS_COBRANZA' },
+    { title: 'Categorias', description: 'Gestiona las categorías de clientes', icon: 'fas fa-file-invoice-dollar', route: '/people-categories', iconType: 'categorias-persona', action: { text: 'Gestionar' }, moduleKey: 'CATEGORIAS_CLIENTES' },
 
-    { title: 'Recibos', description: 'Gestiona aquellos generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/recibos', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'RECIBOS' },
-    { title: 'Categorias', description: 'Gestiona las categorías de clientes', icon: 'fas fa-file-invoice-dollar', route: '/categorias-persona', iconType: 'categorias-persona', action: { text: 'Gestionar' }, moduleKey: 'CATEGORIA_CLIENTE' },
+    { title: 'Recibos', description: 'Gestiona aquellos generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/receipts', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'RECIBOS' },
+    { title: 'Categorias', description: 'Gestiona las categorías de clientes', icon: 'fas fa-file-invoice-dollar', route: '/people-categories', iconType: 'categorias-persona', action: { text: 'Gestionar' }, moduleKey: 'CATEGORIA_CLIENTE' },
 
-    { title: 'Recursos', description: 'Gestión de recursos', icon: 'fas fa-box', route: '/productos', iconType: 'recursos', action: { text: 'Administrar' }, moduleKey: 'PRODUCTOS' },
-    { title: 'Organización', description: 'Gestión de organización', icon: 'fas fa-file-alt', route: '/sucursales', iconType: 'sucursales', action: { text: 'Administrar' }, moduleKey: 'SUCURSALES' },
-    { title: 'Usuarios', description: 'Gestión de accesos y roles', icon: 'fas fa-users-cog', route: '/usuarios', iconType: 'sucursales', action: { text: 'Administrar' }, moduleKey: 'USUARIOS' }
+    { title: 'Recursos', description: 'Gestión de recursos', icon: 'fas fa-box', route: '/products', iconType: 'recursos', action: { text: 'Administrar' }, moduleKey: 'PRODUCTOS' },
+    { title: 'Organización', description: 'Gestión de organización', icon: 'fas fa-file-alt', route: '/branches', iconType: 'sucursales', action: { text: 'Administrar' }, moduleKey: 'SUCURSALES' },
+    { title: 'Usuarios', description: 'Gestión de accesos y roles', icon: 'fas fa-users-cog', route: '/users', iconType: 'sucursales', action: { text: 'Administrar' }, moduleKey: 'USUARIOS' }
   ];
 
   constructor(

@@ -160,7 +160,7 @@ export class AsientoContable implements OnInit, OnDestroy {
     this.initializeForms();
     this.loadInitialData();
     // Assuming you have a menu configuration for asientos contables, otherwise fallback to root
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/asientos-contables') || this.menuConfigService.getMenuItems('/');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/accounting-entries') || this.menuConfigService.getMenuItems('/');
   }
 
   ngOnDestroy(): void {

@@ -103,7 +103,7 @@ export class PersonasComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/personas');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/people');
     this.loadPersonas();
     this.loadStats();
   }
@@ -194,12 +194,12 @@ export class PersonasComponent implements OnInit {
 
   crearPersonaNatural(): void {
     this.cerrarModalSeleccionTipo();
-    this.router.navigate(['/personas/detalle', 'nuevo']);
+    this.router.navigate(['/people/detalle', 'nuevo']);
   }
 
   crearPersonaJuridica(): void {
     this.cerrarModalSeleccionTipo();
-    this.router.navigate(['/juridico/detalle', 'nuevo']);
+    this.router.navigate(['/legal/detalle', 'nuevo']);
   }
 
   // ============ CLIENTE TABLE EVENTOS ============
@@ -211,9 +211,9 @@ export class PersonasComponent implements OnInit {
 
   onEditarCliente(cliente: PersonaTabla): void {
     if (cliente.tipo === 'natural') {
-      this.router.navigate(['/personas/detalle', cliente.id]);
+      this.router.navigate(['/people/detalle', cliente.id]);
     } else {
-      this.router.navigate(['/juridico/detalle', cliente.id]);
+      this.router.navigate(['/legal/detalle', cliente.id]);
     }
   }
 
@@ -339,9 +339,9 @@ export class PersonasComponent implements OnInit {
 
   onEditarCompleto(cliente: PersonaTabla): void {
     if (cliente.tipo === 'natural') {
-      this.router.navigate(['/personas/detalle', cliente.id]);
+      this.router.navigate(['/people/detalle', cliente.id]);
     } else {
-      this.router.navigate(['/juridico/detalle', cliente.id]);
+      this.router.navigate(['/legal/detalle', cliente.id]);
     }
     this.cerrarModalDetalles();
   }

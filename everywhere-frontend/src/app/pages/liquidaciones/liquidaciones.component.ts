@@ -294,7 +294,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   constructor(private menuConfigService: MenuConfigService) { }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/liquidaciones');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/settlements');
     this.initializeForms();
     this.loadInitialData();
     this.setupClienteSearch();
@@ -716,7 +716,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   async mostrarFormularioEditar(liquidacion: LiquidacionResponse): Promise<void> {
     // Navegar al componente de detalle en modo edici├│n
-    this.router.navigate(['/liquidaciones/detalle', liquidacion.id], {
+    this.router.navigate(['/settlements/detalle', liquidacion.id], {
       queryParams: { modo: 'editar' }
     });
   }
@@ -1001,7 +1001,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   mostrarModalVerLiquidacion(liquidacion: LiquidacionResponse): void {
-    this.router.navigate(['/liquidaciones/detalle', liquidacion.id]);
+    this.router.navigate(['/settlements/detalle', liquidacion.id]);
   }
 
   async mostrarModalVerLiquidacionOld(liquidacion: LiquidacionResponse): Promise<void> {

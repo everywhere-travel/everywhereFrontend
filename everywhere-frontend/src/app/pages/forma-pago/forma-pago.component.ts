@@ -145,7 +145,7 @@ export class FormaPagoComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/formas-pago');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/payment-methods');
     this.loadFormasPago();
   }
 

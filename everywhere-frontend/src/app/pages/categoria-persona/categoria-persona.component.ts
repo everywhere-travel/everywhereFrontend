@@ -147,7 +147,7 @@ export class CategoriaPersonaComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/categorias-persona');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/people-categories');
     this.loadCategoriasPersona();
   }
 
