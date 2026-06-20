@@ -44,6 +44,8 @@ interface PagoPaxTemp {
   detalle?: string;
   formaPagoId?: number;
   formaPago?: FormaPagoResponse;
+  proveedorId?: number;
+  proveedor?: ProveedorResponse;
   creado?: string;
   actualizado?: string;
   isTemporary?: boolean; // true si es nuevo y no está en BD
@@ -118,6 +120,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // UI State
   isLoading = false;
+  isSaving = false;
   error: string | null = null;
   sidebarCollapsed = false;
   modoEdicion = false; // Nueva propiedad para controlar modo edición
@@ -183,7 +186,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       monto: [0],
       moneda: ['USD'], // USD por defecto
       detalle: [''],
-      formaPagoId: [null]
+      formaPagoId: [null],
+      proveedorId: [null]
     });
 
     // Suscribirse a cambios en costoTicket y valorVenta para calcular automáticamente cargoServicio
@@ -413,6 +417,13 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     this.loadLiquidacion(this.liquidacionId);
   }
 
+  recargarDatos(): void {
+    if (this.liquidacionId) {
+      this.loadLiquidacion(this.liquidacionId);
+    }
+  }
+
+
   private loadLiquidacion(id: number): void {
     this.isLoading = true;
     this.error = null;
@@ -424,7 +435,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       .pipe(
         catchError(error => {
           console.error('Error al cargar liquidación:', error);
-          this.error = 'Error al cargar la liquidación. Por favor, intente nuevamente.';
+          if (!(error as any).isHandledGlobally) {
+            this.error = 'Error al cargar la liquidación. Por favor, intente nuevamente.';
+          }
           return of(null);
         }),
         finalize(() => {
@@ -483,7 +496,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   private loadSelectOptions(): void {
     // Cargar productos
-    const productosSubscription = this.productoService.getAllProductos()
+    const productosSubscription = this.productoService.getDropdownProductos()
       .pipe(
         catchError(error => {
           console.error('Error al cargar productos:', error);
@@ -495,7 +508,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       });
 
     // Cargar formas de pago
-    const formasPagoSubscription = this.formaPagoService.getAllFormasPago()
+    const formasPagoSubscription = this.formaPagoService.getDropdownFormasPago()
       .pipe(
         catchError(() => {
           return of([]);
@@ -506,7 +519,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       });
 
     // Cargar proveedores
-    const proveedoresSubscription = this.proveedorService.findAllProveedor()
+    const proveedoresSubscription = this.proveedorService.getDropdownProveedores()
       .pipe(
         catchError(() => {
           return of([]);
@@ -517,7 +530,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       });
 
     // Cargar operadores
-    const operadoresSubscription = this.operadorService.findAllOperador()
+    const operadoresSubscription = this.operadorService.getDropdownOperadores()
       .pipe(
         catchError(() => {
           return of([]);
@@ -552,7 +565,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Navigation methods
   volverALiquidaciones(): void {
-    this.router.navigate(['/liquidaciones']);
+    this.router.navigate(['/settlements']);
   }
 
   descargarLiquidacionExcel(): void {
@@ -668,16 +681,27 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     const viajerosDeDetalles = Array.from(viajerosMap.values());
 
     // SIEMPRE cargar todos los viajeros disponibles del backend
-    this.viajeroService.findAllWithPersonaNatural().subscribe({
-      next: (todosLosViajeros: ViajeroConPersonaNatural[]) => {
+    this.viajeroService.getDropdownViajeros().subscribe({
+      next: (viajerosLigero) => {
+        const todosLosViajeros: ViajeroConPersonaNatural[] = viajerosLigero.map(v => ({
+          id: v.id,
+          personaNatural: {
+            nombres: (v as any).nombre || (v as any).descripcion || '',
+            apellidosPaterno: '',
+            apellidosMaterno: ''
+          }
+        } as unknown as ViajeroConPersonaNatural));
+
         // Combinar: primero los de los detalles, luego el resto
         const viajerosCombinados = new Map<number, ViajeroConPersonaNatural>();
 
         // Agregar primero los viajeros de los detalles (si existen)
         viajerosDeDetalles.forEach(v => viajerosCombinados.set(v.id, v));
 
-        // Luego agregar todos los del backend (esto actualizará los datos si hay cambios)
-        todosLosViajeros.forEach(v => viajerosCombinados.set(v.id, v));
+        // Agregar los del backend (sobrescribirá si el ID ya existe, ES NECESARIO porque el detalle no tiene personaNatural por el JsonBackReference)
+        todosLosViajeros.forEach(v => {
+          viajerosCombinados.set(v.id, v);
+        });
 
         this.viajeros = Array.from(viajerosCombinados.values());
 
@@ -813,6 +837,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           detalle: pago.detalle,
           formaPagoId: pago.formaPago?.id,
           formaPago: pago.formaPago,
+          proveedorId: pago.proveedor?.id,
+          proveedor: pago.proveedor,
           creado: pago.creado,
           actualizado: pago.actualizado,
           isTemporary: false
@@ -832,7 +858,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       monto: 0,
       moneda: 'USD', // USD por defecto
       detalle: '',
-      formaPagoId: null
+      formaPagoId: null,
+      proveedorId: null
     });
   }
 
@@ -846,6 +873,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     const formaPagoId = this.pagoPaxForm.value.formaPagoId;
     const formaPago = formaPagoId ? this.formasPago.find(fp => fp.id === formaPagoId) : undefined;
+    
+    const proveedorId = this.pagoPaxForm.value.proveedorId;
+    const proveedor = proveedorId ? this.proveedores.find(p => p.id === proveedorId) : undefined;
 
     const nuevoPagoPax: PagoPaxTemp = {
       monto: this.pagoPaxForm.value.monto,
@@ -853,6 +883,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       detalle: this.pagoPaxForm.value.detalle,
       formaPagoId: formaPagoId,
       formaPago: formaPago,
+      proveedorId: proveedorId,
+      proveedor: proveedor,
       isTemporary: true // Marca como temporal (no guardado en BD)
     };
 
@@ -876,7 +908,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       monto: pago.monto,
       moneda: pago.moneda || 'USD',
       detalle: pago.detalle || '',
-      formaPagoId: pago.formaPagoId || null
+      formaPagoId: pago.formaPagoId || null,
+      proveedorId: pago.proveedorId || null
     });
   }
 
@@ -891,6 +924,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     const formaPagoId = this.pagoPaxForm.value.formaPagoId;
     const formaPago = formaPagoId ? this.formasPago.find(fp => fp.id === formaPagoId) : undefined;
 
+    const proveedorId = this.pagoPaxForm.value.proveedorId;
+    const proveedor = proveedorId ? this.proveedores.find(p => p.id === proveedorId) : undefined;
+
     // Actualizar el pago en el array local
     this.pagosPax[this.pagoPaxEditandoIndex] = {
       ...this.pagosPax[this.pagoPaxEditandoIndex],
@@ -898,7 +934,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       moneda: this.pagoPaxForm.value.moneda || 'USD',
       detalle: this.pagoPaxForm.value.detalle,
       formaPagoId: formaPagoId,
-      formaPago: formaPago
+      formaPago: formaPago,
+      proveedorId: proveedorId,
+      proveedor: proveedor
     };
 
     this.cerrarFormularioPagoPax();
@@ -936,7 +974,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       monto: 0,
       moneda: 'USD', // USD por defecto
       detalle: '',
-      formaPagoId: null
+      formaPagoId: null,
+      proveedorId: null
     });
   }
 
@@ -1017,8 +1056,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.isSaving = true;
     this.isLoading = true;
-    this.loadingService.setLoading(true);
 
     const liquidacionRequest: LiquidacionRequest = {
       numero: this.liquidacionForm.value.numero,
@@ -1038,16 +1077,36 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         tap(() => {
           this.cambiosGuardados = true;
           this.limpiarEstadoTemporal();
-          this.recargarDatos();
+        }),
+        switchMap(() => {
+          // Obtener los datos frescos de la liquidación antes de terminar
+          return this.liquidacionService.getLiquidacionConDetalles(this.liquidacionId!).pipe(
+            tap(liquidacion => {
+              if (liquidacion) {
+                const liq = liquidacion;
+                this.liquidacion = liq;
+                this.initializeForm();
+                this.cargarObservacionesLiquidacion(liq.id);
+                this.loadPagosPax(liq.id);
+                this.extraerViajerosDeDetalles();
+                if (liq.cotizacion?.personas?.id) {
+                  this.loadClienteInfo(liq.cotizacion.personas.id);
+                }
+              }
+              this.salirModoEdicion();
+            })
+          );
         }),
         catchError(error => {
           console.error('Error al guardar la liquidación:', error);
-          this.error = 'Error al guardar los cambios. Por favor, intente nuevamente.';
+          if (!(error as any).isHandledGlobally) {
+            this.error = 'Error al guardar los cambios. Por favor, intente nuevamente.';
+          }
           return of(null);
         }),
         finalize(() => {
           this.isLoading = false;
-          this.loadingService.setLoading(false);
+          this.isSaving = false;
         })
       )
       .subscribe();
@@ -1127,39 +1186,35 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       this.detallesEliminados = [];
     }
 
-    // 1) Actualizar detalles existentes
-    const updatePromises: Array<Promise<any>> = [];
+    // Preparar lista de todos los detalles a enviar en el batch
+    const batchRequests: DetalleLiquidacionRequest[] = [];
+
+    // 1) Detalles existentes
     if (this.liquidacion?.detalles) {
       this.liquidacion.detalles.forEach(detalle => {
         if (detalle.id) {
           const detalleRequest = this.buildDetalleRequestFromExistente(detalle, liquidacionId);
-          updatePromises.push(
-            this.detalleLiquidacionService.updateDetalleLiquidacion(detalle.id, detalleRequest).toPromise()
-          );
+          (detalleRequest as any).id = detalle.id; // Asegurar que el ID vaya para el update
+          batchRequests.push(detalleRequest);
         }
       });
     }
-    if (updatePromises.length > 0) {
-      await Promise.all(updatePromises);
-    }
 
-    // 2) Crear detalles nuevos
-    const createPromises: Array<Promise<any>> = [];
+    // 2) Crear detalles nuevos fijos
     this.detallesFijos.forEach(detalle => {
       if (this.hasDetalleContenido(detalle)) {
         const detalleRequest = this.buildDetalleRequestFromFijo(detalle, liquidacionId);
-        createPromises.push(
-          this.detalleLiquidacionService.createDetalleLiquidacion(liquidacionId, detalleRequest).toPromise()
-        );
+        batchRequests.push(detalleRequest);
       }
     });
-    if (createPromises.length > 0) {
-      await Promise.all(createPromises);
+
+    if (batchRequests.length > 0) {
+      await this.detalleLiquidacionService.saveBatch(liquidacionId, batchRequests).toPromise();
     }
   }
 
   /**
-   * Procesar pagos PAX: crear nuevos, actualizar existentes, eliminar marcados
+   * Procesar pagos PAX: usar endpoint batch
    */
   private async procesarPagosPax(liquidacionId: number): Promise<void> {
     try {
@@ -1172,42 +1227,32 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         this.pagosPaxEliminados = [];
       }
 
-      // 2. Procesar cada pago PAX (crear o actualizar)
+      // Preparar lista de todos los pagos a enviar en el batch
+      const batchRequests: PagoPaxRequest[] = [];
+
       for (const pago of this.pagosPax) {
         const pagoPaxRequest: PagoPaxRequest = {
           monto: pago.monto,
           moneda: pago.moneda,
           detalle: pago.detalle,
           liquidacionId: liquidacionId,
-          formaPagoId: pago.formaPagoId!
+          formaPagoId: pago.formaPagoId!,
+          proveedorId: pago.proveedorId!
         };
 
         if (pago.id && !pago.isTemporary) {
-          // Actualizar existente
-          await this.pagoPaxService.update(pago.id, pagoPaxRequest).toPromise();
-        } else {
-          // Crear nuevo
-          const response = await this.pagoPaxService.create(pagoPaxRequest).toPromise();
-          // Actualizar el pago con el ID recibido
-          if (response) {
-            pago.id = response.id;
-            pago.isTemporary = false;
-          }
+          (pagoPaxRequest as any).id = pago.id;
         }
+        batchRequests.push(pagoPaxRequest);
+      }
+
+      if (batchRequests.length > 0) {
+        await this.pagoPaxService.saveBatch(liquidacionId, batchRequests).toPromise();
       }
     } catch (error) {
       console.error('Error al procesar pagos PAX:', error);
       throw error;
     }
-  }
-
-  recargarDatos(): void {
-    // Recargar los datos actualizados después de un breve delay
-    setTimeout(() => {
-      this.loadLiquidacion(this.liquidacionId!);
-      // Salir del modo edición
-      this.salirModoEdicion();
-    }, 1000);
   }
 
   // Métodos para detalles fijos
@@ -1295,7 +1340,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   irAEditarLiquidacionOld(): void {
     if (this.liquidacionId) {
-      this.router.navigate(['/liquidaciones'], {
+      this.router.navigate(['/settlements'], {
         queryParams: { editId: this.liquidacionId }
       });
     }
@@ -1591,7 +1636,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     this.personaService.findPersonaNaturalOrJuridicaById(personaId).subscribe({
       next: (cached: personaDisplay) => {
         this.personasCache[personaId] = cached;
-        this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+        this.personasDisplayMap[personaId] = cached.nombre;
       },
       error: (error: any) => {
         console.error('Error al cargar información del cliente:', error);
@@ -1686,7 +1731,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
     const producto = this.productos.find(p => p.id === productoId);
     if (producto) {
-      return producto.tipo;
+      return producto.descripcion;
     }
 
     return 'Producto no encontrado';
@@ -1891,3 +1936,4 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     }
   }
 }
+

@@ -33,6 +33,11 @@
             <i class="fas fa-plus"></i>
             Nuevo Usuario
           </button>
+          <button *ngIf="activeTab === 'roles'" (click)="abrirModalCrearRol()"
+            class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+            <i class="fas fa-plus"></i>
+            Nuevo Rol
+          </button>
         </div>
       </div>
     </header>
@@ -79,6 +84,7 @@
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
                   <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sucursal</th>
+                  <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                   <th scope="col" class="relative px-6 py-3"><span class="sr-only">Acciones</span></th>
                 </tr>
               </thead>
@@ -105,17 +111,30 @@
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ user.sucursalName }}
                   </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span *ngIf="user.estado" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      Activo
+                    </span>
+                    <span *ngIf="!user.estado" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                      Inactivo
+                    </span>
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button (click)="editarUsuario(user)" class="text-indigo-600 hover:text-indigo-900 mr-4" title="Editar">
                       <i class="fas fa-edit"></i>
                     </button>
-                    <button (click)="eliminarUsuario(user.id)" class="text-red-600 hover:text-red-900" title="Eliminar">
-                      <i class="fas fa-trash-alt"></i>
+                    <button (click)="toggleEstadoUsuario(user.id, user.estado)" 
+                            [class.text-red-600]="user.estado" 
+                            [class.hover:text-red-900]="user.estado"
+                            [class.text-green-600]="!user.estado" 
+                            [class.hover:text-green-900]="!user.estado"
+                            [title]="user.estado ? 'Deshabilitar' : 'Habilitar'">
+                      <i class="fas text-lg" [class.fa-toggle-on]="user.estado" [class.fa-toggle-off]="!user.estado"></i>
                     </button>
                   </td>
                 </tr>
                 <tr *ngIf="filteredUsuarios.length === 0">
-                  <td colspan="5" class="px-6 py-8 text-center text-gray-500">No se encontraron usuarios</td>
+                  <td colspan="6" class="px-6 py-8 text-center text-gray-500">No se encontraron usuarios</td>
                 </tr>
               </tbody>
             </table>
@@ -131,46 +150,108 @@
             </div>
             <ul class="divide-y divide-gray-200">
               <li *ngFor="let role of roles" 
-                  (click)="seleccionarRole(role)"
                   [ngClass]="{'bg-blue-50 border-l-4 border-blue-600': roleSeleccionado?.id === role.id, 'hover:bg-gray-50 border-l-4 border-transparent': roleSeleccionado?.id !== role.id}"
-                  class="cursor-pointer transition-colors">
-                <div class="px-4 py-4 flex items-center justify-between">
+                  class="transition-colors group">
+                <div class="px-4 py-4 flex items-center justify-between cursor-pointer" (click)="seleccionarRole(role)">
                   <div>
                     <p class="text-sm font-medium text-gray-900">{{ role.name }}</p>
                     <p class="text-xs text-gray-500">{{ role.permissions.length }} permisos</p>
                   </div>
-                  <i class="fas fa-chevron-right text-gray-400"></i>
+                  <div class="flex items-center gap-3">
+                    <button (click)="editarRol(role, $event)" class="text-indigo-600 hover:text-indigo-900 opacity-0 group-hover:opacity-100 transition-opacity" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button (click)="eliminarRol(role.id, $event)" class="text-red-600 hover:text-red-900 opacity-0 group-hover:opacity-100 transition-opacity" title="Eliminar">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                  </div>
                 </div>
               </li>
             </ul>
           </div>
-
-          <!-- Columna 2: Permisos del Rol Seleccionado -->
-          <div class="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <!-- Columna 2: Permisos del Rol Seleccionado -->
+          <div class="md:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
             <div *ngIf="roleSeleccionado" class="h-full flex flex-col">
-              <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
-                <h3 class="text-sm font-semibold text-gray-700">Permisos para: <span class="text-blue-600">{{ roleSeleccionado.name }}</span></h3>
+              <div class="px-4 py-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                <h3 class="text-sm font-semibold text-gray-700">Matriz de Permisos: <span class="text-blue-600 font-bold">{{ roleSeleccionado.name }}</span></h3>
               </div>
-              <div class="p-4 flex-1 overflow-y-auto max-h-[500px]">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div *ngFor="let permiso of permisos" class="relative flex items-start border p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div class="flex items-center h-5">
-                      <input [id]="'perm_' + permiso.id" type="checkbox" 
-                             [checked]="hasPermissionChecked(permiso.id)"
-                             (change)="togglePermission(permiso)"
-                             class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded cursor-pointer">
-                    </div>
-                    <div class="ml-3 text-sm">
-                      <label [for]="'perm_' + permiso.id" class="font-medium text-gray-700 cursor-pointer">{{ permiso.name }}</label>
-                      <p class="text-gray-500 text-xs mt-1">{{ permiso.description || 'Sin descripción' }}</p>
-                    </div>
-                  </div>
-                </div>
+              
+              <div class="overflow-x-auto flex-1">
+                <table class="min-w-full divide-y divide-gray-200 border-b border-gray-200">
+                  <thead class="bg-gray-50 sticky top-0 z-10">
+                    <tr>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider bg-gray-100 border-r border-gray-200">Módulo</th>
+                      <th scope="col" class="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Ver (READ)</th>
+                      <th scope="col" class="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Crear (CREATE)</th>
+                      <th scope="col" class="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Editar (UPDATE)</th>
+                      <th scope="col" class="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-r border-gray-200">Eliminar (DELETE)</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <tr *ngFor="let row of permissionMatrix" class="hover:bg-blue-50/50 transition-colors">
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 bg-gray-50/50 border-r border-gray-200">
+                        {{ formatModuleName(row.module) }}
+                      </td>
+                      
+                      <!-- READ -->
+                      <td class="px-3 py-4 whitespace-nowrap text-center">
+                        <label *ngIf="row.read" class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.read.description || row.read.name">
+                          <input type="checkbox" class="sr-only peer" 
+                                 [checked]="hasPermissionChecked(row.read.id)"
+                                 (change)="togglePermission(row.read)"
+                                 [disabled]="loading">
+                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                        </label>
+                        <span *ngIf="!row.read" class="text-gray-300">-</span>
+                      </td>
+
+                      <!-- CREATE -->
+                      <td class="px-3 py-4 whitespace-nowrap text-center">
+                        <label *ngIf="row.create" class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.create.description || row.create.name">
+                          <input type="checkbox" class="sr-only peer" 
+                                 [checked]="hasPermissionChecked(row.create.id)"
+                                 (change)="togglePermission(row.create)"
+                                 [disabled]="loading">
+                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                        </label>
+                        <span *ngIf="!row.create" class="text-gray-300">-</span>
+                      </td>
+
+                      <!-- UPDATE -->
+                      <td class="px-3 py-4 whitespace-nowrap text-center">
+                        <label *ngIf="row.update" class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.update.description || row.update.name">
+                          <input type="checkbox" class="sr-only peer" 
+                                 [checked]="hasPermissionChecked(row.update.id)"
+                                 (change)="togglePermission(row.update)"
+                                 [disabled]="loading">
+                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-yellow-500"></div>
+                        </label>
+                        <span *ngIf="!row.update" class="text-gray-300">-</span>
+                      </td>
+
+                      <!-- DELETE -->
+                      <td class="px-3 py-4 whitespace-nowrap text-center border-r border-gray-200">
+                        <label *ngIf="row.delete" class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.delete.description || row.delete.name">
+                          <input type="checkbox" class="sr-only peer" 
+                                 [checked]="hasPermissionChecked(row.delete.id)"
+                                 (change)="togglePermission(row.delete)"
+                                 [disabled]="loading">
+                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                        </label>
+                        <span *ngIf="!row.delete" class="text-gray-300">-</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
-            <div *ngIf="!roleSeleccionado" class="h-full flex flex-col items-center justify-center py-12 text-gray-500">
-              <i class="fas fa-shield-alt text-5xl text-gray-300 mb-4"></i>
-              <p>Selecciona un rol para gestionar sus permisos</p>
+            <div *ngIf="!roleSeleccionado" class="h-full flex flex-col items-center justify-center py-16 text-gray-500 bg-gray-50/30">
+              <div class="w-20 h-20 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 border border-gray-100">
+                <i class="fas fa-shield-alt text-4xl text-blue-300"></i>
+              </div>
+              <h4 class="text-lg font-semibold text-gray-700 mb-1">Ningún rol seleccionado</h4>
+              <p class="text-sm">Selecciona un rol de la lista lateral para gestionar sus permisos</p>
             </div>
           </div>
         </div>
@@ -241,3 +322,39 @@
     </form>
   </div>
 </div>
+
+<!-- Modal Crear/Editar Rol -->
+<div *ngIf="mostrarModalRol" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" (click)="cerrarModalRol()"></div>
+
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+      <h3 class="text-lg font-semibold text-gray-900">
+        {{ editandoRol ? 'Editar Rol' : 'Nuevo Rol' }}
+      </h3>
+      <button (click)="cerrarModalRol()" class="text-gray-400 hover:text-gray-600 transition-colors rounded-full p-1 hover:bg-gray-100">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="rolForm" (ngSubmit)="guardarRol()">
+      <div class="px-6 py-4 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Rol <span class="text-red-500">*</span></label>
+          <input type="text" formControlName="name" class="w-full rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-2 bg-gray-50 focus:bg-white transition-colors" placeholder="Ej. CONTABILIDAD">
+        </div>
+      </div>
+
+      <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-2xl">
+        <button type="button" (click)="cerrarModalRol()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors">
+          Cancelar
+        </button>
+        <button type="submit" [disabled]="loading || rolForm.invalid" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm">
+          <i *ngIf="loading" class="fas fa-spinner fa-spin"></i>
+          {{ editandoRol ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+

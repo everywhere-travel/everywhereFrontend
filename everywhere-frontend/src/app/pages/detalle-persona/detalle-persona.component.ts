@@ -326,7 +326,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/personas/detalle/:id');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/people/detalle/:id');
     this.loadPersonaFromRoute();
   }
 
@@ -421,8 +421,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       correos: this.correoPersonaService.findByPersonaId(this.personaId),
       documentos: this.detalleDocumentoService.findByPersonaNaturalId(this.personaId),
       todasLasEmpresas: this.personaJuridicaService.findAll(),
-      tiposDocumento: this.documentoService.getAllDocumentos(),
-      categoriasPersona: this.categoriaPersonaService.findAll()
+      tiposDocumento: this.documentoService.getDropdownDocumentos(),
+      categoriasPersona: this.categoriaPersonaService.getDropdownCategoriasPersona()
     });
 
     const subscription = dataLoaders$
@@ -497,8 +497,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
     const subscription = forkJoin({
       empresas: this.personaJuridicaService.findAll(),
-      tiposDocumento: this.documentoService.getAllDocumentos(),
-      categoriasPersona: this.categoriaPersonaService.findAll()
+      tiposDocumento: this.documentoService.getDropdownDocumentos(),
+      categoriasPersona: this.categoriaPersonaService.getDropdownCategoriasPersona()
     })
       .pipe(
         tap(data => {
@@ -521,7 +521,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
   // Navigation methods
   volverAPersonas(): void {
-    this.router.navigate(['/personas']);
+    this.router.navigate(['/people']);
   }
 
   // Tab management
@@ -663,7 +663,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
                 // Éxito en ambas creaciones
                 this.isCreating = false;
                 this.personaId = personaResponse.id;
-                this.router.navigate(['/personas/detalle', personaResponse.id], { replaceUrl: true });
+                this.router.navigate(['/people/detalle', personaResponse.id], { replaceUrl: true });
                 this.loadPersonaData();
               }),
               catchError(error => {
@@ -676,7 +676,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
             // PersonaNatural se creó sin documento - ESTO ES OK
             this.isCreating = false;
             this.personaId = personaResponse.id;
-            this.router.navigate(['/personas/detalle', personaResponse.id], { replaceUrl: true });
+            this.router.navigate(['/people/detalle', personaResponse.id], { replaceUrl: true });
             this.loadPersonaData();
             return of(null);
           }
@@ -766,7 +766,20 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     // Verificar si se proporcionaron datos de viajero
     const tieneViajeroData = formValue.fechaNacimiento || formValue.nacionalidad || formValue.residencia;
 
-    if (tieneViajeroData) {
+    const normalize = (val: any) => val ? String(val).trim() : '';
+    let viajeroChanged = false;
+    if (this.personaNatural?.viajero) {
+      const v = this.personaNatural.viajero;
+      if (normalize(v.fechaNacimiento) !== normalize(formValue.fechaNacimiento) ||
+          normalize(v.nacionalidad) !== normalize(formValue.nacionalidad) ||
+          normalize(v.residencia) !== normalize(formValue.residencia)) {
+        viajeroChanged = true;
+      }
+    } else {
+      viajeroChanged = true;
+    }
+
+    if (tieneViajeroData && viajeroChanged) {
       const viajeroData: ViajeroRequest = {
         fechaNacimiento: formValue.fechaNacimiento,
         nacionalidad: formValue.nacionalidad,
@@ -1392,6 +1405,10 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
   // Error Modal Management
   mostrarErrorModal(error: any): void {
+    if (error && (error as any).isHandledGlobally) {
+      return;
+    }
+    
     const mensaje = this.errorHandlerService.getErrorMessage(error);
     const status = this.errorHandlerService.getStatusCode(error) || 500;
 
@@ -1412,3 +1429,4 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     this.backendErrorResponse = null;
   }
 }
+

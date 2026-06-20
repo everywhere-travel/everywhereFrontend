@@ -5,6 +5,14 @@ import { LiquidacionConDetallesResponse, LiquidacionRequest, LiquidacionResponse
 import { environment } from '../../../../environments/environment';
 import { CacheService } from '../cache.service';
 
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -17,6 +25,14 @@ export class LiquidacionService {
 
   getAllLiquidaciones(): Observable<LiquidacionResponse[]> {
     return this.http.get<LiquidacionResponse[]>(this.apiUrl);
+  }
+
+  getLiquidacionesPage(page: number = 0, size: number = 10, sortColumn: string = 'id', sortDirection: string = 'desc'): Observable<PageResponse<LiquidacionResponse>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', `${sortColumn},${sortDirection}`);
+    return this.http.get<PageResponse<LiquidacionResponse>>(`${this.apiUrl}/page`, { params });
   }
 
   getLiquidacionById(id: number): Observable<LiquidacionResponse> {

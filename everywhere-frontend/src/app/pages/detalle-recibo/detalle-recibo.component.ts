@@ -109,7 +109,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/recibos/detalle/:id');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/receipts/detalle/:id');
     this.loadReciboFromRoute();
     this.loadProductos();
   }
@@ -215,7 +215,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
   }
 
   private loadProductos(): void {
-    const subscription = this.productoService.getAllProductos()
+    const subscription = this.productoService.getDropdownProductos()
       .pipe(
         catchError(error => {
           console.error('Error al cargar productos:', error);
@@ -471,7 +471,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
   }
 
   volverARecibos(): void {
-    this.router.navigate(['/recibos']);
+    this.router.navigate(['/receipts']);
   }
 
   recargarDetalles(): void {
@@ -486,7 +486,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
     // Convertir a número para comparar
     const id = typeof productoId === 'string' ? parseInt(productoId, 10) : productoId;
     const producto = this.productos.find(p => p.id === id);
-    return producto ? producto.tipo : 'Producto no encontrado';
+    return producto ? producto.descripcion : 'Producto no encontrado';
   }
 
   calcularTotal(): number {
@@ -509,7 +509,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
   async cargarOpcionesEdicion(): Promise<void> {
     try {
       this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || []; // Cargar sucursales
-      this.formasPago = await this.formaPagoService.getAllFormasPago().toPromise() || []; // Cargar formas de pago
+      this.formasPago = await this.formaPagoService.getDropdownFormasPago().toPromise() || []; // Cargar formas de pago
 
       const personaId = this.recibo?.personaId; // Cargar documentos del cliente (DNI, Pasaporte, etc.)
 
@@ -811,3 +811,4 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
     this.pdfService.viewReciboPdf(reciboId);
   }
 }
+

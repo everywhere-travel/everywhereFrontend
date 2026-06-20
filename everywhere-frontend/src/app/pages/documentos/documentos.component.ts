@@ -178,7 +178,7 @@ export class DocumentosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/documentos');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/documents');
     this.cargarDocumentos();
   }
 

@@ -25,6 +25,7 @@ export interface CotizacionRequest {
   estadoCotizacionId?: number
   sucursalId?: number
   carpetaId?: number
+  personaId?: number
 }
 
 export type CotizacionPatchRequest = Partial<CotizacionRequest>

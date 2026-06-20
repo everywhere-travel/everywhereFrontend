@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { DetalleDocumentoRequest, DetalleDocumentoResponse, DetalleDocumentoConPersonasDto } from '../../../shared/models/Documento/detalleDocumento.model'; // Asegúrate que la ruta sea correcta
 import { environment } from '../../../../environments/environment';
 
@@ -53,4 +54,6 @@ export class DetalleDocumentoService {
     const params = new HttpParams().set('numero', numero);
     return this.http.get<DetalleDocumentoConPersonasDto[]>(`${this.apiUrl}/buscar-por-numero`, { params });
   }
+
+
 }

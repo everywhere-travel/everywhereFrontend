@@ -7,6 +7,7 @@ export interface PagoPaxRequest {
   detalle?: string;
   liquidacionId: number;
   formaPagoId: number;
+  proveedorId: number;
 }
 
 export interface PagoPaxResponse {
@@ -18,4 +19,5 @@ export interface PagoPaxResponse {
   actualizado: string;
   liquidacion?: LiquidacionResponse;
   formaPago?: FormaPagoResponse;
+  proveedor?: any; // or import ProveedorResponse
 }

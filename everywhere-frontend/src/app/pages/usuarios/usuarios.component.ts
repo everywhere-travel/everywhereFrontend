@@ -27,6 +27,16 @@ export interface UsuarioTabla {
   roleName: string;
   sucursalId?: number;
   sucursalName: string;
+  estado: boolean;
+}
+
+export interface PermissionMatrixRow {
+  module: string;
+  read?: PermissionResponse;
+  create?: PermissionResponse;
+  update?: PermissionResponse;
+  delete?: PermissionResponse;
+  other: PermissionResponse[];
 }
 
 @Component({
@@ -67,6 +77,13 @@ export class UsuariosComponent implements OnInit {
   // Role Modal / Permissions Management
   roleSeleccionado: RoleResponse | null = null;
   roleSeleccionadoPermisos: Set<number> = new Set();
+  permissionMatrix: PermissionMatrixRow[] = [];
+  
+  // Role CRUD Modal
+  mostrarModalRol = false;
+  editandoRol = false;
+  rolSeleccionadoIdParaEdicion: number | null = null;
+  rolForm!: FormGroup;
   
   // Filtros
   searchTermUsuarios = '';
@@ -85,7 +102,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/usuarios');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/users');
     this.loadInitialData();
   }
 
@@ -97,6 +114,10 @@ export class UsuariosComponent implements OnInit {
       roleId: ['', Validators.required],
       sucursalId: ['']
     });
+
+    this.rolForm = this.fb.group({
+      name: ['', [Validators.required, Validators.maxLength(100)]]
+    });
   }
 
   private loadInitialData(): void {
@@ -104,11 +125,12 @@ export class UsuariosComponent implements OnInit {
     Promise.all([
       this.roleService.getAll().toPromise().catch(() => []),
       this.permissionService.getAll().toPromise().catch(() => []),
-      this.sucursalService.findAllSucursal().toPromise().catch(() => [])
+      this.sucursalService.getDropdownSucursales().toPromise().catch(() => [])
     ]).then(([rolesRes, permisosRes, sucursalesRes]) => {
       this.roles = rolesRes || [];
       this.permisos = permisosRes || [];
       this.sucursales = sucursalesRes || [];
+      this.buildPermissionMatrix();
       this.loadUsuarios();
     }).catch(err => {
       console.error('Error inesperado', err);
@@ -140,7 +162,8 @@ export class UsuariosComponent implements OnInit {
       roleId: u.role?.id || 0,
       roleName: u.role?.name || 'Sin rol',
       sucursalId: u.sucursal?.id,
-      sucursalName: u.sucursal?.descripcion || 'Sin sucursal'
+      sucursalName: u.sucursal?.descripcion || 'Sin sucursal',
+      estado: u.estado ?? true
     }));
   }
 
@@ -171,6 +194,43 @@ export class UsuariosComponent implements OnInit {
 
   switchTab(tab: 'usuarios' | 'roles'): void {
     this.activeTab = tab;
+  }
+
+  // ==========================================
+  // Permisos Matrix Builder
+  // ==========================================
+  private buildPermissionMatrix(): void {
+    const matrixMap = new Map<string, PermissionMatrixRow>();
+
+    this.permisos.forEach(p => {
+      const parts = p.name.split(':');
+      if (parts.length >= 2) {
+        const module = parts[0];
+        const action = parts.slice(1).join(':');
+
+        if (!matrixMap.has(module)) {
+          matrixMap.set(module, { module, other: [] });
+        }
+
+        const row = matrixMap.get(module)!;
+
+        switch (action) {
+          case 'READ': row.read = p; break;
+          case 'CREATE': row.create = p; break;
+          case 'UPDATE': row.update = p; break;
+          case 'DELETE': row.delete = p; break;
+          default: row.other.push(p); break;
+        }
+      }
+    });
+
+    this.permissionMatrix = Array.from(matrixMap.values());
+  }
+
+  formatModuleName(moduleName: string): string {
+    return moduleName.replace(/_/g, ' ')
+                     .replace(/-/g, ' ')
+                     .replace(/\b\w/g, l => l.toUpperCase());
   }
 
   // ==========================================
@@ -264,6 +324,21 @@ export class UsuariosComponent implements OnInit {
     }
   }
 
+  toggleEstadoUsuario(id: number, currentEstado: boolean): void {
+    const accion = currentEstado ? 'deshabilitar' : 'habilitar';
+    if (confirm(`¿Estás seguro de que deseas ${accion} este usuario?`)) {
+      this.loading = true;
+      this.userService.toggleUserStatus(id).subscribe({
+        next: () => this.loadUsuarios(),
+        error: (err) => {
+          console.error('Error cambiando estado del usuario', err);
+          this.loading = false;
+          alert('Error al cambiar el estado del usuario');
+        }
+      });
+    }
+  }
+
   // ==========================================
   // Gestión de Roles y Permisos
   // ==========================================
@@ -327,5 +402,98 @@ export class UsuariosComponent implements OnInit {
 
   hasPermissionChecked(permisoId: number): boolean {
     return this.roleSeleccionadoPermisos.has(permisoId);
+  }
+
+  // ==========================================
+  // Gestión de Roles (CRUD)
+  // ==========================================
+  abrirModalCrearRol(): void {
+    this.editandoRol = false;
+    this.rolSeleccionadoIdParaEdicion = null;
+    this.rolForm.reset({ name: '' });
+    this.mostrarModalRol = true;
+  }
+
+  editarRol(role: RoleResponse, event: Event): void {
+    event.stopPropagation();
+    this.editandoRol = true;
+    this.rolSeleccionadoIdParaEdicion = role.id;
+    this.rolForm.patchValue({ name: role.name });
+    this.mostrarModalRol = true;
+  }
+
+  cerrarModalRol(): void {
+    this.mostrarModalRol = false;
+  }
+
+  guardarRol(): void {
+    if (this.rolForm.invalid) {
+      this.rolForm.markAllAsTouched();
+      return;
+    }
+
+    const request = { name: this.rolForm.value.name.toUpperCase() };
+    this.loading = true;
+
+    if (this.editandoRol && this.rolSeleccionadoIdParaEdicion) {
+      this.roleService.update(this.rolSeleccionadoIdParaEdicion, request).subscribe({
+        next: () => {
+          this.loadRoles();
+          this.cerrarModalRol();
+        },
+        error: (err) => {
+          console.error('Error actualizando rol', err);
+          this.loading = false;
+          alert('Error: ' + (err.error?.message || 'No se pudo actualizar el rol'));
+        }
+      });
+    } else {
+      this.roleService.create(request).subscribe({
+        next: () => {
+          this.loadRoles();
+          this.cerrarModalRol();
+        },
+        error: (err) => {
+          console.error('Error creando rol', err);
+          this.loading = false;
+          alert('Error: ' + (err.error?.message || 'No se pudo crear el rol'));
+        }
+      });
+    }
+  }
+
+  eliminarRol(id: number, event: Event): void {
+    event.stopPropagation();
+    if (confirm('¿Estás seguro de que deseas eliminar este rol? Se perderán sus permisos.')) {
+      this.loading = true;
+      this.roleService.delete(id).subscribe({
+        next: () => {
+          if (this.roleSeleccionado?.id === id) {
+            this.roleSeleccionado = null;
+            this.roleSeleccionadoPermisos.clear();
+          }
+          this.loadRoles();
+        },
+        error: (err) => {
+          console.error('Error eliminando rol', err);
+          this.loading = false;
+          alert('Error al eliminar rol');
+        }
+      });
+    }
+  }
+
+  private loadRoles(): void {
+    this.loading = true;
+    this.roleService.getAll().subscribe({
+      next: (roles) => {
+        this.roles = roles || [];
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error cargando roles', err);
+        this.loading = false;
+      }
+    });
   }
 }

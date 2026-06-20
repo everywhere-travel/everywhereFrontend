@@ -31,28 +31,28 @@ export class MenuConfigService {
             id: 'clientes',
             title: 'Clientes',
             icon: 'fas fa-address-book',
-            route: '/personas',
-            moduleKey: 'PERSONAS'
+            route: '/people',
+            moduleKey: 'CLIENTES'
         },
         {
             id: 'carpetas',
             title: 'Carpetas',
             icon: 'fas fa-folder',
-            route: '/carpetas',
-            moduleKey: 'CARPETAS'
+            route: '/folders',
+            moduleKey: 'CARPETA'
         },
         {
             id: 'cotizaciones',
             title: 'Cotizaciones',
             icon: 'fas fa-file-invoice',
-            route: '/cotizaciones',
+            route: '/quotes',
             moduleKey: 'COTIZACIONES'
         },
         {
             id: 'liquidaciones',
             title: 'Liquidaciones',
             icon: 'fas fa-credit-card',
-            route: '/liquidaciones',
+            route: '/settlements',
             moduleKey: 'LIQUIDACIONES'
         },
         {
@@ -64,15 +64,22 @@ export class MenuConfigService {
                     id: 'documentos-cobranza',
                     title: 'Documentos de Cobranza',
                     icon: 'fas fa-file-contract',
-                    route: '/documentos-cobranza',
+                    route: '/collection-documents',
                     moduleKey: 'DOCUMENTOS_COBRANZA'
                 },
                 {
                     id: 'recibos',
                     title: 'Recibos',
                     icon: 'fas fa-file-alt',
-                    route: '/recibos',
+                    route: '/receipts',
                     moduleKey: 'RECIBOS'
+                },
+                {
+                    id: 'asientos-contables',
+                    title: 'Asientos Contables',
+                    icon: 'fas fa-book-open',
+                    route: '/accounting-entries',
+                    moduleKey: 'DOCUMENTOS_COBRANZA'
                 },
             ]
         },
@@ -85,35 +92,36 @@ export class MenuConfigService {
                     id: 'categorias-persona',
                     title: 'Categorias de Clientes',
                     icon: 'fas fa-users',
-                    route: '/categorias-persona',
-                    moduleKey: 'CATEGORIA_PERSONAS'
+                    route: '/people-categories',
+                    moduleKey: 'CATEGORIA_CLIENTE'
                 },
                 {
                     id: 'documentos',
                     title: 'Documentos de clientes',
                     icon: 'fas fa-file-alt',
-                    route: '/documentos',
-                    moduleKey: 'DOCUMENTOS'
+                    route: '/documents',
+                    moduleKey: 'DOCUMENTO_CLIENTE'
                 },
                 {
                     id: 'categorias-producto',
                     title: 'Categorias de Producto',
                     icon: 'fas fa-list',
-                    route: '/categorias'
+                    route: '/categories',
+                    moduleKey: 'CATEGORIA_PRODUCTO'
                 },
                 {
                     id: 'estado-cotizacion',
                     title: 'Estado de Cotización',
                     icon: 'fas fa-clipboard-check',
-                    route: '/estado-cotizacion',
-                    moduleKey: 'COTIZACIONES'
+                    route: '/quote-status',
+                    moduleKey: 'ESTADO_COTIZACION'
                 },
                 {
                     id: 'forma-pago',
                     title: 'Forma de Pago',
                     icon: 'fas fa-credit-card',
-                    route: '/formas-pago',
-                    moduleKey: 'FORMA_PAGO'
+                    route: '/payment-methods',
+                    moduleKey: 'FORMA-PAGO'
                 }
             ]
         },
@@ -126,21 +134,21 @@ export class MenuConfigService {
                     id: 'productos',
                     title: 'Productos',
                     icon: 'fas fa-cube',
-                    route: '/productos',
+                    route: '/products',
                     moduleKey: 'PRODUCTOS'
                 },
                 {
                     id: 'proveedores',
                     title: 'Proveedores',
                     icon: 'fas fa-truck',
-                    route: '/proveedores',
+                    route: '/suppliers',
                     moduleKey: 'PROVEEDORES'
                 },
                 {
                     id: 'operadores',
                     title: 'Operadores',
                     icon: 'fas fa-headset',
-                    route: '/operadores',
+                    route: '/operators',
                     moduleKey: 'OPERADOR'
                 }
             ]
@@ -149,7 +157,7 @@ export class MenuConfigService {
             id: 'usuarios-root',
             title: 'Usuarios y Roles',
             icon: 'fas fa-users-cog',
-            route: '/usuarios',
+            route: '/users',
             moduleKey: 'USUARIOS'
         },
         {
@@ -161,7 +169,7 @@ export class MenuConfigService {
                     id: 'sucursales',
                     title: 'Sucursales',
                     icon: 'fas fa-building',
-                    route: '/sucursales',
+                    route: '/branches',
                     moduleKey: 'SUCURSALES'
                 }
             ]

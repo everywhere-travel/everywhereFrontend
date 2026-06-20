@@ -186,7 +186,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     // ===== LIFECYCLE HOOKS =====
     ngOnInit(): void {
-        this.sidebarMenuItems = this.menuConfigService.getMenuItems('/cotizaciones');
+        this.sidebarMenuItems = this.menuConfigService.getMenuItems('/quotes');
         this.initializeForms();
         this.loadCotizacionFromRoute();
         this.loadInitialData();
@@ -313,16 +313,23 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                     this.personasCache[personaId] = {
                         id: personaId,
                         identificador: pj.ruc || '',
-                        nombre: pj.razonSocial || 'Sin nombre',
+                        nombre: String(pj.razonSocial || '').replace(/null|undefined/gi, '').trim() || 'Sin nombre',
                         tipo: 'JURIDICA',
                     };
                 } else {
                     const pn = persona as PersonaNaturalResponse;
-                    const apellidos = `${pn.apellidosPaterno || ''} ${pn.apellidosMaterno || ''}`.trim();
+                    const safeStr = (str: any) => String(str || '').replace(/null|undefined/gi, '').trim();
+                    
+                    const nombres = safeStr(pn.nombres);
+                    const apellidoPaterno = safeStr(pn.apellidosPaterno || (pn as any).apellidoPaterno);
+                    const apellidoMaterno = safeStr(pn.apellidosMaterno || (pn as any).apellidoMaterno);
+                    
+                    const fullName = [nombres, apellidoPaterno, apellidoMaterno].filter(Boolean).join(' ');
+                    
                     this.personasCache[personaId] = {
                         id: personaId,
                         identificador: pn.documento || '',
-                        nombre: `${pn.nombres || ''} ${apellidos}`.trim() || 'Sin nombre',
+                        nombre: fullName || 'Sin nombre',
                         tipo: 'NATURAL',
                     };
                 }
@@ -339,7 +346,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     private async loadFormasPago(): Promise<void> {
         try {
-            this.formasPago = (await this.formaPagoService.getAllFormasPago().toPromise()) || [];
+            this.formasPago = (await this.formaPagoService.getDropdownFormasPago().toPromise()) || [];
         } catch (error) {
             this.formasPago = [];
         }
@@ -347,7 +354,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     private async loadEstadosCotizacion(): Promise<void> {
         try {
-            this.estadosCotizacion = (await this.estadoCotizacionService.getAllEstadosCotizacion().toPromise()) || [];
+            this.estadosCotizacion = (await this.estadoCotizacionService.getDropdownEstadosCotizacion().toPromise()) || [];
         } catch (error) {
             this.estadosCotizacion = [];
         }
@@ -355,7 +362,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     private async loadSucursales(): Promise<void> {
         try {
-            this.sucursales = (await this.sucursalService.findAllSucursal().toPromise()) || [];
+            this.sucursales = (await this.sucursalService.getDropdownSucursales().toPromise()) || [];
         } catch (error) {
             this.sucursales = [];
         }
@@ -363,7 +370,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     private async loadProductos(): Promise<void> {
         try {
-            this.productos = (await this.productoService.getAllProductos().toPromise()) || [];
+            this.productos = (await this.productoService.getDropdownProductos().toPromise()) || [];
         } catch (error) {
             this.productos = [];
         }
@@ -371,7 +378,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     private async loadProveedores(): Promise<void> {
         try {
-            this.proveedores = (await this.proveedorService.findAllProveedor().toPromise()) || [];
+            this.proveedores = (await this.proveedorService.getDropdownProveedores().toPromise()) || [];
         } catch (error) {
             this.proveedores = [];
         }
@@ -379,39 +386,62 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     private async loadOperadores(): Promise<void> {
         try {
-            this.operadores = (await this.operadorService.findAllOperador().toPromise()) || [];
+            this.operadores = (await this.operadorService.getDropdownOperadores().toPromise()) || [];
         } catch (error) {
             this.operadores = [];
         }
     }
 
     private setupClienteSearch(): void {
-        if (this.personas.length > 0) {
-            this.todosLosClientes = [...this.personas];
-        }
-
-        this.personasEncontradas = [...this.todosLosClientes];
+        this.personasEncontradas = [];
         this.buscandoClientes = false;
 
         this.clienteSearchSubscription?.unsubscribe();
 
         this.clienteSearchSubscription = this.clienteSearchControl.valueChanges
             .pipe(
-                debounceTime(300),
+                debounceTime(400),
                 distinctUntilChanged(),
                 switchMap((searchTerm) => {
                     this.buscandoClientes = true;
-                    const termino = searchTerm?.trim().toLowerCase() || '';
+                    const termino = searchTerm?.trim() || '';
 
-                    const resultados = this.todosLosClientes.filter((persona) =>
-                        this.getClienteDisplayName(persona).toLowerCase().includes(termino),
+                    // Consultar a la BD (incluso si está vacío, trae los primeros 10)
+                    return this.personaService.getPersonasPage(0, 10, 'id', 'desc', termino ? termino : undefined).pipe(
+                        catchError((err: any) => {
+                            console.error('Error al buscar clientes:', err);
+                            return of({ content: [] });
+                        })
                     );
-                    this.personasEncontradas = resultados;
-                    this.buscandoClientes = false;
-                    return of(null);
                 }),
             )
             .subscribe({
+                next: (response: any) => {
+                    if (response && response.content) {
+                        // Mapear PersonaTablaDTO a personaDisplay o la estructura esperada
+                        this.personasEncontradas = response.content.map((dto: any) => ({
+                            id: dto.id,
+                            tipo: dto.tipo,
+                            identificador: dto.documento || '',
+                            nombre: dto.nombre || 'Sin nombre',
+                            // Add ruc/documento fields so that getClienteType mapper works if necessary
+                            ruc: dto.tipo === 'JURIDICA' ? dto.documento : undefined,
+                            documento: dto.tipo === 'NATURAL' ? dto.documento : undefined,
+                        }));
+
+                        // Actualizar el cache interno para que no salga "Cliente no encontrado" luego
+                        this.personasEncontradas.forEach((p: any) => {
+                            this.personasCache[p.id] = {
+                                id: p.id,
+                                identificador: p.identificador,
+                                nombre: p.nombre,
+                                tipo: p.tipo
+                            };
+                            this.personasDisplayMap[p.id] = p.nombre;
+                        });
+                    }
+                    this.buscandoClientes = false;
+                },
                 error: () => {
                     this.buscandoClientes = false;
                 },
@@ -466,18 +496,18 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             this.modoEdicion = true;
             this.editandoCotizacion = true;
             this.initializeForm();
-            this.router.navigate(['/cotizaciones/detalle', cotizacionId], {
+            this.router.navigate(['/quotes/detalle', cotizacionId], {
                 queryParams: { modo: 'editar' }
             });
         } else {
-            this.router.navigate(['/cotizaciones/detalle', cotizacionId]);
+            this.router.navigate(['/quotes/detalle', cotizacionId]);
         }
     }
 
 
     // ===== NAVIGATION METHODS =====
     volverACotizaciones(): void {
-        this.router.navigate(['/cotizaciones']);
+        this.router.navigate(['/quotes']);
     }
 
     irAEditarCotizacion(): void {
@@ -852,16 +882,45 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             patch.cantNinos = cantNinos;
         }
 
-        // Comparar resto de campos
+        // Comparar resto de campos simples
         fieldsToCheck.forEach((field) => {
             const newValue = formValue[field];
             const originalValue = this.cotizacionOriginal![field as keyof CotizacionResponse];
 
-            // Si el valor cambió, agregarlo al patch
             if (newValue !== undefined && newValue !== null && newValue !== originalValue) {
                 patch[field] = newValue;
             }
         });
+
+        // Comparar personaId (cliente)
+        if (formValue.personaId && this.cotizacionOriginal.personas?.id !== formValue.personaId) {
+            patch.personaId = formValue.personaId;
+        }
+
+        // Comparar counterId
+        if (formValue.counterId && this.cotizacionOriginal.counter?.id !== formValue.counterId) {
+            patch.counterId = formValue.counterId;
+        }
+
+        // Comparar formaPagoId
+        if (formValue.formaPagoId && this.cotizacionOriginal.formaPago?.id !== formValue.formaPagoId) {
+            patch.formaPagoId = formValue.formaPagoId;
+        }
+
+        // Comparar estadoCotizacionId
+        if (formValue.estadoCotizacionId && this.cotizacionOriginal.estadoCotizacion?.id !== formValue.estadoCotizacionId) {
+            patch.estadoCotizacionId = formValue.estadoCotizacionId;
+        }
+
+        // Comparar sucursalId
+        if (formValue.sucursalId && this.cotizacionOriginal.sucursal?.id !== formValue.sucursalId) {
+            patch.sucursalId = formValue.sucursalId;
+        }
+
+        // Comparar carpetaId
+        if (formValue.carpetaId !== undefined && this.cotizacionOriginal.carpeta?.id !== formValue.carpetaId) {
+            patch.carpetaId = formValue.carpetaId;
+        }
 
         return patch;
     }
@@ -1166,7 +1225,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         this.personaService.findPersonaNaturalOrJuridicaById(personaId).subscribe({
             next: (cached: personaDisplay) => {
                 this.personasCache[personaId] = cached;
-                this.personasDisplayMap[personaId] = `${cached.tipo === 'JURIDICA' ? 'RUC' : 'DNI'}: ${cached.identificador} - ${cached.nombre}`;
+                this.personasDisplayMap[personaId] = cached.nombre;
             },
             error: (error: any) => {
                 console.error('Error al cargar información del cliente:', error);
@@ -1841,7 +1900,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     private async loadCategorias(): Promise<void> {
         try {
             this.categorias = [];
-            const response = await this.categoriaService.findAll().toPromise();
+            const response = await this.categoriaService.getDropdownCategorias().toPromise();
             this.categorias = response || [];
         } catch (error) {
             this.categorias = [];
@@ -2055,3 +2114,4 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         return totalFijos + grupoMasEconomico;
     }
 }
+
