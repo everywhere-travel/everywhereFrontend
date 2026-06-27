@@ -10,10 +10,12 @@ import { ClienteDetailModalComponent, DocumentoCliente } from './../../shared/co
 import { ClienteTableComponent } from './../../shared/components/cliente/cliente-table/cliente-table.component';
 import { ErrorModalComponent, ErrorModalData } from '../../shared/components/error-modal/error-modal.component';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { AuthServiceService } from '../../core/service/auth/auth.service';
 import { DetalleDocumentoConPersonasDto } from '../../shared/models/Documento/detalleDocumento.model';
 
 export interface PersonaTabla {
   id: number;
+  tipoId: number;
   tipo: 'natural' | 'juridica';
   nombre: string;
   nombres?: string;
@@ -99,16 +101,23 @@ export class PersonasComponent implements OnInit {
     private personaService: PersonaService,
     private detalleDocumentoService: DetalleDocumentoService,
     private router: Router,
-    private menuConfigService: MenuConfigService
+    private menuConfigService: MenuConfigService,
+    private authService: AuthServiceService
   ) { }
 
   ngOnInit(): void {
     this.sidebarMenuItems = this.menuConfigService.getMenuItems('/people');
-    this.loadPersonas();
-    this.loadStats();
+    if (this.authService.hasPermission('CLIENTES', 'READ')) {
+      this.loadPersonas();
+      this.loadStats();
+    }
   }
 
   async loadStats(): Promise<void> {
+    if (!this.authService.hasPermission('CLIENTES', 'READ')) {
+      return;
+    }
+
     try {
       const stats = await this.personaService.getPersonaStats().toPromise();
       if (stats) {
@@ -135,6 +144,10 @@ export class PersonasComponent implements OnInit {
   // ============ DATA LOADING ============
 
   async loadPersonas(): Promise<void> {
+    if (!this.authService.hasPermission('CLIENTES', 'READ')) {
+      return;
+    }
+
     try {
       this.isLoading = true;
       this.modoVistaDocumentos = false;
@@ -211,9 +224,9 @@ export class PersonasComponent implements OnInit {
 
   onEditarCliente(cliente: PersonaTabla): void {
     if (cliente.tipo === 'natural') {
-      this.router.navigate(['/people/detalle', cliente.id]);
+      this.router.navigate(['/people/detalle', cliente.tipoId]);
     } else {
-      this.router.navigate(['/legal/detalle', cliente.id]);
+      this.router.navigate(['/legal/detalle', cliente.tipoId]);
     }
   }
 
@@ -235,7 +248,7 @@ export class PersonasComponent implements OnInit {
       this.showConfirmation = false;
 
       if (cliente.tipo === 'natural') {
-        this.personaNaturalService.deleteById(cliente.id).subscribe({
+        this.personaNaturalService.deleteById(cliente.tipoId).subscribe({
           next: () => this.loadPersonas(),
           error: (error) => {
             console.error('Error al eliminar persona natural:', error);
@@ -244,7 +257,7 @@ export class PersonasComponent implements OnInit {
           }
         });
       } else {
-        this.personaJuridicaService.deleteById(cliente.id).subscribe({
+        this.personaJuridicaService.deleteById(cliente.tipoId).subscribe({
           next: () => this.loadPersonas(),
           error: (error) => {
             console.error('Error al eliminar persona jurídica:', error);
@@ -288,7 +301,7 @@ export class PersonasComponent implements OnInit {
       const persona = this.personas.find(p => p.id === id);
       if (persona) {
         if (persona.tipo === 'natural') {
-          this.personaNaturalService.deleteById(id).subscribe({
+          this.personaNaturalService.deleteById(persona.tipoId).subscribe({
             next: () => {
               eliminados++;
               if (eliminados === total) {
@@ -307,7 +320,7 @@ export class PersonasComponent implements OnInit {
             }
           });
         } else {
-          this.personaJuridicaService.deleteById(id).subscribe({
+          this.personaJuridicaService.deleteById(persona.tipoId).subscribe({
             next: () => {
               eliminados++;
               if (eliminados === total) {
@@ -339,9 +352,9 @@ export class PersonasComponent implements OnInit {
 
   onEditarCompleto(cliente: PersonaTabla): void {
     if (cliente.tipo === 'natural') {
-      this.router.navigate(['/people/detalle', cliente.id]);
+      this.router.navigate(['/people/detalle', cliente.tipoId]);
     } else {
-      this.router.navigate(['/legal/detalle', cliente.id]);
+      this.router.navigate(['/legal/detalle', cliente.tipoId]);
     }
     this.cerrarModalDetalles();
   }
@@ -406,7 +419,8 @@ export class PersonasComponent implements OnInit {
                 const tipo = displayInfo.tipo.toLowerCase() as 'natural' | 'juridica';
                 
                 personasDesdeDocumentos.push({
-                  id: displayInfo.id,
+                  id: persona.personaId,
+                  tipoId: displayInfo.id,
                   tipo: tipo,
                   nombre: displayInfo.nombre,
                   documento: tipo === 'natural' ? displayInfo.identificador : '',

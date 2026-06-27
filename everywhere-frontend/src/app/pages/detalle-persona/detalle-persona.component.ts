@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription, Observable, of, forkJoin } from 'rxjs';
-import { catchError, finalize, tap, switchMap } from 'rxjs/operators';
+import { catchError, finalize, tap, switchMap, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 // Services
 import { LoadingService } from '../../core/service/loading.service';
@@ -20,6 +20,8 @@ import { CorreoPersonaService } from '../../core/service/CorreoPersona/correo-pe
 import { TelefonoPersonaService } from '../../core/service/TelefonoPersona/telefono-persona.service';
 import { CategoriaPersonaService } from '../../core/service/CategoriaPersona/categoria-persona.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { Location } from '@angular/common';
 
 // Models
 import { PersonaNaturalResponse, PersonaNaturalRequest } from '../../shared/models/Persona/personaNatural.model';
@@ -77,10 +79,16 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   private correoPersonaService = inject(CorreoPersonaService);
   private telefonoPersonaService = inject(TelefonoPersonaService);
   private categoriaPersonaService = inject(CategoriaPersonaService);
+  private menuConfigService = inject(MenuConfigService);
+  private authService = inject(AuthServiceService);
+  private location = inject(Location);
   private fb = inject(FormBuilder);
 
-  // Data properties
+  // Router params
   personaId: number | null = null;
+  isCreating: boolean = false;
+
+  // Data properties
   personaNatural: PersonaNaturalResponse | null = null;
   empresasAsociadas: PersonaJuridicaResponse[] = [];
   telefonos: TelefonoPersonaResponse[] = [];
@@ -105,8 +113,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   personaNaturalForm!: FormGroup;
   showPersonaNaturalModal = false;
   editingViajeroFrecuenteId: number | null = null;
-  isCreating: boolean = false;
-
+  
   codigosPaises: CodigoPais[] = [
     { code: 'AF', name: 'Afganistán', dialCode: '+93' },
     { code: 'AL', name: 'Albania', dialCode: '+355' },
@@ -301,6 +308,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   correoForm!: FormGroup;
   empresaForm!: FormGroup;
   viajeroFrecuenteForm!: FormGroup;
+  empresaSearchControl = new FormControl('');
 
   // Modal states
   showTelefonoModal = false;
@@ -319,15 +327,28 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
   private subscriptions = new Subscription();
 
-  constructor(
-    private menuConfigService: MenuConfigService
-  ) {
+  constructor() {
     this.initializeForms();
   }
 
   ngOnInit(): void {
     this.sidebarMenuItems = this.menuConfigService.getMenuItems('/people/detalle/:id');
     this.loadPersonaFromRoute();
+    
+    // Configurar búsqueda de empresas
+    this.subscriptions.add(
+      this.empresaSearchControl.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(search => {
+          return this.personaJuridicaService.getDropdown(search || '').pipe(
+            catchError(() => of([]))
+          );
+        })
+      ).subscribe(empresas => {
+        this.todasLasEmpresas = empresas;
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -413,22 +434,23 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.loadingService.setLoading(true);
 
-    // Cargar todos los datos en paralelo
-    const dataLoaders$ = forkJoin({
-      personaNatural: this.personaNaturalService.findById(this.personaId),
-      empresasAsociadas: this.naturalJuridicoService.findByPersonaNaturalId(this.personaId),
-      telefonos: this.telefonoPersonaService.findByPersonaId(this.personaId),
-      correos: this.correoPersonaService.findByPersonaId(this.personaId),
-      documentos: this.detalleDocumentoService.findByPersonaNaturalId(this.personaId),
-      todasLasEmpresas: this.personaJuridicaService.findAll(),
-      tiposDocumento: this.documentoService.getDropdownDocumentos(),
-      categoriasPersona: this.categoriaPersonaService.getDropdownCategoriasPersona()
-    });
-
-    const subscription = dataLoaders$
+    const subscription = this.personaNaturalService.findById(this.personaId)
       .pipe(
+        switchMap(personaNatural => {
+          this.personaNatural = personaNatural;
+          const personaBaseId = personaNatural.persona?.id || this.personaId!;
+
+          return forkJoin({
+            empresasAsociadas: this.naturalJuridicoService.findByPersonaNaturalId(this.personaId!),
+            telefonos: this.telefonoPersonaService.findByPersonaId(personaBaseId),
+            correos: this.correoPersonaService.findByPersonaId(personaBaseId),
+            documentos: this.detalleDocumentoService.findByPersonaNaturalId(this.personaId!),
+            todasLasEmpresas: this.personaJuridicaService.getDropdown(),
+            tiposDocumento: this.documentoService.getDropdownDocumentos(),
+            categoriasPersona: this.categoriaPersonaService.getDropdownCategoriasPersona()
+          });
+        }),
         tap(data => {
-          this.personaNatural = data.personaNatural;
           this.empresasAsociadas = this.extractEmpresasAsociadas(data.empresasAsociadas);
           this.telefonos = data.telefonos;
           this.correos = data.correos;
@@ -437,7 +459,6 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           this.tiposDocumento = data.tiposDocumento;
           this.categoriasPersona = data.categoriasPersona;
 
-          // Cargar viajeros frecuentes si la persona tiene viajero asociado
           if (this.personaNatural?.viajero) {
             this.loadViajerosFrecuentes(this.personaNatural.viajero.id);
           }
@@ -495,8 +516,10 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   private loadDatosParaCreacion(): void {
     this.loadingService.setLoading(true);
 
+    const empresas$ = this.personaJuridicaService.getDropdown().pipe(catchError(() => of([])));
+
     const subscription = forkJoin({
-      empresas: this.personaJuridicaService.findAll(),
+      empresas: empresas$,
       tiposDocumento: this.documentoService.getDropdownDocumentos(),
       categoriasPersona: this.categoriaPersonaService.getDropdownCategoriasPersona()
     })
@@ -657,14 +680,17 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
               fechaVencimiento: documentoData.fechaVencimiento || undefined
             };
 
-            // Crear detalleDocumento
             return this.detalleDocumentoService.saveDetalle(detalleDocumento).pipe(
               tap(() => {
                 // Éxito en ambas creaciones
                 this.isCreating = false;
                 this.personaId = personaResponse.id;
-                this.router.navigate(['/people/detalle', personaResponse.id], { replaceUrl: true });
-                this.loadPersonaData();
+                if (this.authService.hasPermission('CLIENTES', 'READ')) {
+                  this.router.navigate(['/people/detalle', personaResponse.id], { replaceUrl: true });
+                  this.loadPersonaData();
+                } else {
+                  this.location.back();
+                }
               }),
               catchError(error => {
                 console.error('Error al crear documento:', error);
@@ -676,8 +702,12 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
             // PersonaNatural se creó sin documento - ESTO ES OK
             this.isCreating = false;
             this.personaId = personaResponse.id;
-            this.router.navigate(['/people/detalle', personaResponse.id], { replaceUrl: true });
-            this.loadPersonaData();
+            if (this.authService.hasPermission('CLIENTES', 'READ')) {
+              this.router.navigate(['/people/detalle', personaResponse.id], { replaceUrl: true });
+              this.loadPersonaData();
+            } else {
+              this.location.back();
+            }
             return of(null);
           }
         }),
@@ -886,10 +916,12 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
     let operation$: Observable<TelefonoPersonaResponse>;
 
+    const personaBaseId = this.personaNatural?.persona?.id || this.personaId;
+
     if (this.editingTelefonoId) {
-      operation$ = this.telefonoPersonaService.update(this.personaId, this.editingTelefonoId, telefonoData);
+      operation$ = this.telefonoPersonaService.update(personaBaseId, this.editingTelefonoId, telefonoData);
     } else {
-      operation$ = this.telefonoPersonaService.create(this.personaId, telefonoData);
+      operation$ = this.telefonoPersonaService.create(personaBaseId, telefonoData);
     }
 
     const subscription = operation$
@@ -910,8 +942,9 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
   eliminarTelefono(telefono: TelefonoPersonaResponse): void {
     if (!this.personaId || !confirm('¿Está seguro de eliminar este teléfono?')) return;
+    const personaBaseId = this.personaNatural?.persona?.id || this.personaId;
 
-    const subscription = this.telefonoPersonaService.delete(this.personaId, telefono.id)
+    const subscription = this.telefonoPersonaService.delete(personaBaseId, telefono.id)
       .pipe(
         tap(() => this.loadTelefonos()),
         catchError(error => {
@@ -926,8 +959,9 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
   private loadTelefonos(): void {
     if (!this.personaId) return;
+    const personaBaseId = this.personaNatural?.persona?.id || this.personaId;
 
-    const subscription = this.telefonoPersonaService.findByPersonaId(this.personaId)
+    const subscription = this.telefonoPersonaService.findByPersonaId(personaBaseId)
       .subscribe(telefonos => {
         this.telefonos = telefonos;
       });
@@ -968,10 +1002,12 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
     let operation$: Observable<CorreoPersonaResponse>;
 
+    const personaBaseId = this.personaNatural?.persona?.id || this.personaId;
+
     if (this.editingCorreoId) {
-      operation$ = this.correoPersonaService.update(this.personaId, this.editingCorreoId, correoData);
+      operation$ = this.correoPersonaService.update(personaBaseId, this.editingCorreoId, correoData);
     } else {
-      operation$ = this.correoPersonaService.create(this.personaId, correoData);
+      operation$ = this.correoPersonaService.create(personaBaseId, correoData);
     }
 
     const subscription = operation$
@@ -1008,8 +1044,9 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
   private loadCorreos(): void {
     if (!this.personaId) return;
+    const personaBaseId = this.personaNatural?.persona?.id || this.personaId;
 
-    const subscription = this.correoPersonaService.findByPersonaId(this.personaId)
+    const subscription = this.correoPersonaService.findByPersonaId(personaBaseId)
       .subscribe(correos => {
         this.correos = correos;
       });

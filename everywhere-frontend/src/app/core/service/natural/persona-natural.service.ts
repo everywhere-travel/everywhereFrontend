@@ -13,6 +13,14 @@ export class PersonaNaturalService {
 
   constructor() { }
 
+  getDropdown(search?: string): Observable<PersonaNaturalResponse[]> {
+    let params = new HttpParams();
+    if (search) {
+      params = params.set('search', search);
+    }
+    return this.http.get<PersonaNaturalResponse[]>(`${this.baseURL}/dropdown`, { params });
+  }
+
   findAll(): Observable<PersonaNaturalResponse[]> {
     return this.http.get<PersonaNaturalResponse[]>(this.baseURL);
   }

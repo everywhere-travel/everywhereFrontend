@@ -7,7 +7,6 @@ import { OperadorResponse } from '../Operador/operador.model';
 
 /**
  * DTO para crear o actualizar detalles de cotización
- * Todos los campos son opcionales para flexibilidad con PATCH
  */
 export interface DetalleCotizacionRequest {
   cantidad?: number;          // ✅ Opcional para flexibilidad

@@ -548,20 +548,13 @@ export class DetalleProveedorComponent implements OnInit {
 
     guardarProveedor(): void {
         if (this.proveedorForm.invalid || !this.proveedorId) {
-            console.log('Form invalid or no proveedorId', {
-                formValid: this.proveedorForm.valid,
-                formValue: this.proveedorForm.value,
-                proveedorId: this.proveedorId
-            });
             return;
         }
 
         const request: ProveedorRequest = this.proveedorForm.value;
-        console.log('Guardando proveedor:', request);
 
         this.proveedorService.updateProveedor(this.proveedorId, request).subscribe({
             next: (response) => {
-                console.log('Proveedor actualizado exitosamente:', response);
                 this.loadProveedor();
                 this.editandoProveedor = false;
                 this.cdr.detectChanges();

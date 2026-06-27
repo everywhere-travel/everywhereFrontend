@@ -19,6 +19,7 @@ import { ProductoService } from '../../core/service/Producto/producto.service';
 import { ProveedorService } from '../../core/service/Proveedor/proveedor.service';
 import { CategoriaService } from '../../core/service/Categoria/categoria.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { AuthServiceService } from '../../core/service/auth/auth.service';
 
 import { personaDisplay } from '../../shared/models/Persona/persona.model';
 // Models
@@ -116,6 +117,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private productoService = inject(ProductoService);
   private proveedorService = inject(ProveedorService);
   private categoriaService = inject(CategoriaService);
+  private authService = inject(AuthServiceService);
   private clienteSearchSubscription: Subscription | null = null;
 
   // ===== UI STATE =====
@@ -501,7 +503,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
           const termino = searchTerm?.trim() || '';
 
           // Consultar a la BD (incluso si está vacío, trae los primeros 10)
-          return this.personaService.getPersonasPage(0, 10, 'id', 'desc', termino ? termino : undefined).pipe(
+          return this.personaService.getPersonasDropdownPage(0, 10, 'id', 'desc', termino ? termino : undefined).pipe(
             catchError((err: any) => {
               console.error('Error al buscar clientes:', err);
               return of({ content: [] });
@@ -551,13 +553,14 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
       this.loadPersonas(),
       this.loadCotizaciones()
     ])
-      .then(() => {
+      .then(async () => {
+        // Primero verificar y cargar clientes faltantes
+        await this.findAndLoadMissingClients();
+        
         // Re-filtrar para asegurar que los nombres de cliente carguen en la tabla
         if (this.cotizaciones.length > 0) {
           this.filterCotizaciones();
         }
-        // Después de cargar cotizaciones, verificar y cargar clientes faltantes
-        return this.findAndLoadMissingClients();
       })
       .finally(() => {
         this.isLoading = false;
@@ -594,9 +597,9 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     try {
       // Usar el mismo enfoque que funciona en liquidaciones
       // Cargar personas naturales
-      const personasNaturales = (await this.personaNaturalService.findAll().toPromise()) || [];
+      const personasNaturales = (await this.personaNaturalService.getDropdown().toPromise()) || [];
       // Cargar personas jurídicas
-      const personasJuridicas = (await this.personaJuridicaService.findAll().toPromise()) || [];
+      const personasJuridicas = (await this.personaJuridicaService.getDropdown().toPromise()) || [];
 
       // Combinar ambas listas
       this.personas = [...personasNaturales, ...personasJuridicas];
@@ -679,11 +682,16 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
         idsFaltantes.map(async (personaId) => {
           try {
             const personaDisplay = await this.personaService
-              .findPersonaNaturalOrJuridicaById(personaId)
+              .findPersonaNaturalOrJuridicaByIdDropdown(personaId)
               .toPromise();
             return personaDisplay;
           } catch (error) {
-            return null;
+            return {
+              id: personaId,
+              tipo: 'UNKNOWN',
+              identificador: '',
+              nombre: `Cliente N/A (ID: ${personaId})`
+            };
           }
         }),
       );
@@ -1339,7 +1347,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
   private async loadClienteForEdit(personaId: number): Promise<void> {
     try {
       const persona = await firstValueFrom(
-        this.personaService.findPersonaNaturalOrJuridicaById(personaId),
+        this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(personaId),
       );
       console.debug(
         '[cotizaciones] loadClienteForEdit -> persona fetched for id:',
@@ -2903,7 +2911,7 @@ export class CotizacionesComponent implements OnInit, OnDestroy {
     this.loadingPersonas.add(personaId);
 
     // Cargar persona de forma asíncrona
-    firstValueFrom(this.personaService.findPersonaNaturalOrJuridicaById(personaId))
+    firstValueFrom(this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(personaId))
       .then((persona) => {
         if (persona) {
           console.debug('[cotizaciones] loadMissingPersona -> loaded:', personaId, persona);

@@ -145,7 +145,6 @@ export class SidebarComponent implements OnInit, OnChanges {
     if (cachedData) {
       try {
         this.exchangeData = JSON.parse(cachedData);
-        console.log('Tipo de cambio cargado desde cache');
       } catch (error) {
         console.error('Error al parsear cache de tipo de cambio:', error);
         this.loadExchangeRate();
@@ -165,7 +164,6 @@ export class SidebarComponent implements OnInit, OnChanges {
 
         try {
           localStorage.setItem('exchangeRateData', JSON.stringify(data));
-          console.log('Tipo de cambio actualizado y guardado en cache');
         } catch (error) {
           console.error('Error al guardar tipo de cambio en cache:', error);
         }

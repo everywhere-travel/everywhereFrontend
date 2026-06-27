@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription, Observable, of, forkJoin } from 'rxjs';
-import { catchError, finalize, tap } from 'rxjs/operators';
+import { catchError, finalize, tap, switchMap } from 'rxjs/operators';
 
 // Services
 import { LoadingService } from '../../core/service/loading.service';
@@ -12,6 +12,8 @@ import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natur
 import { CorreoPersonaService } from '../../core/service/CorreoPersona/correo-persona.service';
 import { TelefonoPersonaService } from '../../core/service/TelefonoPersona/telefono-persona.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { Location } from '@angular/common';
 
 // Models
 import { PersonaNaturalResponse } from '../../shared/models/Persona/personaNatural.model';
@@ -59,6 +61,8 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   private naturalJuridicoService = inject(NaturalJuridicoService);
   private correoPersonaService = inject(CorreoPersonaService);
   private telefonoPersonaService = inject(TelefonoPersonaService);
+  private authService = inject(AuthServiceService);
+  private location = inject(Location);
   private fb = inject(FormBuilder);
 
   // Data properties
@@ -199,18 +203,19 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.loadingService.setLoading(true);
 
-    // Cargar todos los datos en paralelo
-    const dataLoaders$ = forkJoin({
-      personaJuridica: this.personaJuridicaService.findById(this.personaId),
-      clientesAsociados: this.naturalJuridicoService.findByPersonaJuridicaId(this.personaId),
-      telefonos: this.telefonoPersonaService.findByPersonaId(this.personaId),
-      correos: this.correoPersonaService.findByPersonaId(this.personaId),
-    });
-
-    const subscription = dataLoaders$
+    const subscription = this.personaJuridicaService.findById(this.personaId)
       .pipe(
+        switchMap(personaJuridica => {
+          this.personaJuridica = personaJuridica;
+          const personaBaseId = personaJuridica.persona?.id || this.personaId!;
+
+          return forkJoin({
+            clientesAsociados: this.naturalJuridicoService.findByPersonaJuridicaId(this.personaId!),
+            telefonos: this.telefonoPersonaService.findByPersonaId(personaBaseId),
+            correos: this.correoPersonaService.findByPersonaId(personaBaseId),
+          });
+        }),
         tap(data => {
-          this.personaJuridica = data.personaJuridica;
           this.clientesAsociados = this.extractClientesAsociados(data.clientesAsociados);
           this.telefonos = data.telefonos;
           this.correos = data.correos;
@@ -324,15 +329,17 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
     const subscription = this.personaJuridicaService.save(personaJuridicaData)
       .pipe(
         tap((response) => {
-          // Cambiar de modo crear a modo detalle/editar
           this.isCreating = false;
           this.personaId = response.id;
 
-          // Actualizar la URL sin recargar el componente
-          this.router.navigate(['/legal/detalle', response.id], { replaceUrl: true });
-
-          // Cargar los datos de la persona recién creada
-          this.loadPersonaData();
+          if (this.authService.hasPermission('CLIENTES', 'READ')) {
+            // Actualizar la URL sin recargar el componente
+            this.router.navigate(['/legal/detalle', response.id], { replaceUrl: true });
+            // Cargar los datos de la persona recién creada
+            this.loadPersonaData();
+          } else {
+            this.location.back();
+          }
         }),
         catchError(error => {
           console.error('Error al crear empresa:', error);
@@ -458,10 +465,12 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
 
     let operation$: Observable<TelefonoPersonaResponse>;
 
+    const personaBaseId = this.personaJuridica?.persona?.id || this.personaId;
+
     if (this.editingTelefonoId) {
-      operation$ = this.telefonoPersonaService.update(this.personaId, this.editingTelefonoId, telefonoData);
+      operation$ = this.telefonoPersonaService.update(personaBaseId, this.editingTelefonoId, telefonoData);
     } else {
-      operation$ = this.telefonoPersonaService.create(this.personaId, telefonoData);
+      operation$ = this.telefonoPersonaService.create(personaBaseId, telefonoData);
     }
 
     const subscription = operation$
@@ -483,7 +492,9 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   eliminarTelefono(telefono: TelefonoPersonaResponse): void {
     if (!this.personaId || !confirm('¿Está seguro de eliminar este teléfono?')) return;
 
-    const subscription = this.telefonoPersonaService.delete(this.personaId, telefono.id)
+    const personaBaseId = this.personaJuridica?.persona?.id || this.personaId;
+
+    const subscription = this.telefonoPersonaService.delete(personaBaseId, telefono.id)
       .pipe(
         tap(() => this.loadTelefonos()),
         catchError(error => {
@@ -499,7 +510,9 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   private loadTelefonos(): void {
     if (!this.personaId) return;
 
-    const subscription = this.telefonoPersonaService.findByPersonaId(this.personaId)
+    const personaBaseId = this.personaJuridica?.persona?.id || this.personaId;
+
+    const subscription = this.telefonoPersonaService.findByPersonaId(personaBaseId)
       .subscribe(telefonos => {
         this.telefonos = telefonos;
       });
@@ -540,10 +553,12 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
 
     let operation$: Observable<CorreoPersonaResponse>;
 
+    const personaBaseId = this.personaJuridica?.persona?.id || this.personaId;
+
     if (this.editingCorreoId) {
-      operation$ = this.correoPersonaService.update(this.personaId, this.editingCorreoId, correoData);
+      operation$ = this.correoPersonaService.update(personaBaseId, this.editingCorreoId, correoData);
     } else {
-      operation$ = this.correoPersonaService.create(this.personaId, correoData);
+      operation$ = this.correoPersonaService.create(personaBaseId, correoData);
     }
 
     const subscription = operation$
@@ -565,6 +580,8 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   eliminarCorreo(correo: CorreoPersonaResponse): void {
     if (!confirm('¿Está seguro de eliminar este correo?')) return;
 
+    const personaBaseId = this.personaJuridica?.persona?.id || this.personaId;
+
     const subscription = this.correoPersonaService.delete(correo.id)
       .pipe(
         tap(() => this.loadCorreos()),
@@ -581,7 +598,9 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   private loadCorreos(): void {
     if (!this.personaId) return;
 
-    const subscription = this.correoPersonaService.findByPersonaId(this.personaId)
+    const personaBaseId = this.personaJuridica?.persona?.id || this.personaId;
+
+    const subscription = this.correoPersonaService.findByPersonaId(personaBaseId)
       .subscribe(correos => {
         this.correos = correos;
       });
