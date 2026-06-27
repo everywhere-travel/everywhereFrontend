@@ -190,7 +190,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const subscription = this.detalleDocumentoService.findByPersonaId(this.documento.personaId)
+    const subscription = this.detalleDocumentoService.getDropdownByPersonaId(this.documento.personaId)
       .pipe(
         catchError(error => {
           return of([]);
@@ -511,7 +511,7 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ============ OPCIONES DE EDICIÓN =============
   async cargarOpcionesEdicion(): Promise<void> {
     try {
-      this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || []; // Cargar sucursales
+      this.sucursales = await this.sucursalService.getDropdownSucursales().toPromise() || []; // Cargar sucursales
       this.formasPago = await this.formaPagoService.getDropdownFormasPago().toPromise() || []; // Cargar formas de pago
 
       const personaId = this.documento?.personaId; // Cargar documentos del cliente (DNI, Pasaporte, etc.)
@@ -519,14 +519,14 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       if (personaId) {
         try {
           this.documentosCliente = await this.detalleDocumentoService // Cargar documentos del cliente
-            .findByPersonaId(personaId)
+            .getDropdownByPersonaId(personaId)
             .toPromise() || [];
 
           if (this.documentosCliente.length > 0) {
             // Usar el personaNaturalId del primer documento
             const personaNaturalId = this.documentosCliente[0].personaNatural.id;
             const relaciones = await this.naturalJuridicoService
-              .findByPersonaNaturalId(personaNaturalId)
+              .getDropdownByPersonaNaturalId(personaNaturalId)
               .toPromise() || [];
             this.personasJuridicas = relaciones.map(r => r.personaJuridica);
           } else {
@@ -719,9 +719,12 @@ export class DetalleDocumentoCobranzaComponent implements OnInit, OnDestroy {
       }
       this.salirModoEdicion();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al guardar cambios:', error);
-      this.error = 'Error al guardar los cambios';
+      // Si es 403, el interceptor ya mostró el toast de "Acceso Denegado"
+      if (error?.status !== 403) {
+        this.error = 'Error al guardar los cambios';
+      }
     } finally {
       this.isLoading = false;
       this.loadingService.setLoading(false);

@@ -173,21 +173,10 @@
           </div>
         </div>
 
-        <!-- Error State -->
-        <div *ngIf="error && !isLoading" class="bg-red-50 border border-red-200 rounded-2xl p-6">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
-              <i class="fas fa-exclamation-triangle text-red-600"></i>
-            </div>
-            <div>
-              <h3 class="font-bold text-red-900">Error</h3>
-              <p class="text-red-700">{{ error }}</p>
-            </div>
-          </div>
-        </div>
+
 
         <!-- Tab Navigation -->
-        <div *ngIf="!isLoading && !error" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div *ngIf="!isLoading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
           <div class="border-b border-gray-200">
             <nav class="flex">
               <button *ngFor="let tab of [

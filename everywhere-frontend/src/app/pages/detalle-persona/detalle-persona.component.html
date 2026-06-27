@@ -308,7 +308,7 @@
         </div>
 
         <!-- Tab Navigation -->
-        <div *ngIf="!isLoading && !error" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+        <div *ngIf="!isLoading" class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
           <div class="border-b border-gray-200">
             <nav class="flex">
               <button *ngFor="let tab of [
@@ -1254,8 +1254,21 @@
             </span>
           </div>
 
+          <!-- Búsqueda de empresas -->
+          <div class="mb-4">
+            <div class="relative">
+              <input type="text" [formControl]="empresaSearchControl"
+                placeholder="Buscar empresa por RUC o Razón Social..."
+                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-everywhere-primary focus:border-everywhere-primary" />
+              <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+            <p class="text-xs text-gray-500 mt-1" *ngIf="getEmpresasNoAsociadas().length === 100">
+              Mostrando los primeros 100 resultados. Escriba para buscar más.
+            </p>
+          </div>
+
           <!-- Lista de empresas disponibles -->
-          <div class="space-y-2">
+          <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
             <div *ngFor="let empresa of getEmpresasNoAsociadas()"
               class="border border-gray-200 rounded-lg p-4 hover:border-everywhere-primary hover:bg-gray-50 transition-all cursor-pointer"
               (click)="onEmpresaCheckboxChange({target: {checked: !isEmpresaSeleccionada(empresa.id)}}, empresa.id)">

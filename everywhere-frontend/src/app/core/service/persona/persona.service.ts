@@ -35,6 +35,22 @@ export class PersonaService {
     return this.http.get<any>(`${this.baseURL}/page`, { params });
   }
 
+  getPersonasDropdownPage(page: number = 0, size: number = 10, sortColumn: string = 'id', sortDirection: string = 'desc', searchTerm?: string, typeFilter?: string): Observable<any> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', `${sortColumn},${sortDirection}`);
+
+    if (searchTerm) {
+      params = params.set('searchTerm', searchTerm);
+    }
+    if (typeFilter) {
+      params = params.set('typeFilter', typeFilter);
+    }
+
+    return this.http.get<any>(`${this.baseURL}/dropdown/page`, { params });
+  }
+
   getPersonaStats(): Observable<{totalNaturales: number, totalJuridicas: number}> {
     return this.http.get<{totalNaturales: number, totalJuridicas: number}>(`${this.baseURL}/stats`);
   }
@@ -73,5 +89,9 @@ export class PersonaService {
 
   findPersonaNaturalOrJuridicaById(id: number): Observable<personaDisplay> {
     return this.http.get<personaDisplay>(`${this.baseURL}/${id}/NaturalOrJuridica`);
+  }
+
+  findPersonaNaturalOrJuridicaByIdDropdown(id: number): Observable<personaDisplay> {
+    return this.http.get<personaDisplay>(`${this.baseURL}/dropdown/${id}/NaturalOrJuridica`);
   }
 }

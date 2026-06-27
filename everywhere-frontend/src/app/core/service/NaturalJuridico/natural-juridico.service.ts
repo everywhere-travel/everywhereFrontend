@@ -26,6 +26,10 @@ export class NaturalJuridicoService {
     return this.http.get<NaturalJuridicaResponse[]>(`${this.baseURL}/persona-natural/${personaNaturalId}`);
   }
 
+  getDropdownByPersonaNaturalId(personaNaturalId: number): Observable<NaturalJuridicaResponse[]> {
+    return this.http.get<NaturalJuridicaResponse[]>(`${this.baseURL}/dropdown/persona-natural/${personaNaturalId}`);
+  }
+
   findByPersonaJuridicaId(personaJuridicaId: number): Observable<NaturalJuridicaResponse[]> {
     return this.http.get<NaturalJuridicaResponse[]>(`${this.baseURL}/persona-juridica/${personaJuridicaId}`);
   }

@@ -9,6 +9,7 @@ export interface DocumentoCliente {
 
 export interface PersonaTabla {
   id: number;
+  tipoId: number;
   tipo: 'natural' | 'juridica';
   nombre: string;
   nombres?: string;

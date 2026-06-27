@@ -79,7 +79,7 @@ export class MenuConfigService {
                     title: 'Asientos Contables',
                     icon: 'fas fa-book-open',
                     route: '/accounting-entries',
-                    moduleKey: 'DOCUMENTOS_COBRANZA'
+                    moduleKey: 'ASIENTOS_CONTABLES'
                 },
             ]
         },

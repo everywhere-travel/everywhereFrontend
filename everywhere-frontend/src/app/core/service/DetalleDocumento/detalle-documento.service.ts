@@ -38,6 +38,10 @@ export class DetalleDocumentoService {
     return this.http.get<DetalleDocumentoResponse[]>(`${this.apiUrl}/persona/${personaId}`);
   }
 
+  getDropdownByPersonaId(personaId: number): Observable<DetalleDocumentoResponse[]> {
+    return this.http.get<DetalleDocumentoResponse[]>(`${this.apiUrl}/dropdown/persona/${personaId}`);
+  }
+
   saveDetalle(detalle: DetalleDocumentoRequest): Observable<DetalleDocumentoResponse> {
     return this.http.post<DetalleDocumentoResponse>(this.apiUrl, detalle);
   }

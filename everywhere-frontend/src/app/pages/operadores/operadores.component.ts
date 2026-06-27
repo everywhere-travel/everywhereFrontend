@@ -237,7 +237,6 @@ export class OperadoresComponent implements OnInit {
     });
   }
 
-  // Métodos de búsqueda
   onSearchChange(): void {
     this.searchTerm = this.searchQuery;
     this.currentPage = 1;
@@ -254,7 +253,6 @@ export class OperadoresComponent implements OnInit {
     this.applyFilters();
   }
 
-  // Métodos de ordenamiento
   sortBy(column: string): void {
     if (this.sortColumn === column) {
       this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -393,7 +391,6 @@ export class OperadoresComponent implements OnInit {
     this.operadorToDelete = null;
   }
 
-  // Métodos para el menú de acciones
   toggleActionMenu(id: number): void {
     this.showQuickActions = null;
     this.showActionMenuCards = null;
@@ -429,7 +426,6 @@ export class OperadoresComponent implements OnInit {
     this.showQuickActions = null;
   }
 
-  // Métodos para selección múltiple
   toggleAllSelection(): void {
     if (this.allSelected) {
       this.selectedItems = [];
@@ -499,7 +495,6 @@ export class OperadoresComponent implements OnInit {
     }
   }
 
-  // Métodos para cambiar entre vistas
   changeView(view: 'table' | 'cards' | 'list'): void {
     this.currentView = view;
     this.closeAllMenus();
@@ -509,14 +504,11 @@ export class OperadoresComponent implements OnInit {
     return this.currentView === view;
   }
 
-  // Métodos de utilidad
   refreshData(): void {
     this.loadOperadores();
   }
 
   exportData(): void {
-    // TODO: Implementar exportación
-    console.log('Exportar datos');
   }
 
   getOperadorInitials(operador: OperadorResponse): string {
@@ -649,7 +641,6 @@ export class OperadoresComponent implements OnInit {
     return operador.id;
   }
 
-  // Métodos para paginación (remover el getter duplicado)
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;

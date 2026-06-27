@@ -244,7 +244,6 @@ export class ProveedorComponent implements OnInit {
     };
   }
 
-  // Método principal para guardar (crea o actualiza según el estado)
   guardarProveedor(): void {
     if (this.editandoProveedor) {
       this.actualizarProveedor();
@@ -333,7 +332,6 @@ export class ProveedorComponent implements OnInit {
     this.proveedorAEliminar = null;
   }
 
-  // Nuevo método para confirmar eliminación desde el modal
   confirmarEliminacionModal(): void {
     if (this.proveedorAEliminar) {
       this.eliminarProveedorDefinitivo(this.proveedorAEliminar.id);
@@ -395,7 +393,6 @@ export class ProveedorComponent implements OnInit {
     this.loadProveedores();
   }
 
-  // Métodos para acciones masivas
   clearSelection(): void {
     this.selectedItems = [];
     this.updateSelectionState();
@@ -564,7 +561,6 @@ export class ProveedorComponent implements OnInit {
     this.currentView = view;
   }
 
-  // Métodos para selección múltiple
   toggleAllSelection(): void {
     if (this.allSelected) {
       this.selectedItems = [];

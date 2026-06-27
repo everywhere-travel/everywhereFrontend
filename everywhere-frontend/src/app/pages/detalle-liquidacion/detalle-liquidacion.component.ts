@@ -1633,7 +1633,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     }
 
     // Cargar datos desde PersonaService usando personaDisplay
-    this.personaService.findPersonaNaturalOrJuridicaById(personaId).subscribe({
+    this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(personaId).subscribe({
       next: (cached: personaDisplay) => {
         this.personasCache[personaId] = cached;
         this.personasDisplayMap[personaId] = cached.nombre;

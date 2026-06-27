@@ -137,7 +137,7 @@ export class ReciboComponent implements OnInit, OnDestroy {
   // ===== DATA LOADING =====
   private async loadDocumentosConRecibos(): Promise<void> {
     try {
-      const documentos = await this.documentoCobranzaService.getAllDocumentos().toPromise() || [];
+      const documentos = await this.documentoCobranzaService.getDropdownDocumentos().toPromise() || [];
 
       this.documentosConRecibos = documentos.map(doc => ({
         documento: doc,
