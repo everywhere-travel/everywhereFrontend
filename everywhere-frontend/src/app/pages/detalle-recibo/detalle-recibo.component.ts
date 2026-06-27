@@ -686,7 +686,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
             cantidad: detalle.cantidad,
             descripcion: detalle.descripcion || '',
             precio: detalle.precio,
-            productoId: detalle.productoId || 0,
+            productoId: detalle.productoId || undefined,
             reciboId: this.reciboId
           };
 
@@ -700,7 +700,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
           cantidad: detalleFijo.cantidad,
           descripcion: detalleFijo.descripcion || '',
           precio: detalleFijo.precio,
-          productoId: detalleFijo.productoId || 0,
+          productoId: detalleFijo.productoId || undefined,
           reciboId: this.reciboId
         };
 
