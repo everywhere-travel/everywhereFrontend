@@ -190,7 +190,6 @@ export class SucursalesComponent implements OnInit {
   // =================================================================
   // SIDEBAR FILTERING
   // ================================================================= 
-  // Sidebar methods
   onToggleSidebar(): void {
     this.sidebarCollapsed = !this.sidebarCollapsed;
   }
@@ -262,7 +261,6 @@ export class SucursalesComponent implements OnInit {
     };
   }
 
-  // Método principal para guardar (crea o actualiza según el estado)
   guardarSucursal(): void {
     if (this.sucursalForm.valid) {
       if (this.editandoSucursal) {
@@ -480,7 +478,6 @@ export class SucursalesComponent implements OnInit {
     });
   }
 
-  // Métodos para selección múltiple
   toggleAllSelection(): void {
     if (this.allSelected) {
       this.selectedItems = [];
@@ -544,10 +541,6 @@ export class SucursalesComponent implements OnInit {
     this.totalInactivas = this.sucursales.filter(s => !s.estado).length;
   }
 
-  // Sidebar methods
-
-
-  // Métodos para cambiar entre vistas
   changeView(view: 'table' | 'cards' | 'list'): void {
     this.currentView = view;
   }
@@ -556,7 +549,6 @@ export class SucursalesComponent implements OnInit {
     return this.currentView === view;
   }
 
-  // Métodos para estadísticas del header
   getActiveSucursalesCount(): number {
     return this.totalActivas;
   }
@@ -569,7 +561,6 @@ export class SucursalesComponent implements OnInit {
     return this.totalSucursales;
   }
 
-  // Métodos para formatear fechas
   formatDate(dateString: string): string {
     if (!dateString) return '';
     return new Date(dateString).toLocaleDateString('es-ES');

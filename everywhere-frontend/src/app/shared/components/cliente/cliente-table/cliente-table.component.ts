@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 
 export interface PersonaTabla {
   id: number;
+  tipoId: number;
   tipo: 'natural' | 'juridica';
   nombre: string;
   nombres?: string;

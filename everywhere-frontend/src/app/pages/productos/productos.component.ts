@@ -237,7 +237,6 @@ export class ProductosComponent implements OnInit {
     };
   }
 
-  // Método principal para guardar (crea o actualiza según el estado)
   guardarProducto(): void {
     if (this.editandoProducto) {
       this.actualizarProducto();
@@ -381,7 +380,6 @@ export class ProductosComponent implements OnInit {
     this.someSelected = selectedCount > 0 && selectedCount < totalItems;
   }
 
-  // Métodos para acciones masivas
   clearSelection(): void {
     this.selectedItems = [];
     this.updateSelectionState();
@@ -544,7 +542,6 @@ export class ProductosComponent implements OnInit {
     });
   }
 
-  // Métodos para selección múltiple
   toggleAllSelection(): void {
     if (this.allSelected) {
       this.selectedItems = [];
@@ -629,7 +626,6 @@ export class ProductosComponent implements OnInit {
     }
   }
 
-  // Métodos para cambiar entre vistas
   changeView(view: 'table' | 'cards' | 'list'): void {
     this.currentView = view;
   }
@@ -638,7 +634,6 @@ export class ProductosComponent implements OnInit {
     return this.currentView === view;
   }
 
-  // Métodos para estadísticas del header
   getActiveProductsCount(): number {
     return this.productos.filter(p => p.id).length; // Asumiendo que productos activos son los que tienen ID
   }
@@ -648,7 +643,6 @@ export class ProductosComponent implements OnInit {
     return tipos.size;
   }
 
-  // Método para obtener clases de color por tipo
   getTipoColorClass(tipo: string): string {
     const colorMap: { [key: string]: string } = {
       'TRANSPORTE': 'bg-blue-100 text-blue-800',
@@ -661,7 +655,6 @@ export class ProductosComponent implements OnInit {
     return colorMap[tipo] || 'bg-gray-100 text-gray-800';
   }
 
-  // Métodos para filtros
   hasActiveFilters(): boolean {
     return this.selectedType !== 'todos';
   }
@@ -678,12 +671,10 @@ export class ProductosComponent implements OnInit {
     this.calcularEstadisticas();
   }
 
-  // Método para actualizar datos paginados
   updatePaginatedData(): void {
     this.calcularEstadisticas();
   }
 
-  // Métodos para paginación (remover el getter duplicado)
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;

@@ -14,6 +14,7 @@ import {
   MenuConfigService,
   ExtendedSidebarMenuItem,
 } from '../../core/service/menu/menu-config.service';
+import { AuthServiceService } from '../../core/service/auth/auth.service';
 
 // Models
 import { DocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
@@ -86,6 +87,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ===== SEARCH AND FILTERS =====
   searchTerm = '';
   searchCotizacion = '';
+  personasDisplayMap: { [key: number]: string } = {};
 
   totalItems = 0;
 
@@ -201,7 +203,10 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     trackByKey: 'id',
   };
 
-  constructor(private menuConfigService: MenuConfigService) { }
+  constructor(
+    private menuConfigService: MenuConfigService,
+    private authService: AuthServiceService
+  ) { }
 
   ngOnInit(): void {
     this.initializeForms();
@@ -334,6 +339,22 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       this.cotizaciones = 
         (await this.cotizacionService.getCotizacionesSinDocumentoCobranza().toPromise()) || [];
       this.cotizacionesFiltradas = [...this.cotizaciones];
+
+      // Cargar nombres de clientes para las cotizaciones
+      const personaIds = new Set<number>();
+      this.cotizaciones.forEach(c => {
+        if (c.personas?.id) personaIds.add(c.personas.id);
+      });
+      for (const pid of personaIds) {
+        if (!this.personasDisplayMap[pid]) {
+          try {
+            const display = await this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(pid).toPromise();
+            if (display) {
+              this.personasDisplayMap[pid] = display.nombre || `Cliente ID: ${pid}`;
+            }
+          } catch { /* silencioso */ }
+        }
+      }
     } catch (error) {
       console.error('Error al cargar cotizaciones:', error);
       this.cotizaciones = [];
@@ -625,6 +646,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // ===== UTILITY METHODS =====
   getPersonaDisplayName(cotizacion: CotizacionResponse): string {
+    // Primero intentar el cache de nombres
+    if (cotizacion.personas?.id && this.personasDisplayMap[cotizacion.personas.id]) {
+      return this.personasDisplayMap[cotizacion.personas.id];
+    }
+
     if (cotizacion.personas) {
       const p: any = cotizacion.personas;
       if (p.personaJuridica?.razonSocial) {
@@ -635,12 +661,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
         return `${pn.nombres || ''} ${pn.apellidosPaterno || ''} ${pn.apellidosMaterno || ''}`.trim();
       }
       
-      // Fallback si la persona tiene nombre directo (algunos DTOs pueden tenerlo)
       if (p.nombre || p.razonSocial) {
         return p.nombre || p.razonSocial;
       }
     }
-    return 'Cliente no especificado';
+    return 'Cargando cliente...';
   }
 
   formatDate(dateString: string | undefined): string {
@@ -726,7 +751,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
           // Cargar personas jurídicas asociadas
           // El backend convierte internamente de personas.id a persona_natural.id
           this.personasJuridicas =
-            (await this.naturalJuridicoService.findByPersonaNaturalId(personaId).toPromise()) || [];
+            (await this.naturalJuridicoService.getDropdownByPersonaNaturalId(personaId).toPromise()) || [];
         } catch (error) {
           this.personasJuridicas = [];
           this.personaNaturalIdActual = null;

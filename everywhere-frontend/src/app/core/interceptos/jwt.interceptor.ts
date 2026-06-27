@@ -29,8 +29,14 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
         authService.logout();
         router.navigate(['/login']);
       } else if (error.status === 403) {
-        console.warn('Acceso denegado a este recurso (403).');
-        toastService.showError(errorHandler.getErrorMessage(error), 'Acceso Denegado');
+        // No mostrar toast para endpoints /dropdown/ — son llamadas auxiliares
+        // que manejan el error silenciosamente en el componente
+        const url = error.url || req.url || '';
+        const isDropdownRoute = url.includes('/dropdown');
+        if (!isDropdownRoute) {
+          console.warn('Acceso denegado a este recurso (403).');
+          toastService.showError(errorHandler.getErrorMessage(error), 'Acceso Denegado');
+        }
         (error as any).isHandledGlobally = true; // Flag for local components to ignore
       }
       return throwError(() => error);

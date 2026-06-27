@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { PersonaJuridicaRequest, PersonaJuridicaResponse } from '../../../shared/models/Persona/personaJuridica.models';
 
+
 @Injectable({
   providedIn: 'root'
 })
@@ -12,6 +13,14 @@ export class PersonaJuridicaService {
   private http = inject(HttpClient);
 
   constructor() { }
+
+  getDropdown(search?: string): Observable<PersonaJuridicaResponse[]> {
+    let params = new HttpParams();
+    if (search) {
+      params = params.set('search', search);
+    }
+    return this.http.get<PersonaJuridicaResponse[]>(`${this.baseURL}/dropdown`, { params });
+  }
 
   findAll(): Observable<PersonaJuridicaResponse[]> {
     return this.http.get<PersonaJuridicaResponse[]>(this.baseURL);

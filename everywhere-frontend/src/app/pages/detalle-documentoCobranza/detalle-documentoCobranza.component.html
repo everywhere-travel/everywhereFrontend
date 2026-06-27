@@ -1,4 +1,4 @@
-﻿<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100">
   <!-- Sidebar Component -->
   <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
     (toggleSidebar)="onToggleSidebar()">
@@ -38,26 +38,7 @@
       </div>
     </div>
 
-    <!-- Error State -->
-    <div *ngIf="error && !isLoading" class="max-w-full mx-auto px-6 py-12">
-      <div class="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
-        <i class="fas fa-exclamation-triangle text-red-400 text-6xl mb-4"></i>
-        <h2 class="text-2xl font-bold text-red-800 mb-3">Error al cargar</h2>
-        <p class="text-red-600 mb-6">{{ error }}</p>
-        <div class="flex gap-3 justify-center">
-          <button (click)="recargarDetalles()"
-            class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-            <i class="fas fa-redo mr-2"></i>
-            Reintentar
-          </button>
-          <button (click)="volverADocumentos()"
-            class="px-6 py-2 border border-red-300 text-red-700 rounded-lg hover:bg-red-50 transition-colors">
-            <i class="fas fa-arrow-left mr-2"></i>
-            Volver a Documentos
-          </button>
-        </div>
-      </div>
-    </div>
+
 
     <!-- Content when data is loaded -->
     <div *ngIf="documento && !isLoading" class="max-w-full mx-auto">

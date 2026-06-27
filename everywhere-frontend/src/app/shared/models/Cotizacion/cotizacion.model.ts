@@ -8,7 +8,6 @@ import { DetalleCotizacionSimpleDTO } from '../Cotizacion/detalleCotizacion.mode
 
 /**
  * DTO para crear o actualizar cotizaciones
- * Todos los campos son opcionales ya que usamos PATCH para actualizaciones
  */
 export interface CotizacionRequest {
   nombreCotizacion?: string

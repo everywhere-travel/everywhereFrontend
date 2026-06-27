@@ -296,8 +296,8 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     private async loadPersonas(): Promise<void> {
         try {
-            const personasNaturales = (await this.personaNaturalService.findAll().toPromise()) || [];
-            const personasJuridicas = (await this.personaJuridicaService.findAll().toPromise()) || [];
+            const personasNaturales = (await this.personaNaturalService.getDropdown().toPromise()) || [];
+            const personasJuridicas = (await this.personaJuridicaService.getDropdown().toPromise()) || [];
 
             this.personas = [...personasNaturales, ...personasJuridicas];
             this.todosLosClientes = [...this.personas];
@@ -407,7 +407,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                     const termino = searchTerm?.trim() || '';
 
                     // Consultar a la BD (incluso si está vacío, trae los primeros 10)
-                    return this.personaService.getPersonasPage(0, 10, 'id', 'desc', termino ? termino : undefined).pipe(
+                    return this.personaService.getPersonasDropdownPage(0, 10, 'id', 'desc', termino ? termino : undefined).pipe(
                         catchError((err: any) => {
                             console.error('Error al buscar clientes:', err);
                             return of({ content: [] });
@@ -677,7 +677,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     private async loadClienteForEdit(personaId: number): Promise<void> {
         try {
             const persona = await firstValueFrom(
-                this.personaService.findPersonaNaturalOrJuridicaById(personaId),
+                this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(personaId),
             );
             if (persona) {
                 this.clienteSeleccionado = persona;
@@ -1222,7 +1222,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         }
 
         // Cargar datos desde PersonaService usando personaDisplay
-        this.personaService.findPersonaNaturalOrJuridicaById(personaId).subscribe({
+        this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(personaId).subscribe({
             next: (cached: personaDisplay) => {
                 this.personasCache[personaId] = cached;
                 this.personasDisplayMap[personaId] = cached.nombre;

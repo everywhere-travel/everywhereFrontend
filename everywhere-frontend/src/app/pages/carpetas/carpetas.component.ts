@@ -1000,10 +1000,6 @@ export class CarpetasComponent implements OnInit {
       this.mostrarExito('Documento asociado exitosamente');
       this.cerrarModalSelector();
       await this.cargarDocumentosDeCarpeta(carpetaId);
-
-      if (tipo === 'cotizacion') {
-        this.router.navigate([`/cotizaciones/detalle/${docId}`]);
-      }
     } catch (error) {
       console.error('Error al asociar documento:', error);
       this.mostrarError('Error al asociar documento');
@@ -1087,10 +1083,10 @@ export class CarpetasComponent implements OnInit {
   /** Navegar al detalle del documento */
   navegarADocumento(documento: DocumentoAsociado): void {
     const routes: Record<TipoDocumento, string> = {
-      'liquidacion': `/liquidaciones/detalle/${documento.id}`,
-      'cotizacion': `/cotizaciones/detalle/${documento.id}`,
-      'recibo': `/recibos/detalle/${documento.id}`,
-      'documento-cobranza': `/documentos-cobranza/detalle/${documento.id}`
+      'liquidacion': `/settlements/detalle/${documento.id}`,
+      'cotizacion': `/quotes/detalle/${documento.id}`,
+      'recibo': `/receipts/detalle/${documento.id}`,
+      'documento-cobranza': `/collection-documents/detalle/${documento.id}`
     };
 
     this.router.navigate([routes[documento.tipo]]);
@@ -1204,7 +1200,7 @@ export class CarpetasComponent implements OnInit {
       personaIds.map(async (id) => {
         if (this.clientesCache[id]) return;
         try {
-          const cliente = await this.personaService.findPersonaNaturalOrJuridicaById(id).toPromise();
+          const cliente = await this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(id).toPromise();
           if (cliente) {
             this.clientesCache[id] = cliente;
           }
