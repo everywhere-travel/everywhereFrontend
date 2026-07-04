@@ -1,7 +1,7 @@
 export const environment = {
 
     production: true,
-    baseURL: "https://taller-everywherebackend.onrender.com/api/v1"
+    baseURL: "https://everywherebackend-p64d.onrender.com/api/v1"
 
 
 };
