@@ -1,7 +1,7 @@
 export const environment = {
 
     production: true,
-    baseURL: "https://everywherebackend-p64d.onrender.com/api/v1"
+    baseURL: "http://localhost:8080/api/v1"
 
 
 };

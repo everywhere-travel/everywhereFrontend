@@ -196,50 +196,46 @@
                       
                       <!-- READ -->
                       <td class="px-3 py-4 whitespace-nowrap text-center">
-                        <label *ngIf="row.read" class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.read.description || row.read.name">
+                        <label class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.read?.description || row.read?.name || 'Permiso no definido'">
                           <input type="checkbox" class="sr-only peer" 
-                                 [checked]="hasPermissionChecked(row.read.id)"
-                                 (change)="togglePermission(row.read)"
-                                 [disabled]="loading">
-                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                                 [checked]="row.read ? hasPermissionChecked(row.read.id) : false"
+                                 (change)="row.read ? togglePermission(row.read) : null"
+                                 [disabled]="loading || !row.read">
+                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500" [ngClass]="{'opacity-50 cursor-not-allowed': !row.read}"></div>
                         </label>
-                        <span *ngIf="!row.read" class="text-gray-300">-</span>
                       </td>
 
                       <!-- CREATE -->
                       <td class="px-3 py-4 whitespace-nowrap text-center">
-                        <label *ngIf="row.create" class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.create.description || row.create.name">
+                        <label class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.create?.description || row.create?.name || 'Permiso no definido'">
                           <input type="checkbox" class="sr-only peer" 
-                                 [checked]="hasPermissionChecked(row.create.id)"
-                                 (change)="togglePermission(row.create)"
-                                 [disabled]="loading">
-                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                                 [checked]="row.create ? hasPermissionChecked(row.create.id) : false"
+                                 (change)="row.create ? togglePermission(row.create) : null"
+                                 [disabled]="loading || !row.create">
+                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500" [ngClass]="{'opacity-50 cursor-not-allowed': !row.create}"></div>
                         </label>
-                        <span *ngIf="!row.create" class="text-gray-300">-</span>
                       </td>
 
                       <!-- UPDATE -->
                       <td class="px-3 py-4 whitespace-nowrap text-center">
-                        <label *ngIf="row.update" class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.update.description || row.update.name">
+                        <label class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.update?.description || row.update?.name || 'Permiso no definido'">
                           <input type="checkbox" class="sr-only peer" 
-                                 [checked]="hasPermissionChecked(row.update.id)"
-                                 (change)="togglePermission(row.update)"
-                                 [disabled]="loading">
-                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-yellow-500"></div>
+                                 [checked]="row.update ? hasPermissionChecked(row.update.id) : false"
+                                 (change)="row.update ? togglePermission(row.update) : null"
+                                 [disabled]="loading || !row.update">
+                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-yellow-500" [ngClass]="{'opacity-50 cursor-not-allowed': !row.update}"></div>
                         </label>
-                        <span *ngIf="!row.update" class="text-gray-300">-</span>
                       </td>
 
                       <!-- DELETE -->
                       <td class="px-3 py-4 whitespace-nowrap text-center border-r border-gray-200">
-                        <label *ngIf="row.delete" class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.delete.description || row.delete.name">
+                        <label class="relative inline-flex items-center cursor-pointer justify-center" [title]="row.delete?.description || row.delete?.name || 'Permiso no definido'">
                           <input type="checkbox" class="sr-only peer" 
-                                 [checked]="hasPermissionChecked(row.delete.id)"
-                                 (change)="togglePermission(row.delete)"
-                                 [disabled]="loading">
-                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500"></div>
+                                 [checked]="row.delete ? hasPermissionChecked(row.delete.id) : false"
+                                 (change)="row.delete ? togglePermission(row.delete) : null"
+                                 [disabled]="loading || !row.delete">
+                          <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-red-500" [ngClass]="{'opacity-50 cursor-not-allowed': !row.delete}"></div>
                         </label>
-                        <span *ngIf="!row.delete" class="text-gray-300">-</span>
                       </td>
                     </tr>
                   </tbody>
