@@ -74,6 +74,7 @@ export class MenuConfigService {
                     route: '/receipts',
                     moduleKey: 'RECIBOS'
                 },
+                /*
                 {
                     id: 'asientos-contables',
                     title: 'Asientos Contables',
@@ -81,6 +82,7 @@ export class MenuConfigService {
                     route: '/accounting-entries',
                     moduleKey: 'ASIENTOS_CONTABLES'
                 },
+                */
             ]
         },
         {

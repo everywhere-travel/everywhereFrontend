@@ -172,12 +172,14 @@ export const routes: Routes = [
       import('./pages/detalle-recibo/detalle-recibo.component').then(m => m.DetalleReciboComponent),
     canActivate: [authGuard]
   },
+  /*
   {
     path: 'accounting-entries',
     loadComponent: () =>
       import('./pages/asiento-contable/asiento-contable').then(m => m.AsientoContable),
     canActivate: [authGuard]
   },
+  */
   {
     path: 'roles',
     loadComponent: () =>

@@ -61,8 +61,7 @@ export class DashboardComponent implements OnInit {
     // Generación de Documentos
     { title: 'Documentos Cobranza', description: 'Generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/collection-documents', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTOS_COBRANZA' },
     { title: 'Recibos', description: 'Emisión de recibos', icon: 'fas fa-file-alt', route: '/receipts', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'RECIBOS' },
-    { title: 'Asientos Contables', description: 'Historial de movimientos', icon: 'fas fa-book-open', route: '/accounting-entries', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'ASIENTOS_CONTABLES' },
-    
+    // { title: 'Asientos Contables', description: 'Historial de movimientos', icon: 'fas fa-book-open', route: '/accounting-entries', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'ASIENTOS_CONTABLES' },    
     // Gestión de Categorías
     { title: 'Categ. de Clientes', description: 'Clasificación de clientes', icon: 'fas fa-users', route: '/people-categories', iconType: 'categorias-persona', action: { text: 'Gestionar' }, moduleKey: 'CATEGORIA_CLIENTE' },
     { title: 'Doc. de Clientes', description: 'Tipos de documentos', icon: 'fas fa-file-alt', route: '/documents', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTO_CLIENTE' },
