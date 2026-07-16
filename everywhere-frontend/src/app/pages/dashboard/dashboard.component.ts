@@ -29,6 +29,7 @@ import {
 export class DashboardComponent implements OnInit {
 
   isLoading = false;
+  isFirstLogin = false;
 
   exchangeData: Exchange | null = null;
 
@@ -97,6 +98,11 @@ export class DashboardComponent implements OnInit {
 
     // Header
     this.headerData.userData = { name: userName, role: userRole };
+
+    // Check if it's the first login
+    if (authData?.loginCount === 1) {
+      this.isFirstLogin = true;
+    }
 
     // Welcome banner
     this.welcomeData.title = `¡Bienvenido, ${userName}!`;

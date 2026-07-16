@@ -74,4 +74,12 @@ export class AuthServiceService {
   getPermissions(): string[] {
     return this.currentUserSubject.value?.permissions ?? [];
   }
+
+  sendVerificationCode(email: string): Observable<string> {
+    return this.http.post(`${this.baseURL}/send-verification-code`, { email }, { responseType: 'text' });
+  }
+
+  verifyPasswordChange(email: string, code: string, newPassword: string): Observable<string> {
+    return this.http.post(`${this.baseURL}/verify-password-change`, { email, code, newPassword }, { responseType: 'text' });
+  }
 }

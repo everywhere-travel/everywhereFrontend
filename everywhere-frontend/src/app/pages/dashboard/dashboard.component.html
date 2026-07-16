@@ -11,6 +11,17 @@
     <!-- Welcome Section with reusable component -->
     <app-welcome-banner [data]="welcomeData"></app-welcome-banner>
 
+    <!-- Alerta de Cambio de Contraseña Recomendado -->
+    <div *ngIf="isFirstLogin" class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mx-6 mt-4 flex items-center justify-between shadow-sm">
+      <div class="flex items-center">
+        <svg class="w-6 h-6 mr-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        <span class="font-medium">Se recomienda realizar el cambio de contraseña por seguridad (es su primer ingreso).</span>
+      </div>
+      <a routerLink="/profile" [queryParams]="{ forceChange: 'true' }" class="px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors">
+        Cambiar Contraseña
+      </a>
+    </div>
+
     <!-- Main Modules Grid -->
     <section class="modules-section">
       <div class="section-header">
