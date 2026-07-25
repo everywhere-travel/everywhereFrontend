@@ -229,22 +229,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         sortable: true,
         width: '100px',
         render: (item) => item.numeroPasajeros?.toString() || '0'
-      },
-      {
-        key: 'producto',
-        header: 'Producto',
-        icon: 'fa-box',
-        sortable: true,
-        width: '150px',
-        render: (item) => item.producto || 'Sin producto'
-      },
-      {
-        key: 'formaPago',
-        header: 'Forma de Pago',
-        icon: 'fa-credit-card',
-        sortable: true,
-        width: '150px',
-        render: (item) => item.formaPago || 'Sin forma de pago'
       }
     ],
     enableSearch: true,

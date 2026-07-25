@@ -95,4 +95,20 @@ export class ClienteDetailModalComponent {
     if (!this.cliente) return '';
     return this.cliente.documento || this.cliente.ruc || '';
   }
+
+  getDocumentosList(): DocumentoCliente[] {
+    if (!this.cliente) return [];
+    if (this.cliente.documentos && this.cliente.documentos.length > 0) {
+      return this.cliente.documentos;
+    }
+    const docValue = this.getDocumentValue();
+    if (docValue && docValue.trim() !== '') {
+      return [{
+        numero: docValue,
+        tipo: this.getDocumentType(),
+        origen: '-'
+      }];
+    }
+    return [];
+  }
 }

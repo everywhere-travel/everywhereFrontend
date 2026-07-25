@@ -220,8 +220,9 @@
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <div *ngFor="let item of paginatedData; trackBy: trackByFn"
             [class]="'bg-white rounded-2xl shadow-lg border border-gray-200 p-6 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ' + getRowClass(item)">
-            <div class="space-y-3">
-                <div *ngFor="let column of visibleColumns.slice(0, 4)">
+            <div class="grid grid-cols-2 gap-y-3 gap-x-2">
+                <div *ngFor="let column of visibleColumns.slice(0, 4); let i = index"
+                     [ngClass]="i < 2 ? 'col-span-2' : 'col-span-1'">
                     <div class="text-sm text-gray-500">{{ column.header }}</div>
                     <div class="text-sm font-medium text-gray-900">{{ getCellValue(item, column) }}</div>
                 </div>
@@ -229,18 +230,18 @@
             <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100"
                 *ngIf="config.actions && config.actions.length > 0">
                 <button *ngFor="let action of config.actions" [hidden]="!shouldShowAction(action, item)"
-                    (click)="executeAction(action, item)"
-                    [class]="'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 hover:scale-105 bg-' + action.color + '-50 text-' + action.color + '-700 hover:bg-' + action.color + '-100'">
-                    <i [class]="'fas ' + action.icon"></i>{{ action.label }}
+                    (click)="executeAction(action, item)" [title]="action.label"
+                    [class]="'flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center hover:scale-105 bg-' + action.color + '-50 text-' + action.color + '-700 hover:bg-' + action.color + '-100'">
+                    <i [class]="'fas ' + action.icon"></i>
                 </button>
             </div>
         </div>
     </div>
 
     <!-- List View (Simplified) -->
-    <div *ngIf="!isLoading && filteredData.length > 0 && state.currentView === 'list'" class="space-y-2">
+    <div *ngIf="!isLoading && filteredData.length > 0 && state.currentView === 'list'" class="space-y-1">
         <div *ngFor="let item of paginatedData; trackBy: trackByFn"
-            [class]="'bg-white rounded-lg border border-gray-200 p-4 transition-all duration-200 ' + (config.enableRowHover !== false ? 'hover:bg-gray-50' : '') + ' ' + getRowClass(item)">
+            [class]="'bg-white rounded-lg border border-gray-200 px-3 py-2 transition-all duration-200 ' + (config.enableRowHover !== false ? 'hover:bg-gray-50' : '') + ' ' + getRowClass(item)">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4 flex-1">
                     <label *ngIf="config.enableSelection" class="relative inline-block cursor-pointer">
@@ -258,10 +259,10 @@
                     </span>
                 </div>
 
-                <div class="flex items-center gap-2 ml-4" *ngIf="config.actions && config.actions.length > 0">
+                <div class="flex items-center gap-1 ml-4" *ngIf="config.actions && config.actions.length > 0">
                     <button *ngFor="let action of config.actions" [hidden]="!shouldShowAction(action, item)"
                         (click)="executeAction(action, item)"
-                        [class]="'p-2 rounded transition-colors duration-200 bg-' + action.color + '-50 text-' + action.color + '-700 hover:bg-' + action.color + '-100'"
+                        [class]="'p-1.5 rounded transition-colors duration-200 bg-' + action.color + '-50 text-' + action.color + '-700 hover:bg-' + action.color + '-100'"
                         [title]="action.label">
                         <i [class]="'fas ' + action.icon + ' text-sm'"></i>
                     </button>

@@ -74,6 +74,7 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   personaJuridicaForm!: FormGroup;
   showPersonaJuridicaModal = false;
   isCreating: boolean = false;
+  isSaving: boolean = false;
 
   codigosPaises: CodigoPais[] = [
     { code: 'PE', name: 'Perú', dialCode: '+51' },
@@ -309,11 +310,12 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   }
 
   crearPersonaJuridica(): void {
-    if (!this.personaJuridicaForm.valid) {
-      this.markFormGroupTouched(this.personaJuridicaForm);
+    if (!this.personaJuridicaForm.valid || this.isSaving) {
+      if (!this.isSaving) this.markFormGroupTouched(this.personaJuridicaForm);
       return;
     }
 
+    this.isSaving = true;
     this.loadingService.setLoading(true);
 
     const formValue = this.personaJuridicaForm.value;
@@ -347,6 +349,7 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
           return of(null);
         }),
         finalize(() => {
+          this.isSaving = false;
           this.loadingService.setLoading(false);
         })
       )
@@ -386,7 +389,8 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   }
 
   guardarPersonaJuridica(): void {
-    if (!this.personaJuridicaForm.valid || !this.personaId) return;
+    if (!this.personaJuridicaForm.valid || !this.personaId || this.isSaving) return;
+    this.isSaving = true;
 
     this.loadingService.setLoading(true);
 
@@ -420,6 +424,7 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
           return of(null);
         }),
         finalize(() => {
+          this.isSaving = false;
           this.loadingService.setLoading(false);
         })
       )
@@ -459,7 +464,8 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   }
 
   guardarTelefono(): void {
-    if (!this.telefonoForm.valid || !this.personaId) return;
+    if (!this.telefonoForm.valid || !this.personaId || this.isSaving) return;
+    this.isSaving = true;
 
     const telefonoData: TelefonoPersonaRequest = this.telefonoForm.value;
 
@@ -482,6 +488,9 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
         catchError(error => {
           this.error = 'Error al guardar el teléfono';
           return of(null);
+        }),
+        finalize(() => {
+          this.isSaving = false;
         })
       )
       .subscribe();
@@ -547,7 +556,8 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   }
 
   guardarCorreo(): void {
-    if (!this.correoForm.valid || !this.personaId) return;
+    if (!this.correoForm.valid || !this.personaId || this.isSaving) return;
+    this.isSaving = true;
 
     const correoData: CorreoPersonaRequest = this.correoForm.value;
 
@@ -570,6 +580,9 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
         catchError(error => {
           this.error = 'Error al guardar el correo';
           return of(null);
+        }),
+        finalize(() => {
+          this.isSaving = false;
         })
       )
       .subscribe();

@@ -158,6 +158,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     cotizacionEditandoId: number | null = null;
     cotizacionOriginal: CotizacionResponse | null = null;
     buscandoClientes = false;
+    isDropdownVisible = false;
     clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay | null = null;
     personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
     todosLosClientes: (PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay)[] = [];
@@ -281,7 +282,6 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     private loadInitialData(): void {
         Promise.all([
-            this.loadPersonas(),
             this.loadFormasPago(),
             this.loadEstadosCotizacion(),
             this.loadSucursales(),
@@ -295,53 +295,11 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     }
 
     private async loadPersonas(): Promise<void> {
-        try {
-            const personasNaturales = (await this.personaNaturalService.getDropdown().toPromise()) || [];
-            const personasJuridicas = (await this.personaJuridicaService.getDropdown().toPromise()) || [];
-
-            this.personas = [...personasNaturales, ...personasJuridicas];
-            this.todosLosClientes = [...this.personas];
-            this.personasEncontradas = [...this.todosLosClientes];
-
-            // Poblar cache
-            this.personas.forEach((persona) => {
-                const personaId = persona.persona?.id || persona.id;
-                if (!personaId) return;
-
-                if ('ruc' in persona) {
-                    const pj = persona as PersonaJuridicaResponse;
-                    this.personasCache[personaId] = {
-                        id: personaId,
-                        identificador: pj.ruc || '',
-                        nombre: String(pj.razonSocial || '').replace(/null|undefined/gi, '').trim() || 'Sin nombre',
-                        tipo: 'JURIDICA',
-                    };
-                } else {
-                    const pn = persona as PersonaNaturalResponse;
-                    const safeStr = (str: any) => String(str || '').replace(/null|undefined/gi, '').trim();
-                    
-                    const nombres = safeStr(pn.nombres);
-                    const apellidoPaterno = safeStr(pn.apellidosPaterno || (pn as any).apellidoPaterno);
-                    const apellidoMaterno = safeStr(pn.apellidosMaterno || (pn as any).apellidoMaterno);
-                    
-                    const fullName = [nombres, apellidoPaterno, apellidoMaterno].filter(Boolean).join(' ');
-                    
-                    this.personasCache[personaId] = {
-                        id: personaId,
-                        identificador: pn.documento || '',
-                        nombre: fullName || 'Sin nombre',
-                        tipo: 'NATURAL',
-                    };
-                }
-
-                const cached = this.personasCache[personaId];
-                this.personasDisplayMap[personaId] = cached.nombre;
-            });
-        } catch (error) {
-            this.personas = [];
-            this.todosLosClientes = [];
-            this.personasEncontradas = [];
-        }
+        // Carga masiva deshabilitada por rendimiento.
+        // La carga se realiza de forma paginada mediante setupClienteSearch y al editar.
+        this.personas = [];
+        this.todosLosClientes = [];
+        this.personasEncontradas = [];
     }
 
     private async loadFormasPago(): Promise<void> {
@@ -460,6 +418,16 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     }
 
     // ===== PUBLIC METHODS - UI ACTIONS =====
+
+    showDropdown(): void {
+        this.isDropdownVisible = true;
+    }
+
+    hideDropdown(): void {
+        setTimeout(() => {
+            this.isDropdownVisible = false;
+        }, 200);
+    }
 
     cerrarVistaGestionGrupos(): void {
         this.mostrarGestionGrupos = false;
@@ -944,12 +912,14 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     }
 
     private async procesarDetalles(cotizacionId: number): Promise<void> {
+        const promises: Promise<void>[] = [];
+
         // Process productos fijos (categoria ID = 1)
         for (const detalle of this.detallesFijos) {
             if (detalle.isTemporary) {
-                await this.crearDetalle(cotizacionId, detalle, 1);
+                promises.push(this.crearDetalle(cotizacionId, detalle, 1));
             } else if (detalle.id) {
-                await this.actualizarDetalle(detalle);
+                promises.push(this.actualizarDetalle(detalle));
             }
         }
 
@@ -959,13 +929,16 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                 if (detalle.isTemporary) {
                     const categoria = grupo.categoria.id;
                     if (categoria) {
-                        await this.crearDetalle(cotizacionId, detalle, categoria);
+                        promises.push(this.crearDetalle(cotizacionId, detalle, categoria));
                     }
                 } else if (detalle.id) {
-                    await this.actualizarDetalle(detalle);
+                    promises.push(this.actualizarDetalle(detalle));
                 }
             }
         }
+
+        // Ejecutar todas las llamadas HTTP al backend en paralelo para maximizar velocidad
+        await Promise.all(promises);
     }
 
     private async crearDetalle(
@@ -1459,6 +1432,21 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         return totalFijos + grupoMasEconomico;
     }
 
+    getNombreGrupoMasEconomicoView(): string {
+        const categoriasNoFijas = this.getCategoriasNoFijas();
+        if (categoriasNoFijas.length === 0) return '';
+        let minTotal = Infinity;
+        let nombreEconomico = '';
+        for (const categoria of categoriasNoFijas) {
+            const total = this.getTotalCategoria(this.getDetallesByCategoria(categoria.id));
+            if (total < minTotal) {
+                minTotal = total;
+                nombreEconomico = categoria.nombre || '';
+            }
+        }
+        return nombreEconomico;
+    }
+
     // ===== PRIVATE HELPER METHODS =====
 
     private showError(message: string): void {
@@ -1549,11 +1537,8 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
     clearClienteSearch(): void {
         this.clienteSearchControl.setValue('', { emitEvent: false });
-        // Al limpiar, asegurar que se muestren todos los clientes
-        if (this.personas.length > 0) {
-            this.todosLosClientes = [...this.personas];
-            this.personasEncontradas = [...this.todosLosClientes];
-        }
+        // Buscar los 10 primeros para no dejar la lista vacia
+        this.clienteSearchControl.setValue('');
         this.buscandoClientes = false;
     }
 
@@ -2112,6 +2097,19 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
 
         const grupoMasEconomico = Math.min(...this.gruposHoteles.map((g) => g.total));
         return totalFijos + grupoMasEconomico;
+    }
+
+    getNombreGrupoMasEconomicoEdit(): string {
+        if (this.gruposHoteles.length === 0) return '';
+        let minTotal = Infinity;
+        let nombreEconomico = '';
+        for (const grupo of this.gruposHoteles) {
+            if (grupo.total < minTotal) {
+                minTotal = grupo.total;
+                nombreEconomico = grupo.categoria.nombre || '';
+            }
+        }
+        return nombreEconomico;
     }
 }
 
