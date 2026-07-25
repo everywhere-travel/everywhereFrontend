@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 import { Exchange } from '../../../shared/models/Exchange/exchange.model';
 import { environment } from '../../../../environments/environment';
 
+export interface ApiPeruConfig {
+  url: string;
+  token: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -15,5 +20,13 @@ export class ExchangeService {
 
   getExchangeRates(): Observable<Exchange> {
     return this.http.get<Exchange>(`${this.apiUrl}/tipo-de-cambio`);
+  }
+
+  getApiConfig(): Observable<ApiPeruConfig> {
+    return this.http.get<ApiPeruConfig>(`${this.apiUrl}/config`);
+  }
+
+  saveApiConfig(config: ApiPeruConfig): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/config`, config);
   }
 }
