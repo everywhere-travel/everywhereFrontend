@@ -1,40 +1,168 @@
-<div class="dashboard-layout">
-  <!-- Header with reusable component -->
-  <app-dashboard-header
-    [data]="headerData"
-    (refreshClicked)="onHeaderRefresh()"
-    (logoutClicked)="logout()">
-  </app-dashboard-header>
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-slate-100 font-sans">
+  <!-- Sidebar Component -->
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()"></app-sidebar>
 
-  <!-- Main Content -->
-  <main class="dashboard-main">
-    <!-- Welcome Section with reusable component -->
-    <app-welcome-banner [data]="welcomeData"></app-welcome-banner>
+  <!-- Main Content Area with sidebar offset -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+    <!-- Mobile Menu Button -->
+    <button (click)="onToggleSidebar()"
+      class="lg:hidden fixed top-4 left-4 z-40 w-10 h-10 bg-white shadow-md rounded-xl flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition-all text-black font-extrabold">
+      <i class="fas fa-bars text-lg"></i>
+    </button>
 
-    <!-- Alerta de Cambio de Contraseña Recomendado -->
-    <div *ngIf="isFirstLogin" class="bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-4 mx-6 mt-4 flex items-center justify-between shadow-sm">
-      <div class="flex items-center">
-        <svg class="w-6 h-6 mr-3 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-        <span class="font-medium">Se recomienda realizar el cambio de contraseña por seguridad (es su primer ingreso).</span>
-      </div>
-      <a routerLink="/profile" [queryParams]="{ forceChange: 'true' }" class="px-4 py-2 bg-amber-600 text-white text-sm font-medium rounded-lg hover:bg-amber-700 transition-colors">
-        Cambiar Contraseña
-      </a>
+    <div class="dashboard-layout">
+      <!-- Header with reusable component -->
+      <app-dashboard-header
+        [data]="headerData"
+        (refreshClicked)="onHeaderRefresh()"
+        (logoutClicked)="logout()">
+      </app-dashboard-header>
+
+      <!-- Main Content -->
+      <!-- Main Content (Optimizado para encajar en 1 sola pantalla) -->
+      <main class="p-4 md:p-6 max-w-[1750px] w-full mx-auto flex flex-col justify-between space-y-4">
+        <div class="space-y-5">
+          <!-- Hero Greeting Block (Barra Ejecutiva Compacta) -->
+          <div class="bg-white rounded-2xl px-5 py-3.5 shadow-sm border border-gray-100/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-baseline gap-3 flex-wrap">
+              <h1 class="text-xl md:text-2xl font-black text-black tracking-tight">
+                ¡Hola, {{ userName }}!
+              </h1>
+              <span class="text-xs md:text-sm font-extrabold text-black">¿Qué deseas hacer hoy?</span>
+            </div>
+            <div class="flex items-center gap-2.5 bg-slate-50 border border-slate-200/60 px-3.5 py-1.5 rounded-xl text-xs md:text-sm font-extrabold text-black shadow-sm w-fit">
+              <i class="fas fa-calendar-day text-everywhere-primary text-sm"></i>
+              <span class="text-black font-extrabold">{{ welcomeData.subtitle }}</span>
+            </div>
+          </div>
+
+          <!-- Layout a 2 columnas principales: Izquierda Gerencial, Derecha Módulos operativos en grilla masonry -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
+            
+            <!-- COLUMNA IZQUIERDA: Panel Gerencial / Indicadores (3 de 12 columnas) -->
+            <section *ngIf="showGerencialSection" class="lg:col-span-4 xl:col-span-3 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-5 text-white shadow-xl border border-slate-700/60 relative overflow-hidden lg:sticky lg:top-4">
+              <!-- Background glow -->
+              <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-everywhere-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+
+              <!-- Encabezado de la Sección Gerencial -->
+              <div class="flex flex-col gap-2 mb-4 relative z-10">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-lg shadow-emerald-400/50 flex-shrink-0"></span>
+                  <h3 class="text-sm md:text-base font-black tracking-wide uppercase text-white leading-tight">
+                    Resumen Gerencial & Operativo
+                  </h3>
+                </div>
+              </div>
+
+              <!-- Filas de KPIs (En una sola columna vertical compacta) -->
+              <div class="grid grid-cols-1 gap-3.5 relative z-10">
+                <!-- KPI 1: Cotizaciones Emitidas -->
+                <div class="bg-slate-800/90 backdrop-blur rounded-2xl p-4 border border-slate-700/80 hover:border-slate-600 transition-all shadow-md group">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <div class="text-2xl md:text-3xl font-black text-white tracking-tight">{{ formatKpi(stats.totalCotizaciones) }}</div>
+                      <div class="text-xs text-white font-extrabold mt-0.5 uppercase tracking-wider">Cotizaciones Emitidas</div>
+                    </div>
+                    <div class="text-slate-600 group-hover:text-red-400/30 transition-colors">
+                      <i class="fas fa-file-invoice-dollar text-2xl"></i>
+                    </div>
+                  </div>
+                  <div class="mt-2.5 text-xs text-emerald-400 font-bold flex items-center gap-1.5 bg-emerald-500/10 py-1 px-2 rounded-lg w-fit">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Flujo comercial</span>
+                  </div>
+                </div>
+
+                <!-- KPI 2: Total Clientes -->
+                <div class="bg-slate-800/90 backdrop-blur rounded-2xl p-4 border border-slate-700/80 hover:border-slate-600 transition-all shadow-md group">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <div class="text-2xl md:text-3xl font-black text-white tracking-tight">{{ formatKpi(stats.totalClientes) }}</div>
+                      <div class="text-xs text-white font-extrabold mt-0.5 uppercase tracking-wider">Directorio de Clientes</div>
+                    </div>
+                    <div class="text-slate-600 group-hover:text-amber-400/30 transition-colors">
+                      <i class="fas fa-users text-2xl"></i>
+                    </div>
+                  </div>
+                  <div class="mt-2.5 text-xs text-amber-300 font-bold bg-amber-500/10 py-1 px-2 rounded-lg w-fit">
+                    <span>{{ stats.totalNaturales }} Naturales • {{ stats.totalJuridicas }} Jurídicas</span>
+                  </div>
+                </div>
+
+                <!-- KPI 3: Liquidaciones -->
+                <div class="bg-slate-800/90 backdrop-blur rounded-2xl p-4 border border-slate-700/80 hover:border-slate-600 transition-all shadow-md group">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <div class="text-2xl md:text-3xl font-black text-white tracking-tight">{{ formatKpi(stats.totalLiquidaciones) }}</div>
+                      <div class="text-xs text-white font-extrabold mt-0.5 uppercase tracking-wider">Liquidaciones Procesadas</div>
+                    </div>
+                    <div class="text-slate-600 group-hover:text-blue-400/30 transition-colors">
+                      <i class="fas fa-calculator text-2xl"></i>
+                    </div>
+                  </div>
+                  <div class="mt-2.5 text-xs text-blue-400 font-bold flex items-center gap-1.5 bg-blue-500/10 py-1 px-2 rounded-lg w-fit">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Cierre operativo y contable</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- COLUMNA DERECHA: Categorías en MASONRY/GRID (Ocupa 9 de 12 columnas) -->
+            <div class="w-full" [ngClass]="showGerencialSection ? 'lg:col-span-8 xl:col-span-9' : 'lg:col-span-12'">
+              <!-- Contenedor Masonry de Columnas para las Categorías (compacto y denso) -->
+              <div class="columns-1 md:columns-2 2xl:columns-3 gap-5">
+                <div *ngFor="let cat of filteredCategories" class="bg-slate-50/70 rounded-2xl p-4 md:p-5 border border-gray-200/80 mb-5 break-inside-avoid inline-block w-full shadow-sm">
+                  <h3 class="text-xs font-black text-black uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span class="w-1.5 h-3.5 bg-everywhere-primary rounded-full inline-block flex-shrink-0"></span>
+                    <span class="text-black leading-tight">{{ cat.categoryName }}</span>
+                  </h3>
+
+                  <!-- Lista vertical limpia sin cortes -->
+                  <div class="flex flex-col gap-3">
+                    <button *ngFor="let item of cat.items" (click)="navigateTo(item.route)"
+                      class="bg-white rounded-xl p-3.5 shadow-sm border border-gray-100 hover:border-gray-300 hover:shadow-md transition-all duration-200 flex items-center justify-between group text-left w-full relative overflow-hidden">
+                      
+                      <!-- Circle Icon on Left (más compacto w-10 h-10) -->
+                      <div class="w-10 h-10 rounded-xl flex items-center justify-center border transition-transform duration-200 group-hover:scale-105 flex-shrink-0"
+                        [ngClass]="{
+                          'border-red-200 text-red-500 bg-red-50/70': item.colorTheme === 'red',
+                          'border-amber-200 text-amber-500 bg-amber-50/70': item.colorTheme === 'orange',
+                          'border-blue-200 text-blue-500 bg-blue-50/70': item.colorTheme === 'blue',
+                          'border-emerald-200 text-emerald-500 bg-emerald-50/70': item.colorTheme === 'green'
+                        }">
+                        <i [class]="item.icon + ' text-base'"></i>
+                      </div>
+                      
+                      <!-- Action Text in Center (SIN TRUNCATE, COMPACTO Y CLARO) -->
+                      <div class="flex-1 px-3 min-w-0">
+                        <div class="font-extrabold text-black group-hover:text-everywhere-primary transition-colors text-sm md:text-base leading-snug">
+                          {{ item.title }}
+                        </div>
+                        <div class="text-xs text-black font-bold mt-0.5 leading-tight">
+                          {{ item.description }}
+                        </div>
+                      </div>
+                      
+                      <!-- Arrow on Right -->
+                      <div class="w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-200 group-hover:translate-x-1 flex-shrink-0"
+                        [ngClass]="{
+                          'text-red-500': item.colorTheme === 'red',
+                          'text-amber-500': item.colorTheme === 'orange',
+                          'text-blue-500': item.colorTheme === 'blue',
+                          'text-emerald-500': item.colorTheme === 'green'
+                        }">
+                        <i class="fas fa-arrow-right text-sm"></i>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
-
-    <!-- Main Modules Grid -->
-    <section class="modules-section">
-      <div class="section-header">
-        <h3>Módulos del Sistema</h3>
-        <p>Accede a todas las funcionalidades principales</p>
-      </div>
-
-      <div class="modules-grid">
-        <app-module-card
-          *ngFor="let module of modules"
-          [data]="module">
-        </app-module-card>
-      </div>
-    </section>
-  </main>
+  </div>
 </div>

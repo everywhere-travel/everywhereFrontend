@@ -1,17 +1,35 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
 import { Exchange } from '../../shared/models/Exchange/exchange.model';
 import { ExchangeService } from '../../core/service/exchange/exchange.service';
+import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
+import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { PersonaService } from '../../core/service/persona/persona.service';
+import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
+import { LiquidacionService } from '../../core/service/Liquidacion/liquidacion.service';
 import {
   DashboardHeaderComponent,
-  WelcomeBannerComponent,
-  ModuleCardComponent,
-  ModuleCardData,
   WelcomeBannerData,
   DashboardHeaderData
 } from '../../shared/components/ui';
+
+export interface DashboardActionItem {
+  title: string;
+  description: string;
+  route: string;
+  icon: string;
+  colorTheme: 'red' | 'orange' | 'blue' | 'green';
+  moduleKey?: string;
+  actionText?: string;
+}
+
+export interface DashboardCategory {
+  categoryName: string;
+  items: DashboardActionItem[];
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -21,19 +39,37 @@ import {
   imports: [
     RouterModule,
     CommonModule,
+    FormsModule,
     DashboardHeaderComponent,
-    WelcomeBannerComponent,
-    ModuleCardComponent
+    SidebarComponent
   ]
 })
 export class DashboardComponent implements OnInit {
 
   isLoading = false;
-  isFirstLogin = false;
+  statsLoading = false;
+  sidebarCollapsed = false;
+  sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
+  userName = 'Administrador';
+  showGerencialSection = false;
+  showApiConfigModal = false;
+  savingApiConfig = false;
+  apiConfigForm = {
+    url: 'https://apiperu.dev/api/tipo_de_cambio',
+    token: ''
+  };
 
   exchangeData: Exchange | null = null;
 
-  // Datos para componentes
+  stats = {
+    totalClientes: 0,
+    totalNaturales: 0,
+    totalJuridicas: 0,
+    totalCotizaciones: 0,
+    totalLiquidaciones: 0
+  };
+
+  // Datos para componentes header
   headerData: DashboardHeaderData = {
     logoSrc: '/logo.png',
     title: {
@@ -53,107 +89,185 @@ export class DashboardComponent implements OnInit {
     subtitle: ''
   };
 
-  modules: ModuleCardData[] = [
-    { title: 'Clientes', description: 'Gestión de clientes', icon: 'fas fa-users', route: '/people', iconType: 'clientes', action: { text: 'Ver Clientes' }, moduleKey: 'CLIENTES' },
-    { title: 'Carpetas', description: 'Gestión de carpetas', icon: 'fas fa-folder', route: '/folders', iconType: 'documentos', action: { text: 'Administrar' }, moduleKey: 'CARPETA' },
-    { title: 'Cotizaciones', description: 'Gestiona las cotizaciones de viajes', icon: 'fas fa-file-invoice-dollar', route: '/quotes', iconType: 'cotizaciones', action: { text: 'Gestionar' }, moduleKey: 'COTIZACIONES' },
-    { title: 'Liquidaciones', description: 'Administra las liquidaciones', icon: 'fas fa-calculator', route: '/settlements', iconType: 'liquidaciones', action: { text: 'Procesar' }, moduleKey: 'LIQUIDACIONES' },
-    
-    // Generación de Documentos
-    { title: 'Documentos Cobranza', description: 'Generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/collection-documents', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTOS_COBRANZA' },
-    { title: 'Recibos', description: 'Emisión de recibos', icon: 'fas fa-file-alt', route: '/receipts', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'RECIBOS' },
-    // { title: 'Asientos Contables', description: 'Historial de movimientos', icon: 'fas fa-book-open', route: '/accounting-entries', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'ASIENTOS_CONTABLES' },    
-    // Gestión de Categorías
-    { title: 'Categ. de Clientes', description: 'Clasificación de clientes', icon: 'fas fa-users', route: '/people-categories', iconType: 'categorias-persona', action: { text: 'Gestionar' }, moduleKey: 'CATEGORIA_CLIENTE' },
-    { title: 'Doc. de Clientes', description: 'Tipos de documentos', icon: 'fas fa-file-alt', route: '/documents', iconType: 'documentos', action: { text: 'Gestionar' }, moduleKey: 'DOCUMENTO_CLIENTE' },
-    { title: 'Categ. de Productos', description: 'Clasificación de productos', icon: 'fas fa-list', route: '/categories', iconType: 'categorias-persona', action: { text: 'Gestionar' }, moduleKey: 'CATEGORIA_PRODUCTO' },
-    { title: 'Estados Cotización', description: 'Estados disponibles', icon: 'fas fa-clipboard-check', route: '/quote-status', iconType: 'cotizaciones', action: { text: 'Gestionar' }, moduleKey: 'ESTADO_COTIZACION' },
-    { title: 'Formas de Pago', description: 'Medios de pago', icon: 'fas fa-credit-card', route: '/payment-methods', iconType: 'cotizaciones', action: { text: 'Gestionar' }, moduleKey: 'FORMA-PAGO' },
-    
-    // Recursos
-    { title: 'Productos', description: 'Gestión de productos', icon: 'fas fa-cube', route: '/products', iconType: 'recursos', action: { text: 'Administrar' }, moduleKey: 'PRODUCTOS' },
-    { title: 'Proveedores', description: 'Red de proveedores', icon: 'fas fa-truck', route: '/suppliers', iconType: 'recursos', action: { text: 'Administrar' }, moduleKey: 'PROVEEDORES' },
-    { title: 'Operadores', description: 'Operadores turísticos', icon: 'fas fa-headset', route: '/operators', iconType: 'recursos', action: { text: 'Administrar' }, moduleKey: 'OPERADOR' },
-    
-    // Sistema
-    { title: 'Usuarios', description: 'Gestión de accesos y roles', icon: 'fas fa-users-cog', route: '/users', iconType: 'sucursales', action: { text: 'Administrar' }, moduleKey: 'USUARIOS' },
-    { title: 'Sucursales', description: 'Estructura de la empresa', icon: 'fas fa-building', route: '/branches', iconType: 'sucursales', action: { text: 'Administrar' }, moduleKey: 'SUCURSALES' }
+  // Categorías al estilo del nuevo diseño POS/Gerencial
+  allCategories: DashboardCategory[] = [
+    {
+      categoryName: 'Operaciones de Viaje & Facturación',
+      items: [
+        { title: 'Nueva Cotización', description: 'Cotizaciones de viajes y grupos', icon: 'fas fa-file-invoice-dollar', route: '/quotes', colorTheme: 'red', moduleKey: 'COTIZACIONES' },
+        { title: 'Procesar Liquidación', description: 'Liquidaciones financieras', icon: 'fas fa-calculator', route: '/settlements', colorTheme: 'red', moduleKey: 'LIQUIDACIONES' },
+        { title: 'Carpetas de Viaje', description: 'Expedientes y organización', icon: 'fas fa-folder-open', route: '/folders', colorTheme: 'red', moduleKey: 'CARPETA' }
+      ]
+    },
+    {
+      categoryName: 'Directorio y Clientes',
+      items: [
+        { title: 'Ver lista de clientes', description: 'Directorio de personas naturales y jurídicas', icon: 'fas fa-users', route: '/people', colorTheme: 'orange', moduleKey: 'CLIENTES' },
+        { title: 'Búsqueda de documentos', description: 'Tipos y documentos de clientes', icon: 'fas fa-id-card', route: '/documents', colorTheme: 'orange', moduleKey: 'DOCUMENTO_CLIENTE' },
+        { title: 'Categorías de Clientes', description: 'Clasificación de clientes', icon: 'fas fa-tags', route: '/people-categories', colorTheme: 'orange', moduleKey: 'CATEGORIA_CLIENTE' }
+      ]
+    },
+    {
+      categoryName: 'Productos, Servicios & Recursos',
+      items: [
+        { title: 'Ver lista de productos', description: 'Catálogo turístico y paquetes', icon: 'fas fa-cube', route: '/products', colorTheme: 'orange', moduleKey: 'PRODUCTOS' },
+        { title: 'Red de Proveedores', description: 'Proveedores asociados', icon: 'fas fa-truck', route: '/suppliers', colorTheme: 'orange', moduleKey: 'PROVEEDORES' },
+        { title: 'Operadores Turísticos', description: 'Operadores externos', icon: 'fas fa-headset', route: '/operators', colorTheme: 'orange', moduleKey: 'OPERADOR' }
+      ]
+    },
+    {
+      categoryName: 'Documentate y Contabilidad',
+      items: [
+        { title: 'Documentos de Cobranza', description: 'Generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/collection-documents', colorTheme: 'blue', moduleKey: 'DOCUMENTOS_COBRANZA' },
+        { title: 'Emisión de Recibos', description: 'Comprobantes y recibos de caja', icon: 'fas fa-file-alt', route: '/receipts', colorTheme: 'blue', moduleKey: 'RECIBOS' },
+        { title: 'Asientos Contables', description: 'Historial de movimientos y caja', icon: 'fas fa-book-open', route: '/accounting-entries', colorTheme: 'blue', moduleKey: 'ASIENTOS_CONTABLES' }
+      ]
+    },
+    {
+      categoryName: 'Configuración y Sistema',
+      items: [
+        { title: 'Gestión de Usuarios y Roles', description: 'Seguridad y permisos del sistema', icon: 'fas fa-users-cog', route: '/users', colorTheme: 'green', moduleKey: 'USUARIOS' },
+        { title: 'Sucursales y Empresa', description: 'Estructura organizacional', icon: 'fas fa-building', route: '/branches', colorTheme: 'green', moduleKey: 'SUCURSALES' },
+        { title: 'Estados de Cotización', description: 'Flujos de estado disponibles', icon: 'fas fa-clipboard-check', route: '/quote-status', colorTheme: 'green', moduleKey: 'ESTADO_COTIZACION' },
+        { title: 'Formas de Pago', description: 'Medios de cobro y pago', icon: 'fas fa-credit-card', route: '/payment-methods', colorTheme: 'green', moduleKey: 'FORMA-PAGO' },
+        { title: 'Categorías de Producto', description: 'Clasificación del catálogo', icon: 'fas fa-list', route: '/categories', colorTheme: 'green', moduleKey: 'CATEGORIA_PRODUCTO' }
+      ]
+    }
   ];
+
+  filteredCategories: DashboardCategory[] = [];
 
   constructor(
     private authService: AuthServiceService,
     private router: Router,
-    private exchangeService: ExchangeService
+    private exchangeService: ExchangeService,
+    private menuConfigService: MenuConfigService,
+    private personaService: PersonaService,
+    private cotizacionService: CotizacionService,
+    private liquidacionService: LiquidacionService
   ) { }
 
   ngOnInit(): void {
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/dashboard');
     this.initializeData();
-    //this.updateExchangeRate();
+    this.loadGerencialStats();
   }
 
   private initializeData(): void {
     const authData = this.authService.getUser();
-    const userName = authData?.name || 'Administrador';
+    this.userName = authData?.name || 'Administrador';
     const userRole = this.getRoleDisplayName(authData?.role || 'ADMIN');
 
     // Header
-    this.headerData.userData = { name: userName, role: userRole };
+    this.headerData.userData = { name: this.userName, role: userRole };
 
-    // Check if it's the first login
-    if (authData?.loginCount === 1) {
-      this.isFirstLogin = true;
-    }
+    // Welcome banner text fallback
+    this.welcomeData.title = `¡Hola ${this.userName}!`;
+    this.welcomeData.subtitle = `Hoy es ${this.getCurrentTime()}`;
 
-    // Welcome banner
-    this.welcomeData.title = `¡Bienvenido, ${userName}!`;
-    this.welcomeData.subtitle = `Hoy es ${this.getCurrentTime()} - Gestiona tu negocio desde aquí`;
-
-    // Filtrar módulos según permisos del nuevo formato ["MODULO:ACCION", ...]
+    // Permisos y filtrado
     const userPermissions = authData?.permissions ?? [];
     const hasAllModules = userPermissions.some((p: string) => p.startsWith('ALL_MODULES:'));
 
     if (hasAllModules) {
-      // El usuario tiene acceso a todos los módulos, no filtrar
-      this.modules = this.modules;
+      this.filteredCategories = JSON.parse(JSON.stringify(this.allCategories));
+      this.showGerencialSection = true;
     } else {
-      // Extraer módulos accesibles desde los permisos planos
       const accessibleModules = new Set(
         userPermissions.map((p: string) => p.split(':')[0])
       );
-      this.modules = this.modules.filter(m => m.moduleKey && accessibleModules.has(m.moduleKey));
+
+      // Bootstrapping de roles gerenciales / sistemas / admin
+      const roleUpper = (authData?.role || '').toUpperCase();
+      if (['GERENTE', 'SISTEMAS', 'ADMIN', 'ROLE_ADMIN', 'ADMINISTRATOR'].some(r => roleUpper.includes(r))) {
+        accessibleModules.add('USUARIOS');
+        accessibleModules.add('ROLES');
+        this.showGerencialSection = true;
+      } else {
+        // Mostrar indicadores si tiene acceso operativo a módulos clave
+        this.showGerencialSection = userPermissions.some((p: string) => 
+          p.includes('COTIZACIONES') || p.includes('CLIENTES') || p.includes('LIQUIDACIONES') || p.includes('READ')
+        );
+      }
+
+      this.filteredCategories = this.allCategories
+        .map(cat => ({
+          categoryName: cat.categoryName,
+          items: cat.items.filter(item => !item.moduleKey || accessibleModules.has(item.moduleKey))
+        }))
+        .filter(cat => cat.items.length > 0);
     }
   }
 
-  private updateExchangeRate(): void {
-    this.isLoading = true; // Activamos el estado de carga general
-    this.exchangeService.getExchangeRates().subscribe({
-      next: (data) => {
-        this.exchangeData = data; // Guardamos los datos recibidos
-        this.updateWelcomeSubtitle(); // Actualizamos el texto de bienvenida con los datos
-        this.isLoading = false;
+  loadGerencialStats(): void {
+    if (!this.showGerencialSection) return;
+    this.statsLoading = true;
+
+    // Cargar Estadísticas de Clientes
+    this.personaService.getPersonaStats().subscribe({
+      next: (res) => {
+        if (res) {
+          this.stats.totalNaturales = res.totalNaturales || 0;
+          this.stats.totalJuridicas = res.totalJuridicas || 0;
+          this.stats.totalClientes = (res.totalNaturales || 0) + (res.totalJuridicas || 0);
+        }
+      },
+      error: (err) => console.warn('No se pudieron obtener estadísticas de clientes', err)
+    });
+
+    // Cargar Total de Cotizaciones Emitidas
+    this.cotizacionService.getCotizacionesPage(0, 1).subscribe({
+      next: (res) => {
+        if (res && typeof res.totalElements === 'number') {
+          this.stats.totalCotizaciones = res.totalElements;
+        }
+      },
+      error: (err) => console.warn('No se pudieron obtener estadísticas de cotizaciones', err)
+    });
+
+    // Cargar Total de Liquidaciones
+    this.liquidacionService.getLiquidacionesPage(0, 1).subscribe({
+      next: (res) => {
+        if (res && typeof res.totalElements === 'number') {
+          this.stats.totalLiquidaciones = res.totalElements;
+        }
+        this.statsLoading = false;
       },
       error: (err) => {
-        console.error('Error al obtener el tipo de cambio', err);
-        this.exchangeData = null; // En caso de error, limpiamos los datos
-        this.updateWelcomeSubtitle(); // Actualizamos el texto para mostrar un error
-        this.isLoading = false;
+        console.warn('No se pudieron obtener estadísticas de liquidaciones', err);
+        this.statsLoading = false;
       }
     });
   }
 
+  refreshGerencial(): void {
+    this.loadGerencialStats();
+  } 
+
   private updateWelcomeSubtitle(): void {
-    const today = this.getCurrentTime();
-    let exchangeInfo = 'Cargando tipo de cambio...'; // Mensaje por defecto
+    this.welcomeData.subtitle = this.getCurrentTime();
+  }
 
-    if (this.exchangeData) {
-      // Si tenemos datos, mostramos los precios
-      exchangeInfo = `Dólar: Compra S/ ${this.exchangeData.buy} | Venta S/ ${this.exchangeData.sell}`;
-    } else if (!this.isLoading) {
-      // Si no está cargando y no hay datos, es un error
-      exchangeInfo = 'No se pudo cargar el tipo de cambio.';
+  formatKpi(val: number): string {
+    if (val >= 1000) {
+      return (val / 1000).toFixed(1) + 'K';
     }
+    return val.toString();
+  }
 
-    this.welcomeData.subtitle = `${today}  •  ${exchangeInfo}`;
+  // Métodos de navegación y sidebar
+  onToggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
+  onSidebarItemClick(item: ExtendedSidebarMenuItem): void {
+    if (item.route && !item.children) {
+      this.router.navigate([item.route]);
+    }
+  }
+
+  navigateTo(route: string): void {
+    this.router.navigate([route]);
   }
 
   // Métodos para el header
@@ -186,6 +300,7 @@ export class DashboardComponent implements OnInit {
 
     setTimeout(() => {
       this.initializeData();
+      this.loadGerencialStats();
       this.headerData.isLoading = false;
       this.isLoading = false;
     }, 1000);

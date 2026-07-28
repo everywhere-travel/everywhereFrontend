@@ -218,8 +218,26 @@ export class PersonasComponent implements OnInit {
   // ============ CLIENTE TABLE EVENTOS ============
 
   onVerCliente(cliente: PersonaTabla): void {
-    this.personaDetalles = cliente;
+    this.personaDetalles = { ...cliente };
     this.mostrarModalDetalles = true;
+    
+    if (cliente.id) {
+      this.detalleDocumentoService.findByPersonaId(cliente.id).subscribe({
+        next: (docs) => {
+          if (docs && docs.length > 0 && this.personaDetalles && this.personaDetalles.id === cliente.id) {
+            this.personaDetalles = {
+              ...this.personaDetalles,
+              documentos: docs.map(d => ({
+                numero: d.numero || '',
+                tipo: d.documento?.tipo || d.documento?.descripcion || (cliente.tipo === 'natural' ? 'DNI' : 'RUC'),
+                origen: d.origen || '-'
+              }))
+            };
+          }
+        },
+        error: (err) => console.error('Error cargando documentos en modal ver:', err)
+      });
+    }
   }
 
   onEditarCliente(cliente: PersonaTabla): void {

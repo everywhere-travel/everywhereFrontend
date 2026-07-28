@@ -272,10 +272,10 @@
               <i class="fas fa-times mr-2"></i>
               Cancelar
             </button>
-            <button type="submit" [disabled]="!isFormularioCreacionValido()"
+            <button type="submit" [disabled]="!isFormularioCreacionValido() || isSaving"
               class="bg-everywhere-primary text-white px-6 py-2.5 rounded-lg hover:bg-everywhere-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2">
-              <i class="fas fa-save"></i>
-              Crear Cliente
+              <i class="fas" [class.fa-spinner]="isSaving" [class.fa-spin]="isSaving" [class.fa-save]="!isSaving"></i>
+              {{ isSaving ? 'Creando...' : 'Crear Cliente' }}
             </button>
           </div>
         </form>
@@ -1022,10 +1022,10 @@
             <i class="fas fa-times mr-2"></i>
             Cancelar
           </button>
-          <button type="submit" [disabled]="personaNaturalForm.invalid"
+          <button type="submit" [disabled]="personaNaturalForm.invalid || isSaving"
             class="bg-everywhere-primary text-white px-6 py-2.5 rounded-lg hover:bg-everywhere-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2">
-            <i class="fas fa-save"></i>
-            Guardar Cambios
+            <i class="fas" [class.fa-spinner]="isSaving" [class.fa-spin]="isSaving" [class.fa-save]="!isSaving"></i>
+            {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
           </button>
         </div>
       </form>
@@ -1143,10 +1143,10 @@
             <i class="fas fa-times mr-2"></i>
             Cancelar
           </button>
-          <button type="submit" [disabled]="telefonoForm.invalid"
+          <button type="submit" [disabled]="telefonoForm.invalid || isSaving"
             class="bg-everywhere-primary text-white px-6 py-2.5 rounded-lg hover:bg-everywhere-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2">
-            <i class="fas" [class.fa-save]="!editingTelefonoId" [class.fa-check]="editingTelefonoId"></i>
-            {{ editingTelefonoId ? 'Actualizar' : 'Guardar' }}
+            <i class="fas" [class.fa-spinner]="isSaving" [class.fa-spin]="isSaving" [class.fa-save]="!isSaving && !editingTelefonoId" [class.fa-check]="!isSaving && editingTelefonoId"></i>
+            {{ isSaving ? 'Guardando...' : (editingTelefonoId ? 'Actualizar' : 'Guardar') }}
           </button>
         </div>
       </form>
@@ -1218,10 +1218,10 @@
             <i class="fas fa-times mr-2"></i>
             Cancelar
           </button>
-          <button type="submit" [disabled]="correoForm.invalid"
+          <button type="submit" [disabled]="correoForm.invalid || isSaving"
             class="bg-everywhere-primary text-white px-6 py-2.5 rounded-lg hover:bg-everywhere-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2">
-            <i class="fas" [class.fa-save]="!editingCorreoId" [class.fa-check]="editingCorreoId"></i>
-            {{ editingCorreoId ? 'Actualizar' : 'Guardar' }}
+            <i class="fas" [class.fa-spinner]="isSaving" [class.fa-spin]="isSaving" [class.fa-save]="!isSaving && !editingCorreoId" [class.fa-check]="!isSaving && editingCorreoId"></i>
+            {{ isSaving ? 'Guardando...' : (editingCorreoId ? 'Actualizar' : 'Guardar') }}
           </button>
         </div>
       </form>
@@ -1317,10 +1317,10 @@
               Cancelar
             </button>
             <button type="submit"
-              [disabled]="empresaForm.invalid || (empresaForm.get('empresaIds')?.value?.length || 0) === 0"
+              [disabled]="empresaForm.invalid || (empresaForm.get('empresaIds')?.value?.length || 0) === 0 || isSaving"
               class="bg-everywhere-primary text-white px-6 py-2 rounded-lg hover:bg-everywhere-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2">
-              <i class="fas fa-link"></i>
-              Asociar {{ empresaForm.get('empresaIds')?.value?.length || 0 }} empresa(s)
+              <i class="fas" [class.fa-spinner]="isSaving" [class.fa-spin]="isSaving" [class.fa-link]="!isSaving"></i>
+              {{ isSaving ? 'Asociando...' : ('Asociar ' + (empresaForm.get('empresaIds')?.value?.length || 0) + ' empresa(s)') }}
             </button>
           </div>
         </div>
@@ -1405,10 +1405,10 @@
             <i class="fas fa-times mr-2"></i>
             Cancelar
           </button>
-          <button type="submit" [disabled]="documentoForm.invalid"
+          <button type="submit" [disabled]="documentoForm.invalid || isSaving"
             class="bg-everywhere-primary text-white px-6 py-2.5 rounded-lg hover:bg-everywhere-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2">
-            <i class="fas" [class.fa-save]="!editingDocumentoId" [class.fa-check]="editingDocumentoId"></i>
-            {{ editingDocumentoId ? 'Actualizar' : 'Guardar' }}
+            <i class="fas" [class.fa-spinner]="isSaving" [class.fa-spin]="isSaving" [class.fa-save]="!isSaving && !editingDocumentoId" [class.fa-check]="!isSaving && editingDocumentoId"></i>
+            {{ isSaving ? 'Guardando...' : (editingDocumentoId ? 'Actualizar' : 'Guardar') }}
           </button>
         </div>
       </form>
@@ -1472,11 +1472,11 @@
             <i class="fas fa-times mr-2"></i>
             Cancelar
           </button>
-          <button type="submit" [disabled]="viajeroFrecuenteForm.invalid"
+          <button type="submit" [disabled]="viajeroFrecuenteForm.invalid || isSaving"
             class="bg-everywhere-primary text-white px-6 py-2.5 rounded-lg hover:bg-everywhere-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium flex items-center gap-2">
-            <i class="fas" [class.fa-save]="!editingViajeroFrecuenteId"
-              [class.fa-check]="editingViajeroFrecuenteId"></i>
-            {{ editingViajeroFrecuenteId ? 'Actualizar' : 'Guardar' }}
+            <i class="fas" [class.fa-spinner]="isSaving" [class.fa-spin]="isSaving" [class.fa-save]="!isSaving && !editingViajeroFrecuenteId"
+              [class.fa-check]="!isSaving && editingViajeroFrecuenteId"></i>
+            {{ isSaving ? 'Guardando...' : (editingViajeroFrecuenteId ? 'Actualizar' : 'Guardar') }}
           </button>
         </div>
       </form>

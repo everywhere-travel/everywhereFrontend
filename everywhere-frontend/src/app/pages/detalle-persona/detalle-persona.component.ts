@@ -87,6 +87,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   // Router params
   personaId: number | null = null;
   isCreating: boolean = false;
+  isSaving: boolean = false;
 
   // Data properties
   personaNatural: PersonaNaturalResponse | null = null;
@@ -636,11 +637,12 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   crearPersonaNatural(): void {
-    if (!this.isFormularioCreacionValido()) {
-      this.markFormGroupTouched(this.personaNaturalForm);
+    if (!this.isFormularioCreacionValido() || this.isSaving) {
+      if (!this.isSaving) this.markFormGroupTouched(this.personaNaturalForm);
       return;
     }
 
+    this.isSaving = true;
     this.loadingService.setLoading(true);
 
     const formValue = this.personaNaturalForm.value;
@@ -717,6 +719,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           return of(null);
         }),
         finalize(() => {
+          this.isSaving = false;
           this.loadingService.setLoading(false);
         })
       )
@@ -767,8 +770,9 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   guardarPersonaNatural(): void {
-    if (!this.personaNaturalForm.valid || !this.personaId) return;
+    if (!this.personaNaturalForm.valid || !this.personaId || this.isSaving) return;
 
+    this.isSaving = true;
     this.loadingService.setLoading(true);
 
     const formValue = this.personaNaturalForm.value;
@@ -847,6 +851,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           return of(null);
         }),
         finalize(() => {
+          this.isSaving = false;
           this.loadingService.setLoading(false);
         })
       )
@@ -910,7 +915,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   guardarTelefono(): void {
-    if (!this.telefonoForm.valid || !this.personaId) return;
+    if (!this.telefonoForm.valid || !this.personaId || this.isSaving) return;
+    this.isSaving = true;
 
     const telefonoData: TelefonoPersonaRequest = this.telefonoForm.value;
 
@@ -933,6 +939,9 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
         catchError(error => {
           this.mostrarErrorModal(error);
           return of(null);
+        }),
+        finalize(() => {
+          this.isSaving = false;
         })
       )
       .subscribe();
@@ -996,7 +1005,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   guardarCorreo(): void {
-    if (!this.correoForm.valid || !this.personaId) return;
+    if (!this.correoForm.valid || !this.personaId || this.isSaving) return;
+    this.isSaving = true;
 
     const correoData: CorreoPersonaRequest = this.correoForm.value;
 
@@ -1019,6 +1029,9 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
         catchError(error => {
           this.mostrarErrorModal(error);
           return of(null);
+        }),
+        finalize(() => {
+          this.isSaving = false;
         })
       )
       .subscribe();
@@ -1101,12 +1114,13 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   asociarEmpresas(): void {
-    if (!this.empresaForm.valid || !this.personaId) return;
+    if (!this.empresaForm.valid || !this.personaId || this.isSaving) return;
 
     const empresaIds: number[] = this.empresaForm.get('empresaIds')?.value || [];
 
     if (empresaIds.length === 0) return;
 
+    this.isSaving = true;
     this.loadingService.setLoading(true);
 
     const request: NaturalJuridicaRequest = {
@@ -1125,6 +1139,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           return of(null);
         }),
         finalize(() => {
+          this.isSaving = false;
           this.loadingService.setLoading(false);
         })
       )
@@ -1179,7 +1194,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   guardarViajeroFrecuente(): void {
-    if (!this.viajeroFrecuenteForm.valid || !this.personaId) return;
+    if (!this.viajeroFrecuenteForm.valid || !this.personaId || this.isSaving) return;
+    this.isSaving = true;
 
     const viajeroData: ViajeroFrecuenteRequest = this.viajeroFrecuenteForm.value;
 
@@ -1206,6 +1222,9 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
         catchError(error => {
           this.mostrarErrorModal(error);
           return of(null);
+        }),
+        finalize(() => {
+          this.isSaving = false;
         })
       )
       .subscribe();
@@ -1341,7 +1360,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   guardarDocumento(): void {
-    if (!this.documentoForm.valid || !this.personaId) return;
+    if (!this.documentoForm.valid || !this.personaId || this.isSaving) return;
+    this.isSaving = true;
 
     const documentoData: DetalleDocumentoRequest = {
       ...this.documentoForm.value,
@@ -1366,6 +1386,9 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
           console.error('Error al guardar documento:', error);
           this.mostrarErrorModal(error);
           return of(null);
+        }),
+        finalize(() => {
+          this.isSaving = false;
         })
       )
       .subscribe();

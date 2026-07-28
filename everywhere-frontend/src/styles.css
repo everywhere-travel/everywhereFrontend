@@ -60,7 +60,7 @@ body {
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
 }
 
 .btn-primary:hover {
@@ -76,7 +76,7 @@ body {
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
 }
 
 .btn-secondary:hover {
@@ -92,7 +92,7 @@ body {
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
 }
 
 .btn-outline-primary:hover {
@@ -153,7 +153,12 @@ body {
   font-weight: 500;
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
+}
+
+.btn:active, .btn-primary:active, .btn-secondary:active, .btn-outline-primary:active {
+  transform: scale(0.97) translateY(1px);
+  transition: all 0.05s ease;
 }
 
 .btn-primary {
