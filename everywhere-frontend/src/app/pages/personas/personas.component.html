@@ -13,33 +13,33 @@
       <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
       </div>
 
-      <div class="max-w-full mx-auto px-6 py-6 relative z-10">
+      <div class="max-w-full mx-auto px-4 py-4 relative z-10">
         <!-- Mobile Menu Button -->
         <button (click)="onToggleSidebar()"
           class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
           <i class="fas fa-bars text-xl"></i>
         </button>
 
-        <div class="flex flex-col lg:flex-row justify-between items-start gap-8">
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-4">
           <!-- Header Info -->
           <div class="flex-1">
-            <div class="flex items-center gap-4 mb-4">
-              <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                <i class="fas fa-users text-2xl"></i>
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <i class="fas fa-users text-xl"></i>
               </div>
               <div>
-                <h1 class="text-4xl font-bold">Gestión de Clientes</h1>
-                <p class="text-xl opacity-90 mt-2">Administra y organiza toda tu base de clientes de manera eficiente
+                <h1 class="text-3xl font-bold">Gestión de Clientes</h1>
+                <p class="text-sm opacity-90 mt-1">Administra y organiza toda tu base de clientes de manera eficiente
                 </p>
               </div>
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8" *ngIf="!isLoading">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4" *ngIf="!isLoading">
               <div
-                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
-                <div class="w-14 h-14 bg-everywhere-blue rounded-xl flex items-center justify-center">
-                  <i class="fas fa-users text-white text-xl"></i>
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-3 flex items-center gap-3 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-10 h-10 bg-everywhere-blue rounded-lg flex items-center justify-center">
+                  <i class="fas fa-users text-white text-lg"></i>
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ totalServerItems }}</div>
@@ -49,9 +49,9 @@
               </div>
 
               <div
-                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
-                <div class="w-14 h-14 bg-green-500 rounded-xl flex items-center justify-center">
-                  <i class="fas fa-user text-white text-xl"></i>
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-3 flex items-center gap-3 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <i class="fas fa-user text-white text-lg"></i>
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ estadisticas.totalNaturales }}</div>
@@ -62,9 +62,9 @@
               </div>
 
               <div
-                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-4 flex items-center gap-4 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
-                <div class="w-14 h-14 bg-everywhere-secondary rounded-xl flex items-center justify-center">
-                  <i class="fas fa-building text-white text-xl"></i>
+                class="bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl p-3 flex items-center gap-3 hover:bg-white/20 transition-all duration-300 hover:-translate-y-1">
+                <div class="w-10 h-10 bg-everywhere-secondary rounded-lg flex items-center justify-center">
+                  <i class="fas fa-building text-white text-lg"></i>
                 </div>
                 <div>
                   <div class="text-2xl font-bold">{{ estadisticas.totalJuridicas }}</div>
@@ -79,11 +79,11 @@
           <!-- Header Action -->
           <div class="z-10">
             <button (click)="abrirModalSeleccionTipo()" [disabled]="isLoading"
-              class="bg-white text-red-600 hover:bg-gray-50 px-8 py-4 rounded-2xl font-bold flex items-center gap-3 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 min-w-48 justify-center relative overflow-hidden group">
+              class="bg-white text-red-600 hover:bg-gray-50 px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 min-w-40 justify-center relative overflow-hidden group">
               <div
                 class="absolute inset-0 bg-gradient-to-r from-transparent via-red-50 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700">
               </div>
-              <i class="fas fa-plus text-lg"></i>
+              <i class="fas fa-plus text-base"></i>
               <span>Nuevo Cliente</span>
             </button>
           </div>
@@ -92,7 +92,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-full mx-auto px-6 py-6">
+    <main class="max-w-full mx-auto px-4 py-2">
       <!-- Banner informativo cuando está en modo búsqueda por documento -->
       <div *ngIf="modoVistaDocumentos" class="mb-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
         <div class="flex items-center gap-3">

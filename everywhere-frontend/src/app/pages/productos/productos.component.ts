@@ -138,7 +138,7 @@ export class ProductosComponent implements OnInit {
     ],
     enableSearch: true,
     searchPlaceholder: 'Buscar productos...',
-    enableSelection: true,
+    enableSelection: false,
     enablePagination: true,
     enableViewSwitcher: true,
     enableSorting: true,

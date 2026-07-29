@@ -96,7 +96,7 @@ export class CategoriaPersonaComponent implements OnInit {
     ],
     enableSearch: true,
     searchPlaceholder: 'Buscar por nombre...',
-    enableSelection: true,
+    enableSelection: false,
     enablePagination: true,
     enableViewSwitcher: true,
     enableSorting: true,

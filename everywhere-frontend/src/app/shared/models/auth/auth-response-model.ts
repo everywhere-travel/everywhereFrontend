@@ -5,4 +5,5 @@ export interface AuthResponse {
   role: string;
   // Nuevo formato: ["CLIENTES:READ", "COTIZACIONES:CREATE", "ALL_MODULES:DELETE", ...]
   permissions: string[];
+  loginCount?: number;
 }

@@ -41,7 +41,7 @@
       <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-white/20 transform skew-x-12">
       </div>
 
-      <div class="max-w-full mx-auto px-6 py-6 relative z-10">
+      <div class="max-w-full mx-auto px-4 py-4 relative z-10">
         <!-- Mobile Menu Button -->
         <button (click)="onToggleSidebar()"
           class="lg:hidden fixed top-4 left-4 z-50 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/30 hover:bg-white/30 transition-all">
@@ -98,7 +98,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="max-w-full mx-auto px-6 py-6">
+    <main class="max-w-full mx-auto px-4 py-2">
       <app-data-table [config]="tableConfig" [isLoading]="isLoading">
       </app-data-table>
     </main>
@@ -191,7 +191,7 @@
 <!-- Modal para Crear/Editar Cotización -->
 <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-5"
   *ngIf="mostrarFormulario" (click)="cerrarFormulario()">
-  <div class="bg-white rounded-3xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-y-auto"
+  <div class="bg-white rounded-3xl shadow-2xl max-w-full w-full max-h-[95vh] overflow-y-auto"
     (click)="$event.stopPropagation()">
     <!-- Modal Header -->
     <div class="bg-gradient-to-r from-[#D9043D] to-[#BF4968] text-white px-8 py-4 rounded-t-3xl">
@@ -1146,7 +1146,7 @@
 <!-- Modal de Visualización de Cotización -->
 <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[70] p-5"
   *ngIf="mostrarModalVer" (click)="cerrarModalVer()">
-  <div class="bg-white rounded-3xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-y-auto"
+  <div class="bg-white rounded-3xl shadow-2xl max-w-full w-full max-h-[95vh] overflow-y-auto"
     (click)="$event.stopPropagation()">
 
     <!-- Header del Modal -->
