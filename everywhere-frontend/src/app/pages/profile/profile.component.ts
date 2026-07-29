@@ -40,6 +40,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.sidebarMenuItems = this.menuConfigService.getMenuItems('/profile');
     this.loadProfile();
+    this.checkFirstLogin();
   }
 
   ngOnDestroy(): void {
@@ -112,4 +113,76 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return this.profile?.sucursal?.descripcion || 'Sin sucursal asignada';
   }
 
+  // --- NUEVA LÓGICA DE CAMBIO DE CONTRASEÑA ---
+  isFirstLogin = false;
+  codeSent = false;
+  isSendingCode = false;
+  isChangingPassword = false;
+
+  passwordForm: FormGroup = this.fb.group({
+    code: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+    newPassword: ['', [Validators.required, Validators.minLength(6)]]
+  });
+
+  checkFirstLogin(): void {
+    const route = inject(Router);
+    const urlTree = route.parseUrl(route.url);
+    if (urlTree.queryParams['forceChange'] === 'true') {
+      this.isFirstLogin = true;
+    }
+  }
+
+  sendCode(): void {
+    if (!this.profile?.email) {
+      this.errorMessage = 'No tienes un correo asignado para enviar el código.';
+      return;
+    }
+    this.isSendingCode = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.subscription.add(
+      this.authService.sendVerificationCode(this.profile.email).subscribe({
+        next: (res) => {
+          this.codeSent = true;
+          this.successMessage = 'Se le envió un código de verificación a su correo asignado.';
+          this.isSendingCode = false;
+        },
+        error: (err) => {
+          this.errorMessage = 'Error al enviar el código. Intente de nuevo.';
+          this.isSendingCode = false;
+        }
+      })
+    );
+  }
+
+  changePassword(): void {
+    if (this.passwordForm.invalid || !this.profile?.email) {
+      this.passwordForm.markAllAsTouched();
+      return;
+    }
+
+    this.isChangingPassword = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    const { code, newPassword } = this.passwordForm.value;
+
+    this.subscription.add(
+      this.authService.verifyPasswordChange(this.profile.email, code, newPassword).subscribe({
+        next: (res) => {
+          this.successMessage = 'Se realizaron los cambios correctamente. Cerrando sesión...';
+          this.isChangingPassword = false;
+          setTimeout(() => {
+            this.authService.logout();
+            this.router.navigate(['/auth/login']);
+          }, 2000);
+        },
+        error: (err) => {
+          this.errorMessage = 'El código es incorrecto o ha expirado. Revise su correo nuevamente.';
+          this.isChangingPassword = false;
+        }
+      })
+    );
+  }
 }

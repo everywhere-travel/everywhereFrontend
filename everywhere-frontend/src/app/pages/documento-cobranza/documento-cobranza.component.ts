@@ -150,7 +150,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     ],
     enableSearch: true,
     searchPlaceholder: 'Buscar por número, cotización, cliente...',
-    enableSelection: true,
+    enableSelection: false,
     enablePagination: true,
     serverSidePagination: true,
     totalServerItems: 0,
@@ -568,8 +568,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   async seleccionarCotizacion(cotizacion: CotizacionResponse): Promise<void> {
     this.cotizacionSeleccionada = cotizacion;
     this.mostrarModalCotizaciones = false;
-    // Cargar personas jurídicas y sucursales para la selección
-    await this.cargarOpcionesCreacion(cotizacion);
+    
+    // Crear el documento directamente sin popup (la sucursal se toma del usuario en backend)
+    this.personaJuridicaSeleccionada = null;
+    this.sucursalSeleccionada = null;
+    await this.confirmarCreacionDocumento();
   }
 
   cancelarSeleccionCotizacion(): void {
@@ -740,6 +743,19 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       this.isLoading = true;
 
       this.sucursales = (await this.sucursalService.getDropdownSucursales().toPromise()) || [];
+
+      // Auto-seleccionar la sucursal por defecto:
+      // Prioridad 1: la misma sucursal de la cotización (si existe en la lista)
+      // Prioridad 2: la primera sucursal disponible
+      if (this.sucursales.length > 0) {
+        const sucursalCotizacion = (cotizacion as any).sucursal;
+        if (sucursalCotizacion?.id) {
+          const match = this.sucursales.find(s => s.id === sucursalCotizacion.id);
+          this.sucursalSeleccionada = match || this.sucursales[0];
+        } else {
+          this.sucursalSeleccionada = this.sucursales[0];
+        }
+      }
 
       // Obtener personaId de la cotización (ID de tabla 'personas')
       // El backend tiene PersonaNaturalRepository.findByPersonasId() que convierte automáticamente

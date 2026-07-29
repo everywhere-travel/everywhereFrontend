@@ -171,7 +171,8 @@ export class DashboardComponent implements OnInit {
 
     if (hasAllModules) {
       this.filteredCategories = JSON.parse(JSON.stringify(this.allCategories));
-      this.showGerencialSection = true;
+      // this.showGerencialSection = true; // COMENTADO Y OCULTO TEMPORALMENTE
+      this.showGerencialSection = false;
     } else {
       const accessibleModules = new Set(
         userPermissions.map((p: string) => p.split(':')[0])
@@ -182,13 +183,10 @@ export class DashboardComponent implements OnInit {
       if (['GERENTE', 'SISTEMAS', 'ADMIN', 'ROLE_ADMIN', 'ADMINISTRATOR'].some(r => roleUpper.includes(r))) {
         accessibleModules.add('USUARIOS');
         accessibleModules.add('ROLES');
-        this.showGerencialSection = true;
-      } else {
-        // Mostrar indicadores si tiene acceso operativo a módulos clave
-        this.showGerencialSection = userPermissions.some((p: string) => 
-          p.includes('COTIZACIONES') || p.includes('CLIENTES') || p.includes('LIQUIDACIONES') || p.includes('READ')
-        );
       }
+      
+      // OCULTADO TEMPORALMENTE PARA EVITAR ALERTAS DE PERMISOS EN MÓDULOS COMO LIQUIDACIONES
+      this.showGerencialSection = false;
 
       this.filteredCategories = this.allCategories
         .map(cat => ({
@@ -200,6 +198,8 @@ export class DashboardComponent implements OnInit {
   }
 
   loadGerencialStats(): void {
+    // FUNCIONES Y CONSULTAS COMENTADAS TEMPORALMENTE PARA EVITAR "ACCESO DENEGADO"
+    /*
     if (!this.showGerencialSection) return;
     this.statsLoading = true;
 
@@ -238,10 +238,11 @@ export class DashboardComponent implements OnInit {
         this.statsLoading = false;
       }
     });
+    */
   }
 
   refreshGerencial(): void {
-    this.loadGerencialStats();
+    // this.loadGerencialStats();
   } 
 
   private updateWelcomeSubtitle(): void {

@@ -102,6 +102,7 @@ export class DocumentosComponent implements OnInit {
         header: 'Descripción',
         icon: 'fa-align-left',
         sortable: true,
+        width: '100%',
         render: (item) => item.descripcion || 'Sin descripción'
       },
       {
@@ -132,7 +133,7 @@ export class DocumentosComponent implements OnInit {
     ],
     enableSearch: true,
     searchPlaceholder: 'Buscar por tipo, descripción...',
-    enableSelection: true,
+    enableSelection: false,
     enablePagination: true,
     enableViewSwitcher: true,
     enableSorting: true,

@@ -2,7 +2,7 @@
     <!-- Search & View Controls -->
     <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
         *ngIf="config.enableSearch !== false || config.enableViewSwitcher !== false">
-        <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
+        <div class="bg-gradient-to-r from-gray-50 to-white px-3 py-2 border-b border-gray-200">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-everywhere-primary rounded-xl flex items-center justify-center">
@@ -114,7 +114,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <!-- Selection Column -->
-                        <th *ngIf="config.enableSelection" class="w-12 p-5 text-center">
+                        <th *ngIf="config.enableSelection" class="w-12 p-2 text-center">
                             <label class="relative inline-block cursor-pointer">
                                 <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
                                     (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0" />
@@ -130,13 +130,13 @@
 
                         <!-- Row Index -->
                         <th *ngIf="config.showRowIndex"
-                            class="w-12 px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            class="w-12 px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             #
                         </th>
 
                         <!-- Data Columns -->
                         <th *ngFor="let column of visibleColumns"
-                            [class]="'px-6 py-4 text-xs font-medium text-gray-500 uppercase tracking-wider ' + (column.sortable !== false && config.enableSorting !== false ? 'cursor-pointer hover:bg-gray-100' : '')"
+                            [class]="'px-3 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider ' + (column.sortable !== false && config.enableSorting !== false ? 'cursor-pointer hover:bg-gray-100' : '')"
                             [class.text-left]="column.align === 'left' || !column.align"
                             [class.text-center]="column.align === 'center'"
                             [class.text-right]="column.align === 'right'" [style.width]="column.width"
@@ -152,7 +152,7 @@
 
                         <!-- Actions Column -->
                         <th *ngIf="config.actions && config.actions.length > 0"
-                            class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            class="px-3 py-2 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
                             <i class="fas fa-cog text-gray-500"></i>
                             Acciones
                         </th>
@@ -164,7 +164,7 @@
                         [class]="'transition-colors duration-200 ' + getRowClass(item) + (config.enableRowHover !== false ? ' hover:bg-gray-50' : '')">
 
                         <!-- Selection -->
-                        <td *ngIf="config.enableSelection" class="p-5 text-center">
+                        <td *ngIf="config.enableSelection" class="p-2 text-center">
                             <label class="relative inline-block cursor-pointer">
                                 <input type="checkbox" [checked]="isSelected(item)" (change)="toggleSelection(item)"
                                     class="absolute opacity-0 w-0 h-0" />
@@ -177,12 +177,12 @@
                         </td>
 
                         <!-- Row Index -->
-                        <td *ngIf="config.showRowIndex" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td *ngIf="config.showRowIndex" class="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                             {{ (state.currentPage - 1) * state.itemsPerPage + i + 1 }}
                         </td>
 
                         <!-- Data Cells -->
-                        <td *ngFor="let column of visibleColumns" class="px-6 py-4 whitespace-nowrap text-sm"
+                        <td *ngFor="let column of visibleColumns" class="px-3 py-2 whitespace-nowrap text-sm"
                             [class.text-left]="column.align === 'left' || !column.align"
                             [class.text-center]="column.align === 'center'"
                             [class.text-right]="column.align === 'right'">
@@ -197,7 +197,7 @@
 
                         <!-- Actions -->
                         <td *ngIf="config.actions && config.actions.length > 0"
-                            class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            class="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex justify-center space-x-2">
                                 <button *ngFor="let action of config.actions" [hidden]="!shouldShowAction(action, item)"
                                     [disabled]="isActionDisabled(action, item)" (click)="executeAction(action, item)"
