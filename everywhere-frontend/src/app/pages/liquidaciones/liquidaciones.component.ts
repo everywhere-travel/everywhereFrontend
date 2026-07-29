@@ -233,7 +233,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     ],
     enableSearch: true,
     searchPlaceholder: 'Buscar por número, cotización, cliente, destino...',
-    enableSelection: true,
+    enableSelection: false,
     enablePagination: true,
     enableViewSwitcher: true,
     enableSorting: true,

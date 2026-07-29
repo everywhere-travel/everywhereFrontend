@@ -76,7 +76,8 @@ export class CategoriasComponent implements OnInit {
         key: 'nombre',
         header: 'Categoría',
         icon: 'fa-tag',
-        sortable: true
+        sortable: true,
+        align: 'center'
       },
       {
         key: 'creado',
@@ -95,7 +96,7 @@ export class CategoriasComponent implements OnInit {
     ],
     enableSearch: true,
     searchPlaceholder: 'Buscar por nombre...',
-    enableSelection: true,
+    enableSelection: false,
     enablePagination: true,
     enableViewSwitcher: true,
     enableSorting: true,

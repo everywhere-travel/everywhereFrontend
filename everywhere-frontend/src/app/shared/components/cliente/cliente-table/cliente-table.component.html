@@ -2,8 +2,8 @@
 <!-- Search & Filters Panel -->
 <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
   <!-- Panel Header -->
-  <div class="bg-gradient-to-r from-gray-50 to-white px-6 py-4 border-b border-gray-200">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+  <div class="bg-gradient-to-r from-gray-50 to-white px-5 py-3 border-b border-gray-200">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 bg-everywhere-primary rounded-xl flex items-center justify-center">
           <i class="fas fa-search text-white"></i>
@@ -39,7 +39,7 @@
     <!-- Selector de tipo de búsqueda -->
     <div class="flex items-center gap-3">
       <span class="text-sm font-medium text-gray-700">Buscar por:</span>
-      <div class="bg-gray-100 p-1 rounded-xl border border-gray-200 flex gap-1">
+      <div class="bg-gray-100 p-1 rounded-lg border border-gray-200 flex gap-1">
         <button (click)="cambiarTipoBusqueda('nombre')"
           [class.bg-everywhere-primary]="searchType === 'nombre'"
           [class.text-white]="searchType === 'nombre'"
@@ -61,7 +61,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center">
       <!-- Search Input -->
       <div class="lg:col-span-2">
         <div class="relative flex gap-2">
@@ -69,7 +69,7 @@
             <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             <input type="text" [placeholder]="getSearchPlaceholder()" [(ngModel)]="searchQuery"
               (keydown)="onKeyDownSearch($event)" [disabled]="isLoading"
-              class="w-full pl-12 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+              class="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white text-sm">
             <button *ngIf="searchQuery && searchType === 'nombre'" (click)="clearSearch()"
               class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
               <i class="fas fa-times"></i>
@@ -79,23 +79,23 @@
           <!-- Botón de búsqueda solo visible en modo documento -->
           <button *ngIf="searchType === 'documento'" (click)="ejecutarBusquedaDocumento()"
             [disabled]="!searchQuery.trim() || isLoading"
-            class="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-3 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shadow-sm">
-            <i class="fas fa-search text-xl"></i>
-            <span class="text-lg">Buscar</span>
+            class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap shadow-sm text-sm">
+            <i class="fas fa-search"></i>
+            <span>Buscar</span>
           </button>
 
           <!-- Botón de limpiar siempre visible si hay texto -->
           <button *ngIf="searchQuery" (click)="clearSearch()"
-            class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-colors duration-200 whitespace-nowrap shadow-sm">
+            class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-100 px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors duration-200 whitespace-nowrap shadow-sm text-sm">
             <i class="fas fa-eraser"></i>
-            <span class="text-lg">Limpiar</span>
+            <span>Limpiar</span>
           </button>
         </div>
       </div>
 
       <!-- Filter Pills -->
-      <div class="flex flex-wrap gap-2" *ngIf="searchType === 'nombre'">
-        <div class="bg-gray-100 p-1 rounded-2xl border border-gray-200 flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2 lg:justify-end" *ngIf="searchType === 'nombre'">
+        <div class="bg-gray-100 p-1 rounded-xl border border-gray-200 flex flex-wrap gap-1">
           <button *ngFor="let filter of [
                   {key: 'todos', label: 'Todos', icon: 'fa-users', count: clientes.length},
                   {key: 'natural', label: 'Naturales', icon: 'fa-user', count: estadisticas?.totalNaturales || 0},
@@ -104,10 +104,10 @@
             [class.text-gray-600]="filtroTipo !== filter.key" [class.bg-transparent]="filtroTipo !== filter.key"
             [class.hover:bg-red-50]="filtroTipo !== filter.key" [class.hover:text-red-600]="filtroTipo !== filter.key"
             (click)="aplicarFiltroTipo(filter.key)" [disabled]="isLoading"
-            class="px-4 py-2 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 text-sm whitespace-nowrap">
+            class="px-3 py-1.5 rounded-lg font-semibold flex items-center gap-2 transition-all duration-200 text-sm whitespace-nowrap">
             <i class="fas" [class]="filter.icon"></i>
             <span>{{ filter.label }}</span>
-            <span class="px-2 py-1 rounded-lg text-xs font-bold min-w-[20px] text-center"
+            <span class="px-2 py-0.5 rounded-md text-xs font-bold min-w-[20px] text-center"
               [class.bg-white/25]="filtroTipo === filter.key" [class.bg-gray-200]="filtroTipo !== filter.key"
               *ngIf="!isLoading">{{ filter.count }}</span>
           </button>
@@ -185,8 +185,8 @@
         <!-- Table Header -->
         <thead class="bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
           <tr>
-            <th class="w-12 p-4 text-center">
-              <label class="relative inline-block cursor-pointer">
+            <th class="w-12 p-3 text-center" *ngIf="false">
+              <label class="relative inline-block cursor-pointer" *ngIf="false">
                 <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
                   (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0">
                 <span
@@ -198,9 +198,9 @@
               </label>
             </th>
 
-            <th class="p-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+            <th class="p-3 text-center text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
               (click)="sortBy('tipo')" [class.bg-everywhere-primary/5]="sortColumn === 'tipo'">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-center">
                 <div class="flex items-center gap-2">
                   <i class="fas fa-tags text-gray-500"></i>
                   <span>Tipo</span>
@@ -215,7 +215,7 @@
               </div>
             </th>
 
-            <th class="p-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
+            <th class="p-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider cursor-pointer hover:bg-everywhere-primary/5 transition-colors group"
               (click)="sortBy('nombre')" [class.bg-everywhere-primary/5]="sortColumn === 'nombre'">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -232,14 +232,14 @@
               </div>
             </th>
 
-            <th class="p-4 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
+            <th class="p-3 text-left text-xs font-bold text-gray-900 uppercase tracking-wider">
               <div class="flex items-center gap-2">
                 <i class="fas fa-phone text-gray-500"></i>
                 <span>Contacto</span>
               </div>
             </th>
 
-            <th class="p-4 text-center text-xs font-bold text-gray-900 uppercase tracking-wider">
+            <th class="p-3 text-center text-xs font-bold text-gray-900 uppercase tracking-wider">
               <div class="flex items-center justify-center gap-2">
                 <i class="fas fa-cog text-gray-500"></i>
                 <span>Acciones</span>
@@ -254,8 +254,8 @@
             class="hover:bg-gray-50 transition-colors duration-200">
 
             <!-- Checkbox -->
-            <td class="p-2 text-center">
-              <label class="relative inline-block cursor-pointer">
+            <td class="p-2 text-center" *ngIf="false">
+              <label class="relative inline-block cursor-pointer" *ngIf="false">
                 <input type="checkbox" [checked]="isSelected(persona.id)" (change)="toggleSelection(persona.id)"
                   class="absolute opacity-0 w-0 h-0">
                 <span
@@ -267,9 +267,9 @@
             </td>
 
             <!-- Tipo -->
-            <td class="p-2">
+            <td class="p-2 text-center">
               <div
-                class="flex items-center gap-3 px-4 py-2 rounded-xl font-bold text-sm uppercase tracking-wide w-fit border-2"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-xs uppercase tracking-wide w-fit mx-auto border-2"
                 [class.bg-green-50]="persona.tipo === 'natural'" [class.text-green-700]="persona.tipo === 'natural'"
                 [class.border-green-200]="persona.tipo === 'natural'" [class.bg-blue-50]="persona.tipo === 'juridica'"
                 [class.text-blue-700]="persona.tipo === 'juridica'"
@@ -285,16 +285,16 @@
 
             <!-- Cliente -->
             <td class="p-2">
-              <div class="flex items-center gap-4">
+              <div class="flex items-center gap-3">
                 <div
-                  class="w-12 h-12 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                  class="w-10 h-10 bg-gradient-to-r from-[#D9043D] to-[#BF4968] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">
                   {{ getClientInitials(persona) }}
                 </div>
                 <div class="min-w-0 flex-1">
-                  <div class="font-bold text-gray-900 text-lg mb-1 truncate">
+                  <div class="font-bold text-gray-900 text-sm mb-0.5 truncate">
                     {{ persona.nombre }}
                   </div>
-                  <div class="flex items-center gap-3 text-sm flex-wrap">
+                  <div class="flex items-center gap-2 text-xs flex-wrap">
                     <span class="text-gray-600 font-mono font-medium">ID: #{{ persona.id }}</span>
                     
                     <!-- Mostrar tipo y número de documento solo cuando está en modo búsqueda por documento -->
@@ -317,7 +317,7 @@
 
             <!-- Contacto -->
             <td class="p-2">
-              <div class="space-y-2">
+              <div class="space-y-1">
                 <div class="flex items-center justify-center gap-2 text-sm" *ngIf="persona.email">
                   <i class="fas fa-envelope text-gray-400 w-4"></i>
                   <span class="text-gray-900 truncate">{{ persona.email }}</span>
@@ -326,7 +326,7 @@
                   <i class="fas fa-phone text-gray-400 w-4"></i>
                   <span class="text-gray-900">{{ persona.telefono }}</span>
                 </div>
-                <div class="flex items-center justify-center h-16 text-gray-500 italic text-sm"
+                <div class="flex items-center justify-center py-2 text-gray-500 italic text-sm"
                   *ngIf="!persona.email && !persona.telefono">
                   Sin contacto
                 </div>
@@ -335,21 +335,21 @@
 
             <!-- Acciones -->
             <td class="p-2 whitespace-nowrap text-center">
-              <div class="flex justify-center items-center gap-2">
+              <div class="flex justify-center items-center gap-1.5">
                 <button (click)="onVerCliente(persona)"
-                  class="w-9 h-9 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                  class="w-8 h-8 bg-green-100 hover:bg-green-200 text-green-600 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-105"
                   title="Ver detalle">
-                  <i class="fas fa-eye text-green-500"></i>
+                  <i class="fas fa-eye text-green-500 text-sm"></i>
                 </button>
                 <button (click)="onEditarCliente(persona)"
-                  class="w-9 h-9 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                  class="w-8 h-8 bg-blue-100 hover:bg-blue-200 text-blue-600 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-105"
                   title="Editar Persona">
-                  <i class="fas fa-edit text-blue-500"></i>
+                  <i class="fas fa-edit text-blue-500 text-sm"></i>
                 </button>
                 <button (click)="confirmarEliminar(persona)"
-                  class="w-9 h-9 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                  class="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-md flex items-center justify-center transition-all duration-200 hover:scale-105"
                   title="Eliminar Persona">
-                  <i class="fas fa-trash text-red-500"></i>
+                  <i class="fas fa-trash text-red-500 text-sm"></i>
                 </button>
               </div>
             </td>
@@ -370,7 +370,7 @@
       <div class="relative p-6 border-b border-gray-100">
         <!-- Selection Checkbox -->
         <div class="absolute top-4 right-4">
-          <label class="relative inline-block cursor-pointer">
+          <label class="relative inline-block cursor-pointer" *ngIf="false">
             <input type="checkbox" [checked]="isSelected(persona.id)" (change)="toggleSelection(persona.id)"
               class="absolute opacity-0 w-0 h-0">
             <span
@@ -470,7 +470,7 @@
     <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <label class="relative inline-block cursor-pointer">
+          <label class="relative inline-block cursor-pointer" *ngIf="false">
             <input type="checkbox" [checked]="allSelected" [indeterminate]="someSelected"
               (change)="toggleAllSelection()" class="absolute opacity-0 w-0 h-0">
             <span
@@ -493,7 +493,7 @@
 
         <div class="flex items-center gap-4">
           <!-- Checkbox -->
-          <label class="relative inline-block cursor-pointer">
+          <label class="relative inline-block cursor-pointer" *ngIf="false">
             <input type="checkbox" [checked]="isSelected(persona.id)" (change)="toggleSelection(persona.id)"
               class="absolute opacity-0 w-0 h-0">
             <span

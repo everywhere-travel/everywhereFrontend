@@ -145,7 +145,7 @@ export class SucursalesComponent implements OnInit {
     ],
     enableSearch: true,
     searchPlaceholder: 'Buscar sucursales...',
-    enableSelection: true,
+    enableSelection: false,
     enablePagination: true,
     enableViewSwitcher: true,
     enableSorting: true,

@@ -16,14 +16,14 @@ export class ReciboService {
   constructor(private http: HttpClient) { }
 
   createRecibo(
-    documentoCobranzaId: number,
+    cotizacionId: number,
     personaJuridicaId?: number,
     sucursalId?: number,
     montoPago?: number
   ): Observable<ReciboResponseDTO> {
     let params = new HttpParams().set(
-      'documentoCobranzaId',
-      documentoCobranzaId.toString()
+      'cotizacionId',
+      cotizacionId.toString()
     );
 
     if (personaJuridicaId) {
@@ -45,6 +45,25 @@ export class ReciboService {
 
   getAllRecibos(): Observable<ReciboResponseDTO[]> {
     return this.http.get<ReciboResponseDTO[]>(this.apiUrl);
+  }
+
+  getRecibosPage(
+    page: number = 0,
+    size: number = 10,
+    sortColumn: string = 'id',
+    sortDirection: string = 'desc',
+    search?: string
+  ): Observable<{content: ReciboResponseDTO[], totalElements: number, totalPages: number}> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', `${sortColumn},${sortDirection}`);
+
+    if (search) {
+      params = params.set('search', search);
+    }
+
+    return this.http.get<{content: ReciboResponseDTO[], totalElements: number, totalPages: number}>(`${this.apiUrl}/page`, { params });
   }
 
   getReciboById(id: number): Observable<ReciboResponseDTO> {

@@ -80,6 +80,7 @@ export class FormaPagoComponent implements OnInit {
         header: 'Descripción',
         icon: 'fa-align-left',
         sortable: true,
+        align: 'center',
         render: (item) => item.descripcion || 'Sin descripción'
       },
       {
@@ -101,7 +102,7 @@ export class FormaPagoComponent implements OnInit {
     ],
     enableSearch: true,
     searchPlaceholder: 'Buscar por código o descripción...',
-    enableSelection: true,
+    enableSelection: false,
     enablePagination: true,
     enableViewSwitcher: true,
     enableSorting: true,

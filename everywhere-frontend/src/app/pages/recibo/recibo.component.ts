@@ -11,6 +11,7 @@ import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natur
 import { SucursalService } from '../../core/service/Sucursal/sucursal.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 import { DocumentoCobranzaService } from '../../core/service/DocumentoCobranza/DocumentoCobranza.service';
+import { ErrorHandlerService } from '../../core/service/error-handler.service';
 
 // Models
 import { ReciboResponseDTO } from '../../shared/models/Recibo/recibo.model';
@@ -20,14 +21,28 @@ import { SucursalResponse } from '../../shared/models/Sucursal/sucursal.model';
 
 // Components
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
+import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
+import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
+interface ReciboTabla {
+  id: number;
+  numero: string;
+  codigoCotizacion: string;
+  clienteNombre: string;
+  fechaEmision: string;
+  moneda: string;
+  fileVenta: string;
+  createdAt: string;
+  updatedAt: string;
+  reciboOriginal: ReciboResponseDTO;
+}
 
 @Component({
   selector: 'app-recibo',
   standalone: true,
   templateUrl: './recibo.component.html',
   styleUrls: ['./recibo.component.css'],
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent]
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, SidebarComponent, DataTableComponent]
 })
 export class ReciboComponent implements OnInit, OnDestroy {
 
@@ -40,6 +55,7 @@ export class ReciboComponent implements OnInit, OnDestroy {
   private naturalJuridicoService = inject(NaturalJuridicoService);
   private sucursalService = inject(SucursalService);
   private documentoCobranzaService = inject(DocumentoCobranzaService);
+  private errorHandlerService = inject(ErrorHandlerService);
 
   // ===== UI STATE =====
   loading: boolean = false;
@@ -74,10 +90,46 @@ export class ReciboComponent implements OnInit, OnDestroy {
   searchTerm = '';
   searchCotizacion = '';
 
-  // ===== PAGINATION =====
+  // ===== DATA TABLE CONFIGURATION =====
+  recibosTabla: ReciboTabla[] = [];
   currentPage = 1;
-  itemsPerPage = 10;
+  pageSize = 10;
+  sortColumn = 'id';
+  sortDirection = 'desc';
   totalItems = 0;
+
+  tableConfig: DataTableConfig<ReciboTabla> = {
+    data: [],
+    columns: [
+      { key: 'numero', header: 'Número', icon: 'fa-hashtag', sortable: true, width: '150px' },
+      { key: 'codigoCotizacion', header: 'Cotización', icon: 'fa-file-alt', sortable: true },
+      { key: 'clienteNombre', header: 'Cliente', icon: 'fa-user', sortable: true },
+      { key: 'fechaEmision', header: 'Fecha Emisión', icon: 'fa-calendar', sortable: true },
+      { key: 'moneda', header: 'Moneda', icon: 'fa-money-bill', sortable: true, align: 'center', width: '100px' }
+    ],
+    enableSearch: true,
+    searchPlaceholder: 'Buscar por número, cotización, cliente...',
+    enableSelection: false,
+    enablePagination: true,
+    serverSidePagination: true,
+    totalServerItems: 0,
+    enableViewSwitcher: true,
+    enableSorting: true,
+    itemsPerPage: 10,
+    pageSizeOptions: [5, 10, 25, 50],
+    actions: [
+      { icon: 'fa-eye', label: 'Ver', color: 'green', handler: (item) => this.verDetalleDocumento(item.reciboOriginal) },
+      { icon: 'fa-edit', label: 'Editar', color: 'blue', handler: (item) => this.editarDocumento(item.reciboOriginal) },
+      { icon: 'fa-file-pdf', label: 'Ver', color: 'gray', handler: (item) => this.verPDF(item.reciboOriginal) },
+      { icon: 'fa-download', label: 'Descargar', color: 'purple', handler: (item) => this.descargarPDF(item.reciboOriginal) }
+    ],
+    bulkActions: [],
+    emptyMessage: 'No se encontraron recibos',
+    loadingMessage: 'Cargando recibos...',
+    defaultView: 'table',
+    enableRowHover: true,
+    trackByKey: 'id'
+  };
 
   // ===== MESSAGES =====
   errorMessage: string = '';
@@ -100,7 +152,7 @@ export class ReciboComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.initializeForms();
     this.loadInitialData();
-    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/recibos');
+    this.sidebarMenuItems = this.menuConfigService.getMenuItems('/receipts');
   }
 
   ngOnDestroy(): void {
@@ -142,11 +194,7 @@ export class ReciboComponent implements OnInit, OnDestroy {
       observaciones: ['']
     });
 
-    // Setup search
-    this.searchForm.get('searchTerm')?.valueChanges.subscribe(value => {
-      this.searchTerm = value;
-      this.filterRecibos();
-    });
+    // Remove search value listener since table handles it
   }
 
   private async loadInitialData(): Promise<void> {
@@ -163,6 +211,29 @@ export class ReciboComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ===== EVENTOS DE TABLA SERVER-SIDE =====
+  onPageChange(page: number): void {
+    this.currentPage = page;
+    this.loadRecibos();
+  }
+
+  onSortChange(sort: { column: string, direction: 'asc' | 'desc' | null }): void {
+    if (sort.direction) {
+      this.sortColumn = sort.column;
+      this.sortDirection = sort.direction;
+    } else {
+      this.sortColumn = 'id';
+      this.sortDirection = 'desc';
+    }
+    this.loadRecibos();
+  }
+
+  onSearchChange(term: string): void {
+    this.searchTerm = term;
+    this.currentPage = 1;
+    this.loadRecibos();
+  }
+
   // ===== DATA LOADING =====
   private async loadRecibos(setLoading: boolean = false): Promise<void> {
     try {
@@ -171,10 +242,20 @@ export class ReciboComponent implements OnInit, OnDestroy {
         this.isLoading = true;
       }
 
-      this.recibos = await this.reciboService.getAllRecibos().toPromise() || [];
+      const response = await this.reciboService.getRecibosPage(
+        this.currentPage - 1,
+        this.pageSize,
+        this.sortColumn,
+        this.sortDirection,
+        this.searchTerm
+      ).toPromise();
 
-      this.filteredRecibos = [...this.recibos];
-      this.totalItems = this.recibos.length;
+      if (response) {
+        this.recibos = response.content || [];
+        this.filteredRecibos = [...this.recibos];
+        this.totalItems = response.totalElements;
+        this.updateTableConfig();
+      }
     } catch (error) {
       console.error('Error al cargar recibos:', error);
       this.showError('Error al cargar los recibos');
@@ -208,21 +289,6 @@ export class ReciboComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ===== REFRESH METHODS =====
-  async actualizarDatos(): Promise<void> {
-    this.loading = true;
-    this.isLoading = true;
-    try {
-      await this.loadRecibos();
-      await this.loadCotizaciones();
-    } catch (error) {
-      this.showError('Error al actualizar los datos');
-    } finally {
-      this.loading = false;
-      this.isLoading = false;
-    }
-  }
-
   async recargarRecibos(): Promise<void> {
     await this.loadRecibos();
   }
@@ -245,28 +311,26 @@ export class ReciboComponent implements OnInit, OnDestroy {
     this.showSuccessMessage = false;
   }
 
-  // ===== SEARCH AND FILTER =====
-  clearSearch(): void {
-    this.searchForm.patchValue({ searchTerm: '' });
-    this.searchTerm = '';
-    this.filterRecibos();
-  }
+  // ===== TABLE CONFIG UPDATE =====
+  private updateTableConfig(): void {
+    this.recibosTabla = this.filteredRecibos.map((rec) => ({
+      id: rec.id || 0,
+      numero: this.getNumeroRecibo(rec),
+      codigoCotizacion: rec.codigoCotizacion || 'Sin cotización',
+      clienteNombre: rec.clienteNombre || 'Sin nombre',
+      fechaEmision: this.formatDate(rec.fechaEmision),
+      moneda: rec.moneda || 'USD',
+      fileVenta: rec.fileVenta || 'Sin file',
+      createdAt: this.formatDateTime((rec as any).createdAt),
+      updatedAt: this.formatDateTime((rec as any).updatedAt),
+      reciboOriginal: rec,
+    }));
 
-  private filterRecibos(): void {
-    if (!this.searchTerm.trim()) {
-      this.filteredRecibos = [...this.recibos];
-    } else {
-      const term = this.searchTerm.toLowerCase();
-      this.filteredRecibos = this.recibos.filter(recibo =>
-        recibo.serie?.toLowerCase().includes(term) ||
-        recibo.correlativo?.toString().includes(term) ||
-        recibo.fileVenta?.toLowerCase().includes(term) ||
-        recibo.clienteNombre?.toLowerCase().includes(term) ||
-        recibo.codigoCotizacion?.toLowerCase().includes(term)
-      );
-    }
-    this.totalItems = this.filteredRecibos.length;
-    this.currentPage = 1;
+    this.tableConfig = {
+      ...this.tableConfig,
+      data: this.recibosTabla,
+      totalServerItems: this.totalItems
+    };
   }
 
   // ===== VIEW METHODS =====
@@ -384,8 +448,11 @@ export class ReciboComponent implements OnInit, OnDestroy {
   async seleccionarCotizacion(cotizacion: CotizacionResponse): Promise<void> {
     this.cotizacionSeleccionada = cotizacion;
     this.mostrarModalCotizaciones = false;
-    // Cargar personas jurídicas y sucursales para la selección
-    await this.cargarOpcionesCreacion(cotizacion);
+    
+    // Crear el recibo directamente sin popup (la sucursal se toma del usuario en backend)
+    this.personaJuridicaSeleccionada = null;
+    this.sucursalSeleccionada = null;
+    await this.confirmarCreacionDocumento();
   }
 
   cancelarSeleccionCotizacion(): void {
@@ -441,97 +508,6 @@ export class ReciboComponent implements OnInit, OnDestroy {
     }
 
     this.pdfService.viewReciboPdf(reciboId);
-  }
-
-  // ===== SELECTION METHODS =====
-  toggleAllSelection(): void {
-    if (this.allSelected) {
-      this.selectedItems = [];
-    } else {
-      this.selectedItems = this.filteredRecibos
-        .map(recibo => (recibo as any).id)
-        .filter(id => id !== undefined && id !== null);
-    }
-    this.updateSelectionState();
-  }
-
-  toggleSelection(id: number | undefined): void {
-    if (!id) return;
-    const index = this.selectedItems.indexOf(id);
-    if (index > -1) {
-      this.selectedItems.splice(index, 1);
-    } else {
-      this.selectedItems.push(id);
-    }
-    this.updateSelectionState();
-  }
-
-  isSelected(id: number | undefined): boolean {
-    if (!id) return false;
-    return this.selectedItems.includes(id);
-  }
-
-  updateSelectionState(): void {
-    this.allSelected = this.selectedItems.length === this.filteredRecibos.length && this.filteredRecibos.length > 0;
-    this.someSelected = this.selectedItems.length > 0 && !this.allSelected;
-  }
-
-  clearSelection(): void {
-    this.selectedItems = [];
-    this.updateSelectionState();
-  }
-
-  // ===== PAGINATION =====
-  get totalPages(): number {
-    return Math.ceil(this.totalItems / this.itemsPerPage);
-  }
-
-  get paginatedRecibos(): ReciboResponseDTO[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    return this.filteredRecibos.slice(startIndex, endIndex);
-  }
-
-  onItemsPerPageChange(): void {
-    this.currentPage = 1;
-  }
-
-  goToPage(page: number): void {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-    }
-  }
-
-  getVisiblePages(): number[] {
-    const totalPages = this.totalPages;
-    const currentPage = this.currentPage;
-    const visiblePages: number[] = [];
-
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) {
-        visiblePages.push(i);
-      }
-    } else {
-      if (currentPage <= 4) {
-        for (let i = 1; i <= 5; i++) {
-          visiblePages.push(i);
-        }
-        visiblePages.push(-1, totalPages);
-      } else if (currentPage >= totalPages - 3) {
-        visiblePages.push(1, -1);
-        for (let i = totalPages - 4; i <= totalPages; i++) {
-          visiblePages.push(i);
-        }
-      } else {
-        visiblePages.push(1, -1);
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          visiblePages.push(i);
-        }
-        visiblePages.push(-1, totalPages);
-      }
-    }
-
-    return visiblePages;
   }
 
   // ===== SIDEBAR METHODS =====
@@ -673,40 +649,26 @@ export class ReciboComponent implements OnInit, OnDestroy {
       const personaJuridicaId = this.personaJuridicaSeleccionada?.personaJuridica?.id;
       const sucursalId = this.sucursalSeleccionada?.id;
 
-      this.documentoCobranzaService.getDocumentoByCotizacion(this.cotizacionSeleccionada.id).subscribe({
-        next: (documentoCobranza) => {
-          if (!documentoCobranza || !documentoCobranza.id) {
-            this.showError('El Documento de Cobranza no es válido.');
-            this.isLoading = false;
-            return;
-          }
-
-          this.reciboService.createRecibo(
-            documentoCobranza.id,
-            personaJuridicaId,
-            sucursalId
-          ).subscribe({
-            next: async (recibo: any) => {
-              this.showSuccess('Recibo creado exitosamente');
-              this.cerrarFormulario();
-              // Redirigir al detalle en modo edición
-              this.router.navigate(['/receipts/detalle', recibo.id], {
-                queryParams: { modo: 'editar' }
-              });
-            },
-            error: (error) => {
-              const errorMsg = error.error?.message || error.message || 'Error al crear el recibo';
-              this.showError(errorMsg);
-              this.isLoading = false;
-            },
-            complete: () => {
-              this.isLoading = false;
-            }
+      this.reciboService.createRecibo(
+        this.cotizacionSeleccionada.id,
+        personaJuridicaId,
+        sucursalId
+      ).subscribe({
+        next: async (recibo: any) => {
+          this.showSuccess('Recibo creado exitosamente');
+          this.cerrarFormulario();
+          // Redirigir al detalle en modo edición
+          this.router.navigate(['/receipts/detalle', recibo.id], {
+            queryParams: { modo: 'editar' }
           });
         },
         error: (error) => {
+          const errorMsg = this.errorHandlerService.getErrorMessage(error);
+          this.showError(errorMsg);
           this.isLoading = false;
-          this.showError('Debes crear un Documento de Cobranza para esta cotización antes de emitir un recibo.');
+        },
+        complete: () => {
+          this.isLoading = false;
         }
       });
     } catch (error) {
