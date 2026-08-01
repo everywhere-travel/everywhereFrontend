@@ -51,6 +51,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'quotes/crear',
+    loadComponent: () =>
+      import('./pages/detalle-cotizacion/detalle-cotizacion.component').then(m => m.DetalleCotizacionComponent),
+    canActivate: [authGuard]
+  },
+  {
     path: 'quotes/detalle/:id',
     loadComponent: () =>
       import('./pages/detalle-cotizacion/detalle-cotizacion.component').then(m => m.DetalleCotizacionComponent),

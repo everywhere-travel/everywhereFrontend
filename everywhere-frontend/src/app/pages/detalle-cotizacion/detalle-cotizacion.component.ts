@@ -143,6 +143,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     isLoading = false;
     error: string | null = null;
     modoEdicion = false;
+    modoCreacion = false;
     grupoSeleccionadoId: number | null = null;
     editandoCotizacion = false;
     seccionDestino: string | null = null;
@@ -202,7 +203,17 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         }
     }
 
-    private loadCotizacionFromRoute(): void {
+    private async loadCotizacionFromRoute(): Promise<void> {
+        const url = this.router.url;
+        
+        if (url.includes('/quotes/crear')) {
+            this.modoCreacion = true;
+            this.modoEdicion = true;
+            this.editandoCotizacion = false;
+            await this.setupDatesForNew();
+            return;
+        }
+
         const idParam = this.route.snapshot.paramMap.get('id');
 
         if (!idParam || isNaN(Number(idParam))) {
@@ -673,6 +684,59 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Obtiene la fecha y hora actual en zona horaria de Lima (UTC-5)
+     */
+    private getCurrentLimaTime(): Date {
+        const now = new Date();
+        return new Date(now.toLocaleString('en-US', { timeZone: 'America/Lima' }));
+    }
+
+    /**
+     * Obtiene la fecha y hora actual en formato ISO string para Lima
+     */
+    private getCurrentLimaISOString(): string {
+        return this.getCurrentLimaTime().toISOString();
+    }
+
+    private async generateNextCode(): Promise<string> {
+        try {
+            const cotizaciones = (await this.cotizacionService.getAllCotizaciones().toPromise()) || [];
+            const maxCotizacion = cotizaciones.reduce((max, cotizacion) => {
+                const codigo = cotizacion.codigoCotizacion || '';
+                const numero = parseInt(codigo.replace(/[^0-9]/g, '')) || 0;
+                return Math.max(max, numero);
+            }, 0);
+            return `COT-${String(maxCotizacion + 1).padStart(3, '0')}`;
+        } catch (error) {
+            console.error('Error al generar código:', error);
+            return `COT-001`;
+        }
+    }
+
+    private async setupDatesForNew(): Promise<void> {
+        // Crear fecha actual en zona horaria de Lima (UTC-5)
+        const now = new Date();
+        const limaTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Lima' }));
+
+        // Crear fecha de vencimiento el mismo día a las 11pm en hora de Lima
+        const vencimiento = new Date(limaTime);
+        vencimiento.setHours(23, 0, 0, 0);
+
+        // Si ya pasaron las 11pm del día actual, mover al siguiente día a las 11pm
+        if (limaTime.getHours() >= 23) {
+            vencimiento.setDate(vencimiento.getDate() + 1);
+        }
+
+        const nextCode = await this.generateNextCode();
+
+        this.cotizacionForm.patchValue({
+            fechaEmision: this.formatDateTimeLocal(limaTime),
+            fechaVencimiento: this.formatDateTimeLocal(vencimiento),
+            codigoCotizacion: nextCode,
+        });
+    }
+
+    /**
      * Formatea una fecha para input type="date" (YYYY-MM-DD)
      */
     private formatDateForInput(date: Date): string {
@@ -784,6 +848,19 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                 // Ya incluimos las relaciones en el payload de creación (si vienen)
 
                 this.showSuccess('Cotización creada exitosamente!');
+                
+                // Si estamos en modo creación, actualizamos IDs y navegamos al modo normal/edición
+                if (this.modoCreacion) {
+                    this.modoCreacion = false;
+                    this.cotizacionId = cotizacionResponse.id;
+                    
+                    // Aseguramos procesar los detalles recién agregados a la cotización creada
+                    await this.procesarDetalles(cotizacionResponse.id);
+                    
+                    // Navegamos al detalle de la cotización recién creada
+                    this.router.navigate(['/quotes/detalle', cotizacionResponse.id]);
+                    return; // Terminamos aquí porque procesarDetalles y la redirección ya están manejados
+                }
             }
 
             // Create/update detalles
@@ -1817,14 +1894,6 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         setTimeout(() => (this.successMessage = ''), 3000);
     }
 
-    private getCurrentLimaISOString(): string {
-        return this.getCurrentLimaTime().toISOString();
-    }
-
-    private getCurrentLimaTime(): Date {
-        const now = new Date();
-        return new Date(now.toLocaleString('en-US', { timeZone: 'America/Lima' }));
-    }
 
     calcularTotalFijos(): number {
         return this.detallesFijos.reduce((sum, detalle) => sum + detalle.total, 0);
@@ -2086,6 +2155,21 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             comision: 0, // Resetear comisión también
             operadorId: '',
         });
+    }
+    descargarWord(): void {
+        if (!this.cotizacion || !this.cotizacion.id) {
+            this.showError('No se puede generar el documento. Cotización inválida.');
+            return;
+        }
+
+        this.isLoading = true;
+        this.cotizacionService.descargarDocx(this.cotizacion.id, this.cotizacion.codigoCotizacion);
+
+        // Simulamos un pequeño delay para mostrar feedback al usuario
+        setTimeout(() => {
+            this.isLoading = false;
+            this.showSuccess('Documento Word generado correctamente');
+        }, 1000);
     }
 
     calcularCotizacionEconomica(): number {

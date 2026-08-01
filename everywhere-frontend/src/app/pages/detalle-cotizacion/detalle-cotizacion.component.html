@@ -37,7 +37,7 @@
         </div>
 
         <!-- Content when data is loaded -->
-        <div *ngIf="cotizacion && !isLoading" class="max-w-full mx-auto">
+        <div *ngIf="(cotizacion || modoCreacion) && !isLoading" class="max-w-full mx-auto">
 
             <!-- Header Section -->
             <header
@@ -67,8 +67,7 @@
                                 <i class="fas fa-chevron-right mx-2"></i>
                             </li>
                             <li class="text-white font-medium">
-                                Detalle de Cotización{{ cotizacion.codigoCotizacion ? ' #' + cotizacion.codigoCotizacion
-                                : '' }}
+                                {{ modoCreacion ? 'Nueva Cotización' : 'Detalle de Cotización' }}{{ cotizacion?.codigoCotizacion ? ' #' + cotizacion?.codigoCotizacion : '' }}
                             </li>
                         </ol>
                     </nav>
@@ -82,11 +81,10 @@
                                 </div>
                                 <div>
                                     <h1 class="text-3xl font-bold">
-                                        Cotización{{ cotizacion.codigoCotizacion ? ' #' + cotizacion.codigoCotizacion :
-                                        '' }}
+                                        {{ modoCreacion ? 'Nueva Cotización' : 'Cotización' }}{{ cotizacion?.codigoCotizacion ? ' #' + cotizacion?.codigoCotizacion : '' }}
                                     </h1>
                                     <p class="text-white/80 text-lg">
-                                        {{ modoEdicion ? 'Editando cotización' : 'Detalle completo de la cotización' }}
+                                        {{ modoCreacion ? 'Creando nueva cotización' : (modoEdicion ? 'Editando cotización' : 'Detalle completo de la cotización') }}
                                     </p>
                                     <div *ngIf="modoEdicion" class="mt-2">
                                         <span
@@ -107,6 +105,12 @@
                                 <span class="hidden sm:inline">Actualizar</span>
                             </button>
 
+                            <button *ngIf="cotizacion?.id && !modoCreacion" (click)="descargarWord()"
+                                class="px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2">
+                                <i class="fas fa-file-word text-blue-200"></i>
+                                <span class="hidden sm:inline">Word</span>
+                            </button>
+
                             <button (click)="openHistorialDrawer()"
                                 class="px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl border border-white/30 hover:bg-white/30 transition-all flex items-center gap-2">
                                 <i class="fas fa-history"></i>
@@ -125,7 +129,7 @@
                                 <button (click)="onSubmitCotizacion()" [disabled]="isLoading"
                                     class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg border border-blue-500 hover:from-blue-700 hover:to-indigo-700 transition-all flex items-center gap-2 font-semibold disabled:opacity-50">
                                     <i class="fas" [ngClass]="isLoading ? 'fa-spinner fa-spin' : 'fa-save'"></i>
-                                    <span class="hidden sm:inline">Guardar Cambios</span>
+                                    <span class="hidden sm:inline">{{ modoCreacion ? 'Crear Cotización' : 'Guardar Cambios' }}</span>
                                 </button>
                             </div>
 
@@ -157,7 +161,7 @@
                             <div class="col-span-2 lg:col-span-2">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Código</label>
                                 <div class="w-full min-h-[34px] flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 font-medium shadow-sm">
-                                    {{ cotizacion.codigoCotizacion || '-' }}
+                                    {{ cotizacion?.codigoCotizacion || '-' }}
                                 </div>
                             </div>
 
@@ -165,7 +169,7 @@
                             <div class="col-span-2 lg:col-span-2">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">F. Emisión</label>
                                 <div class="w-full min-h-[34px] flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm">
-                                    {{ formatDateTime(cotizacion.fechaEmision) || '-' }}
+                                    {{ formatDateTime(cotizacion?.fechaEmision) || '-' }}
                                 </div>
                             </div>
 
@@ -173,7 +177,7 @@
                             <div class="col-span-2 lg:col-span-2">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">F. Vencimiento</label>
                                 <div class="w-full min-h-[34px] flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm">
-                                    {{ formatDateTime(cotizacion.fechaVencimiento) || '-' }}
+                                    {{ formatDateTime(cotizacion?.fechaVencimiento) || '-' }}
                                 </div>
                             </div>
 
@@ -182,8 +186,8 @@
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Estado</label>
                                 <div class="w-full min-h-[34px] px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm flex items-center">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                                        [ngClass]="getEstadoBadgeClass(cotizacion.estadoCotizacion)">
-                                        {{ cotizacion.estadoCotizacion?.descripcion || 'Sin estado' }}
+                                        [ngClass]="getEstadoBadgeClass(cotizacion?.estadoCotizacion)">
+                                        {{ cotizacion?.estadoCotizacion?.descripcion || 'Sin estado' }}
                                     </span>
                                 </div>
                             </div>
@@ -192,7 +196,7 @@
                             <div class="col-span-2 lg:col-span-2">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Sucursal</label>
                                 <div class="w-full min-h-[34px] flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm truncate">
-                                    {{ cotizacion.sucursal?.descripcion || 'No especificada' }}
+                                    {{ cotizacion?.sucursal?.descripcion || 'No especificada' }}
                                 </div>
                             </div>
 
@@ -200,7 +204,7 @@
                             <div class="col-span-2 lg:col-span-2">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Moneda</label>
                                 <div class="w-full min-h-[34px] flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm font-medium">
-                                    {{ cotizacion.moneda || 'USD' }}
+                                    {{ cotizacion?.moneda || 'USD' }}
                                 </div>
                             </div>
 
@@ -210,7 +214,7 @@
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Cliente</label>
                                 <div class="w-full min-h-[34px] px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm flex items-center gap-2">
                                     <lucide-icon name="circle-user-round" class="text-everywhere-primary w-4 h-4 flex-shrink-0"></lucide-icon>
-                                    <span class="truncate font-semibold">{{ getPersonaDisplayName(cotizacion.personas?.id || 0) }}</span>
+                                    <span class="truncate font-semibold">{{ getPersonaDisplayName(cotizacion?.personas?.id || 0) }}</span>
                                 </div>
                             </div>
 
@@ -218,7 +222,7 @@
                             <div class="col-span-2 md:col-span-3 lg:col-span-4">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Nombre Referencial</label>
                                 <div class="w-full min-h-[34px] flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm truncate">
-                                    {{ cotizacion.nombreCotizacion || 'Sin nombre' }}
+                                    {{ cotizacion?.nombreCotizacion || 'Sin nombre' }}
                                 </div>
                             </div>
 
@@ -226,7 +230,7 @@
                             <div class="col-span-2 lg:col-span-3">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Forma de Pago</label>
                                 <div class="w-full min-h-[34px] flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm truncate">
-                                    {{ cotizacion.formaPago?.descripcion || 'No especificada' }}
+                                    {{ cotizacion?.formaPago?.descripcion || 'No especificada' }}
                                 </div>
                             </div>
 
@@ -236,7 +240,7 @@
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Origen - Destino</label>
                                 <div class="relative">
                                     <div class="w-full min-h-[34px] flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm truncate pr-8">
-                                        {{ cotizacion.origenDestino || 'No especificado' }}
+                                        {{ cotizacion?.origenDestino || 'No especificado' }}
                                     </div>
                                     <div class="absolute inset-y-0 right-0 flex items-center pr-2">
                                         <i class="fas fa-route text-gray-400 text-xs"></i>
@@ -248,7 +252,7 @@
                             <div class="col-span-2 lg:col-span-2">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Salida</label>
                                 <div class="w-full min-h-[34px] flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm truncate">
-                                    {{ formatDateTime(cotizacion.fechaSalida) || 'No especifica'}}
+                                    {{ formatDateTime(cotizacion?.fechaSalida) || 'No especifica'}}
                                 </div>
                             </div>
 
@@ -256,7 +260,7 @@
                             <div class="col-span-2 lg:col-span-2">
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Regreso</label>
                                 <div class="w-full min-h-[34px] flex items-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm truncate">
-                                    {{ formatDateTime(cotizacion.fechaRegreso) || 'No especifica' }}
+                                    {{ formatDateTime(cotizacion?.fechaRegreso) || 'No especifica' }}
                                 </div>
                             </div>
 
@@ -265,7 +269,7 @@
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Adultos</label>
                                 <div class="relative">
                                     <div class="w-full min-h-[34px] flex items-center justify-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm text-center">
-                                        {{ cotizacion.cantAdultos || 1 }}
+                                        {{ cotizacion?.cantAdultos || 1 }}
                                     </div>
                                     <div class="absolute inset-y-0 right-0 flex items-center pr-2">
                                         <i class="fas fa-user text-gray-400 text-[10px]"></i>
@@ -278,7 +282,7 @@
                                 <label class="block text-xs font-semibold text-gray-700 mb-1">Niños</label>
                                 <div class="relative">
                                     <div class="w-full min-h-[34px] flex items-center justify-center px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white text-gray-900 shadow-sm text-center">
-                                        {{ cotizacion.cantNinos || 0 }}
+                                        {{ cotizacion?.cantNinos || 0 }}
                                     </div>
                                     <div class="absolute inset-y-0 right-0 flex items-center pr-2">
                                         <i class="fas fa-child text-gray-400 text-[10px]"></i>
@@ -427,7 +431,7 @@
                                         <div class="text-sm font-medium text-gray-700">Descripción</div>
                                         <div class="text-sm font-medium text-gray-700">Precio USD</div>
                                         <div class="text-sm font-medium text-gray-700">Comisión</div>
-                                        <div class="text-sm font-medium text-gray-700">Total USD</div>
+                                        <div class="text-sm font-medium text-gray-700">SubTotal USD</div>
                                     </div>
 
                                     <!-- Productos del grupo -->
@@ -487,10 +491,10 @@
                                 <i class="fas fa-sticky-note text-slate-500 mr-2 text-base"></i>
                                 Observaciones
                             </h3>
-                            <div *ngIf="cotizacion.observacion" class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white text-gray-900 min-h-[120px] shadow-sm text-sm">
-                                {{ cotizacion.observacion }}
+                            <div *ngIf="cotizacion?.observacion" class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white text-gray-900 min-h-[120px] shadow-sm text-sm">
+                                {{ cotizacion?.observacion }}
                             </div>
-                            <div *ngIf="!cotizacion.observacion" class="w-full px-4 py-3 border border-dashed border-gray-300 rounded-lg bg-transparent text-gray-400 min-h-[120px] flex items-center justify-center text-sm italic">
+                            <div *ngIf="!cotizacion?.observacion" class="w-full px-4 py-3 border border-dashed border-gray-300 rounded-lg bg-transparent text-gray-400 min-h-[120px] flex items-center justify-center text-sm italic">
                                 Sin observaciones registradas.
                             </div>
                         </div>
@@ -521,11 +525,11 @@
                                         Total Cotización más económica
                                         <span *ngIf="getNombreGrupoMasEconomicoView()" class="text-xs text-gray-500 normal-case">(Grupo {{ getNombreGrupoMasEconomicoView() }})</span>:
                                     </span>
-                                    <span class="font-extrabold text-emerald-600 text-2xl">${{ getTotalCotizacionCompleta() | number:'1.2-2' }} <span class="text-sm text-emerald-700">{{ cotizacion.moneda || 'USD' }}</span></span>
+                                    <span class="font-extrabold text-emerald-600 text-2xl">${{ getTotalCotizacionCompleta() | number:'1.2-2' }} <span class="text-sm text-emerald-700">{{ cotizacion?.moneda || 'USD' }}</span></span>
                                 </div>
 
                                 <div class="flex justify-end">
-                                    <button type="button" (click)="navegarADetalle(cotizacion.id, true)"
+                                    <button type="button" (click)="navegarADetalle(cotizacion?.id, true)"
                                         class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-semibold shadow flex items-center justify-center space-x-2 text-sm">
                                         <i class="fas fa-edit"></i>
                                         <span>Editar Cotización</span>
