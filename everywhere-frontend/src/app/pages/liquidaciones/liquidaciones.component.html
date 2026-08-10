@@ -367,7 +367,7 @@
                   {{ cotizacion.estadoCotizacion?.descripcion || 'Sin estado' }}
                 </span>
               </div>
-              <p class="text-gray-700 font-medium">{{ getPersonaDisplayName(cotizacion.personas?.id || 0) }}</p>
+              <p class="text-gray-700 font-medium">{{ cotizacion.clienteNombre || 'Sin cliente' }}</p>
               <p class="text-gray-600 text-sm">{{ cotizacion.origenDestino || 'Sin destino' }}</p>
               <div class="flex items-center gap-4 mt-2">
                 <span class="text-sm text-gray-500">

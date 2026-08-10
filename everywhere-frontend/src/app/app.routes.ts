@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth/auth.guard';
 import { authInverseGuard } from './core/guards/auth/auth-inverse.guard';
-import { AdminGuard } from './core/guards/authorization.guard';
+import { ModuleAccessGuard } from './core/guards/authorization.guard';
 import { ProveedorComponent } from './pages/proveedor/proveedor.component';
 import { OperadoresComponent } from './pages/operadores/operadores.component';
 import { CategoriaPersonaComponent } from './pages/categoria-persona/categoria-persona.component';
@@ -72,13 +72,15 @@ export const routes: Routes = [
     path: 'users',
     loadComponent: () =>
       import('./pages/usuarios/usuarios.component').then(m => m.UsuariosComponent),
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'USUARIOS', requiredAction: 'READ' }
   },
   {
     path: 'branches',
     loadComponent: () =>
       import('./pages/sucursales/sucursales.component').then(m => m.SucursalesComponent),
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'SUCURSALES', requiredAction: 'READ' }
   },
   {
     path: 'settlements',
@@ -96,45 +98,53 @@ export const routes: Routes = [
     path: 'products',
     loadComponent: () =>
       import('./pages/productos/productos.component').then(m => m.ProductosComponent),
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'PRODUCTOS', requiredAction: 'READ' }
   },
   {
     path: 'quote-status',
     component: EstadoCotizacionComponent,
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'ESTADO_COTIZACION', requiredAction: 'READ' }
   },
   {
     path: 'payment-methods',
     loadComponent: () =>
       import('./pages/forma-pago/forma-pago.component').then(m => m.FormaPagoComponent),
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'FORMA-PAGO', requiredAction: 'READ' }
   },
   {
     path: 'categories',
     loadComponent: () =>
       import('./pages/categorias/categorias.component').then(m => m.CategoriasComponent),
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'CATEGORIA_PRODUCTO', requiredAction: 'READ' }
   },
   {
     path: 'suppliers',
     component: ProveedorComponent,
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'PROVEEDORES', requiredAction: 'READ' }
   },
   {
     path: 'suppliers/detalle/:id',
     loadComponent: () =>
       import('./pages/detalle-proveedor/detalle-proveedor.component').then(m => m.DetalleProveedorComponent),
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'PROVEEDORES', requiredAction: 'READ' }
   },
   {
     path: 'people-categories',
     component: CategoriaPersonaComponent,
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'CATEGORIA_CLIENTE', requiredAction: 'READ' }
   },
   {
     path: 'operators',
     component: OperadoresComponent,
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'OPERADOR', requiredAction: 'READ' }
   },
   {
     path: 'statistics',
@@ -178,19 +188,12 @@ export const routes: Routes = [
       import('./pages/detalle-recibo/detalle-recibo.component').then(m => m.DetalleReciboComponent),
     canActivate: [authGuard]
   },
-  /*
-  {
-    path: 'accounting-entries',
-    loadComponent: () =>
-      import('./pages/asiento-contable/asiento-contable').then(m => m.AsientoContable),
-    canActivate: [authGuard]
-  },
-  */
   {
     path: 'roles',
     loadComponent: () =>
       import('./pages/roles/roles.component').then(m => m.RolesComponent),
-    canActivate: [authGuard, AdminGuard]
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'ROLES', requiredAction: 'READ' }
   },
   { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/auth/login' }

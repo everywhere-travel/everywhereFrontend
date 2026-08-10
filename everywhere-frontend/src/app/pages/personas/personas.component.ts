@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
 import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
@@ -43,7 +45,9 @@ export interface PersonaTabla {
     ErrorModalComponent
   ]
 })
-export class PersonasComponent implements OnInit {
+export class PersonasComponent implements OnInit, OnDestroy {
+
+  private destroy$ = new Subject<void>();
 
   // Sidebar
   sidebarCollapsed = false;
@@ -111,6 +115,11 @@ export class PersonasComponent implements OnInit {
       this.loadPersonas();
       this.loadStats();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   async loadStats(): Promise<void> {
@@ -222,7 +231,9 @@ export class PersonasComponent implements OnInit {
     this.mostrarModalDetalles = true;
     
     if (cliente.id) {
-      this.detalleDocumentoService.findByPersonaId(cliente.id).subscribe({
+      this.detalleDocumentoService.findByPersonaId(cliente.id).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
         next: (docs) => {
           if (docs && docs.length > 0 && this.personaDetalles && this.personaDetalles.id === cliente.id) {
             this.personaDetalles = {
@@ -266,7 +277,9 @@ export class PersonasComponent implements OnInit {
       this.showConfirmation = false;
 
       if (cliente.tipo === 'natural') {
-        this.personaNaturalService.deleteById(cliente.tipoId).subscribe({
+        this.personaNaturalService.deleteById(cliente.tipoId).pipe(
+          takeUntil(this.destroy$)
+        ).subscribe({
           next: () => this.loadPersonas(),
           error: (error) => {
             console.error('Error al eliminar persona natural:', error);
@@ -275,7 +288,9 @@ export class PersonasComponent implements OnInit {
           }
         });
       } else {
-        this.personaJuridicaService.deleteById(cliente.tipoId).subscribe({
+        this.personaJuridicaService.deleteById(cliente.tipoId).pipe(
+          takeUntil(this.destroy$)
+        ).subscribe({
           next: () => this.loadPersonas(),
           error: (error) => {
             console.error('Error al eliminar persona jurídica:', error);
@@ -319,7 +334,9 @@ export class PersonasComponent implements OnInit {
       const persona = this.personas.find(p => p.id === id);
       if (persona) {
         if (persona.tipo === 'natural') {
-          this.personaNaturalService.deleteById(persona.tipoId).subscribe({
+          this.personaNaturalService.deleteById(persona.tipoId).pipe(
+            takeUntil(this.destroy$)
+          ).subscribe({
             next: () => {
               eliminados++;
               if (eliminados === total) {
@@ -338,7 +355,9 @@ export class PersonasComponent implements OnInit {
             }
           });
         } else {
-          this.personaJuridicaService.deleteById(persona.tipoId).subscribe({
+          this.personaJuridicaService.deleteById(persona.tipoId).pipe(
+            takeUntil(this.destroy$)
+          ).subscribe({
             next: () => {
               eliminados++;
               if (eliminados === total) {
@@ -421,45 +440,28 @@ export class PersonasComponent implements OnInit {
     this.isLoading = true;
     this.modoVistaDocumentos = false; // Ocultar banner hasta que termine la búsqueda
     
-    this.detalleDocumentoService.buscarPorNumeroDocumento(numero).subscribe({
-      next: async (resultados) => {
-        const personasDesdeDocumentos: PersonaTabla[] = [];
-        
-        for (const doc of resultados) {
-          for (const persona of doc.personas) {
-            try {
-              // Obtenemos los datos básicos (nombre, tipo, identificador)
-              const displayInfo = await this.personaService.findPersonaNaturalOrJuridicaById(persona.personaId).toPromise();
-              // Obtenemos datos de contacto (direccion, correos, telefonos)
-              const contactInfo = await this.personaService.findById(persona.personaId).toPromise();
-              
-              if (displayInfo && contactInfo) {
-                const tipo = displayInfo.tipo.toLowerCase() as 'natural' | 'juridica';
-                
-                personasDesdeDocumentos.push({
-                  id: persona.personaId,
-                  tipoId: displayInfo.id,
-                  tipo: tipo,
-                  nombre: displayInfo.nombre,
-                  documento: tipo === 'natural' ? displayInfo.identificador : '',
-                  ruc: tipo === 'juridica' ? displayInfo.identificador : '',
-                  email: contactInfo.correos && contactInfo.correos.length > 0 ? contactInfo.correos[0].email : '',
-                  telefono: contactInfo.telefonos && contactInfo.telefonos.length > 0 ? contactInfo.telefonos[0].numero : '',
-                  direccion: contactInfo.direccion,
-                  // Info extra del tipo de documento para mostrarlo en el banner
-                  documentos: [{
-                    numero: doc.numeroDocumento,
-                    tipo: doc.tipoDocumento,
-                    origen: ''
-                  }]
-                });
-              }
-            } catch (err) {
-              console.error('Error obteniendo detalles de la persona con ID:', persona.personaId, err);
-            }
-          }
-        }
-        
+    this.detalleDocumentoService.buscarPorNumeroDocumento(numero).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
+      next: (resultados) => {
+        const personasDesdeDocumentos: PersonaTabla[] = resultados.flatMap(doc =>
+          doc.personas.map(persona => ({
+            id: persona.personaId,
+            tipoId: persona.personaId,
+            tipo: 'natural' as const,
+            nombre: persona.nombreCompleto,
+            documento: persona.documento ?? '',
+            email: persona.email ?? '',
+            telefono: persona.telefono ?? '',
+            direccion: persona.direccion ?? '',
+            documentos: [{
+              numero: doc.numeroDocumento,
+              tipo: doc.tipoDocumento,
+              origen: ''
+            }]
+          }))
+        );
+
         this.personas = personasDesdeDocumentos;
         this.totalServerItems = personasDesdeDocumentos.length;
         this.modoVistaDocumentos = true; // Mostrar banner solo si hay resultados

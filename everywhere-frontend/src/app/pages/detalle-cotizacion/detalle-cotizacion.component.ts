@@ -10,8 +10,6 @@ import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.serv
 import { LoadingService } from '../../core/service/loading.service';
 import { DetalleCotizacionService } from '../../core/service/DetalleCotizacion/detalle-cotizacion.service';
 import { PersonaService } from '../../core/service/persona/persona.service';
-import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
-import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
 import { FormaPagoService } from '../../core/service/FormaPago/forma-pago.service';
 import { EstadoCotizacionService } from '../../core/service/EstadoCotizacion/estado-cotizacion.service';
 import { HistorialCotizacionService } from '../../core/service/HistorialCotizacion/historial-cotizacion.service';
@@ -100,8 +98,6 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     private cotizacionService = inject(CotizacionService);
     private detalleCotizacionService = inject(DetalleCotizacionService);
     private personaService = inject(PersonaService);
-    private personaNaturalService = inject(PersonaNaturalService);
-    private personaJuridicaService = inject(PersonaJuridicaService);
     private formaPagoService = inject(FormaPagoService);
     private estadoCotizacionService = inject(EstadoCotizacionService);
     private historialCotizacionService = inject(HistorialCotizacionService);
@@ -167,11 +163,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     sidebarCollapsed = false;
     sidebarMenuItems: ExtendedSidebarMenuItem[] = [];
 
-    // Cache for personas
-    personasCache: { [id: number]: any } = {};
-    personasDisplayMap: { [id: number]: string } = {};
 
-    // Array para rastrear IDs de detalles eliminados que deben ser eliminados de la BD
     deletedDetalleIds: number[] = [];
 
     // Control de guardado
@@ -398,15 +390,8 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                             documento: dto.tipo === 'NATURAL' ? dto.documento : undefined,
                         }));
 
-                        // Actualizar el cache interno para que no salga "Cliente no encontrado" luego
+
                         this.personasEncontradas.forEach((p: any) => {
-                            this.personasCache[p.id] = {
-                                id: p.id,
-                                identificador: p.identificador,
-                                nombre: p.nombre,
-                                tipo: p.tipo
-                            };
-                            this.personasDisplayMap[p.id] = p.nombre;
                         });
                     }
                     this.buscandoClientes = false;
@@ -660,10 +645,6 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             );
             if (persona) {
                 this.clienteSeleccionado = persona;
-                if (!this.personasCache[personaId]) {
-                    this.personasCache[personaId] = persona;
-                    this.personasDisplayMap[personaId] = persona.nombre || 'Sin nombre';
-                }
             }
         } catch (error) {
             console.warn('Error al cargar cliente para edición:', error);
@@ -1221,8 +1202,11 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
             }
         });
 
-        // NUEVA LÓGICA: Inferir qué grupo está seleccionado basándose en los detalles
-        this.inferirGrupoSeleccionado();
+
+        this.grupoSeleccionadoId = cotizacionCompleta?.grupoSeleccionadoId ?? this.cotizacion?.grupoSeleccionadoId ?? null;
+        this.gruposHoteles.forEach((grupo) => {
+            grupo.seleccionado = grupo.categoria?.id === this.grupoSeleccionadoId;
+        });
     }
 
     private addDetalleToGrupoHotelFromCompleta(detalle: any, categoria: any): void {
@@ -1246,43 +1230,6 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         }
     }
 
-    private inferirGrupoSeleccionado(): void {
-        // Reset: ningún grupo seleccionado inicialmente
-        this.grupoSeleccionadoId = null;
-        this.gruposHoteles.forEach((grupo) => (grupo.seleccionado = false));
-
-        // Buscar un grupo que tenga al menos un detalle seleccionado
-        for (const grupo of this.gruposHoteles) {
-            const tieneDetallesSeleccionados = grupo.detalles.some(
-                (detalle) => detalle.seleccionado === true,
-            );
-
-            if (tieneDetallesSeleccionados && grupo.categoria.id) {
-                this.grupoSeleccionadoId = grupo.categoria.id;
-                grupo.seleccionado = true;
-
-                break; // Solo un grupo puede estar seleccionado
-            }
-        }
-    }
-
-    loadClienteInfo(personaId: number): void {
-        if (!personaId || this.personasCache[personaId]) {
-            return;
-        }
-
-        // Cargar datos desde PersonaService usando personaDisplay
-        this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(personaId).subscribe({
-            next: (cached: personaDisplay) => {
-                this.personasCache[personaId] = cached;
-                this.personasDisplayMap[personaId] = cached.nombre;
-            },
-            error: (error: any) => {
-                console.error('Error al cargar información del cliente:', error);
-                this.personasDisplayMap[personaId] = 'Cliente no encontrado';
-            }
-        });
-    }
 
     getSelectedClienteName(): string {
         if (!this.clienteSeleccionado) return '';
@@ -1691,16 +1638,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         return 'Usuario no identificado';
     }
 
-    getPersonaDisplayName(personaId: number): string {
-        if (!personaId || personaId === 0) {
-            return 'Sin cliente';
-        }
 
-        if (this.personasDisplayMap[personaId]) {
-            return this.personasDisplayMap[personaId];
-        }
-        return 'Cliente no encontrado';
-    }
 
     seleccionarCliente(
         persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay,

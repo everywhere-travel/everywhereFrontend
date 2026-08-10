@@ -1,6 +1,8 @@
 import { CategoriaPersonaResponse } from '../CategoriaPersona/categoriaPersona.models'
 import { ViajeroResponse } from '../Viajero/viajero.model'
 import { PersonaRequest, PersonaResponse } from './persona.model'
+import { PersonaJuridicaResponse } from './personaJuridica.models'
+import { DetalleDocumentoResponse } from '../Documento/detalleDocumento.model'
 
 export interface PersonaNaturalRequest {
   documento?: string
@@ -60,4 +62,10 @@ export interface PersonaNaturalSinViajeroResponse {
   persona: PersonaResponse
   categoriaPersona?: CategoriaPersonaResponse
   // SIN campo viajero para evitar referencia circular
+}
+
+export interface PersonaNaturalDetalleResponse {
+  personaNatural: PersonaNaturalResponse
+  empresasAsociadas: PersonaJuridicaResponse[]
+  documentos: DetalleDocumentoResponse[]
 }

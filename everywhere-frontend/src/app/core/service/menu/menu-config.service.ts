@@ -74,15 +74,6 @@ export class MenuConfigService {
                     route: '/receipts',
                     moduleKey: 'RECIBOS'
                 },
-                /*
-                {
-                    id: 'asientos-contables',
-                    title: 'Asientos Contables',
-                    icon: 'fas fa-book-open',
-                    route: '/accounting-entries',
-                    moduleKey: 'ASIENTOS_CONTABLES'
-                },
-                */
             ]
         },
         {
