@@ -344,19 +344,8 @@ export class UsuariosComponent implements OnInit {
   // ==========================================
   seleccionarRole(role: RoleResponse): void {
     this.roleSeleccionado = role;
-    // Identificar los IDs de los permisos que tiene el rol
-    this.roleSeleccionadoPermisos.clear();
-    
-    // Los permisos en RoleResponse vienen como un array de strings (ej: "CLIENTES:READ").
-    // Necesitamos mapearlos a IDs basados en la lista this.permisos
-    if (role.permissions && role.permissions.length > 0) {
-      role.permissions.forEach(permString => {
-        const p = this.permisos.find(x => x.name === permString);
-        if (p) {
-          this.roleSeleccionadoPermisos.add(p.id);
-        }
-      });
-    }
+
+    this.roleSeleccionadoPermisos = new Set(role.permissions.map(p => p.id));
   }
 
   togglePermission(permiso: PermissionResponse): void {

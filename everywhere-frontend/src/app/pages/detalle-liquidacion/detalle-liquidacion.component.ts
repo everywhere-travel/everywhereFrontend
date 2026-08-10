@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, inject, ChangeDetectionStrategy } from '@
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Subscription, of, from } from 'rxjs';
-import { catchError, finalize, tap, switchMap } from 'rxjs/operators';
+import { Subject, of, from, merge } from 'rxjs';
+import { catchError, finalize, tap, switchMap, takeUntil, debounceTime } from 'rxjs/operators';
 
 // Services
 import { LiquidacionService } from '../../core/service/Liquidacion/liquidacion.service';
@@ -114,9 +114,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   liquidacionForm: FormGroup;
   detalleForm: FormGroup;
 
-  // Cache for personas
-  personasCache: { [id: number]: any } = {};
-  personasDisplayMap: { [id: number]: string } = {};
+
 
   // UI State
   isLoading = false;
@@ -150,7 +148,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   private cambiosGuardados = false;
   private saveDebounceTimer: any;
 
-  private subscriptions = new Subscription();
+  private destroy$ = new Subject<void>();
 
   constructor() {
     this.liquidacionForm = this.fb.group({
@@ -191,11 +189,15 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     });
 
     // Suscribirse a cambios en costoTicket y valorVenta para calcular automáticamente cargoServicio
-    this.detalleForm.get('costoTicket')?.valueChanges.subscribe(value => {
+    this.detalleForm.get('costoTicket')?.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
       this.calcularCargoServicioFormulario();
     });
 
-    this.detalleForm.get('valorVenta')?.valueChanges.subscribe(value => {
+    this.detalleForm.get('valorVenta')?.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
       this.calcularCargoServicioFormulario();
     });
   }
@@ -211,7 +213,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     if (!this.cambiosGuardados) {
       this.limpiarEstadoTemporal();
     }
-    this.subscriptions.unsubscribe();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // ===== MÉTODOS PARA AUTOGUARDADO TEMPORAL =====
@@ -371,25 +374,19 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     }
   }
 
-  private configurarAutoguardado(): void {
+  private setupAutoguardado(): void {
     if (!this.modoEdicion) {
       return;
     }
 
-    // Autoguardar cada 30 segundos cuando hay cambios
-    let timerAutoguardado: any;
-    const autoguardar = () => {
-      if (timerAutoguardado) {
-        clearTimeout(timerAutoguardado);
-      }
-      timerAutoguardado = setTimeout(() => {
-        this.guardarEstadoTemporal();
-      }, 30000); // 30 segundos
-    };
 
-    // Escuchar cambios en los formularios
-    this.liquidacionForm.valueChanges.subscribe(() => autoguardar());
-    this.detalleForm.valueChanges.subscribe(() => autoguardar());
+    merge(
+      this.liquidacionForm.valueChanges,
+      this.detalleForm.valueChanges
+    ).pipe(
+      debounceTime(30000),
+      takeUntil(this.destroy$)
+    ).subscribe(() => this.guardarEstadoTemporal());
 
     // Guardar antes de cerrar ventana/pestaña
     window.addEventListener('beforeunload', () => {
@@ -431,7 +428,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     // Mostrar loading global
     this.loadingService.setLoading(true);
 
-    const subscription = this.liquidacionService.getLiquidacionConDetalles(id)
+    this.liquidacionService.getLiquidacionConDetalles(id)
       .pipe(
         catchError(error => {
           console.error('Error al cargar liquidación:', error);
@@ -443,124 +440,73 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         finalize(() => {
           this.isLoading = false;
           this.loadingService.setLoading(false);
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe(liquidacion => {
         if (!liquidacion) return;
 
-        const applyLiquidacion = (liq: LiquidacionConDetallesResponse) => {
-          this.liquidacion = liq;
+        this.liquidacion = liquidacion;
 
-          // Inicializar el formulario (ya incluye carga de estado temporal)
-          this.initializeForm();
 
-          // Cargar observaciones de la liquidación
-          this.cargarObservacionesLiquidacion(liq.id);
+        this.initializeForm();
 
-          // Cargar pagos PAX de la liquidación
-          this.loadPagosPax(liq.id);
 
-          // Extraer viajeros únicos de los detalles
-          this.extraerViajerosDeDetalles();
+        this.cargarObservacionesLiquidacion(liquidacion.id);
 
-          // Cargar información del cliente si existe cotización
-          if (liq.cotizacion?.personas?.id) {
-            this.loadClienteInfo(liq.cotizacion.personas.id);
-          }
-        };
 
-        // Si la cotización/persona no viene en ConDetalles, traerla desde getLiquidacionById
-        if (!liquidacion.cotizacion?.personas?.id) {
-          this.liquidacionService.getLiquidacionById(id).subscribe({
-            next: (liquidacionBasica) => {
-              if (liquidacionBasica?.cotizacion) {
-                applyLiquidacion({
-                  ...liquidacion,
-                  cotizacion: liquidacionBasica.cotizacion
-                });
-              } else {
-                applyLiquidacion(liquidacion);
-              }
-            },
-            error: () => {
-              applyLiquidacion(liquidacion);
-            }
-          });
-        } else {
-          applyLiquidacion(liquidacion);
-        }
+        this.loadPagosPax(liquidacion.id);
+
+
+        this.extraerViajerosDeDetalles();
       });
-
-    this.subscriptions.add(subscription);
   }
 
   private loadSelectOptions(): void {
     // Cargar productos
-    const productosSubscription = this.productoService.getDropdownProductos()
+    this.productoService.getDropdownProductos()
       .pipe(
         catchError(error => {
           console.error('Error al cargar productos:', error);
           return of([]);
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe(productos => {
         this.productos = productos;
       });
 
     // Cargar formas de pago
-    const formasPagoSubscription = this.formaPagoService.getDropdownFormasPago()
+    this.formaPagoService.getDropdownFormasPago()
       .pipe(
-        catchError(() => {
-          return of([]);
-        })
+        catchError(() => of([])),
+        takeUntil(this.destroy$)
       )
       .subscribe(formasPago => {
         this.formasPago = formasPago;
       });
 
     // Cargar proveedores
-    const proveedoresSubscription = this.proveedorService.getDropdownProveedores()
+    this.proveedorService.getDropdownProveedores()
       .pipe(
-        catchError(() => {
-          return of([]);
-        })
+        catchError(() => of([])),
+        takeUntil(this.destroy$)
       )
       .subscribe((proveedores: ProveedorResponse[]) => {
         this.proveedores = proveedores;
       });
 
     // Cargar operadores
-    const operadoresSubscription = this.operadorService.getDropdownOperadores()
+    this.operadorService.getDropdownOperadores()
       .pipe(
-        catchError(() => {
-          return of([]);
-        })
+        catchError(() => of([])),
+        takeUntil(this.destroy$)
       )
       .subscribe((operadores: OperadorResponse[]) => {
         this.operadores = operadores;
       });
 
     // No cargar viajeros desde servicio separado, se obtienen de los detalles
-    // const viajerosSubscription = this.viajeroService.findAll()
-    //   .pipe(
-    //     catchError(() => {
-    //       return of([]);
-    //     })
-    //   )
-    //   .subscribe((viajeros: ViajeroResponse[]) => {
-    //     this.viajeros = viajeros;
-
-    //     // Inicializar los valores de búsqueda después de cargar los viajeros
-    //     setTimeout(() => {
-    //       this.initializeAllViajeroSearchValues();
-    //     }, 100);
-    //   });
-
-    this.subscriptions.add(productosSubscription);
-    this.subscriptions.add(formasPagoSubscription);
-    this.subscriptions.add(proveedoresSubscription);
-    this.subscriptions.add(operadoresSubscription);
-    // this.subscriptions.add(viajerosSubscription); // Comentado porque ya no se usa
   }
 
   // Navigation methods
@@ -580,7 +526,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       .trim()
       .replace(/[\\/:*?"<>|]+/g, '_');
 
-    const subscription = this.liquidacionService.generarExcel(this.liquidacionId)
+    this.liquidacionService.generarExcel(this.liquidacionId)
       .pipe(
         catchError(error => {
           console.error('Error al descargar el Excel de la liquidación:', error);
@@ -588,7 +534,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         }),
         finalize(() => {
           this.descargandoExcel = false;
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe(blob => {
         if (!blob) {
@@ -602,8 +549,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         link.click();
         window.URL.revokeObjectURL(url);
       });
-
-    this.subscriptions.add(subscription);
   }
 
   irAEditarLiquidacion(): void {
@@ -647,22 +592,21 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
 
   // Método para cargar observaciones
   private cargarObservacionesLiquidacion(liquidacionId: number): void {
-    const subscription = this.observacionLiquidacionService.findByLiquidacionId(liquidacionId)
+    this.observacionLiquidacionService.findByLiquidacionId(liquidacionId)
       .pipe(
         catchError(error => {
           console.error('Error al cargar observaciones:', error);
           return of([]);
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe(observaciones => {
         // Cargar todas las observaciones
         this.observaciones = observaciones || [];
       });
-
-    this.subscriptions.add(subscription);
   }
 
-  // Extraer viajeros únicos de los detalles de liquidación
+
   private extraerViajerosDeDetalles(): void {
     if (!this.liquidacion?.detalles) {
       this.viajeros = [];
@@ -681,7 +625,9 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     const viajerosDeDetalles = Array.from(viajerosMap.values());
 
     // SIEMPRE cargar todos los viajeros disponibles del backend
-    this.viajeroService.getDropdownViajeros().subscribe({
+    this.viajeroService.getDropdownViajeros().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
       next: (viajerosLigero) => {
         const todosLosViajeros: ViajeroConPersonaNatural[] = viajerosLigero.map(v => ({
           id: v.id,
@@ -731,12 +677,13 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       liquidacionId: this.liquidacionId
     };
 
-    const subscription = this.observacionLiquidacionService.create(observacionRequest)
+    this.observacionLiquidacionService.create(observacionRequest)
       .pipe(
         catchError(error => {
           console.error('Error al crear observación:', error);
           return of(null);
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe(response => {
         if (response) {
@@ -744,24 +691,21 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           this.nuevaObservacion = '';
         }
       });
-
-    this.subscriptions.add(subscription);
   }
 
   // Método para eliminar observación directamente
   eliminarObservacion(observacion: ObservacionConEdicion): void {
-    const subscription = this.observacionLiquidacionService.delete(observacion.id)
+    this.observacionLiquidacionService.delete(observacion.id)
       .pipe(
         catchError(error => {
           console.error('Error al eliminar observación:', error);
           return of(null);
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe(response => {
         this.observaciones = this.observaciones.filter(obs => obs.id !== observacion.id);
       });
-
-    this.subscriptions.add(subscription);
   }
 
   // Método para iniciar la edición de una observación
@@ -790,12 +734,13 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
       liquidacionId: this.liquidacionId!
     };
 
-    const subscription = this.observacionLiquidacionService.update(observacion.id, observacionRequest)
+    this.observacionLiquidacionService.update(observacion.id, observacionRequest)
       .pipe(
         catchError(error => {
           console.error('Error al actualizar observación:', error);
           return of(null);
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe(response => {
         if (response && observacion.descripcionTemp) {
@@ -805,8 +750,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           delete observacion.descripcionTemp;
         }
       });
-
-    this.subscriptions.add(subscription);
   }
 
   // Método para cancelar la edición de una observación
@@ -818,15 +761,16 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
   // ===== MÉTODOS PARA PAGOS PAX =====
 
   /**
-   * Cargar pagos PAX de la liquidación
+
    */
   private loadPagosPax(liquidacionId: number): void {
-    const subscription = this.pagoPaxService.findByLiquidacionId(liquidacionId)
+    this.pagoPaxService.findByLiquidacionId(liquidacionId)
       .pipe(
         catchError(error => {
           console.error('Error al cargar pagos PAX:', error);
           return of([]);
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe(pagosPax => {
         // Convertir PagoPaxResponse a PagoPaxTemp
@@ -844,8 +788,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
           isTemporary: false
         }));
       });
-
-    this.subscriptions.add(subscription);
   }
 
   /**
@@ -1019,7 +961,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     }
 
     // Configurar autoguardado si estamos en modo edición
-    this.configurarAutoguardado();
+    this.setupAutoguardado();
 
     // DESPUÉS de inicializar, esperar a que todos los datos async estén cargados
     // y LUEGO intentar cargar estado temporal
@@ -1070,7 +1012,7 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     };
 
     // Guardar la liquidación principal y luego persistir todos los detalles de forma secuencial
-    const saveSubscription = this.liquidacionService.updateLiquidacion(this.liquidacionId, liquidacionRequest)
+    this.liquidacionService.updateLiquidacion(this.liquidacionId, liquidacionRequest)
       .pipe(
         switchMap(() => from(this.guardarDetallesLiquidacion(this.liquidacionId!))),
         switchMap(() => from(this.procesarPagosPax(this.liquidacionId!))),
@@ -1089,9 +1031,6 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
                 this.cargarObservacionesLiquidacion(liq.id);
                 this.loadPagosPax(liq.id);
                 this.extraerViajerosDeDetalles();
-                if (liq.cotizacion?.personas?.id) {
-                  this.loadClienteInfo(liq.cotizacion.personas.id);
-                }
               }
               this.salirModoEdicion();
             })
@@ -1107,11 +1046,10 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
         finalize(() => {
           this.isLoading = false;
           this.isSaving = false;
-        })
+        }),
+        takeUntil(this.destroy$)
       )
       .subscribe();
-
-    this.subscriptions.add(saveSubscription);
   }
 
   private buildDetalleRequestFromExistente(detalle: DetalleLiquidacionResponse, liquidacionId: number): DetalleLiquidacionRequest {
@@ -1626,67 +1564,8 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Persona display methods
-  loadClienteInfo(personaId: number): void {
-    if (!personaId || this.personasCache[personaId]) {
-      return;
-    }
-
-    // Cargar datos desde PersonaService usando personaDisplay
-    this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(personaId).subscribe({
-      next: (cached: personaDisplay) => {
-        this.personasCache[personaId] = cached;
-        this.personasDisplayMap[personaId] = cached.nombre;
-      },
-      error: (error: any) => {
-        console.error('Error al cargar información del cliente:', error);
-        this.personasDisplayMap[personaId] = 'Cliente no encontrado';
-      }
-    });
-  }
-
-  getPersonaDisplayName(personaId: number): string {
-    if (!personaId || personaId === 0) {
-      return 'Sin cliente';
-    }
-
-    if (this.personasDisplayMap[personaId]) {
-      return this.personasDisplayMap[personaId];
-    }
-
-    // Si no está en cache, retornar texto temporal
-    return 'Cargando...';
-  }
-
   getClienteInfo(): string {
-    if (this.liquidacion?.cotizacion?.personas?.id) {
-      return this.getClienteNombreSolo(this.liquidacion.cotizacion.personas.id);
-    }
-    return 'Sin cliente asignado';
-  }
-
-  /**
-   * Obtiene solo el nombre del cliente sin documento
-   */
-  getClienteNombreSolo(personaId: number): string {
-    if (!personaId || personaId === 0) {
-      return 'Sin cliente';
-    }
-
-    // Buscar en cache
-    const persona = this.personasCache[personaId];
-    if (persona && persona.nombre) {
-      // Limpiar cualquier texto "null" que pueda existir en el nombre
-      const nombreLimpio = persona.nombre
-        .split(' ')
-        .filter((parte: string) => parte && parte !== 'null' && parte !== 'undefined')
-        .join(' ')
-        .trim();
-
-      return nombreLimpio || 'Sin nombre';
-    }
-
-    return 'Cliente no encontrado';
+    return this.liquidacion?.cotizacion?.clienteNombre || 'Sin cliente asignado';
   }
 
   // Método auxiliar para obtener el nombre del viajero por ID

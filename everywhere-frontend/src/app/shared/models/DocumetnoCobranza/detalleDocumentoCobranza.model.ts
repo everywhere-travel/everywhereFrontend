@@ -6,7 +6,7 @@ export interface DetalleDocumentoCobranzaResponseDTO {
   precio?: number;
   fechaCreacion?: string; // ISO string format for LocalDateTime
 
-  // IDs de relaciones para evitar lazy loading
+
   documentoCobranzaId?: number;
   documentoCobranzaNumero?: string;
 

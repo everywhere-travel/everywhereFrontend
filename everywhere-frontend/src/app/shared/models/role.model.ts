@@ -10,7 +10,7 @@
 export interface RoleResponse {
   id: number;
   name: string;
-  permissions: string[]; // ["CLIENTES:READ", "ALL_MODULES:DELETE", ...]
+  permissions: PermissionResponse[];
   createdAt?: string;
   updatedAt?: string;
 }

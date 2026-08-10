@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { PersonaJuridicaRequest, PersonaJuridicaResponse } from '../../../shared/models/Persona/personaJuridica.models';
+import { PersonaJuridicaDetalleResponse, PersonaJuridicaRequest, PersonaJuridicaResponse } from '../../../shared/models/Persona/personaJuridica.models';
 
 
 @Injectable({
@@ -38,6 +38,10 @@ export class PersonaJuridicaService {
 
   findById(id: number): Observable<PersonaJuridicaResponse> {
     return this.http.get<PersonaJuridicaResponse>(`${this.baseURL}/${id}`);
+  }
+
+  getDetalle(id: number): Observable<PersonaJuridicaDetalleResponse> {
+    return this.http.get<PersonaJuridicaDetalleResponse>(`${this.baseURL}/${id}/detalle`);
   }
 
   save(personaJuridicaRequest: PersonaJuridicaRequest): Observable<PersonaJuridicaResponse> {

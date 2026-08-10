@@ -26,6 +26,10 @@ export interface DetalleDocumentoResponse {
 export interface PersonaInfo {
   personaId: number;
   nombreCompleto: string;
+  documento?: string;
+  direccion?: string;
+  email?: string;
+  telefono?: string;
 }
 
 export interface DetalleDocumentoConPersonasDto {

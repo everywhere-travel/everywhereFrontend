@@ -123,19 +123,15 @@ export class RolesComponent implements OnInit {
 
   // ---- Asignación rol-permiso ----
 
-  roleHasPerm(permName: string): boolean {
-    return this.selectedRole()?.permissions?.includes(permName) ?? false;
-  }
-
-  getPermIdByName(name: string): number | undefined {
-    return this.permissions().find(p => p.name === name)?.id;
+  roleHasPerm(permId: number): boolean {
+    return this.selectedRole()?.permissions?.some(p => p.id === permId) ?? false;
   }
 
   togglePermission(perm: PermissionResponse) {
     const role = this.selectedRole();
     if (!role) return;
 
-    const hasPerm = this.roleHasPerm(perm.name);
+    const hasPerm = this.roleHasPerm(perm.id);
     const obs = hasPerm
       ? this.roleService.removePermission(role.id, perm.id)
       : this.roleService.addPermission(role.id, perm.id);

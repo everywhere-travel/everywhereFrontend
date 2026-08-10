@@ -1,3 +1,5 @@
+import { DetalleDocumentoCobranzaResponseDTO } from './detalleDocumentoCobranza.model';
+
 // Modelo para el detalle del documento de cobranza (básico)
 export interface DetalleDocumentoCobranza {
   cantidad: number;
@@ -81,6 +83,8 @@ export interface DocumentoCobranzaResponseDTO {
   // Campos de auditoría
   createdAt?: string; // ISO string format for LocalDateTime
   updatedAt?: string; // ISO string format for LocalDateTime
+
+  detalles?: DetalleDocumentoCobranzaResponseDTO[];
 }
 
 // DTO para actualización de documento de cobranza (equivalente a DocumentoCobranzaUpdateDTO)

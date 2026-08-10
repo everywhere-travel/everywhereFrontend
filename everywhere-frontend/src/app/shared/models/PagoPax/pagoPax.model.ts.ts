@@ -1,4 +1,3 @@
-import { LiquidacionResponse } from "../Liquidacion/liquidacion.model";
 import { FormaPagoResponse } from "../FormaPago/formaPago.model";
 
 export interface PagoPaxRequest {
@@ -17,7 +16,6 @@ export interface PagoPaxResponse {
   detalle?: string;
   creado: string;
   actualizado: string;
-  liquidacion?: LiquidacionResponse;
   formaPago?: FormaPagoResponse;
   proveedor?: any; // or import ProveedorResponse
 }

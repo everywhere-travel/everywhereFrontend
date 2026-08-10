@@ -84,9 +84,9 @@
               <h3 class="module-label">{{ group.module }}</h3>
               <div class="perm-chips">
                 @for (perm of group.perms; track perm.id) {
-                  <label class="perm-chip" [class.active]="roleHasPerm(perm.name)">
+                  <label class="perm-chip" [class.active]="roleHasPerm(perm.id)">
                     <input type="checkbox"
-                           [checked]="roleHasPerm(perm.name)"
+                           [checked]="roleHasPerm(perm.id)"
                            (change)="togglePermission(perm)" />
                     <span class="chip-label">{{ perm.name.split(':')[1] }}</span>
                   </label>
