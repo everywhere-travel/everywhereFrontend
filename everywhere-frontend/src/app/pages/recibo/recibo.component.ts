@@ -161,11 +161,11 @@ export class ReciboComponent implements OnInit, OnDestroy {
 
   // ===== STATS METHODS =====
   getTotalRecibos(): number {
-    return this.recibos.length;
+    return this.totalItems;
   }
 
   getRecibosConPdf(): number {
-    return this.recibos.filter(recibo => recibo.id).length; // Todos los recibos con ID tienen PDF disponible
+    return this.recibos.filter(recibo => recibo.id).length;
   }
 
   getCotizacionesDisponibles(): number {
@@ -201,8 +201,8 @@ export class ReciboComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.isLoading = true;
     try {
+
       await this.loadRecibos();
-      await this.loadCotizaciones();
     } catch (error) {
       this.showError('Error al cargar los datos iniciales');
     } finally {
@@ -270,11 +270,15 @@ export class ReciboComponent implements OnInit, OnDestroy {
 
   private async loadCotizaciones(): Promise<void> {
     try {
-      const todasLasCotizaciones = await this.cotizacionService.getAllCotizaciones().toPromise() || [];
 
-      // Filtrar solo las cotizaciones que no tienen recibo creado
+      const response = await this.cotizacionService
+        .getCotizacionesPage(0, 200, 'id', 'desc')
+        .toPromise();
+
+      const todasLasCotizaciones = response?.content || [];
+
+
       this.cotizaciones = todasLasCotizaciones.filter(cotizacion => {
-        // Verificar si ya existe un recibo para esta cotización
         const yaExisteRecibo = this.recibos.some(recibo =>
           recibo.cotizacionId === cotizacion.id ||
           recibo.codigoCotizacion === cotizacion.codigoCotizacion
@@ -470,7 +474,7 @@ export class ReciboComponent implements OnInit, OnDestroy {
 
     this.cotizacionesFiltradas = this.cotizaciones.filter(cotizacion => {
       const codigoCotizacion = cotizacion.codigoCotizacion?.toLowerCase() || '';
-      const personaDisplay = this.getPersonaDisplayName(cotizacion).toLowerCase();
+      const personaDisplay = (cotizacion.clienteNombre || 'Sin cliente').toLowerCase();
       const origenDestino = cotizacion.origenDestino?.toLowerCase() || '';
 
       return codigoCotizacion.includes(searchTerm) ||
@@ -519,25 +523,6 @@ export class ReciboComponent implements OnInit, OnDestroy {
     if (item.route) {
       this.router.navigate([item.route]);
     }
-  }
-
-  // ===== UTILITY METHODS =====
-  getPersonaDisplayName(cotizacion: CotizacionResponse): string {
-    // Intentar obtener el primer email de la persona
-    if (cotizacion.personas?.correos && cotizacion.personas.correos.length > 0) {
-      return cotizacion.personas.correos[0].email;
-    }
-
-    // Si no hay email, intentar mostrar dirección o ID
-    if (cotizacion.personas?.direccion) {
-      return cotizacion.personas.direccion;
-    }
-
-    if (cotizacion.personas?.id) {
-      return `Cliente ID: ${cotizacion.personas.id}`;
-    }
-
-    return 'Cliente no especificado';
   }
 
   formatDate(dateString: string | undefined): string {
@@ -611,14 +596,12 @@ export class ReciboComponent implements OnInit, OnDestroy {
       this.sucursales = await this.sucursalService.findAllSucursal().toPromise() || [];
 
       // Obtener personaId de la cotización (ID de tabla 'personas')
-      // El backend tiene PersonaNaturalRepository.findByPersonasId() que convierte automáticamente
       if (cotizacion.personas?.id) {
         try {
           const personaId = cotizacion.personas.id;
           this.personaNaturalIdActual = personaId;
 
           // Cargar personas jurídicas asociadas
-          // El backend convierte internamente de personas.id a persona_natural.id
           this.personasJuridicas = await this.naturalJuridicoService
             .findByPersonaNaturalId(personaId)
             .toPromise() || [];

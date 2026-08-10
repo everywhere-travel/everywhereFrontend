@@ -1,4 +1,5 @@
 import { PersonaRequest, PersonaResponse } from './persona.model'
+import { PersonaNaturalResponse } from './personaNatural.model'
 
 export interface PersonaJuridicaRequest {
   ruc?: string
@@ -13,4 +14,9 @@ export interface PersonaJuridicaResponse {
   creado: string
   actualizado: string
   persona: PersonaResponse
+}
+
+export interface PersonaJuridicaDetalleResponse {
+  personaJuridica: PersonaJuridicaResponse
+  clientesAsociados: PersonaNaturalResponse[]
 }

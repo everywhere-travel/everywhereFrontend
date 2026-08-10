@@ -292,7 +292,7 @@
                   </div>
                   <div>
                     <h3 class="font-semibold text-gray-900">{{ cotizacion.codigoCotizacion || 'Sin código' }}</h3>
-                    <p class="text-gray-600">{{ getPersonaDisplayName(cotizacion) }}</p>
+                    <p class="text-gray-600">{{ cotizacion.clienteNombre || 'Sin cliente' }}</p>
                     <div class="flex items-center gap-4 mt-1 text-sm text-gray-500">
                       <span><i class="fas fa-calendar mr-1"></i>{{ formatDate(cotizacion.fechaEmision) }}</span>
                       <span><i class="fas fa-map-marker-alt mr-1"></i>{{ cotizacion.origenDestino || 'Sin destino'

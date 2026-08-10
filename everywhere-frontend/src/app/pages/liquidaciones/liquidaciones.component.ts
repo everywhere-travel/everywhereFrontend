@@ -13,8 +13,6 @@ import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.serv
 import { DetalleCotizacionService } from '../../core/service/DetalleCotizacion/detalle-cotizacion.service';
 
 import { PersonaService } from '../../core/service/persona/persona.service';
-import { PersonaNaturalService } from '../../core/service/natural/persona-natural.service';
-import { PersonaJuridicaService } from '../../core/service/juridica/persona-juridica.service';
 import { FormaPagoService } from '../../core/service/FormaPago/forma-pago.service';
 import { ProductoService } from '../../core/service/Producto/producto.service';
 import { ProveedorService } from '../../core/service/Proveedor/proveedor.service';
@@ -93,8 +91,6 @@ interface DetalleLiquidacionTemp {
 })
 export class LiquidacionesComponent implements OnInit, OnDestroy {
   // ===== CACHE AND MAPPING =====
-  personasCache: { [id: number]: any } = {};
-  personasDisplayMap: { [id: number]: string } = {};
 
   // Services injection
   private fb = inject(FormBuilder);
@@ -104,8 +100,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   private cotizacionService = inject(CotizacionService);
   private detalleCotizacionService = inject(DetalleCotizacionService);
   private personaService = inject(PersonaService);
-  private personaNaturalService = inject(PersonaNaturalService);
-  private personaJuridicaService = inject(PersonaJuridicaService);
   private formaPagoService = inject(FormaPagoService);
   private productoService = inject(ProductoService);
   private proveedorService = inject(ProveedorService);
@@ -173,7 +167,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
 
   // ===== CLIENT SELECTION =====
   personasEncontradas: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
-  todosLosClientes: (PersonaNaturalResponse | PersonaJuridicaResponse)[] = [];
   buscandoClientes = false;
   clienteSeleccionado: PersonaNaturalResponse | PersonaJuridicaResponse | null = null;
 
@@ -385,27 +378,14 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: any) => {
           if (response && response.content) {
-            // Mapear PersonaTablaDTO a personaDisplay o la estructura esperada
             this.personasEncontradas = response.content.map((dto: any) => ({
               id: dto.id,
               tipo: dto.tipo,
               identificador: dto.documento || '',
               nombre: dto.nombre || 'Sin nombre',
-              // Add ruc/documento fields so that loadPersonas mapper works if necessary
               ruc: dto.tipo === 'JURIDICA' ? dto.documento : undefined,
               documento: dto.tipo === 'NATURAL' ? dto.documento : undefined,
             }));
-            
-            // Actualizar el cache interno para que no salga "Cliente no encontrado" luego
-            this.personasEncontradas.forEach((p: any) => {
-              this.personasCache[p.id] = {
-                id: p.id,
-                identificador: p.identificador,
-                nombre: p.nombre,
-                tipo: p.tipo
-              };
-              this.personasDisplayMap[p.id] = p.nombre;
-            });
           }
           this.buscandoClientes = false;
         },
@@ -418,21 +398,12 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   private loadInitialData(): void {
     this.isLoading = true;
 
-    // Ejecutar loadLiquidaciones y loadPersonas en paralelo
+
     Promise.all([
-      this.loadPersonas(),
       this.loadLiquidaciones()
     ]).finally(() => {
       this.isLoading = false;
     });
-
-    // Cargar catálogos pesados en segundo plano
-    Promise.all([
-      this.loadFormasPago(),
-      this.loadProductos(),
-      this.loadProveedores(),
-      this.loadOperadores()
-    ]).catch(console.error);
   }
 
   // ===== EVENTOS DE TABLA SERVER-SIDE =====
@@ -474,10 +445,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       if (response) {
         this.liquidaciones = response.content || [];
         
-        // Cargamos los clientes faltantes solo para la pagina actual (max 10)
-        await this.findAndLoadMissingClients();
 
-        // Ahora convertimos a tabla, para que tome los nombres correctos
         this.liquidacionesTabla = this.convertToLiquidacionTabla(this.liquidaciones);
         
         this.tableConfig = {
@@ -501,9 +469,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
       id: liq.id,
       numeroLiquidacion: liq.numero,
       numeroCotizacion: liq.cotizacion?.codigoCotizacion,
-      personaNombre: liq.cotizacion?.personas?.id
-        ? this.getPersonaDisplayName(liq.cotizacion.personas.id)
-        : 'Sin cliente',
+      personaNombre: liq.cotizacion?.clienteNombre || 'Sin cliente',
       destino: liq.destino,
       fechaCompra: liq.fechaCompra,
       numeroPasajeros: liq.numeroPasajeros,
@@ -516,140 +482,7 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     return this.liquidaciones.find(l => l.id === id);
   }
 
-  private async loadPersonas(): Promise<void> {
-    try {
-      // Cargar personas naturales
-      const personasNaturales = await this.personaNaturalService.getDropdown().toPromise() || [];
-      
-      // Cargar personas jurídicas
-      const personasJuridicas = await this.personaJuridicaService.getDropdown().toPromise() || [];
-      this.personas = [...personasNaturales, ...personasJuridicas];
-      this.todosLosClientes = [...this.personas];
-      this.personasEncontradas = [...this.todosLosClientes];
 
-      // Poblar cache simple
-      this.personas.forEach(persona => {
-        const personaId = persona.persona?.id || persona.id;
-
-        if (personaId) {
-          // Helper to sanitize "null" strings
-          const safeStr = (val: any) => {
-            if (!val) return '';
-            const str = String(val).trim();
-            return str.toLowerCase() === 'null' ? '' : str;
-          };
-          
-          const nombres = safeStr(persona.nombres);
-          const apePaterno = safeStr(persona.apellidosPaterno);
-          const apeMaterno = safeStr(persona.apellidosMaterno);
-          
-          const apellidos = `${apePaterno} ${apeMaterno}`.trim();
-          const nombreCompleto = `${nombres} ${apellidos}`.trim();
-          
-          this.personasCache[personaId] = {
-            id: personaId,
-            identificador: persona.ruc || persona.documento || persona.cedula || '',
-            nombre: persona.razonSocial || nombreCompleto || 'Sin nombre',
-            tipo: persona.ruc ? 'JURIDICA' : 'NATURAL'
-          };
-          // Solo mostrar el nombre del cliente (sin documento)
-          this.personasDisplayMap[personaId] = this.personasCache[personaId].nombre;
-        }
-      });
-
-    } catch (error) {
-      this.showError('Error al cargar los clientes. Algunas funciones pueden no estar disponibles.');
-      this.personas = [];
-      this.todosLosClientes = [];
-      this.personasEncontradas = [];
-    }
-  }
-
-  /**
-   * Busca y carga clientes que aparecen en liquidaciones pero no están en el cache
-   */
-  private async findAndLoadMissingClients(): Promise<void> {
-    try {
-      // Obtener IDs únicos de personas desde las liquidaciones cargadas
-      const personaIdsEnLiquidaciones = new Set<number>();
-      this.liquidaciones.forEach(liquidacion => {
-        if (liquidacion.cotizacion?.personas?.id) {
-          personaIdsEnLiquidaciones.add(liquidacion.cotizacion.personas.id);
-        }
-      });
-      await this.loadMissingClientsFromIds(personaIdsEnLiquidaciones);
-    } catch (error) {
-      console.error('Error al cargar clientes faltantes:', error);
-    }
-  }
-
-  private async loadMissingClientsFromIds(personaIds: Set<number>): Promise<void> {
-    try {
-      // Encontrar IDs que están en el set pero NO en cache
-      const idsEnCache = new Set(Object.keys(this.personasCache).map(id => parseInt(id)));
-      const idsFaltantes = Array.from(personaIds).filter(id => !idsEnCache.has(id));
-
-      if (idsFaltantes.length === 0) {
-        return;
-      }
-
-      // Cargar información para cada cliente faltante usando el endpoint correcto
-      const clientesFaltantes = await Promise.all(
-        idsFaltantes.map(async (personaId) => {
-          try {
-            const personaDisplay = await this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(personaId).toPromise();
-            return personaDisplay;
-          } catch (error) {
-            return {
-              id: personaId,
-              tipo: 'UNKNOWN',
-              identificador: '',
-              nombre: `Cliente N/A (ID: ${personaId})`
-            };
-          }
-        })
-      );
-
-      // Agregar clientes válidos al cache y listas
-      const clientesValidos = clientesFaltantes.filter(c => c != null) as any[];
-
-      clientesValidos.forEach(cliente => {
-        if (cliente && cliente.id) {
-          // Agregar al cache - mejorar datos para clientes "genéricos"
-          const esGenerico = cliente.tipo === 'GENERICA' || !cliente.identificador;
-
-          this.personasCache[cliente.id] = {
-            id: cliente.id,
-            identificador: cliente.identificador || '',
-            nombre: cliente.nombre || `Cliente ID: ${cliente.id}`,
-            tipo: esGenerico ? 'UNKNOWN' : cliente.tipo
-          };
-
-          const cached = this.personasCache[cliente.id];
-          this.personasDisplayMap[cliente.id] = cached.nombre;
-
-          // Agregar a las listas para búsqueda (solo si no es genérico)
-          if (!esGenerico) {
-            this.personas.push(cliente);
-            this.todosLosClientes.push(cliente);
-            this.personasEncontradas.push(cliente);
-          }
-        }
-      });
-
-      // Recalcular tabla para reflejar los nombres cargados despues
-      if (clientesValidos.length > 0) {
-        this.liquidacionesTabla = this.convertToLiquidacionTabla(this.liquidaciones);
-        this.tableConfig = {
-          ...this.tableConfig,
-          data: this.liquidacionesTabla
-        };
-      }
-
-    } catch (error) {
-
-    }
-  }
 
   private async loadFormasPago(): Promise<void> {
     try {
@@ -701,8 +534,14 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     try {
       this.isGenerating = true;
 
-      // Cargar cotizaciones para selección
+
       await this.loadCotizaciones();
+
+
+      if (this.formasPago.length === 0) await this.loadFormasPago();
+      if (this.productos.length === 0) await this.loadProductos();
+      if (this.proveedores.length === 0) await this.loadProveedores();
+      if (this.operadores.length === 0) await this.loadOperadores();
 
       // Mostrar modal de selección de cotizaciones
       this.mostrarModalCotizaciones = true;
@@ -725,10 +564,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   async mostrarFormularioEditarOld(liquidacion: LiquidacionResponse): Promise<void> {
     try {
       this.isLoading = true;
-
-      if (this.todosLosClientes.length === 0) {
-        await this.loadPersonas();
-      }
 
       this.resetForm();
       this.editandoLiquidacion = true;
@@ -777,11 +612,33 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     this.deletedDetalleIds = [];
 
     this.clienteSeleccionado = null;
-    this.buscandoClientes = false;
-
-    this.personasEncontradas = [...this.todosLosClientes];
 
     this.clienteSearchControl.setValue('', { emitEvent: false });
+
+    this.precargarClientesIniciales();
+  }
+
+
+  private precargarClientesIniciales(): void {
+    this.buscandoClientes = true;
+    this.personaService.getPersonasDropdownPage(0, 10, 'id', 'desc', undefined)
+      .pipe(
+        catchError((err: any) => {
+          console.error('Error al precargar clientes:', err);
+          return of({ content: [] });
+        })
+      )
+      .subscribe((response: any) => {
+        this.personasEncontradas = (response?.content || []).map((dto: any) => ({
+          id: dto.id,
+          tipo: dto.tipo,
+          identificador: dto.documento || '',
+          nombre: dto.nombre || 'Sin nombre',
+          ruc: dto.tipo === 'JURIDICA' ? dto.documento : undefined,
+          documento: dto.tipo === 'NATURAL' ? dto.documento : undefined,
+        }));
+        this.buscandoClientes = false;
+      });
   }
 
   // Método simplificado para popular el formulario de liquidación
@@ -928,22 +785,6 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  getPersonaDisplayName(personaId: number): string {
-    // Usar solo datos en cache para evitar llamadas HTTP cíclicas
-    if (!personaId || personaId === 0) {
-      return 'Sin cliente';
-    }
-
-    // Retornar desde display map si existe
-    if (this.personasDisplayMap[personaId]) {
-      return this.personasDisplayMap[personaId];
-    }
-
-    // Si no está en cache, retornar texto temporal
-    // NO hacer llamadas HTTP desde aquí para evitar loops infinitos
-    return 'Cliente no encontrado';
-  }
-
   formatDate(dateString: string | undefined): string {
     if (!dateString) return '';
     // Extraer solo la parte de la fecha (YYYY-MM-DD) y formatear manualmente
@@ -954,8 +795,9 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   }
 
   // ===== MÉTODOS PARA LIQUIDACIONES =====
+
   getTotalLiquidaciones(): number {
-    return this.liquidaciones.length;
+    return this.tableConfig.totalServerItems || 0;
   }
 
   getLiquidacionesProcesadas(): number {
@@ -1174,15 +1016,12 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
   // ===== COTIZACIONES METHODS =====
   async loadCotizaciones(): Promise<void> {
     try {
-      // Siempre bypassear cache para obtener datos frescos de cotizaciones disponibles
-      this.cotizaciones = await this.cotizacionService.getCotizacionSinLiquidacion(true).toPromise() || [];
-      
-      const personaIds = new Set<number>();
-      this.cotizaciones.forEach(c => {
-        if (c.personas?.id) personaIds.add(c.personas.id);
-      });
-      await this.loadMissingClientsFromIds(personaIds);
 
+      const response = await this.cotizacionService
+        .getCotizacionesPage(0, 200, 'id', 'desc')
+        .toPromise();
+
+      this.cotizaciones = response?.content || [];
       this.cotizacionesFiltradas = [...this.cotizaciones];
     } catch (error) {
       console.error('Error en loadCotizaciones:', error);
@@ -1201,7 +1040,8 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
     }
     this.cotizacionesFiltradas = this.cotizaciones.filter(cotizacion =>
       cotizacion.codigoCotizacion?.toLowerCase().includes(term) ||
-      cotizacion.origenDestino?.toLowerCase().includes(term)
+      cotizacion.origenDestino?.toLowerCase().includes(term) ||
+      cotizacion.clienteNombre?.toLowerCase().includes(term)
     );
   }
 

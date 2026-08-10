@@ -44,6 +44,8 @@ export interface CotizacionResponse {
   moneda: string
   observacion?: string
   grupoSeleccionadoId?: number
+  clienteNombre?: string
+  clienteIdentificador?: string
 
   counter?: CounterResponse
   formaPago?: FormaPagoResponse
@@ -68,6 +70,8 @@ export interface CotizacionConDetallesResponseDTO {
   moneda: string
   observacion?: string
   grupoSeleccionadoId?: number
+  clienteNombre?: string
+  clienteIdentificador?: string
 
   // Relaciones de la cotización
   counter?: CounterResponse

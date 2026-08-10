@@ -119,8 +119,7 @@ export class DashboardComponent implements OnInit {
       categoryName: 'Documentate y Contabilidad',
       items: [
         { title: 'Documentos de Cobranza', description: 'Generados desde cotizaciones', icon: 'fas fa-file-contract', route: '/collection-documents', colorTheme: 'blue', moduleKey: 'DOCUMENTOS_COBRANZA' },
-        { title: 'Emisión de Recibos', description: 'Comprobantes y recibos de caja', icon: 'fas fa-file-alt', route: '/receipts', colorTheme: 'blue', moduleKey: 'RECIBOS' },
-        { title: 'Asientos Contables', description: 'Historial de movimientos y caja', icon: 'fas fa-book-open', route: '/accounting-entries', colorTheme: 'blue', moduleKey: 'ASIENTOS_CONTABLES' }
+        { title: 'Emisión de Recibos', description: 'Comprobantes y recibos de caja', icon: 'fas fa-file-alt', route: '/receipts', colorTheme: 'blue', moduleKey: 'RECIBOS' }
       ]
     },
     {

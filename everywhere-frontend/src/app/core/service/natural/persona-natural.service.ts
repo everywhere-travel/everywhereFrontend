@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { PersonaNaturalRequest, PersonaNaturalResponse } from '../../../shared/models/Persona/personaNatural.model';
+import { PersonaNaturalDetalleResponse, PersonaNaturalRequest, PersonaNaturalResponse } from '../../../shared/models/Persona/personaNatural.model';
 
 @Injectable({
   providedIn: 'root'
@@ -27,6 +27,10 @@ export class PersonaNaturalService {
 
   findById(id: number): Observable<PersonaNaturalResponse> {
     return this.http.get<PersonaNaturalResponse>(`${this.baseURL}/${id}`);
+  }
+
+  getDetalle(id: number): Observable<PersonaNaturalDetalleResponse> {
+    return this.http.get<PersonaNaturalDetalleResponse>(`${this.baseURL}/${id}/detalle`);
   }
 
   findByDocumento(documento: string): Observable<PersonaNaturalResponse[]> {

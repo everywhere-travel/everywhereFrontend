@@ -1,7 +1,9 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, of } from 'rxjs';
+import { takeUntil, switchMap, tap, catchError } from 'rxjs/operators';
 import { CarpetaService } from '../../core/service/Carpeta/carpeta.service';
 import { CarpetaRequest, CarpetaResponse } from '../../shared/models/Carpeta/carpeta.model';
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
@@ -10,12 +12,6 @@ import { LiquidacionService } from '../../core/service/Liquidacion/liquidacion.s
 import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
 import { ReciboService } from '../../core/service/Recibo/recibo.service';
 import { DocumentoCobranzaService } from '../../core/service/DocumentoCobranza/DocumentoCobranza.service';
-import { PersonaService } from '../../core/service/persona/persona.service';
-import { LiquidacionResponse } from '../../shared/models/Liquidacion/liquidacion.model';
-import { CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
-import { ReciboResponseDTO } from '../../shared/models/Recibo/recibo.model';
-import { DocumentoCobranzaResponseDTO } from '../../shared/models/DocumetnoCobranza/documentoCobranza.model';
-import { personaDisplay } from '../../shared/models/Persona/persona.model';
 
 // Interface para la tabla de carpetas
 export interface CarpetaTabla {
@@ -55,7 +51,7 @@ interface DocumentoAsociado {
   id: number;
   tipo: TipoDocumento;
   numero: string;
-  fecha: string;
+  fecha?: string;
   descripcion?: string;
 }
 
@@ -71,7 +67,9 @@ interface DocumentoAsociado {
     SidebarComponent
   ]
 })
-export class CarpetasComponent implements OnInit {
+export class CarpetasComponent implements OnInit, OnDestroy {
+
+  private destroy$ = new Subject<void>();
 
   // Sidebar
   sidebarCollapsed = false;
@@ -129,9 +127,6 @@ export class CarpetasComponent implements OnInit {
   mostrarModalDesasociar = false;
   documentoADesasociar: DocumentoAsociado | null = null;
 
-  // Cache de nombres de clientes
-  private clientesCache: { [id: number]: personaDisplay } = {};
-
   // Action menu control
   showActionMenu: number | null = null;
   showQuickActions: number | null = null;
@@ -149,7 +144,7 @@ export class CarpetasComponent implements OnInit {
     private cotizacionService: CotizacionService,
     private reciboService: ReciboService,
     private documentoCobranzaService: DocumentoCobranzaService,
-    private personaService: PersonaService
+
   ) {
     this.initializeForms();
   }
@@ -157,6 +152,11 @@ export class CarpetasComponent implements OnInit {
   ngOnInit(): void {
     this.sidebarMenuItems = this.menuConfigService.getMenuItems('/folders');
     this.inicializarVistaDual();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // =================================================================
@@ -180,15 +180,34 @@ export class CarpetasComponent implements OnInit {
   private async inicializarVistaDual(): Promise<void> {
     this.loading = true;
     try {
-      // Cargar vista tradicional (compatibilidad)
-      this.cargarRaices();
+      const raices = await this.carpetaService.findRaicesCarpeta().toPromise() || [];
 
-      // Cargar vista breadcrumb (raíces)
-      await this.cargarNivelRaiz();
 
-      // Cargar vista de árbol
-      await this.cargarArbolRaices();
+      this.carpetas = raices;
+      this.carpetaActual = null;
+      this.caminoBreadcrumb = [];
+      this.convertirATabla();
+      this.applyFilters();
 
+
+      this.carpetasEnNivelActual = raices;
+      this.breadcrumbPath = [{
+        carpeta: { id: 0, nombre: 'Raíz', nivel: -1 } as CarpetaResponse,
+        label: 'Raíz'
+      }];
+      this.aplicarFiltrosBreadcrumb();
+
+
+      this.treeNodes = raices.map(carpeta => ({
+        carpeta,
+        expanded: false,
+        loading: false,
+        children: [],
+        hasChildren: true,
+        level: 0
+      }));
+
+      this.cdr.detectChanges();
     } catch (error) {
       console.error('Error al inicializar vista dual:', error);
       this.mostrarError('Error al cargar carpetas');
@@ -207,7 +226,9 @@ export class CarpetasComponent implements OnInit {
   // NAVEGACIÓN DE CARPETAS
   cargarRaices(): void {
     this.loading = true;
-    this.carpetaService.findRaicesCarpeta().subscribe({
+    this.carpetaService.findRaicesCarpeta().pipe(
+      takeUntil(this.destroy$)
+    ).subscribe({
       next: (carpetas) => {
         this.carpetas = carpetas;
         this.carpetaActual = null;
@@ -230,31 +251,26 @@ export class CarpetasComponent implements OnInit {
     // Obtener el ID de la carpeta
     const carpetaId = carpeta.id;
 
-    // Actualizar camino de navegación
-    this.carpetaService.findCaminoCarpeta(carpetaId).subscribe({
-      next: (camino) => {
+    this.carpetaService.findCaminoCarpeta(carpetaId).pipe(
+      tap(camino => {
         this.caminoBreadcrumb = camino;
         this.carpetaActual = camino[camino.length - 1] || null;
-
-        // Cargar hijos de la carpeta
-        this.carpetaService.findHijosCarpeta(carpetaId).subscribe({
-          next: (carpetas) => {
-            this.carpetas = carpetas;
-            this.convertirATabla();
-            this.applyFilters();
-            this.loading = false;
-            this.cdr.detectChanges();
-          },
-          error: (error) => {
-            console.error('Error al cargar carpetas hijas:', error);
-            this.loading = false;
-          }
-        });
-      },
-      error: (error) => {
-        console.error('Error al cargar camino:', error);
-        this.loading = false;
+      }),
+      switchMap(() => this.carpetaService.findHijosCarpeta(carpetaId)),
+      catchError(error => {
+        console.error('Error al navegar a la carpeta:', error);
+        return of(null);
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe(carpetas => {
+      this.loading = false;
+      if (carpetas === null) {
+        return;
       }
+      this.carpetas = carpetas;
+      this.convertirATabla();
+      this.applyFilters();
+      this.cdr.detectChanges();
     });
   }
 
@@ -315,7 +331,6 @@ export class CarpetasComponent implements OnInit {
 
   async navegarACarpetaDual(carpeta: CarpetaResponse): Promise<void> {
     if (this.currentViewMode === 'tree') {
-      // En modo árbol, expandir/contraer
       const node = this.encontrarNodoEnArbol(carpeta.id);
       if (node) {
         await this.toggleNodeExpansion(node);
@@ -323,20 +338,15 @@ export class CarpetasComponent implements OnInit {
       return;
     }
 
-    // Modo breadcrumb: navegar al contenido
     this.breadcrumbLoading = true;
     try {
-      // Cargar hijos de la carpeta
       const hijos = await this.carpetaService.findHijosCarpeta(carpeta.id).toPromise() || [];
 
-      // Cargar camino actualizado
       const camino = await this.carpetaService.findCaminoCarpeta(carpeta.id).toPromise() || [];
 
-      // Actualizar estado
       this.carpetasEnNivelActual = hijos;
       this.carpetaActual = carpeta;
 
-      // Construir breadcrumb path
       this.breadcrumbPath = [
         { carpeta: { id: 0, nombre: 'Raíz', nivel: -1 } as CarpetaResponse, label: 'Raíz' }
       ];
@@ -347,7 +357,6 @@ export class CarpetasComponent implements OnInit {
 
       this.aplicarFiltrosBreadcrumb();
 
-      // Cargar documentos asociados a esta carpeta
       if (carpeta.id) {
         await this.cargarDocumentosDeCarpeta(carpeta.id);
       }
@@ -362,10 +371,8 @@ export class CarpetasComponent implements OnInit {
 
   async navegarPorBreadcrumb(item: BreadcrumbItem, index: number): Promise<void> {
     if (index === 0) {
-      // Navegar a raíz
       await this.cargarNivelRaiz();
     } else {
-      // Navegar a carpeta específica
       await this.navegarACarpetaDual(item.carpeta);
     }
   }
@@ -454,9 +461,6 @@ export class CarpetasComponent implements OnInit {
 
   seleccionarNodoArbol(node: TreeNode): void {
     this.selectedTreeNode = node;
-
-    // En vista árbol solo selecciona, no navega
-    // En vista breadcrumb navega
     if (this.currentViewMode === 'breadcrumb') {
       this.navegarACarpeta(node.carpeta);
     }
@@ -486,10 +490,6 @@ export class CarpetasComponent implements OnInit {
     // Por ahora mantiene compatibilidad con el sistema existente
   }
 
-  /**
-   * Convierte CarpetaResponse a CarpetaTabla con valores seguros
-   * Soluciona el error TS2345 de tipos incompatibles
-   */
   private convertirCarpetaResponse(carpeta: CarpetaResponse): CarpetaTabla {
     return {
       id: carpeta.id,
@@ -508,8 +508,6 @@ export class CarpetasComponent implements OnInit {
   }
 
   private esEspecial(carpeta: CarpetaResponse): boolean {
-    // Lógica para determinar si una carpeta debe tener borde rojo
-    // Por ejemplo: carpetas de nivel 0 (raíces) o con nombres específicos
     return carpeta.nivel === 0 ||
       !!(carpeta.nombre && ['Importante', 'Urgente', 'Confidencial'].includes(carpeta.nombre));
   }
@@ -521,7 +519,9 @@ export class CarpetasComponent implements OnInit {
       const carpetaRequest: CarpetaRequest = this.carpetaForm.value;
       const carpetaPadreId = this.carpetaActual?.id;
 
-      this.carpetaService.createCarpeta(carpetaRequest, carpetaPadreId).subscribe({
+      this.carpetaService.createCarpeta(carpetaRequest, carpetaPadreId).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
         next: (response) => {
           this.recargarCarpetaActual();
           this.cerrarModal();
@@ -540,13 +540,11 @@ export class CarpetasComponent implements OnInit {
   editarCarpeta(carpeta: CarpetaTabla | CarpetaResponse): void {
     let carpetaCompleta: CarpetaResponse;
 
-    // Si es CarpetaTabla, buscar la CarpetaResponse correspondiente
     if ('esEspecial' in carpeta) {
       const found = this.carpetas.find(c => c.id === carpeta.id);
       if (!found) return;
       carpetaCompleta = found;
     } else {
-      // Ya es CarpetaResponse
       carpetaCompleta = carpeta;
     }
 
@@ -566,7 +564,9 @@ export class CarpetasComponent implements OnInit {
       this.loading = true;
       const carpetaRequest: CarpetaRequest = this.carpetaForm.value;
 
-      this.carpetaService.updateCarpeta(this.carpetaSeleccionada.id, carpetaRequest).subscribe({
+      this.carpetaService.updateCarpeta(this.carpetaSeleccionada.id, carpetaRequest).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
         next: (response) => {
           this.recargarCarpetaActual();
           this.cerrarModal();
@@ -583,13 +583,11 @@ export class CarpetasComponent implements OnInit {
   confirmarEliminar(carpeta: CarpetaTabla | CarpetaResponse): void {
     let carpetaCompleta: CarpetaResponse;
 
-    // Si es CarpetaTabla, buscar la CarpetaResponse correspondiente
     if ('esEspecial' in carpeta) {
       const found = this.carpetas.find(c => c.id === carpeta.id);
       if (!found) return;
       carpetaCompleta = found;
     } else {
-      // Ya es CarpetaResponse
       carpetaCompleta = carpeta;
     }
 
@@ -600,7 +598,9 @@ export class CarpetasComponent implements OnInit {
   eliminarCarpetaDefinitivo(): void {
     if (this.carpetaAEliminar) {
       this.loading = true;
-      this.carpetaService.deleteByIdCarpeta(this.carpetaAEliminar.id).subscribe({
+      this.carpetaService.deleteByIdCarpeta(this.carpetaAEliminar.id).pipe(
+        takeUntil(this.destroy$)
+      ).subscribe({
         next: () => {
           this.recargarCarpetaActual();
           this.cerrarModalEliminar();
@@ -617,10 +617,8 @@ export class CarpetasComponent implements OnInit {
 
   private recargarCarpetaActual(): void {
     if (this.currentViewMode === 'breadcrumb') {
-      // En vista navegación, recargar el nivel actual
       this.recargarNivelActualBreadcrumb();
     } else if (this.carpetaActual) {
-      // Para otras vistas, usar navegación normal
       this.navegarACarpeta({
         id: this.carpetaActual.id,
         nombre: this.carpetaActual.nombre || '',
@@ -634,7 +632,6 @@ export class CarpetasComponent implements OnInit {
       this.cargarRaices();
     }
 
-    // Si estamos en vista árbol, actualizar también el árbol conservando expansiones
     if (this.currentViewMode === 'tree') {
       this.actualizarArbolConservandoEstado();
     }
@@ -644,11 +641,9 @@ export class CarpetasComponent implements OnInit {
     this.breadcrumbLoading = true;
     try {
       if (this.carpetaActual) {
-        // Recargar hijos de la carpeta actual
         const hijos = await this.carpetaService.findHijosCarpeta(this.carpetaActual.id).toPromise() || [];
         this.carpetasEnNivelActual = hijos;
       } else {
-        // Estamos en la raíz, recargar raíces
         this.carpetasEnNivelActual = await this.carpetaService.findRaicesCarpeta().toPromise() || [];
       }
       this.aplicarFiltrosBreadcrumb();
@@ -891,17 +886,9 @@ export class CarpetasComponent implements OnInit {
   // =================================================================
 
   private mostrarExito(mensaje: string): void {
-
-
-    // Simulación de notificación exitosa
-    console.log('Éxito:', mensaje);
-    // Aquí podrías integrar una librería de notificaciones como Toastr o SweetAlert2
   }
 
   private mostrarError(mensaje: string): void {
-    // Simulación de notificación de error
-    console.error('Error:', mensaje);
-    // Aquí podrías integrar una librería de notificaciones como Toastr o SweetAlert2
   }
 
   // =================================================================
@@ -922,9 +909,9 @@ export class CarpetasComponent implements OnInit {
     this.cargarDocumentosDisponibles(tipo);
   }
 
-  /** Cargar documentos sin carpeta asignada */
   async cargarDocumentosDisponibles(tipo: TipoDocumento): Promise<void> {
     this.loadingDocumentosDisponibles = true;
+    const MAX_MODAL_ITEMS = 100;
     try {
       let docs: any[] = [];
 
@@ -943,12 +930,9 @@ export class CarpetasComponent implements OnInit {
           break;
       }
 
-      if (tipo === 'liquidacion' || tipo === 'cotizacion') {
-        await this.completarClienteNombre(docs, tipo);
-      }
 
-      this.documentosDisponibles = docs;
-      this.documentosFiltrados = [...docs];
+      this.documentosDisponibles = docs.slice(0, MAX_MODAL_ITEMS);
+      this.documentosFiltrados = [...this.documentosDisponibles];
     } catch (error) {
       console.error('Error al cargar documentos disponibles:', error);
       this.mostrarError('Error al cargar documentos disponibles');
@@ -1059,19 +1043,9 @@ export class CarpetasComponent implements OnInit {
   async cargarDocumentosDeCarpeta(carpetaId: number): Promise<void> {
     this.loadingDocumentos = true;
     try {
-      const [liquidaciones, cotizaciones, recibos, documentos] = await Promise.all([
-        this.liquidacionService.getLiquidacionesByCarpeta(carpetaId).toPromise(),
-        this.cotizacionService.getCotizacionesByCarpeta(carpetaId).toPromise(),
-        this.reciboService.getRecibosByCarpeta(carpetaId).toPromise(),
-        this.documentoCobranzaService.getDocumentosByCarpeta(carpetaId).toPromise()
-      ]);
-
-      this.documentosAsociados = [
-        ...this.mapLiquidaciones(liquidaciones || []),
-        ...this.mapCotizaciones(cotizaciones || []),
-        ...this.mapRecibos(recibos || []),
-        ...this.mapDocumentosCobranza(documentos || [])
-      ];
+      const { contenido } = await this.carpetaService.getContenido(carpetaId).toPromise()
+        ?? { contenido: [] as DocumentoAsociado[] };
+      this.documentosAsociados = contenido;
     } catch (error) {
       console.error('Error al cargar documentos de carpeta:', error);
       this.documentosAsociados = [];
@@ -1099,50 +1073,6 @@ export class CarpetasComponent implements OnInit {
     this.documentosDisponibles = [];
     this.documentosFiltrados = [];
     this.searchDocumento = '';
-  }
-
-  // =================================================================
-  // MAPPERS - Convertir documentos a DocumentoAsociado
-  // =================================================================
-
-  private mapLiquidaciones(liquidaciones: LiquidacionResponse[]): DocumentoAsociado[] {
-    return liquidaciones.map(liq => ({
-      id: liq.id!,
-      tipo: 'liquidacion' as TipoDocumento,
-      numero: liq.numero || `LIQ-${liq.id}`,
-      fecha: liq.fechaCompra || liq.creado || '',
-      descripcion: undefined
-    }));
-  }
-
-  private mapCotizaciones(cotizaciones: CotizacionResponse[]): DocumentoAsociado[] {
-    return cotizaciones.map(cot => ({
-      id: cot.id!,
-      tipo: 'cotizacion' as TipoDocumento,
-      numero: cot.codigoCotizacion || `COT-${cot.id}`,
-      fecha: cot.fechaEmision || '',
-      descripcion: cot.observacion
-    }));
-  }
-
-  private mapRecibos(recibos: ReciboResponseDTO[]): DocumentoAsociado[] {
-    return recibos.map(rec => ({
-      id: rec.id!,
-      tipo: 'recibo' as TipoDocumento,
-      numero: `${rec.serie}-${String(rec.correlativo).padStart(9, '0')}`,
-      fecha: rec.fechaEmision || '',
-      descripcion: rec.observaciones
-    }));
-  }
-
-  private mapDocumentosCobranza(docs: DocumentoCobranzaResponseDTO[]): DocumentoAsociado[] {
-    return docs.map(doc => ({
-      id: doc.id!,
-      tipo: 'documento-cobranza' as TipoDocumento,
-      numero: `${doc.serie}-${String(doc.correlativo).padStart(9, '0')}`,
-      fecha: doc.fechaEmision || '',
-      descripcion: doc.observaciones
-    }));
   }
 
   // =================================================================
@@ -1183,48 +1113,5 @@ export class CarpetasComponent implements OnInit {
       doc.razonSocial ||
       ''
     );
-  }
-
-  private async completarClienteNombre(docs: any[], tipo: TipoDocumento): Promise<void> {
-    const personaIds = Array.from(
-      new Set(
-        docs
-          .map((doc) => this.getPersonaIdFromDoc(doc, tipo))
-          .filter((id): id is number => typeof id === 'number' && id > 0)
-      )
-    );
-
-    if (personaIds.length === 0) return;
-
-    await Promise.all(
-      personaIds.map(async (id) => {
-        if (this.clientesCache[id]) return;
-        try {
-          const cliente = await this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(id).toPromise();
-          if (cliente) {
-            this.clientesCache[id] = cliente;
-          }
-        } catch (error) {
-          // Ignorar errores individuales
-        }
-      })
-    );
-
-    docs.forEach((doc) => {
-      const personaId = this.getPersonaIdFromDoc(doc, tipo);
-      if (personaId && this.clientesCache[personaId]) {
-        doc.clienteNombre = this.clientesCache[personaId].nombre || doc.clienteNombre;
-      }
-    });
-  }
-
-  private getPersonaIdFromDoc(doc: any, tipo: TipoDocumento): number | null {
-    if (tipo === 'cotizacion') {
-      return doc.personas?.id ?? doc.personaId ?? null;
-    }
-    if (tipo === 'liquidacion') {
-      return doc.cotizacion?.personas?.id ?? doc.personaId ?? null;
-    }
-    return null;
   }
 }

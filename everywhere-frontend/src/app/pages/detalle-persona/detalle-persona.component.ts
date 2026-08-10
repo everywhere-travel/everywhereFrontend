@@ -435,27 +435,20 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.loadingService.setLoading(true);
 
-    const subscription = this.personaNaturalService.findById(this.personaId)
-      .pipe(
-        switchMap(personaNatural => {
-          this.personaNatural = personaNatural;
-          const personaBaseId = personaNatural.persona?.id || this.personaId!;
 
-          return forkJoin({
-            empresasAsociadas: this.naturalJuridicoService.findByPersonaNaturalId(this.personaId!),
-            telefonos: this.telefonoPersonaService.findByPersonaId(personaBaseId),
-            correos: this.correoPersonaService.findByPersonaId(personaBaseId),
-            documentos: this.detalleDocumentoService.findByPersonaNaturalId(this.personaId!),
-            todasLasEmpresas: this.personaJuridicaService.getDropdown(),
-            tiposDocumento: this.documentoService.getDropdownDocumentos(),
-            categoriasPersona: this.categoriaPersonaService.getDropdownCategoriasPersona()
-          });
-        }),
+    const subscription = forkJoin({
+      detalle: this.personaNaturalService.getDetalle(this.personaId),
+      todasLasEmpresas: this.personaJuridicaService.getDropdown(),
+      tiposDocumento: this.documentoService.getDropdownDocumentos(),
+      categoriasPersona: this.categoriaPersonaService.getDropdownCategoriasPersona()
+    })
+      .pipe(
         tap(data => {
-          this.empresasAsociadas = this.extractEmpresasAsociadas(data.empresasAsociadas);
-          this.telefonos = data.telefonos;
-          this.correos = data.correos;
-          this.documentos = data.documentos;
+          this.personaNatural = data.detalle.personaNatural;
+          this.telefonos = this.personaNatural.persona?.telefonos ?? [];
+          this.correos = this.personaNatural.persona?.correos ?? [];
+          this.empresasAsociadas = data.detalle.empresasAsociadas;
+          this.documentos = data.detalle.documentos;
           this.todasLasEmpresas = data.todasLasEmpresas;
           this.tiposDocumento = data.tiposDocumento;
           this.categoriasPersona = data.categoriasPersona;
@@ -818,7 +811,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
         fechaNacimiento: formValue.fechaNacimiento,
         nacionalidad: formValue.nacionalidad,
         residencia: formValue.residencia,
-        personaId: this.personaId
+        personaNaturalId: this.personaId
       };
 
       if (this.personaNatural?.viajero) {
@@ -1240,7 +1233,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
       fechaNacimiento: undefined, // Se puede actualizar después
       nacionalidad: 'Peruana', // Valor por defecto
       residencia: 'Perú', // Valor por defecto
-      personaId: this.personaId!
+      personaNaturalId: this.personaId!
     };
 
     const subscription = this.viajeroService.save(viajeroRequest)

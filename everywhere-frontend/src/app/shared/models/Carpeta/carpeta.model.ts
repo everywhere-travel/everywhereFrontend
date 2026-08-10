@@ -12,3 +12,16 @@ export interface CarpetaResponse {
   nivel: number
   carpetaPadreId?: number
 }
+
+export interface CarpetaItemDTO {
+  id: number
+  tipo: 'cotizacion' | 'liquidacion' | 'recibo' | 'documento-cobranza'
+  numero: string
+  fecha?: string
+  descripcion?: string
+}
+
+export interface CarpetaContenidoDTO {
+  carpeta: CarpetaResponse
+  contenido: CarpetaItemDTO[]
+}

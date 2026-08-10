@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CarpetaRequest, CarpetaResponse } from '../../../shared/models/Carpeta/carpeta.model';
+import { CarpetaContenidoDTO, CarpetaRequest, CarpetaResponse } from '../../../shared/models/Carpeta/carpeta.model';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
@@ -70,6 +70,10 @@ export class CarpetaService {
 
   findHijosCarpeta(id: number): Observable<CarpetaResponse[]> {
     return this.http.get<CarpetaResponse[]>(`${this.apiUrl}/hijos/${id}`);
+  }
+
+  getContenido(id: number): Observable<CarpetaContenidoDTO> {
+    return this.http.get<CarpetaContenidoDTO>(`${this.apiUrl}/${id}/contenido`);
   }
 
 }

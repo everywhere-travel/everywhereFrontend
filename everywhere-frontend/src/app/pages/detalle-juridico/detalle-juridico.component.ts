@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Subscription, Observable, of, forkJoin } from 'rxjs';
-import { catchError, finalize, tap, switchMap } from 'rxjs/operators';
+import { catchError, finalize, tap } from 'rxjs/operators';
 
 // Services
 import { LoadingService } from '../../core/service/loading.service';
@@ -204,22 +204,14 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.loadingService.setLoading(true);
 
-    const subscription = this.personaJuridicaService.findById(this.personaId)
-      .pipe(
-        switchMap(personaJuridica => {
-          this.personaJuridica = personaJuridica;
-          const personaBaseId = personaJuridica.persona?.id || this.personaId!;
 
-          return forkJoin({
-            clientesAsociados: this.naturalJuridicoService.findByPersonaJuridicaId(this.personaId!),
-            telefonos: this.telefonoPersonaService.findByPersonaId(personaBaseId),
-            correos: this.correoPersonaService.findByPersonaId(personaBaseId),
-          });
-        }),
+    const subscription = this.personaJuridicaService.getDetalle(this.personaId)
+      .pipe(
         tap(data => {
-          this.clientesAsociados = this.extractClientesAsociados(data.clientesAsociados);
-          this.telefonos = data.telefonos;
-          this.correos = data.correos;
+          this.personaJuridica = data.personaJuridica;
+          this.telefonos = this.personaJuridica.persona?.telefonos ?? [];
+          this.correos = this.personaJuridica.persona?.correos ?? [];
+          this.clientesAsociados = data.clientesAsociados;
         }),
         catchError(error => {
           this.error = 'Error al cargar los datos de la persona';

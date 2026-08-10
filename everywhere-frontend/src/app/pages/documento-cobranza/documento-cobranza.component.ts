@@ -87,7 +87,6 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   // ===== SEARCH AND FILTERS =====
   searchTerm = '';
   searchCotizacion = '';
-  personasDisplayMap: { [key: number]: string } = {};
 
   totalItems = 0;
 
@@ -219,13 +218,15 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
   }
 
   // ===== STATS METHODS =====
+
   getTotalDocumentos(): number {
-    return this.documentos.length;
+    return this.totalItems;
   }
 
   getDocumentosConPdf(): number {
-    return this.documentos.filter((doc) => doc.id).length; // Todos los documentos con ID tienen PDF disponible
+    return this.documentos.filter((doc) => doc.id).length;
   }
+
 
   getCotizacionesDisponibles(): number {
     return this.cotizaciones.length;
@@ -264,8 +265,8 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.isLoading = true;
     try {
+
       await this.loadDocumentos();
-      await this.loadCotizaciones();
     } catch (error) {
       this.showError('Error al cargar los datos iniciales');
     } finally {
@@ -336,25 +337,12 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   private async loadCotizaciones(): Promise<void> {
     try {
-      this.cotizaciones = 
-        (await this.cotizacionService.getCotizacionesSinDocumentoCobranza().toPromise()) || [];
-      this.cotizacionesFiltradas = [...this.cotizaciones];
 
-      // Cargar nombres de clientes para las cotizaciones
-      const personaIds = new Set<number>();
-      this.cotizaciones.forEach(c => {
-        if (c.personas?.id) personaIds.add(c.personas.id);
-      });
-      for (const pid of personaIds) {
-        if (!this.personasDisplayMap[pid]) {
-          try {
-            const display = await this.personaService.findPersonaNaturalOrJuridicaByIdDropdown(pid).toPromise();
-            if (display) {
-              this.personasDisplayMap[pid] = display.nombre || `Cliente ID: ${pid}`;
-            }
-          } catch { /* silencioso */ }
-        }
-      }
+      const response = await this.cotizacionService
+        .getCotizacionesPage(0, 200, 'id', 'desc')
+        .toPromise();
+      this.cotizaciones = response?.content || [];
+      this.cotizacionesFiltradas = [...this.cotizaciones];
     } catch (error) {
       console.error('Error al cargar cotizaciones:', error);
       this.cotizaciones = [];
@@ -484,12 +472,11 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
     this.editandoDocumento = false;
     this.resetForm();
 
-    // Asegurarse de que los documentos estén cargados antes de filtrar las cotizaciones
-    if (this.documentos.length === 0) {
-      await this.loadDocumentos();
+
+    if (this.cotizaciones.length === 0) {
+      await this.loadCotizaciones();
     }
 
-    await this.loadCotizaciones();
     this.mostrarModalCotizaciones = true;
   }
 
@@ -649,26 +636,7 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
 
   // ===== UTILITY METHODS =====
   getPersonaDisplayName(cotizacion: CotizacionResponse): string {
-    // Primero intentar el cache de nombres
-    if (cotizacion.personas?.id && this.personasDisplayMap[cotizacion.personas.id]) {
-      return this.personasDisplayMap[cotizacion.personas.id];
-    }
-
-    if (cotizacion.personas) {
-      const p: any = cotizacion.personas;
-      if (p.personaJuridica?.razonSocial) {
-        return p.personaJuridica.razonSocial;
-      }
-      if (p.personaNatural) {
-        const pn = p.personaNatural;
-        return `${pn.nombres || ''} ${pn.apellidosPaterno || ''} ${pn.apellidosMaterno || ''}`.trim();
-      }
-      
-      if (p.nombre || p.razonSocial) {
-        return p.nombre || p.razonSocial;
-      }
-    }
-    return 'Cargando cliente...';
+    return cotizacion.clienteNombre || 'Sin cliente';
   }
 
   formatDate(dateString: string | undefined): string {
@@ -758,14 +726,12 @@ export class DocumentoCobranzaComponent implements OnInit, OnDestroy {
       }
 
       // Obtener personaId de la cotización (ID de tabla 'personas')
-      // El backend tiene PersonaNaturalRepository.findByPersonasId() que convierte automáticamente
       if (cotizacion.personas?.id) {
         try {
           const personaId = cotizacion.personas.id;
           this.personaNaturalIdActual = personaId;
 
           // Cargar personas jurídicas asociadas
-          // El backend convierte internamente de personas.id a persona_natural.id
           this.personasJuridicas =
             (await this.naturalJuridicoService.getDropdownByPersonaNaturalId(personaId).toPromise()) || [];
         } catch (error) {
