@@ -1,3 +1,161 @@
-<p>
-  estadistica works!
-</p>
+<div class="min-h-screen bg-slate-50">
+  <!-- Sidebar Component -->
+  <app-sidebar [isCollapsed]="sidebarCollapsed" [menuItems]="sidebarMenuItems" (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()">
+  </app-sidebar>
+
+  <!-- Main Content Area -->
+  <div class="transition-all duration-300" [class.ml-72]="!sidebarCollapsed" [class.ml-20]="sidebarCollapsed">
+    <div class="dashboard-container p-6">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800">Dashboard de Analíticas</h1>
+            <p class="text-slate-500 mt-1">Monitorea el rendimiento de ventas y vendedores</p>
+        </div>
+        
+        <!-- Filtros de tiempo -->
+        <div class="flex items-center gap-3 bg-white p-2 rounded-lg shadow-sm border border-slate-200">
+            <span class="text-sm font-medium text-slate-500">Período:</span>
+            <select class="border-none bg-slate-50 rounded-md text-sm font-semibold text-slate-700 py-1.5 px-3 focus:ring-2 focus:ring-sky-500 cursor-pointer"
+                (change)="onFilterChange($event)">
+                <option value="7">Últimos 7 días</option>
+                <option value="30" selected>Últimos 30 días</option>
+                <option value="90">Últimos 3 meses</option>
+                <option value="365">Último año</option>
+                <option value="3650">Histórico (Todo)</option>
+            </select>
+        </div>
+
+        <!-- Spinner de Carga -->
+        <div *ngIf="loading()" class="loading-overlay">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
+        </div>
+
+        <!-- Contenido del Dashboard -->
+        <div *ngIf="data() as dash" class="fade-in">
+        
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 mb-8">
+            <div class="kpi-card bg-gradient-to-br from-white to-sky-50/50 relative overflow-hidden">
+                <div class="absolute right-0 top-0 opacity-10 mt-[-10px] mr-[-10px]">
+                    <svg class="w-24 h-24 text-sky-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.65 0 1.12-.97 1.9-2.7 1.9-1.93 0-2.84-.96-2.97-2.1H7.42c.14 2.16 1.48 3.39 3.38 3.84V21h3v-2.15c2-.47 3.5-1.74 3.5-3.75 0-2.61-2-3.41-4.7-4.2z"/></svg>
+                </div>
+                <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Ingresos</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ dash.kpis.ingresoTotal | currency:'USD':'symbol' }}</div>
+            </div>
+
+            <div class="kpi-card bg-gradient-to-br from-white to-violet-50/50 relative overflow-hidden">
+                <div class="absolute right-0 top-0 opacity-10 mt-[-10px] mr-[-10px]">
+                    <svg class="w-24 h-24 text-violet-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2v-6h2v6z"/></svg>
+                </div>
+                <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Ventas Cerradas</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ dash.kpis.totalVentasCerradas }} <span class="text-lg font-medium text-slate-400">cotizaciones</span></div>
+            </div>
+
+            <div class="kpi-card bg-gradient-to-br from-white to-emerald-50/50 relative overflow-hidden">
+                <div class="absolute right-0 top-0 opacity-10 mt-[-10px] mr-[-10px]">
+                    <svg class="w-24 h-24 text-emerald-500" fill="currentColor" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+                </div>
+                <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Mejor Vendedor</h3>
+                <div class="text-2xl font-bold text-slate-800 truncate" *ngIf="dash.topVendors.length > 0; else noVendors">
+                    {{ dash.topVendors[0].nombreVendedor }}
+                </div>
+                <ng-template #noVendors><div class="text-xl font-medium text-slate-400">Sin datos</div></ng-template>
+            </div>
+        </div>
+
+        <!-- Evolución de Ingresos (Fila Completa) -->
+        <div class="chart-card mb-8">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Evolución de Ingresos</h3>
+            <div echarts [options]="salesChartOption" class="w-full h-80"></div>
+        </div>
+
+        <!-- Gráficos Secundarios (Flujo de Clientes y Top Productos) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Gráfico de Evolución de Nuevos Clientes -->
+            <div class="chart-card lg:col-span-2">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Evolución de Nuevos Clientes</h3>
+                <div echarts [options]="newClientsChartOption" class="w-full h-80"></div>
+            </div>
+            
+            <!-- Top Productos (Dona) -->
+            <div class="chart-card">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Top 5 Productos Demandados</h3>
+                <div echarts [options]="topProductsOption" class="w-full h-80"></div>
+            </div>
+        </div>
+
+        <!-- Ranking Vendedores -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Gráfico de Barras -->
+            <div class="chart-card">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Ranking de Counters (Top 5)</h3>
+                <div echarts [options]="topVendorsOption" class="w-full h-72"></div>
+            </div>
+
+            <!-- Tabla de Vendedores -->
+            <div class="chart-card overflow-x-auto">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Desglose por Vendedor</h3>
+                <table class="min-w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-200">
+                            <th class="py-3 font-semibold text-sm text-slate-500 uppercase tracking-wider">Vendedor</th>
+                            <th class="py-3 font-semibold text-sm text-slate-500 uppercase tracking-wider">Cotizaciones</th>
+                            <th class="py-3 font-semibold text-sm text-slate-500 uppercase tracking-wider">Monto Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let vendor of dash.topVendors" class="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                            <td class="py-3 font-medium text-slate-700">{{ vendor.nombreVendedor }}</td>
+                            <td class="py-3 text-slate-600">{{ vendor.cantidadCotizaciones }}</td>
+                            <td class="py-3 font-bold text-slate-800">{{ vendor.montoVendido | currency:'USD':'symbol' }}</td>
+                        </tr>
+                        <tr *ngIf="dash.topVendors.length === 0">
+                            <td colspan="3" class="py-4 text-center text-slate-500">No hay datos en el período seleccionado.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Fila de Destinos y Demografía -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-6">
+            <!-- Top Destinos -->
+            <div class="chart-card">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Destinos Más Solicitados</h3>
+                <div echarts [options]="topDestinationsOption" class="w-full h-80"></div>
+            </div>
+
+            <!-- Demografía de Clientes -->
+            <div class="chart-card">
+                <h3 class="text-lg font-bold text-slate-800 mb-4">Demografía de Clientes (Nacionalidad)</h3>
+                <div echarts [options]="demographyOption" class="w-full h-80"></div>
+            </div>
+        </div>
+
+        <!-- Ranking Top Clientes -->
+        <div class="chart-card overflow-x-auto mt-6">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Mejores Clientes</h3>
+            <table class="min-w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200">
+                        <th class="py-3 font-semibold text-sm text-slate-500 uppercase tracking-wider">Cliente</th>
+                        <th class="py-3 font-semibold text-sm text-slate-500 uppercase tracking-wider">Frecuencia de Compra</th>
+                        <th class="py-3 font-semibold text-sm text-slate-500 uppercase tracking-wider">Total Gastado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let client of dash.topClients" class="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                        <td class="py-3 font-medium text-slate-700">{{ client.nombreCliente }}</td>
+                        <td class="py-3 text-slate-600">{{ client.frecuenciaCompra }} veces</td>
+                        <td class="py-3 font-bold text-emerald-600">{{ client.montoComprado | currency:'USD':'symbol' }}</td>
+                    </tr>
+                    <tr *ngIf="dash.topClients.length === 0">
+                        <td colspan="3" class="py-4 text-center text-slate-500">No hay clientes en el período seleccionado.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+  </div>
+</div>
