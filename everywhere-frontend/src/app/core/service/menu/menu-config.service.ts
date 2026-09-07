@@ -166,6 +166,13 @@ export class MenuConfigService {
                     moduleKey: 'SUCURSALES'
                 }
             ]
+        },
+        {
+            id: 'estadisticas',
+            title: 'Analíticas',
+            icon: 'fas fa-chart-line',
+            route: '/statistics',
+            moduleKey: 'ESTADISTICAS'
         }
     ];
 

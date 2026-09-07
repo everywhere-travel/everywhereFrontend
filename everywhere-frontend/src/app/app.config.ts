@@ -3,6 +3,8 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { jwtInterceptor } from './core/interceptos/jwt.interceptor';
 import { cacheInterceptor } from './core/interceptos/cache.interceptor';
+import { provideEchartsCore } from 'ngx-echarts';
+import * as echarts from 'echarts';
 
 import { LucideAngularModule, RefreshCcw, CircleUserRound  } from 'lucide-angular';
 
@@ -17,6 +19,7 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(LucideAngularModule.pick({
         RefreshCcw,
         CircleUserRound
-    }))
+    })),
+    provideEchartsCore({ echarts })
   ]
 };
