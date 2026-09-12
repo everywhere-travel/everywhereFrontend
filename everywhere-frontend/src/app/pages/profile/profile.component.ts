@@ -125,8 +125,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   });
 
   checkFirstLogin(): void {
-    const route = inject(Router);
-    const urlTree = route.parseUrl(route.url);
+    const urlTree = this.router.parseUrl(this.router.url);
     if (urlTree.queryParams['forceChange'] === 'true') {
       this.isFirstLogin = true;
     }
