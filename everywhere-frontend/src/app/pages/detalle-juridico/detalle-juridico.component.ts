@@ -13,6 +13,7 @@ import { CorreoPersonaService } from '../../core/service/CorreoPersona/correo-pe
 import { TelefonoPersonaService } from '../../core/service/TelefonoPersona/telefono-persona.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 import { Location } from '@angular/common';
 
 // Models
@@ -62,6 +63,7 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   private correoPersonaService = inject(CorreoPersonaService);
   private telefonoPersonaService = inject(TelefonoPersonaService);
   private authService = inject(AuthServiceService);
+  private confirmService = inject(ConfirmService);
   private location = inject(Location);
   private fb = inject(FormBuilder);
 
@@ -491,21 +493,29 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   }
 
   eliminarTelefono(telefono: TelefonoPersonaResponse): void {
-    if (!this.personaId || !confirm('¿Está seguro de eliminar este teléfono?')) return;
+    if (!this.personaId) return;
 
-    const personaBaseId = this.personaJuridica?.persona?.id || this.personaId;
+    this.confirmService.confirm({
+      title: 'Eliminar Teléfono',
+      message: '¿Está seguro de eliminar este teléfono?',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        const personaBaseId = this.personaJuridica?.persona?.id || this.personaId;
 
-    const subscription = this.telefonoPersonaService.delete(personaBaseId, telefono.id)
-      .pipe(
-        tap(() => this.loadTelefonos()),
-        catchError(error => {
-          this.error = 'Error al eliminar el teléfono';
-          return of(null);
-        })
-      )
-      .subscribe();
+        const subscription = this.telefonoPersonaService.delete(personaBaseId!, telefono.id)
+          .pipe(
+            tap(() => this.loadTelefonos()),
+            catchError(error => {
+              this.error = 'Error al eliminar el teléfono';
+              return of(null);
+            })
+          )
+          .subscribe();
 
-    this.subscriptions.add(subscription);
+        this.subscriptions.add(subscription);
+      }
+    });
   }
 
   private loadTelefonos(): void {
@@ -583,21 +593,27 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   }
 
   eliminarCorreo(correo: CorreoPersonaResponse): void {
-    if (!confirm('¿Está seguro de eliminar este correo?')) return;
+    this.confirmService.confirm({
+      title: 'Eliminar Correo',
+      message: '¿Está seguro de eliminar este correo?',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        const personaBaseId = this.personaJuridica?.persona?.id || this.personaId;
 
-    const personaBaseId = this.personaJuridica?.persona?.id || this.personaId;
+        const subscription = this.correoPersonaService.delete(correo.id)
+          .pipe(
+            tap(() => this.loadCorreos()),
+            catchError(error => {
+              this.error = 'Error al eliminar el correo';
+              return of(null);
+            })
+          )
+          .subscribe();
 
-    const subscription = this.correoPersonaService.delete(correo.id)
-      .pipe(
-        tap(() => this.loadCorreos()),
-        catchError(error => {
-          this.error = 'Error al eliminar el correo';
-          return of(null);
-        })
-      )
-      .subscribe();
-
-    this.subscriptions.add(subscription);
+        this.subscriptions.add(subscription);
+      }
+    });
   }
 
   private loadCorreos(): void {

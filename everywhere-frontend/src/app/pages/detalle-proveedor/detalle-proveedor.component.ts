@@ -14,6 +14,7 @@ import { ProveedorColaboradorRequest, ProveedorColaboradorResponse } from '../..
 import { ProveedorContactoRequest, ProveedorContactoResponse } from '../../shared/models/Proveedor/proveedor-contacto.model';
 import { ProveedorGrupoContactoRequest, ProveedorGrupoContactoResponse } from '../../shared/models/Proveedor/proveedor-grupo-contacto.model';
 import { ConfirmationModalComponent, ConfirmationConfig } from '../../shared/components/confirmation-modal/confirmation-modal.component';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 
 interface CodigoPais {
     code: string;
@@ -126,6 +127,7 @@ export class DetalleProveedorComponent implements OnInit {
         private grupoContactoService: ProveedorGrupoContactoService,
         private emailService: EmailService,
         private menuConfigService: MenuConfigService,
+        private confirmService: ConfirmService,
         private cdr: ChangeDetectorRef
     ) {
         this.initializeForms();
@@ -317,12 +319,18 @@ export class DetalleProveedorComponent implements OnInit {
     }
 
     eliminarColaborador(colaborador: ProveedorColaboradorResponse): void {
-        if (confirm(`¿Eliminar colaborador ${colaborador.nombre}?`)) {
-            this.colaboradorService.delete(colaborador.id).subscribe({
-                next: () => this.loadColaboradores(),
-                error: (error) => console.error('Error deleting colaborador:', error)
-            });
-        }
+        this.confirmService.confirm({
+            title: 'Eliminar Colaborador',
+            message: `¿Eliminar colaborador ${colaborador.nombre}?`,
+            type: 'danger'
+        }).subscribe(confirmed => {
+            if (confirmed) {
+                this.colaboradorService.delete(colaborador.id).subscribe({
+                    next: () => this.loadColaboradores(),
+                    error: (error) => console.error('Error deleting colaborador:', error)
+                });
+            }
+        });
     }
 
     // =================================================================
@@ -378,12 +386,18 @@ export class DetalleProveedorComponent implements OnInit {
     }
 
     eliminarContacto(contacto: ProveedorContactoResponse): void {
-        if (confirm(`¿Eliminar contacto ${contacto.email || contacto.numero}?`)) {
-            this.contactoService.delete(contacto.id).subscribe({
-                next: () => this.loadContactos(),
-                error: (error) => console.error('Error deleting contacto:', error)
-            });
-        }
+        this.confirmService.confirm({
+            title: 'Eliminar Contacto',
+            message: `¿Eliminar contacto ${contacto.email || contacto.numero}?`,
+            type: 'danger'
+        }).subscribe(confirmed => {
+            if (confirmed) {
+                this.contactoService.delete(contacto.id).subscribe({
+                    next: () => this.loadContactos(),
+                    error: (error) => console.error('Error deleting contacto:', error)
+                });
+            }
+        });
     }
 
     // =================================================================
@@ -519,12 +533,18 @@ export class DetalleProveedorComponent implements OnInit {
     }
 
     eliminarGrupoContacto(grupo: ProveedorGrupoContactoResponse): void {
-        if (confirm(`¿Eliminar grupo ${grupo.nombre}?`)) {
-            this.grupoContactoService.delete(grupo.id).subscribe({
-                next: () => this.loadGruposContacto(),
-                error: (error) => console.error('Error deleting grupo:', error)
-            });
-        }
+        this.confirmService.confirm({
+            title: 'Eliminar Grupo',
+            message: `¿Eliminar grupo ${grupo.nombre}?`,
+            type: 'danger'
+        }).subscribe(confirmed => {
+            if (confirmed) {
+                this.grupoContactoService.delete(grupo.id).subscribe({
+                    next: () => this.loadGruposContacto(),
+                    error: (error) => console.error('Error deleting grupo:', error)
+                });
+            }
+        });
     }
 
     // =================================================================

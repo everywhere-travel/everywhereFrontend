@@ -334,16 +334,19 @@ export class SucursalesComponent implements OnInit {
   cambiarEstadoSucursal(sucursal: SucursalResponse): void {
     const nuevoEstado = !sucursal.estado;
 
-    this.loading = true;
     this.sucursalService.cambiarEstadoSucursal(sucursal.id, nuevoEstado).subscribe({
       next: (response) => {
-        this.loadSucursales();
+        const idx = this.sucursales.findIndex(s => s.id === sucursal.id);
+        if (idx !== -1) {
+          this.sucursales[idx].estado = nuevoEstado;
+          this.transformarDataParaTabla();
+          this.applyFilters();
+          this.calcularEstadisticas();
+        }
         this.cerrarModalEliminar();
-        this.loading = false;
       },
       error: (error) => {
         console.error('Error al cambiar estado de sucursal:', error);
-        this.loading = false;
       }
     });
   }

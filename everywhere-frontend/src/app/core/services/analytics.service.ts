@@ -3,46 +3,77 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Observable } from 'rxjs';
 
-export interface AnalyticsDashboardDTO {
-    kpis: {
-        ingresoTotal: number;
-        comisionesTotales: number;
-        totalVentasCerradas: number;
-    };
-    topVendors: {
-        nombreVendedor: string;
-        montoVendido: number;
-        cantidadCotizaciones: number;
-    }[];
-    topProducts: {
-        nombreProducto: string;
-        cantidadVendida: number;
-        ingresoGenerado: number;
-    }[];
-    salesChart: {
-        fecha: string;
-        monto: number;
-    }[];
-    topClients: {
-        nombreCliente: string;
-        montoComprado: number;
-        frecuenciaCompra: number;
-    }[];
-    clientDemographics: {
-        paisNacionalidad: string;
-        paisResidencia: string;
-        cantidadClientes: number;
-    }[];
-    topDestinations: {
-        destino: string;
-        cantidadViajes: number;
-        ingresoGenerado: number;
-    }[];
-    newClientsChart: {
-        fecha: string;
-        cantidad: number;
-    }[];
+// ─── DTOs ────────────────────────────────────────────────────────────────────
+
+export interface KpiSummaryDTO {
+  ingresoTotal: number;
+  comisionesTotales: number;
+  totalVentasCerradas: number;
+  expedienteDeVenta: number;  // Promedio por venta
+  tasaConversion: number;     // Porcentaje
+  cotizacionesAbiertas: number;
+  cotizacionesVencidas: number;
 }
+
+export interface QuoteFunnelDTO {
+  totalCotizaciones: number;
+  convertidas: number;
+  noConvertidas: number;
+  cotizacionesVigentes: number;
+  cotizacionesVencidas: number;
+  tasaConversion: number;
+}
+
+export interface ConversionByVendorDTO {
+  nombreVendedor: string;
+  totalCotizaciones: number;
+  cotizacionesConvertidas: number;
+  tasaConversion: number;
+  montoVendido: number;
+}
+
+export interface AnalyticsDashboardDTO {
+  kpis: KpiSummaryDTO;
+  topVendors: {
+    nombreVendedor: string;
+    montoVendido: number;
+    cantidadCotizaciones: number;
+  }[];
+  topProducts: {
+    nombreProducto: string;
+    cantidadVendida: number;
+    ingresoGenerado: number;
+  }[];
+  salesChart: { fecha: string; monto: number; }[];
+  topClients: {
+    nombreCliente: string;
+    montoComprado: number;
+    frecuenciaCompra: number;
+  }[];
+  clientDemographics: {
+    paisNacionalidad: string;
+    paisResidencia: string;
+    cantidadClientes: number;
+  }[];
+  topDestinations: {
+    destino: string;
+    cantidadViajes: number;
+    ingresoGenerado: number;
+  }[];
+  newClientsChart: { fecha: string; cantidad: number; }[];
+  // Nuevos
+  quoteFunnel: QuoteFunnelDTO;
+  conversionByVendor: ConversionByVendorDTO[];
+}
+
+export interface DashboardFilters {
+  startDate: string;
+  endDate: string;
+  counterId?: number | null;
+  sucursalId?: number | null;
+}
+
+// ─── Servicio ─────────────────────────────────────────────────────────────────
 
 @Injectable({
   providedIn: 'root'
@@ -52,10 +83,12 @@ export class AnalyticsService {
 
   constructor(private http: HttpClient) {}
 
-  getDashboardData(startDate?: string, endDate?: string): Observable<AnalyticsDashboardDTO> {
+  getDashboardData(filters: DashboardFilters): Observable<AnalyticsDashboardDTO> {
     let params = new HttpParams();
-    if (startDate) params = params.set('startDate', startDate);
-    if (endDate) params = params.set('endDate', endDate);
+    if (filters.startDate) params = params.set('startDate', filters.startDate);
+    if (filters.endDate)   params = params.set('endDate', filters.endDate);
+    if (filters.counterId)   params = params.set('counterId',  filters.counterId.toString());
+    if (filters.sucursalId)  params = params.set('sucursalId', filters.sucursalId.toString());
 
     return this.http.get<AnalyticsDashboardDTO>(`${this.apiUrl}/dashboard`, { params });
   }

@@ -21,6 +21,7 @@ import { TelefonoPersonaService } from '../../core/service/TelefonoPersona/telef
 import { CategoriaPersonaService } from '../../core/service/CategoriaPersona/categoria-persona.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 import { Location } from '@angular/common';
 
 // Models
@@ -81,6 +82,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   private categoriaPersonaService = inject(CategoriaPersonaService);
   private menuConfigService = inject(MenuConfigService);
   private authService = inject(AuthServiceService);
+  private confirmService = inject(ConfirmService);
   private location = inject(Location);
   private fb = inject(FormBuilder);
 
@@ -943,20 +945,27 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   eliminarTelefono(telefono: TelefonoPersonaResponse): void {
-    if (!this.personaId || !confirm('¿Está seguro de eliminar este teléfono?')) return;
-    const personaBaseId = this.personaNatural?.persona?.id || this.personaId;
-
-    const subscription = this.telefonoPersonaService.delete(personaBaseId, telefono.id)
-      .pipe(
-        tap(() => this.loadTelefonos()),
-        catchError(error => {
-          this.mostrarErrorModal(error);
-          return of(null);
-        })
-      )
-      .subscribe();
-
-    this.subscriptions.add(subscription);
+    if (!this.personaId) return;
+    this.confirmService.confirm({
+      title: 'Eliminar Teléfono',
+      message: '¿Está seguro de eliminar este teléfono?',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.loadingService.setLoading(true);
+        const personaBaseId = this.personaNatural?.persona?.id || this.personaId;
+        this.telefonoPersonaService.delete(personaBaseId!, telefono.id).subscribe({
+          next: () => {
+            this.loadPersonaData(); // Recargar datos
+          },
+          error: (error) => {
+            console.error('Error al eliminar teléfono:', error);
+            this.mostrarErrorModal(error);
+            this.loadingService.setLoading(false);
+          }
+        });
+      }
+    });
   }
 
   private loadTelefonos(): void {
@@ -1033,19 +1042,25 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   eliminarCorreo(correo: CorreoPersonaResponse): void {
-    if (!confirm('¿Está seguro de eliminar este correo?')) return;
-
-    const subscription = this.correoPersonaService.delete(correo.id)
-      .pipe(
-        tap(() => this.loadCorreos()),
-        catchError(error => {
-          this.mostrarErrorModal(error);
-          return of(null);
-        })
-      )
-      .subscribe();
-
-    this.subscriptions.add(subscription);
+    this.confirmService.confirm({
+      title: 'Eliminar Correo',
+      message: '¿Está seguro de eliminar este correo?',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.loadingService.setLoading(true);
+        this.correoPersonaService.delete(correo.id).subscribe({
+          next: () => {
+            this.loadPersonaData(); // Recargar datos
+          },
+          error: (error) => {
+            console.error('Error al eliminar correo:', error);
+            this.mostrarErrorModal(error);
+            this.loadingService.setLoading(false);
+          }
+        });
+      }
+    });
   }
 
   private loadCorreos(): void {
@@ -1142,26 +1157,29 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   desasociarEmpresa(empresa: PersonaJuridicaResponse): void {
-    if (!this.personaId) return;
-    if (!confirm(`¿Está seguro de desasociar la empresa "${empresa.razonSocial}"?`)) return;
-    this.loadingService.setLoading(true);
+    this.confirmService.confirm({
+      title: 'Desasociar Empresa',
+      message: `¿Está seguro de desasociar la empresa "${empresa.razonSocial}"?`,
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.isSaving = true;
+        this.loadingService.setLoading(true);
 
-    const subscription = this.naturalJuridicoService.deleteByPersonas(this.personaNatural!.id, empresa.id)
-      .pipe(
-        tap(() => {
-          this.recargarEmpresasAsociadas();
-        }),
-        catchError(error => {
-          this.mostrarErrorModal(error);
-          return of(null);
-        }),
-        finalize(() => {
-          this.loadingService.setLoading(false);
-        })
-      )
-      .subscribe();
-
-    this.subscriptions.add(subscription);
+        this.naturalJuridicoService.deleteByPersonas(this.personaId!, empresa.id).subscribe({
+          next: () => {
+            this.loadPersonaData(); // Recargar los datos
+            this.isSaving = false;
+          },
+          error: (error: any) => {
+            console.error('Error al desasociar empresa:', error);
+            this.mostrarErrorModal(error);
+            this.isSaving = false;
+            this.loadingService.setLoading(false);
+          }
+        });
+      }
+    });
   }
 
   // Viajeros Frecuentes management
@@ -1308,23 +1326,28 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   }
 
   eliminarViajeroFrecuente(viajero: ViajeroFrecuenteResponse): void {
-    if (!confirm('¿Está seguro de eliminar este viajero frecuente?')) return;
-
-    const subscription = this.viajeroFrecuenteService.eliminar(viajero.id)
-      .pipe(
-        tap(() => {
-          if (this.personaNatural?.viajero) {
-            this.loadViajerosFrecuentes(this.personaNatural.viajero.id);
+    this.confirmService.confirm({
+      title: 'Eliminar Viajero Frecuente',
+      message: '¿Está seguro de eliminar este viajero frecuente?',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.loadingService.setLoading(true);
+        this.viajeroFrecuenteService.eliminar(viajero.id).subscribe({
+          next: () => {
+            if (this.personaNatural?.viajero) {
+              this.loadViajerosFrecuentes(this.personaNatural.viajero.id);
+            }
+            this.loadingService.setLoading(false);
+          },
+          error: (error) => {
+            console.error('Error al eliminar viajero frecuente:', error);
+            this.mostrarErrorModal(error);
+            this.loadingService.setLoading(false);
           }
-        }),
-        catchError(error => {
-          this.mostrarErrorModal(error);
-          return of(null);
-        })
-      )
-      .subscribe();
-
-    this.subscriptions.add(subscription);
+        });
+      }
+    });
   }
 
   // Documentos management
