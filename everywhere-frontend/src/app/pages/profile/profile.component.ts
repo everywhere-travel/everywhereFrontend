@@ -125,9 +125,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   });
 
   checkFirstLogin(): void {
+    const user = this.authService.getUser();
     const route = inject(Router);
     const urlTree = route.parseUrl(route.url);
-    if (urlTree.queryParams['forceChange'] === 'true') {
+    if (urlTree.queryParams['forceChange'] === 'true' || (user && user.loginCount === 0)) {
       this.isFirstLogin = true;
     }
   }

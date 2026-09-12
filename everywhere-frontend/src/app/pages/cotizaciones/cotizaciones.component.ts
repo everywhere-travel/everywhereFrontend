@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 
 import { CotizacionService } from '../../core/service/Cotizacion/cotizacion.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 
 import { CotizacionResponse } from '../../shared/models/Cotizacion/cotizacion.model';
 
@@ -39,6 +40,7 @@ export interface CotizacionTabla {
 export class CotizacionesComponent implements OnInit {
   private router = inject(Router);
   private cotizacionService = inject(CotizacionService);
+  private confirmService = inject(ConfirmService);
 
   isLoading = false;
 
@@ -266,9 +268,15 @@ export class CotizacionesComponent implements OnInit {
   }
 
   confirmarEliminacion(cotizacion: CotizacionResponse): void {
-    if (confirm(`¿Estás seguro de que deseas eliminar la cotización ${cotizacion.codigoCotizacion}?`)) {
-      this.eliminarCotizacionDirectamente(cotizacion.id);
-    }
+    this.confirmService.confirm({
+      title: 'Eliminar Cotización',
+      message: `¿Estás seguro de que deseas eliminar la cotización ${cotizacion.codigoCotizacion}?`,
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.eliminarCotizacionDirectamente(cotizacion.id);
+      }
+    });
   }
 
   mostrarFormularioCrear(): void {

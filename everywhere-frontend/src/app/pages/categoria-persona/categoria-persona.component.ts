@@ -8,6 +8,7 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
@@ -141,7 +142,8 @@ export class CategoriaPersonaComponent implements OnInit {
     private router: Router,
     private cdr: ChangeDetectorRef,
     private errorHandler: ErrorHandlerService,
-    private menuConfigService: MenuConfigService
+    private menuConfigService: MenuConfigService,
+    private confirmService: ConfirmService
   ) {
     this.initializeForms();
   }
@@ -311,32 +313,39 @@ export class CategoriaPersonaComponent implements OnInit {
   onEliminarMasivo(ids: number[]): void {
     if (ids.length === 0) return;
 
-    const confirmMessage = `¿Está seguro de eliminar ${ids.length} categoría${ids.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
-    if (confirm(confirmMessage)) {
-      this.loading = true;
-      let eliminados = 0;
-      const total = ids.length;
+    const confirmMessage = `¿Está seguro de eliminar ${ids.length} categoría${ids.length > 1 ? 's' : ''}? Esta acción no se puede deshacer.`;
+    
+    this.confirmService.confirm({
+      title: 'Eliminar Categorías',
+      message: confirmMessage,
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.loading = true;
+        let eliminados = 0;
+        const total = ids.length;
 
-      ids.forEach(id => {
-        this.categoriaPersonaService.deleteById(id).subscribe({
-          next: () => {
-            eliminados++;
-            if (eliminados === total) {
-              this.loadCategoriasPersona();
-              this.loading = false;
+        ids.forEach(id => {
+          this.categoriaPersonaService.deleteById(id).subscribe({
+            next: () => {
+              eliminados++;
+              if (eliminados === total) {
+                this.loadCategoriasPersona();
+                this.loading = false;
+              }
+            },
+            error: (error) => {
+              console.error('Error al eliminar categoría:', error);
+              eliminados++;
+              if (eliminados === total) {
+                this.loadCategoriasPersona();
+                this.loading = false;
+              }
             }
-          },
-          error: (error) => {
-            console.error('Error al eliminar categoría:', error);
-            eliminados++;
-            if (eliminados === total) {
-              this.loadCategoriasPersona();
-              this.loading = false;
-            }
-          }
+          });
         });
-      });
-    }
+      }
+    });
   }
 
   cerrarModalError(): void {

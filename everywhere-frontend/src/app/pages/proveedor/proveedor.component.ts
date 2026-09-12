@@ -8,6 +8,7 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
@@ -177,6 +178,7 @@ export class ProveedorComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private proveedorService: ProveedorService,
+    private confirmService: ConfirmService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private errorHandler: ErrorHandlerService,
@@ -417,38 +419,43 @@ export class ProveedorComponent implements OnInit {
   eliminarSeleccionados(): void {
     if (this.selectedItems.length === 0) return;
 
-    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cliente${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
-    if (confirm(confirmMessage)) {
-      this.loading = true;
-      let eliminados = 0;
-      const total = this.selectedItems.length;
+    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} proveedor${this.selectedItems.length > 1 ? 'es' : ''}?\n\nEsta acción no se puede deshacer.`;
+    this.confirmService.confirm({
+      title: 'Eliminar Proveedores',
+      message: confirmMessage,
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.loading = true;
+        let eliminados = 0;
+        const total = this.selectedItems.length;
 
-      this.selectedItems.forEach(id => {
-        const proveedor = this.proveedores.find(p => p.id === id);
-        if (proveedor) {
-          this.proveedorService.deleteByIdProveedor(id).subscribe({
-            next: () => {
-              eliminados++;
-              if (eliminados === total) {
-                this.loadProveedores();
-                this.clearSelection();
-                this.loading = false;
+        this.selectedItems.forEach(id => {
+          const proveedor = this.proveedores.find(p => p.id === id);
+          if (proveedor) {
+            this.proveedorService.deleteByIdProveedor(id).subscribe({
+              next: () => {
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadProveedores();
+                  this.clearSelection();
+                  this.loading = false;
+                }
+              },
+              error: (error) => {
+                console.error('Error al eliminar proveedor:', error);
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadProveedores();
+                  this.clearSelection();
+                  this.loading = false;
+                }
               }
-            },
-            error: (error) => {
-              console.error('Error al eliminar persona natural:', error);
-              eliminados++;
-              if (eliminados === total) {
-                this.loadProveedores();
-                this.clearSelection();
-                this.loading = false;
-              }
-            }
-          });
-
-        }
-      });
-    }
+            });
+          }
+        });
+      }
+    });
   }
 
   // Search and filter

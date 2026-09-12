@@ -15,6 +15,7 @@ import { FormaPagoService } from '../../core/service/FormaPago/forma-pago.servic
 import { NaturalJuridicoService } from '../../core/service/NaturalJuridico/natural-juridico.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 import { PdfService } from '../../core/service/Pdf/Pdf.service';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 
 // Models
 import { DetalleReciboRequestDTO, DetalleReciboResponseDTO } from '../../shared/models/Recibo/detalleRecibo.model';
@@ -52,6 +53,7 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
   private naturalJuridicoService = inject(NaturalJuridicoService);
   private formaPagoService = inject(FormaPagoService);
   private pdfService = inject(PdfService);
+  private confirmService = inject(ConfirmService);
 
   // Data
   recibo: ReciboResponseDTO | null = null;
@@ -302,27 +304,31 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
   }
 
   eliminarDetalle(detalleId: number): void {
-    if (!confirm('¿Está seguro de que desea eliminar este detalle?')) {
-      return;
-    }
+    this.confirmService.confirm({
+      title: 'Eliminar Detalle',
+      message: '¿Está seguro de que desea eliminar este detalle?',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.isLoading = true;
 
-    this.isLoading = true;
+        const deleteSubscription = this.detalleReciboService.deleteDetalle(detalleId)
+          .pipe(
+            catchError(error => {
+              console.error('Error al eliminar detalle:', error);
+              this.error = 'Error al eliminar el detalle';
+              return of(null);
+            }),
+            finalize(() => this.isLoading = false)
+          )
+          .subscribe(() => {
+            this.success = 'Detalle eliminado correctamente';
+            this.recargarDetalles();
+          });
 
-    const deleteSubscription = this.detalleReciboService.deleteDetalle(detalleId)
-      .pipe(
-        catchError(error => {
-          console.error('Error al eliminar detalle:', error);
-          this.error = 'Error al eliminar el detalle';
-          return of(null);
-        }),
-        finalize(() => this.isLoading = false)
-      )
-      .subscribe(() => {
-        this.success = 'Detalle eliminado correctamente';
-        this.recargarDetalles();
-      });
-
-    this.subscriptions.add(deleteSubscription);
+        this.subscriptions.add(deleteSubscription);
+      }
+    });
   }
 
   // ===== DOCUMENTO CRUD OPERATIONS =====
@@ -608,9 +614,15 @@ export class DetalleReciboComponent implements OnInit, OnDestroy {
    */
   eliminarDetalleOriginal(index: number): void {
     if (index >= 0 && index < this.detalles.length) {
-      if (confirm('¿Está seguro de eliminar este detalle?')) {
-        this.detalles.splice(index, 1);
-      }
+      this.confirmService.confirm({
+        title: 'Eliminar Detalle',
+        message: '¿Está seguro de eliminar este detalle?',
+        type: 'danger'
+      }).subscribe(confirmed => {
+        if (confirmed) {
+          this.detalles.splice(index, 1);
+        }
+      });
     }
   }
 

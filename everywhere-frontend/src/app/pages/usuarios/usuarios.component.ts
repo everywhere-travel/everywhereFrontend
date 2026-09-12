@@ -88,6 +88,24 @@ export class UsuariosComponent implements OnInit {
   // Filtros
   searchTermUsuarios = '';
 
+  // Confirm Modal
+  mostrarModalConfirm = false;
+  confirmConfig = { title: '', message: '', action: () => {}, danger: false };
+
+  abrirModalConfirm(title: string, message: string, action: () => void, danger: boolean = false) {
+    this.confirmConfig = { title, message, action, danger };
+    this.mostrarModalConfirm = true;
+  }
+
+  cerrarModalConfirm() {
+    this.mostrarModalConfirm = false;
+  }
+
+  confirmarAccion() {
+    this.confirmConfig.action();
+    this.cerrarModalConfirm();
+  }
+
   constructor(
     private fb: FormBuilder,
     private userService: UserService,
@@ -311,32 +329,47 @@ export class UsuariosComponent implements OnInit {
   }
 
   eliminarUsuario(id: number): void {
-    if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
-      this.loading = true;
-      this.userService.deleteUser(id).subscribe({
-        next: () => this.loadUsuarios(),
-        error: (err) => {
-          console.error('Error eliminando usuario', err);
-          this.loading = false;
-          alert('Error al eliminar usuario');
-        }
-      });
-    }
+    this.abrirModalConfirm(
+      'Eliminar Usuario',
+      '¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.',
+      () => {
+        this.userService.deleteUser(id).subscribe({
+          next: () => {
+            this.usuarios = this.usuarios.filter(u => u.id !== id);
+            this.transformarDataParaTabla();
+          },
+          error: (err) => {
+            console.error('Error eliminando usuario', err);
+            alert('Error al eliminar usuario');
+          }
+        });
+      },
+      true
+    );
   }
 
   toggleEstadoUsuario(id: number, currentEstado: boolean): void {
     const accion = currentEstado ? 'deshabilitar' : 'habilitar';
-    if (confirm(`¿Estás seguro de que deseas ${accion} este usuario?`)) {
-      this.loading = true;
-      this.userService.toggleUserStatus(id).subscribe({
-        next: () => this.loadUsuarios(),
-        error: (err) => {
-          console.error('Error cambiando estado del usuario', err);
-          this.loading = false;
-          alert('Error al cambiar el estado del usuario');
-        }
-      });
-    }
+    this.abrirModalConfirm(
+      currentEstado ? 'Deshabilitar Usuario' : 'Habilitar Usuario',
+      `¿Estás seguro de que deseas ${accion} este usuario?`,
+      () => {
+        this.userService.toggleUserStatus(id).subscribe({
+          next: () => {
+            const index = this.usuarios.findIndex(u => u.id === id);
+            if (index !== -1) {
+              this.usuarios[index].estado = !this.usuarios[index].estado;
+              this.transformarDataParaTabla();
+            }
+          },
+          error: (err) => {
+            console.error('Error cambiando estado del usuario', err);
+            alert('Error al cambiar el estado del usuario');
+          }
+        });
+      },
+      currentEstado // Peligroso si se va a deshabilitar
+    );
   }
 
   // ==========================================
@@ -453,23 +486,28 @@ export class UsuariosComponent implements OnInit {
 
   eliminarRol(id: number, event: Event): void {
     event.stopPropagation();
-    if (confirm('¿Estás seguro de que deseas eliminar este rol? Se perderán sus permisos.')) {
-      this.loading = true;
-      this.roleService.delete(id).subscribe({
-        next: () => {
-          if (this.roleSeleccionado?.id === id) {
-            this.roleSeleccionado = null;
-            this.roleSeleccionadoPermisos.clear();
+    this.abrirModalConfirm(
+      'Eliminar Rol',
+      '¿Estás seguro de que deseas eliminar este rol? Se perderán sus permisos.',
+      () => {
+        this.loading = true;
+        this.roleService.delete(id).subscribe({
+          next: () => {
+            if (this.roleSeleccionado?.id === id) {
+              this.roleSeleccionado = null;
+              this.roleSeleccionadoPermisos.clear();
+            }
+            this.loadRoles();
+          },
+          error: (err) => {
+            console.error('Error eliminando rol', err);
+            this.loading = false;
+            alert('Error al eliminar rol');
           }
-          this.loadRoles();
-        },
-        error: (err) => {
-          console.error('Error eliminando rol', err);
-          this.loading = false;
-          alert('Error al eliminar rol');
-        }
-      });
-    }
+        });
+      },
+      true
+    );
   }
 
   private loadRoles(): void {
