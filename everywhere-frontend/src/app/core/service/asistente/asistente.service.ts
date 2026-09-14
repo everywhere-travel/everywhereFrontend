@@ -5,6 +5,7 @@ import { environment } from '../../../../environments/environment';
 
 export interface ChatMessageRequest {
   message: string;
+  history?: Array<{ sender: string; text: string }>;
 }
 
 export interface ChatMessageResponse {
@@ -20,8 +21,8 @@ export class AsistenteService {
   private http = inject(HttpClient);
   private baseURL = `${environment.baseURL}/asistente`;
 
-  sendMessage(message: string): Observable<ChatMessageResponse> {
-    const payload: ChatMessageRequest = { message };
+  sendMessage(message: string, history?: Array<{ sender: string; text: string }>): Observable<ChatMessageResponse> {
+    const payload: ChatMessageRequest = { message, history };
     return this.http.post<ChatMessageResponse>(`${this.baseURL}/chat`, payload);
   }
 }

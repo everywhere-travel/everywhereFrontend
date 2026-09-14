@@ -72,6 +72,9 @@ export class ChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewCheck
       return;
     }
 
+    // Historial previo para permitir diálogo continuo
+    const history = this.messages.map(m => ({ sender: m.sender, text: m.text }));
+
     // Agregar mensaje del usuario
     this.messages.push({
       sender: 'user',
@@ -84,7 +87,7 @@ export class ChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewCheck
     this.shouldScroll = true;
 
     this.subscription.add(
-      this.asistenteService.sendMessage(text).subscribe({
+      this.asistenteService.sendMessage(text, history).subscribe({
         next: (res) => {
           this.messages.push({
             sender: 'bot',
