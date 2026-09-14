@@ -1,11 +1,12 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { ToastComponent } from './shared/components/toast/toast.component';
+import { ChatbotWidgetComponent } from './shared/components/chatbot-widget/chatbot-widget.component';
 import { GlobalConfirmComponent } from './shared/components/global-confirm/global-confirm.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastComponent, GlobalConfirmComponent],
+  imports: [RouterOutlet, ToastComponent, ChatbotWidgetComponent, GlobalConfirmComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

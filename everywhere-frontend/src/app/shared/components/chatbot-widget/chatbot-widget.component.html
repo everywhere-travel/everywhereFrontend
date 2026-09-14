@@ -1,0 +1,144 @@
+<!-- Contenedor del Widget: Solo visible si el usuario está autenticado -->
+<div *ngIf="authService.currentUser$ | async" class="fixed bottom-6 right-6 z-50 font-sans">
+
+  <!-- Ventana de Chat Expandida -->
+  <div *ngIf="isOpen"
+       class="mb-3 w-96 max-w-[calc(100vw-2rem)] h-[540px] max-h-[calc(100vh-6rem)] bg-white rounded-2xl shadow-2xl border border-gray-100 flex flex-col overflow-hidden transition-all duration-300 animate-in fade-in zoom-in-95">
+
+    <!-- Cabecera del Chat -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-4 py-3 text-white flex items-center justify-between shadow-sm">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-xl shadow-inner border border-white/30">
+          🤖
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h3 class="text-sm font-bold tracking-wide">EveryBot</h3>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-400/20 text-emerald-200 border border-emerald-300/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>
+              IA Activa
+            </span>
+          </div>
+          <p class="text-[11px] text-blue-100">Asistente de Cotizaciones y Tareas</p>
+        </div>
+      </div>
+      <button (click)="toggleChat()"
+              class="text-white/80 hover:text-white hover:bg-white/10 rounded-lg p-1.5 transition-colors focus:outline-none"
+              title="Cerrar chat">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Área de Mensajes con Scroll -->
+    <div #messagesContainer class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/60">
+      
+      <!-- Listado de mensajes -->
+      <div *ngFor="let msg of messages"
+           [ngClass]="{'flex justify-end': msg.sender === 'user', 'flex justify-start': msg.sender === 'bot'}">
+        
+        <div class="flex items-start max-w-[85%] space-x-2"
+             [ngClass]="{'flex-row-reverse space-x-reverse': msg.sender === 'user'}">
+          
+          <!-- Avatar icono -->
+          <div class="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold"
+               [ngClass]="msg.sender === 'user' ? 'bg-blue-600 text-white shadow-sm' : 'bg-white border border-gray-200 text-indigo-600 shadow-sm'">
+            <span *ngIf="msg.sender === 'user'">Tú</span>
+            <span *ngIf="msg.sender === 'bot'">🤖</span>
+          </div>
+
+          <!-- Burbuja de mensaje -->
+          <div class="rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-sm transition-all"
+               [ngClass]="msg.sender === 'user' 
+                 ? 'bg-blue-600 text-white rounded-tr-none' 
+                 : 'bg-white text-gray-800 border border-gray-100 rounded-tl-none'">
+            
+            <div [innerHTML]="formatMarkdown(msg.text)"></div>
+            <span class="block mt-1 text-[9px] text-right"
+                  [ngClass]="msg.sender === 'user' ? 'text-blue-200' : 'text-gray-400'">
+              {{ msg.time }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Indicador de Carga / Pensando -->
+      <div *ngIf="isLoading" class="flex justify-start items-center space-x-2">
+        <div class="w-7 h-7 rounded-full bg-white border border-gray-200 text-indigo-600 flex items-center justify-center text-xs shadow-sm">
+          🤖
+        </div>
+        <div class="bg-white border border-gray-100 rounded-2xl rounded-tl-none px-4 py-2.5 shadow-sm flex items-center space-x-1.5">
+          <span class="w-2 h-2 rounded-full bg-blue-500 animate-bounce"></span>
+          <span class="w-2 h-2 rounded-full bg-indigo-500 animate-bounce [animation-delay:0.2s]"></span>
+          <span class="w-2 h-2 rounded-full bg-purple-500 animate-bounce [animation-delay:0.4s]"></span>
+          <span class="text-[11px] text-gray-400 ml-1">Consultando EveryWhere...</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Chips de Preguntas Frecuentes / Sugerencias Rápidas -->
+    <div class="px-3 py-2 bg-white border-t border-gray-100">
+      <p class="text-[10px] uppercase font-bold text-gray-400 mb-1.5 tracking-wider">Acciones rápidas</p>
+      <div class="flex flex-wrap gap-1.5">
+        <button *ngFor="let s of suggestions"
+                (click)="selectSuggestion(s)"
+                [disabled]="isLoading"
+                class="text-[11px] bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-gray-700 font-medium px-2.5 py-1 rounded-full border border-gray-200/80 transition-all text-left">
+          {{ s }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Input de Texto y Botón Enviar -->
+    <div class="p-3 bg-white border-t border-gray-100">
+      <form (ngSubmit)="sendMessage()" class="flex items-center space-x-2">
+        <input type="text"
+               [(ngModel)]="inputMessage"
+               name="userQuestion"
+               placeholder="Pregunta sobre cotizaciones o tareas..."
+               [disabled]="isLoading"
+               autocomplete="off"
+               class="flex-1 text-xs bg-slate-50 border border-gray-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all disabled:opacity-50" />
+        
+        <button type="submit"
+                [disabled]="!inputMessage.trim() || isLoading"
+                class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white p-2.5 rounded-xl shadow-md transition-all focus:outline-none flex items-center justify-center">
+          <svg class="w-4 h-4 transform rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Botón Flotante Redondo para Abrir / Cerrar el Chat -->
+  <div class="flex justify-end">
+    <button (click)="toggleChat()"
+            class="group relative flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none border-2 border-white/40">
+      
+      <!-- Icono Chat / Cerrar con animación -->
+      <span *ngIf="!isOpen" class="text-2xl transition-transform group-hover:rotate-12">
+        🤖
+      </span>
+      <svg *ngIf="isOpen" class="w-6 h-6 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+
+      <!-- Badge animado indicando Asistente IA disponible -->
+      <span *ngIf="!isOpen"
+            class="absolute -top-1 -right-1 flex h-4 w-4">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white"></span>
+      </span>
+
+      <!-- Tooltip al pasar el cursor -->
+      <span class="absolute right-16 px-2.5 py-1 rounded-lg bg-gray-900 text-white text-[11px] font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity shadow-lg">
+        Asistente de Cotizaciones
+      </span>
+    </button>
+  </div>
+
+</div>

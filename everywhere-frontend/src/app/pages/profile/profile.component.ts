@@ -124,10 +124,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
     newPassword: ['', [Validators.required, Validators.minLength(6)]]
   });
 
-  checkFirstLogin(): void {
+ checkFirstLogin(): void {
     const user = this.authService.getUser();
-    const route = inject(Router);
-    const urlTree = route.parseUrl(route.url);
+    const urlTree = this.router.parseUrl(this.router.url);
     if (urlTree.queryParams['forceChange'] === 'true' || (user && user.loginCount === 0)) {
       this.isFirstLogin = true;
     }

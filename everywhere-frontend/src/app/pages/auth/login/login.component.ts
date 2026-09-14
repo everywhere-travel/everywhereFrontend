@@ -57,7 +57,11 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(authRequest).subscribe({
       next: (response: AuthResponse) => { 
-        this.router.navigate(['/dashboard']);
+        if (response.loginCount === 1) {
+          this.router.navigate(['/profile'], { queryParams: { forceChange: 'true' } });
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (error: any) => {
         console.error('Error en login:', error);

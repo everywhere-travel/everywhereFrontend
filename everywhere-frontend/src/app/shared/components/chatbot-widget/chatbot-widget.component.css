@@ -1,0 +1,22 @@
+/* Estilos adicionales para scroll suave y animaciones del widget */
+:host {
+  display: block;
+}
+
+/* Scrollbar personalizado para el contenedor de mensajes */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.6);
+}
