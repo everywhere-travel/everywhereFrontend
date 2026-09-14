@@ -1,40 +1,295 @@
+/* ── Dashboard Container ──────────────────────────────────────────────────── */
 .dashboard-container {
-    padding: 2rem;
-    background-color: #f8fafc;
-    min-height: 100vh;
+  max-width: 1600px;
+  margin: 0 auto;
 }
 
-.kpi-card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.chart-card {
-    background: white;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-    margin-bottom: 2rem;
-}
-
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
 .loading-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(255,255,255,0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 50;
-    font-size: 1.25rem;
-    color: #475569;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px;
 }
+
+/* ── Fade in ──────────────────────────────────────────────────────────────── */
+.fade-in {
+  animation: fadeIn 0.45s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Filtros ─────────────────────────────────────────────────────────────── */
+.filters-panel {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.filter-select {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  padding: 6px 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.filter-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.custom-range-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-input {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #334155;
+  padding: 6px 10px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.date-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.btn-apply {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-apply:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+/* ── KPI Cards ───────────────────────────────────────────────────────────── */
+.kpi-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px 24px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 16px 16px 0 0;
+}
+
+.kpi-blue::before   { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+.kpi-violet::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+.kpi-emerald::before{ background: linear-gradient(90deg, #10b981, #34d399); }
+.kpi-amber::before  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.kpi-red::before    { background: linear-gradient(90deg, #ef4444, #f87171); }
+.kpi-slate::before  { background: linear-gradient(90deg, #64748b, #94a3b8); }
+
+/* Colores de fondo suave para conversion card */
+.bg-emerald-50 { background-color: #ecfdf5; }
+.bg-amber-50   { background-color: #fffbeb; }
+.bg-red-50     { background-color: #fef2f2; }
+.border-emerald-200 { border-color: #a7f3d0; }
+.border-amber-200   { border-color: #fde68a; }
+.border-red-200     { border-color: #fecaca; }
+
+.kpi-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.kpi-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.1;
+}
+.kpi-sub {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* ── Chart Cards ─────────────────────────────────────────────────────────── */
+.chart-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s;
+}
+.chart-card:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+}
+
+.chart-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+.chart-subtitle {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+/* ── Section Dividers ────────────────────────────────────────────────────── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.section-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+}
+.section-divider-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  background: #f8fafc;
+  padding: 4px 14px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+/* ── Gauge Stats ─────────────────────────────────────────────────────────── */
+.gauge-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding-top: 8px;
+}
+.gauge-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.gauge-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.gauge-stat-label {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ── Table Headers ───────────────────────────────────────────────────────── */
+.table-header {
+  padding: 10px 12px 10px 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* ── Conversion Badge ────────────────────────────────────────────────────── */
+.conversion-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  min-width: 80px;
+}
+
+.mini-bar-track {
+  width: 60px;
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.mini-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Rank Badges (top clientes) ──────────────────────────────────────────── */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #64748b;
+}
+.rank-gold   { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
+.rank-silver { background: linear-gradient(135deg, #94a3b8, #64748b); color: white; }
+.rank-bronze { background: linear-gradient(135deg, #a16207, #92400e); color: white; }
+
+/* ── Color helpers ───────────────────────────────────────────────────────── */
+.text-emerald-600 { color: #059669; }
+.text-amber-500   { color: #f59e0b; }
+.text-red-500     { color: #ef4444; }
+.text-indigo-600  { color: #4f46e5; }

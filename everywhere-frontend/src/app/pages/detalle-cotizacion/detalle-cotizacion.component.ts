@@ -42,6 +42,7 @@ import { ProveedorResponse } from '../../shared/models/Proveedor/proveedor.model
 import { CategoriaResponse } from '../../shared/models/Categoria/categoria.model';
 import { CategoriaRequest } from '../../shared/models/Categoria/categoria.model';
 import { OperadorResponse } from '../../shared/models/Operador/operador.model';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 
 import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
 
@@ -94,6 +95,7 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private loadingService = inject(LoadingService);
     private menuConfigService = inject(MenuConfigService);
+    private confirmService = inject(ConfirmService);
     private fb = inject(FormBuilder);
     private cotizacionService = inject(CotizacionService);
     private detalleCotizacionService = inject(DetalleCotizacionService);
@@ -1348,9 +1350,15 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
                 `¿Estás seguro de que quieres eliminar la categoría "${categoria.nombre}"?\n\n` +
                 `Esta acción no se puede deshacer y podría afectar grupos existentes.`;
 
-            if (confirm(mensaje)) {
-                this.eliminarCategoria(index);
-            }
+            this.confirmService.confirm({
+                title: 'Eliminar Categoría',
+                message: mensaje,
+                type: 'danger'
+            }).subscribe(confirmed => {
+                if (confirmed) {
+                    this.eliminarCategoria(index);
+                }
+            });
         }
     }
 

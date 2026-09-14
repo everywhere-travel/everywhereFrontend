@@ -8,6 +8,7 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 import { ErrorModalComponent, ErrorModalData, BackendErrorResponse } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
@@ -168,6 +169,7 @@ export class ProductosComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private productoService: ProductoService,
+    private confirmService: ConfirmService,
     private router: Router,
     private cdr: ChangeDetectorRef,
     private errorHandler: ErrorHandlerService,
@@ -405,38 +407,43 @@ export class ProductosComponent implements OnInit {
   eliminarSeleccionados(): void {
     if (this.selectedItems.length === 0) return;
 
-    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} cliente${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
-    if (confirm(confirmMessage)) {
-      this.loading = true;
-      let eliminados = 0;
-      const total = this.selectedItems.length;
+    const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} producto${this.selectedItems.length > 1 ? 's' : ''}?\n\nEsta acción no se puede deshacer.`;
+    this.confirmService.confirm({
+      title: 'Eliminar Productos',
+      message: confirmMessage,
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.loading = true;
+        let eliminados = 0;
+        const total = this.selectedItems.length;
 
-      this.selectedItems.forEach(id => {
-        const producto = this.productos.find(p => p.id === id);
-        if (producto) {
-          this.productoService.deleteByIdProducto(id).subscribe({
-            next: () => {
-              eliminados++;
-              if (eliminados === total) {
-                this.loadProductos();
-                this.clearSelection();
-                this.loading = false;
+        this.selectedItems.forEach(id => {
+          const producto = this.productos.find(p => p.id === id);
+          if (producto) {
+            this.productoService.deleteByIdProducto(id).subscribe({
+              next: () => {
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadProductos();
+                  this.clearSelection();
+                  this.loading = false;
+                }
+              },
+              error: (error) => {
+                console.error('Error al eliminar producto:', error);
+                eliminados++;
+                if (eliminados === total) {
+                  this.loadProductos();
+                  this.clearSelection();
+                  this.loading = false;
+                }
               }
-            },
-            error: (error) => {
-              console.error('Error al eliminar persona natural:', error);
-              eliminados++;
-              if (eliminados === total) {
-                this.loadProductos();
-                this.clearSelection();
-                this.loading = false;
-              }
-            }
-          });
-
-        }
-      });
-    }
+            });
+          }
+        });
+      }
+    });
   }
 
   cerrarModal(): void {

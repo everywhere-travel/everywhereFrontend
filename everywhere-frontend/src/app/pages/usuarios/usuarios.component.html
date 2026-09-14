@@ -354,3 +354,32 @@
   </div>
 </div>
 
+<!-- Modal de Confirmación -->
+<div *ngIf="mostrarModalConfirm" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" (click)="cerrarModalConfirm()"></div>
+
+  <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-auto overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div class="px-6 py-6 text-center">
+      <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-4" [ngClass]="confirmConfig.danger ? 'bg-red-100' : 'bg-blue-100'">
+        <i class="fas text-2xl" [ngClass]="confirmConfig.danger ? 'fa-exclamation-triangle text-red-600' : 'fa-info-circle text-blue-600'"></i>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 mb-2">
+        {{ confirmConfig.title }}
+      </h3>
+      <p class="text-sm text-gray-500">
+        {{ confirmConfig.message }}
+      </p>
+    </div>
+
+    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-center gap-3">
+      <button type="button" (click)="cerrarModalConfirm()" class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors w-full">
+        Cancelar
+      </button>
+      <button type="button" (click)="confirmarAccion()" class="px-6 py-2.5 text-sm font-medium text-white rounded-xl transition-colors shadow-sm w-full"
+              [ngClass]="confirmConfig.danger ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'">
+        Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+

@@ -8,6 +8,7 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 import { ErrorModalComponent } from '../../shared/components/error-modal/error-modal.component';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 import { DataTableComponent } from '../../shared/components/data-table/data-table.component';
 import { DataTableConfig } from '../../shared/components/data-table/data-table.config';
 
@@ -131,6 +132,7 @@ export class OperadoresComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private operadorService: OperadorService,
+    private confirmService: ConfirmService,
     private router: Router,
     private menuConfigService: MenuConfigService,
     private errorHandler: ErrorHandlerService
@@ -205,6 +207,11 @@ export class OperadoresComponent implements OnInit {
     this.applySorting();
     this.updatePagination();
     this.updateSelectionState();
+    
+    // Update data table config
+    if (this.tableConfig) {
+      this.tableConfig = { ...this.tableConfig, data: this.operadores };
+    }
   }
 
   private applySorting(): void {
@@ -344,29 +351,36 @@ export class OperadoresComponent implements OnInit {
 
   executeDelete(): void {
     if (this.operadorToDelete) {
-      this.loading = true;
       // Intentar desactivar vía update (si el backend soporta estado).
       const id = this.operadorToDelete.id;
       const payload: any = { nombre: this.operadorToDelete.nombre, estado: false };
 
       this.operadorService.updateOperador(id, payload).subscribe({
         next: () => {
-          this.loadOperadores();
+          const idx = this.operadores.findIndex(o => o.id === id);
+          if (idx !== -1) {
+            // Asumiendo que desactivar remueve de la vista o cambia estado
+            // Opcionalmente podemos removerlo de this.operadores o marcarlo. 
+            // Si el backend borra logicamente o cambia estado, la app usualmente ya no lo muestra.
+            // Lo quitaremos de la lista por ahora (o si tiene estado, lo cambiamos)
+            this.operadores.splice(idx, 1);
+            this.applyFilters(); // Recalcular UI localmente
+          }
           this.closeConfirmModal();
-          // Actualizar selecciones
           this.selectedItems = this.selectedItems.filter(i => i !== id);
           this.updateSelectionState();
         },
         error: (error) => {
-          // Si el backend no soporta desactivación por update, como fallback intentamos borrar.
           const { modalData } = this.errorHandler.handleHttpError(error, 'desactivar operador');
-          // Si el error indica recurso no encontrado o método no permitido, intentar delete como fallback.
-          // De lo contrario, mostrar error.
           const tryDelete = true;
           if (tryDelete) {
             this.operadorService.deleteByIdOperador(id).subscribe({
               next: () => {
-                this.loadOperadores();
+                const idx = this.operadores.findIndex(o => o.id === id);
+                if (idx !== -1) {
+                  this.operadores.splice(idx, 1);
+                  this.applyFilters();
+                }
                 this.closeConfirmModal();
                 this.selectedItems = this.selectedItems.filter(i => i !== id);
                 this.updateSelectionState();
@@ -467,32 +481,41 @@ export class OperadoresComponent implements OnInit {
     if (this.selectedItems.length === 0) return;
 
     const confirmMessage = `¿Está seguro de eliminar ${this.selectedItems.length} operador${this.selectedItems.length > 1 ? 'es' : ''}?`;
-    if (confirm(confirmMessage)) {
-      this.loading = true;
-      let deletedCount = 0;
-      const totalToDelete = this.selectedItems.length;
+    this.confirmService.confirm({
+      title: 'Eliminar Operadores',
+      message: confirmMessage,
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        let deletedCount = 0;
+        const totalToDelete = this.selectedItems.length;
 
-      this.selectedItems.forEach(id => {
-        this.operadorService.deleteByIdOperador(id).subscribe({
-          next: () => {
-            deletedCount++;
-            if (deletedCount === totalToDelete) {
-              this.loadOperadores();
-              this.clearSelection();
+        this.selectedItems.forEach(id => {
+          this.operadorService.deleteByIdOperador(id).subscribe({
+            next: () => {
+              deletedCount++;
+              if (deletedCount === totalToDelete) {
+                this.operadores = this.operadores.filter(op => !this.selectedItems.includes(op.id));
+                this.applyFilters();
+                this.clearSelection();
+                this.loading = false;
+              }
+            },
+            error: (error) => {
+              const { modalData } = this.errorHandler.handleHttpError(error, 'eliminar operadores');
+              this.showError(modalData.message);
+              deletedCount++;
+              if (deletedCount === totalToDelete) {
+                this.operadores = this.operadores.filter(op => !this.selectedItems.includes(op.id));
+                this.applyFilters();
+                this.clearSelection();
+                this.loading = false;
+              }
             }
-          },
-          error: (error) => {
-            const { modalData } = this.errorHandler.handleHttpError(error, 'eliminar operadores');
-            this.showError(modalData.message);
-            deletedCount++;
-            if (deletedCount === totalToDelete) {
-              this.loadOperadores();
-              this.clearSelection();
-            }
-          }
+          });
         });
-      });
-    }
+      }
+    });
   }
 
   changeView(view: 'table' | 'cards' | 'list'): void {

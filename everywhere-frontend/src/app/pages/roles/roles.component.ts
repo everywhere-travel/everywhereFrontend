@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RoleService } from '../../core/service/Role/role.service';
 import { PermissionService } from '../../core/service/Permission/permission.service';
+import { ConfirmService } from '../../core/service/confirm/confirm.service';
 import { RoleResponse, PermissionResponse, MODULE } from '../../shared/models/role.model';
 
 @Component({
@@ -15,6 +16,7 @@ import { RoleResponse, PermissionResponse, MODULE } from '../../shared/models/ro
 export class RolesComponent implements OnInit {
   private roleService = inject(RoleService);
   private permissionService = inject(PermissionService);
+  private confirmService = inject(ConfirmService);
   private fb = inject(FormBuilder);
 
   roles = signal<RoleResponse[]>([]);
@@ -87,10 +89,17 @@ export class RolesComponent implements OnInit {
   }
 
   deleteRole(id: number) {
-    if (!confirm('¿Eliminar este rol? Los usuarios con este rol perderán acceso.')) return;
-    this.roleService.delete(id).subscribe({
-      next: () => { this.loadRoles(); this.flash('Rol eliminado'); },
-      error: () => this.errorMsg.set('No se puede eliminar: el rol tiene usuarios asignados')
+    this.confirmService.confirm({
+      title: 'Eliminar Rol',
+      message: '¿Eliminar este rol? Los usuarios con este rol perderán acceso.',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.roleService.delete(id).subscribe({
+          next: () => { this.loadRoles(); this.flash('Rol eliminado'); },
+          error: () => this.errorMsg.set('No se puede eliminar: el rol tiene usuarios asignados')
+        });
+      }
     });
   }
 
@@ -114,10 +123,17 @@ export class RolesComponent implements OnInit {
   }
 
   deletePerm(id: number) {
-    if (!confirm('¿Eliminar este permiso? Los roles que lo tenían lo perderán.')) return;
-    this.permissionService.delete(id).subscribe({
-      next: () => { this.loadPermissions(); this.flash('Permiso eliminado'); },
-      error: () => this.errorMsg.set('Error eliminando permiso')
+    this.confirmService.confirm({
+      title: 'Eliminar Permiso',
+      message: '¿Eliminar este permiso? Los roles que lo tenían lo perderán.',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.permissionService.delete(id).subscribe({
+          next: () => { this.loadPermissions(); this.flash('Permiso eliminado'); },
+          error: () => this.errorMsg.set('Error eliminando permiso')
+        });
+      }
     });
   }
 
