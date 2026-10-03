@@ -22,6 +22,8 @@ import { CategoriaPersonaService } from '../../core/service/CategoriaPersona/cat
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
 import { ConfirmService } from '../../core/service/confirm/confirm.service';
+import { ToastService } from '../../core/service/toast.service';
+import { ConsultaPeruService } from '../../core/service/consulta-peru/consulta-peru.service';
 import { Location } from '@angular/common';
 
 // Models
@@ -83,6 +85,8 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   private menuConfigService = inject(MenuConfigService);
   private authService = inject(AuthServiceService);
   private confirmService = inject(ConfirmService);
+  private toastService = inject(ToastService);
+  private consultaPeruService = inject(ConsultaPeruService);
   private location = inject(Location);
   private fb = inject(FormBuilder);
 
@@ -90,6 +94,7 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
   personaId: number | null = null;
   isCreating: boolean = false;
   isSaving: boolean = false;
+  isSearchingDni: boolean = false;
 
   // Data properties
   personaNatural: PersonaNaturalResponse | null = null;
@@ -629,6 +634,65 @@ export class DetallePersonaComponent implements OnInit, OnDestroy {
 
     // Si no llenó nada del documento, es válido (documento opcional)
     return true;
+  }
+
+  buscarDni(numeroDocumento?: string): void {
+    const dni = (numeroDocumento || this.personaNaturalForm.get('documentoInicial.numero')?.value)?.trim();
+    if (!dni) {
+      this.toastService.showWarning('Por favor ingrese un número de DNI para consultar.', 'Campo requerido');
+      return;
+    }
+    if (!/^\d{8}$/.test(dni)) {
+      this.toastService.showError('El número de DNI debe contener exactamente 8 dígitos numéricos.', 'DNI Inválido');
+      return;
+    }
+
+    this.isSearchingDni = true;
+    this.consultaPeruService.consultarDni(dni).pipe(
+      finalize(() => this.isSearchingDni = false)
+    ).subscribe({
+      next: (res) => {
+        if (res.encontrado) {
+          this.personaNaturalForm.patchValue({
+            nombres: res.nombres || '',
+            apellidosPaterno: res.apellidoPaterno || '',
+            apellidosMaterno: res.apellidoMaterno || ''
+          });
+
+          // Si el documento inicial no tenía el número puesto
+          const docNumControl = this.personaNaturalForm.get('documentoInicial.numero');
+          if (docNumControl && !docNumControl.value) {
+            docNumControl.setValue(dni);
+          }
+
+          // Seleccionar automáticamente tipo de documento DNI si existe
+          const tipoDni = this.tiposDocumento.find(t => t.tipo?.toUpperCase() === 'DNI');
+          if (tipoDni) {
+            this.personaNaturalForm.get('documentoInicial.documentoId')?.setValue(tipoDni.id);
+          }
+          if (!this.personaNaturalForm.get('documentoInicial.origen')?.value) {
+            this.personaNaturalForm.get('documentoInicial.origen')?.setValue('Perú');
+          }
+
+          if (res.origen === 'LOCAL') {
+            this.toastService.showInfo('La persona ya se encuentra registrada en el sistema local.', 'Datos Locales');
+          } else {
+            this.toastService.showSuccess(`Datos obtenidos de RENIEC / Padrón: ${res.nombreCompleto}`, 'Consulta DNI Exitosa');
+          }
+        } else {
+          this.toastService.showWarning(res.mensaje || 'No se encontraron datos para el DNI ingresado.', 'DNI no encontrado');
+        }
+      },
+      error: (err) => {
+        const msg = err.error?.detail || err.error?.message || 'Error al conectar con el servicio de consulta DNI.';
+        this.toastService.showError(msg, 'Error de Consulta');
+      }
+    });
+  }
+
+  onDniRapidoInput(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.personaNaturalForm.get('documentoInicial.numero')?.setValue(val);
   }
 
   crearPersonaNatural(): void {

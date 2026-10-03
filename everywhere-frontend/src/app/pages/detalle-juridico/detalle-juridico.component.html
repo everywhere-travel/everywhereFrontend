@@ -91,11 +91,20 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                  RUC
+                  RUC (11 dígitos)
                 </label>
-                <input type="text" formControlName="ruc"
-                  class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
-                  [class.border-red-500]="personaJuridicaForm.get('ruc')?.invalid && personaJuridicaForm.get('ruc')?.touched">
+                <div class="relative">
+                  <input type="text" formControlName="ruc" maxlength="11" placeholder="Ej: 20131312955"
+                    (keyup.enter)="buscarRuc()"
+                    class="w-full px-4 py-2.5 pr-28 border border-gray-300 rounded-lg focus:ring-2 focus:ring-everywhere-primary focus:border-transparent"
+                    [class.border-red-500]="personaJuridicaForm.get('ruc')?.invalid && personaJuridicaForm.get('ruc')?.touched">
+                  <button type="button" (click)="buscarRuc()" [disabled]="isSearchingRuc"
+                    class="absolute right-1 top-1 bottom-1 px-3 bg-everywhere-primary hover:bg-everywhere-secondary text-white text-xs font-semibold rounded-md flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50">
+                    <i class="fas fa-spinner fa-spin text-xs" *ngIf="isSearchingRuc"></i>
+                    <i class="fas fa-search text-xs" *ngIf="!isSearchingRuc"></i>
+                    <span>{{ isSearchingRuc ? 'Buscando...' : 'SUNAT' }}</span>
+                  </button>
+                </div>
               </div>
 
               <div>

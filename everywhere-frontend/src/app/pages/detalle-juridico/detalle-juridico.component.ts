@@ -14,6 +14,8 @@ import { TelefonoPersonaService } from '../../core/service/TelefonoPersona/telef
 import { MenuConfigService, ExtendedSidebarMenuItem } from '../../core/service/menu/menu-config.service';
 import { AuthServiceService } from '../../core/service/auth/auth.service';
 import { ConfirmService } from '../../core/service/confirm/confirm.service';
+import { ToastService } from '../../core/service/toast.service';
+import { ConsultaPeruService } from '../../core/service/consulta-peru/consulta-peru.service';
 import { Location } from '@angular/common';
 
 // Models
@@ -64,6 +66,8 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   private telefonoPersonaService = inject(TelefonoPersonaService);
   private authService = inject(AuthServiceService);
   private confirmService = inject(ConfirmService);
+  private toastService = inject(ToastService);
+  private consultaPeruService = inject(ConsultaPeruService);
   private location = inject(Location);
   private fb = inject(FormBuilder);
 
@@ -77,6 +81,8 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   showPersonaJuridicaModal = false;
   isCreating: boolean = false;
   isSaving: boolean = false;
+  isSearchingRuc: boolean = false;
+
 
   codigosPaises: CodigoPais[] = [
     { code: 'PE', name: 'Perú', dialCode: '+51' },
@@ -301,6 +307,47 @@ export class DetalleJuridicoComponent implements OnInit, OnDestroy {
   getTipoCorreoLabel(tipo: string): string {
     const tipoObj = this.tiposCorreo.find(t => t.value === tipo);
     return tipoObj ? tipoObj.label : tipo;
+  }
+
+  buscarRuc(): void {
+    const ruc = this.personaJuridicaForm.get('ruc')?.value?.trim();
+    if (!ruc) {
+      this.toastService.showWarning('Por favor ingrese un número de RUC para consultar.', 'Campo requerido');
+      return;
+    }
+    if (!/^\d{11}$/.test(ruc)) {
+      this.toastService.showError('El número de RUC debe contener exactamente 11 dígitos numéricos.', 'RUC Inválido');
+      return;
+    }
+
+    this.isSearchingRuc = true;
+    this.consultaPeruService.consultarRuc(ruc).pipe(
+      finalize(() => this.isSearchingRuc = false)
+    ).subscribe({
+      next: (res) => {
+        if (res.encontrado) {
+          if (res.razonSocial) {
+            this.personaJuridicaForm.patchValue({ razonSocial: res.razonSocial });
+          }
+          if (res.direccion) {
+            this.personaJuridicaForm.patchValue({ direccion: res.direccion });
+          }
+          if (res.origen === 'LOCAL') {
+            this.toastService.showInfo('La empresa ya se encuentra registrada en el sistema local.', 'Datos Locales');
+          } else {
+            const estadoCondicion = [res.estado, res.condicion].filter(Boolean).join(' - ');
+            const info = estadoCondicion ? ` (${estadoCondicion})` : '';
+            this.toastService.showSuccess(`Razón social obtenida de SUNAT${info}.`, 'Consulta SUNAT Exitosa');
+          }
+        } else {
+          this.toastService.showWarning(res.mensaje || 'No se encontraron datos para el RUC ingresado.', 'RUC no encontrado');
+        }
+      },
+      error: (err) => {
+        const msg = err.error?.detail || err.error?.message || 'Error al conectar con el servicio de consulta.';
+        this.toastService.showError(msg, 'Error de Consulta');
+      }
+    });
   }
 
   crearPersonaJuridica(): void {
