@@ -83,6 +83,13 @@ export const routes: Routes = [
     data: { requiredModule: 'SUCURSALES', requiredAction: 'READ' }
   },
   {
+    path: 'audit',
+    loadComponent: () =>
+      import('./pages/auditoria/auditoria.component').then(m => m.AuditoriaComponent),
+    canActivate: [authGuard, ModuleAccessGuard],
+    data: { requiredModule: 'AUDITORIA', requiredAction: 'READ' }
+  },
+  {
     path: 'settlements',
     loadComponent: () =>
       import('./pages/liquidaciones/liquidaciones.component').then(m => m.LiquidacionesComponent),

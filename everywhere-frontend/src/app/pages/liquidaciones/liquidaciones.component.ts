@@ -198,7 +198,12 @@ export class LiquidacionesComponent implements OnInit, OnDestroy {
         header: 'Cliente',
         icon: 'fa-user',
         sortable: true,
-        render: (item) => item.personaNombre || 'Sin cliente'
+        render: (item) => {
+          if (item.personaNombre && item.personaNombre.includes('CLIENTES VARIOS')) {
+            return '🛡️ CLIENTES VARIOS (Ley 29733)';
+          }
+          return item.personaNombre || 'Sin cliente';
+        }
       },
       {
         key: 'destino',

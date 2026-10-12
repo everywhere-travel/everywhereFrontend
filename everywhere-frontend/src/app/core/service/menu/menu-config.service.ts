@@ -164,6 +164,13 @@ export class MenuConfigService {
                     icon: 'fas fa-building',
                     route: '/branches',
                     moduleKey: 'SUCURSALES'
+                },
+                {
+                    id: 'auditoria',
+                    title: 'Auditoría',
+                    icon: 'fas fa-shield-alt',
+                    route: '/audit',
+                    moduleKey: 'AUDITORIA'
                 }
             ]
         },

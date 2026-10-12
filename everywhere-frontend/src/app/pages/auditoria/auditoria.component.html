@@ -1,0 +1,386 @@
+<!-- Layout Principal con Sidebar -->
+<div class="min-h-screen bg-slate-50 flex">
+
+  <!-- Sidebar Component -->
+  <app-sidebar 
+    [isCollapsed]="sidebarCollapsed" 
+    [menuItems]="sidebarMenuItems" 
+    (itemClick)="onSidebarItemClick($event)"
+    (toggleSidebar)="onToggleSidebar()">
+  </app-sidebar>
+
+  <!-- Contenedor Principal con Margen Adaptativo -->
+  <main class="flex-1 transition-all duration-300 min-w-0" 
+        [class.ml-72]="!sidebarCollapsed" 
+        [class.ml-20]="sidebarCollapsed">
+
+    <!-- Header con Degradado Moderno -->
+    <header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white shadow-lg">
+      <div class="px-6 py-8 sm:px-8">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <div class="flex items-center gap-3">
+              <div class="p-2.5 bg-blue-500/20 rounded-xl border border-blue-400/30">
+                <i class="fas fa-shield-alt text-2xl text-blue-300"></i>
+              </div>
+              <div>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">Registro Maestro de Auditoría</h1>
+                <p class="text-slate-300 text-sm mt-1">
+                  Pista de auditoría centralizada: trazabilidad de todas las acciones, usuarios, estados previos y nuevos
+                </p>
+              </div>
+            </div>
+          </div>
+          <button (click)="cargarAuditorias(); cargarEstadisticas();" 
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+            Actualizar
+          </button>
+        </div>
+
+        <!-- Tarjetas de Estadísticas KPI -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div class="text-xs font-medium text-slate-300 uppercase tracking-wider">Total de Eventos</div>
+            <div class="text-2xl font-bold text-white mt-1">{{ stats.totalEventos | number }}</div>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div class="text-xs font-medium text-slate-300 uppercase tracking-wider">Eventos de Hoy</div>
+            <div class="text-2xl font-bold text-emerald-400 mt-1">{{ stats.eventosHoy | number }}</div>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div class="text-xs font-medium text-slate-300 uppercase tracking-wider">Modificaciones</div>
+            <div class="text-2xl font-bold text-blue-400 mt-1">{{ stats.modificaciones | number }}</div>
+          </div>
+          <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div class="text-xs font-medium text-slate-300 uppercase tracking-wider">Eliminaciones</div>
+            <div class="text-2xl font-bold text-rose-400 mt-1">{{ stats.eliminaciones | number }}</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="p-6 sm:p-8 space-y-6">
+
+      <!-- Panel de Filtros -->
+      <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+
+          <!-- Buscador Libre -->
+          <div class="lg:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Búsqueda rápida</label>
+            <div class="relative">
+              <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+              <input type="text" [(ngModel)]="searchTerm" (keyup.enter)="aplicarFiltros()"
+                     placeholder="Buscar por usuario, ID de registro o módulo..." 
+                     class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+            </div>
+          </div>
+
+          <!-- Selector de Módulo / Tabla -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Módulo / Tabla</label>
+            <select [(ngModel)]="selectedTabla" (change)="aplicarFiltros()"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+              <option value="">Todos los módulos</option>
+              <option *ngFor="let t of tablasDisponibles" [value]="t">{{ t }}</option>
+            </select>
+          </div>
+
+          <!-- Selector de Acción -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Acción</label>
+            <select [(ngModel)]="selectedAccion" (change)="aplicarFiltros()"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+              <option value="">Todas las acciones</option>
+              <option value="CREACION">CREACIÓN (Insert)</option>
+              <option value="MODIFICACION">MODIFICACIÓN (Update)</option>
+              <option value="ELIMINACION">ELIMINACIÓN (Delete)</option>
+              <option value="CONSULTA">CONSULTA (Read)</option>
+            </select>
+          </div>
+
+          <!-- Rango de Fechas -->
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Desde</label>
+              <input type="date" [(ngModel)]="fechaInicio" (change)="aplicarFiltros()"
+                     class="w-full px-2 py-2 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Hasta</label>
+              <input type="date" [(ngModel)]="fechaFin" (change)="aplicarFiltros()"
+                     class="w-full px-2 py-2 border border-slate-300 rounded-lg text-xs outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
+          <button (click)="limpiarFiltros()" 
+                  class="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-undo mr-1.5"></i> Limpiar
+          </button>
+          <button (click)="aplicarFiltros()" 
+                  class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+            <i class="fas fa-filter mr-1.5"></i> Aplicar Filtros
+          </button>
+        </div>
+      </section>
+
+      <!-- Tabla Principal de Resultados -->
+      <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        
+        <!-- Estado de Carga -->
+        <div *ngIf="loading" class="p-12 text-center text-slate-500">
+          <i class="fas fa-circle-notch fa-spin text-3xl text-blue-600 mb-3"></i>
+          <p class="text-sm">Consultando registros en la tabla maestra de auditoría...</p>
+        </div>
+
+        <!-- Tabla de Datos -->
+        <div *ngIf="!loading" class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+              <tr>
+                <th class="px-5 py-4">Fecha y Hora</th>
+                <th class="px-5 py-4">Usuario / Asesor</th>
+                <th class="px-5 py-4">Módulo / Tabla</th>
+                <th class="px-4 py-4 text-center">ID Reg.</th>
+                <th class="px-4 py-4 text-center">Acción</th>
+                <th class="px-5 py-4">IP Origen</th>
+                <th class="px-5 py-4">Endpoint</th>
+                <th class="px-5 py-4 text-right">Detalle</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr *ngFor="let item of auditorias" class="hover:bg-blue-50/40 transition-colors">
+                
+                <!-- Fecha -->
+                <td class="px-5 py-4 whitespace-nowrap text-slate-700 font-mono text-xs">
+                  <i class="far fa-clock text-slate-400 mr-1.5"></i>
+                  {{ formatFecha(item.fechaHora) }}
+                </td>
+
+                <!-- Usuario -->
+                <td class="px-5 py-4 whitespace-nowrap">
+                  <div class="font-medium text-slate-900">{{ item.usuarioNombre || item.username || 'Sistema' }}</div>
+                  <div class="text-xs text-slate-500 font-mono">{{ item.username }}</div>
+                </td>
+
+                <!-- Módulo / Tabla -->
+                <td class="px-5 py-4 whitespace-nowrap">
+                  <span class="inline-flex items-center gap-1.5 font-medium text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md text-xs border border-slate-200">
+                    <i class="fas fa-database text-slate-400"></i>
+                    {{ item.tabla }}
+                  </span>
+                </td>
+
+                <!-- ID Registro -->
+                <td class="px-4 py-4 whitespace-nowrap text-center font-mono font-semibold text-slate-700">
+                  #{{ item.registroId }}
+                </td>
+
+                <!-- Badge de Acción -->
+                <td class="px-4 py-4 whitespace-nowrap text-center">
+                  <span class="inline-block px-2.5 py-1 text-xs font-semibold rounded-full border"
+                        [ngClass]="getBadgeClass(item.accion)">
+                    {{ item.accion }}
+                  </span>
+                </td>
+
+                <!-- IP Origen -->
+                <td class="px-5 py-4 whitespace-nowrap font-mono text-xs text-slate-600">
+                  {{ item.ipOrigen || '-' }}
+                </td>
+
+                <!-- Endpoint -->
+                <td class="px-5 py-4 whitespace-nowrap text-xs text-slate-500 font-mono max-w-xs truncate" [title]="item.endpoint">
+                  {{ item.endpoint || '-' }}
+                </td>
+
+                <!-- Botón de Inspección -->
+                <td class="px-5 py-4 whitespace-nowrap text-right">
+                  <button (click)="abrirDetalle(item)"
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium border border-blue-200 transition-colors">
+                    <i class="fas fa-code-compare"></i>
+                    Ver Diff
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Sin Resultados -->
+              <tr *ngIf="auditorias.length === 0">
+                <td colspan="8" class="p-12 text-center text-slate-500">
+                  <i class="fas fa-folder-open text-4xl text-slate-300 mb-3"></i>
+                  <p class="font-medium text-slate-700">No se encontraron registros de auditoría</p>
+                  <p class="text-xs text-slate-500 mt-1">Prueba ajustando los filtros de búsqueda o fechas.</p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-xs text-slate-600">
+            Mostrando página <span class="font-bold">{{ currentPage + 1 }}</span> de <span class="font-bold">{{ totalPages || 1 }}</span> 
+            (Total: <span class="font-bold">{{ totalElements }}</span> registros)
+          </div>
+
+          <div class="inline-flex items-center gap-2">
+            <button (click)="cambiarPagina(currentPage - 1)" [disabled]="currentPage === 0"
+                    class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              <i class="fas fa-chevron-left mr-1"></i> Anterior
+            </button>
+            <span class="text-xs font-semibold px-3 py-1.5 bg-blue-600 text-white rounded-lg">
+              {{ currentPage + 1 }}
+            </span>
+            <button (click)="cambiarPagina(currentPage + 1)" [disabled]="currentPage + 1 >= totalPages"
+                    class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              Siguiente <i class="fas fa-chevron-right ml-1"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL DE VISUALIZACIÓN DE CAMBIOS (DIFF & AUDIT TRAIL) -->
+<!-- ========================================================================= -->
+<div *ngIf="modalAbierto" 
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+  
+  <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+    
+    <!-- Modal Header -->
+    <div class="px-6 py-5 bg-gradient-to-r from-slate-900 to-indigo-950 text-white flex justify-between items-center">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="px-2.5 py-0.5 text-xs font-bold rounded-full uppercase"
+                [ngClass]="getBadgeClass(detalleSeleccionado?.accion || '')">
+            {{ detalleSeleccionado?.accion }}
+          </span>
+          <h2 class="text-lg font-bold text-white">
+            Evento de Auditoría: {{ detalleSeleccionado?.tabla }} #{{ detalleSeleccionado?.registroId }}
+          </h2>
+        </div>
+        <p class="text-xs text-slate-300 mt-1">
+          Por: <strong class="text-white">{{ detalleSeleccionado?.usuarioNombre || detalleSeleccionado?.username }}</strong> 
+          • {{ formatFecha(detalleSeleccionado?.fechaHora || '') }}
+          • IP: {{ detalleSeleccionado?.ipOrigen }}
+        </p>
+      </div>
+      <button (click)="cerrarModal()" class="text-slate-400 hover:text-white text-xl p-1 transition-colors">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-4">
+
+      <div *ngIf="loadingModal" class="p-12 text-center text-slate-500">
+        <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-2"></i>
+        <p class="text-sm">Cargando diferencias de auditoría...</p>
+      </div>
+
+      <div *ngIf="!loadingModal">
+
+        <!-- Selector de Pestañas del Modal -->
+        <div class="flex border-b border-slate-200 mb-4">
+          <button (click)="activeModalTab = 'diff'"
+                  [class.border-blue-600]="activeModalTab === 'diff'"
+                  [class.text-blue-600]="activeModalTab === 'diff'"
+                  class="px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition-colors">
+            <i class="fas fa-code-compare mr-1.5"></i> Cambios Realizados (Diff)
+          </button>
+          <button (click)="activeModalTab = 'previo'"
+                  [class.border-blue-600]="activeModalTab === 'previo'"
+                  [class.text-blue-600]="activeModalTab === 'previo'"
+                  class="px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition-colors">
+            <i class="fas fa-history mr-1.5"></i> Estado Previo (Antes)
+          </button>
+          <button (click)="activeModalTab = 'nuevo'"
+                  [class.border-blue-600]="activeModalTab === 'nuevo'"
+                  [class.text-blue-600]="activeModalTab === 'nuevo'"
+                  class="px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition-colors">
+            <i class="fas fa-check-circle mr-1.5"></i> Estado Nuevo (Ahora)
+          </button>
+        </div>
+
+        <!-- Pestaña 1: Vista Comparativa de Cambios (Diff) -->
+        <div *ngIf="activeModalTab === 'diff'">
+          <div *ngIf="parsedDiffList.length > 0" class="border border-slate-200 rounded-xl overflow-hidden">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th class="px-4 py-3 w-1/4">Campo Modificado</th>
+                  <th class="px-4 py-3 w-3/8 text-rose-700 bg-rose-50/50">Valor Anterior</th>
+                  <th class="px-4 py-3 w-3/8 text-emerald-700 bg-emerald-50/50">Valor Nuevo</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 font-mono">
+                <tr *ngFor="let diff of parsedDiffList">
+                  <td class="px-4 py-3 font-semibold text-slate-900 bg-slate-50/50">{{ diff.campo }}</td>
+                  <td class="px-4 py-3 bg-rose-50/30 text-rose-800 break-all">
+                    <span class="inline-block px-1.5 py-0.5 bg-rose-100 rounded mr-1 text-[11px]">-</span>
+                    {{ diff.antes }}
+                  </td>
+                  <td class="px-4 py-3 bg-emerald-50/30 text-emerald-800 break-all">
+                    <span class="inline-block px-1.5 py-0.5 bg-emerald-100 rounded mr-1 text-[11px]">+</span>
+                    {{ diff.ahora }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div *ngIf="parsedDiffList.length === 0" class="p-6 bg-slate-50 rounded-xl border border-slate-200 text-center">
+            <i class="fas fa-info-circle text-2xl text-blue-500 mb-2"></i>
+            <p class="text-sm font-medium text-slate-700">Sin diferencias específicas campo por campo</p>
+            <p class="text-xs text-slate-500 mt-1">
+              {{ detalleSeleccionado?.cambiosDiff || 'Para operaciones de creación o consulta se registra el snapshot completo en las pestañas adyacentes.' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Pestaña 2: Estado Previo Completo -->
+        <div *ngIf="activeModalTab === 'previo'">
+          <div class="relative bg-slate-900 text-rose-300 p-4 rounded-xl font-mono text-xs overflow-x-auto max-h-96">
+            <div class="text-slate-500 text-[10px] uppercase mb-2">Snapshot Previo a la Modificación:</div>
+            <pre>{{ formatJson(detalleSeleccionado?.datosPrevios) }}</pre>
+          </div>
+        </div>
+
+        <!-- Pestaña 3: Estado Nuevo Completo -->
+        <div *ngIf="activeModalTab === 'nuevo'">
+          <div class="relative bg-slate-900 text-emerald-300 p-4 rounded-xl font-mono text-xs overflow-x-auto max-h-96">
+            <div class="text-slate-500 text-[10px] uppercase mb-2">Snapshot Resultante tras la Modificación:</div>
+            <pre>{{ formatJson(detalleSeleccionado?.datosNuevos) }}</pre>
+          </div>
+        </div>
+
+        <!-- Metadatos de Red y Solicitud -->
+        <div class="mt-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600 flex flex-wrap gap-4 justify-between font-mono">
+          <div><strong>Endpoint:</strong> {{ detalleSeleccionado?.endpoint || '-' }}</div>
+          <div><strong>IP:</strong> {{ detalleSeleccionado?.ipOrigen }}</div>
+          <div class="truncate max-w-sm" [title]="detalleSeleccionado?.userAgent">
+            <strong>Agente:</strong> {{ detalleSeleccionado?.userAgent || '-' }}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+      <button (click)="cerrarModal()" 
+              class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-medium transition-colors">
+        Cerrar
+      </button>
+    </div>
+
+  </div>
+</div>

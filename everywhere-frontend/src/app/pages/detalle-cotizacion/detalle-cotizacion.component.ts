@@ -1670,6 +1670,29 @@ export class DetalleCotizacionComponent implements OnInit, OnDestroy {
         this.clearClienteSearch();
     }
 
+    seleccionarClientesVarios(): void {
+        this.buscandoClientes = true;
+        this.personaService.getClientesVarios().subscribe({
+            next: (cliente) => {
+                this.seleccionarCliente(cliente);
+                this.buscandoClientes = false;
+                this.showSuccess('Cliente asignado como CLIENTES VARIOS (Protección de Datos Ley N° 29733)');
+            },
+            error: (err) => {
+                console.error('Error al obtener Clientes Varios:', err);
+                this.buscandoClientes = false;
+                this.showError('No se pudo asignar Clientes Varios. Intente nuevamente.');
+            }
+        });
+    }
+
+    isClientesVariosSeleccionado(): boolean {
+        if (!this.clienteSeleccionado) return false;
+        const identificador = (this.clienteSeleccionado as any).identificador || (this.clienteSeleccionado as any).documento;
+        const nombre = (this.clienteSeleccionado as any).nombre || '';
+        return identificador === '00000000' || nombre.toUpperCase().includes('CLIENTES VARIOS');
+    }
+
     getClienteDisplayName(
         persona: PersonaNaturalResponse | PersonaJuridicaResponse | personaDisplay,
     ): string {

@@ -1568,6 +1568,11 @@ export class DetalleLiquidacionComponent implements OnInit, OnDestroy {
     return this.liquidacion?.cotizacion?.clienteNombre || 'Sin cliente asignado';
   }
 
+  isClientesVarios(): boolean {
+    const nombre = this.getClienteInfo();
+    return nombre.includes('CLIENTES VARIOS') || nombre.includes('00000000');
+  }
+
   // Método auxiliar para obtener el nombre del viajero por ID
   getViajeroDisplayName(viajeroId: number | undefined): string {
     if (!viajeroId) return 'Sin viajero';

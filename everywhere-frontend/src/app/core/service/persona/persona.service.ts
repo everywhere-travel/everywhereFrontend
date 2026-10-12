@@ -94,4 +94,8 @@ export class PersonaService {
   findPersonaNaturalOrJuridicaByIdDropdown(id: number): Observable<personaDisplay> {
     return this.http.get<personaDisplay>(`${this.baseURL}/dropdown/${id}/NaturalOrJuridica`);
   }
+
+  getClientesVarios(): Observable<personaDisplay> {
+    return this.http.get<personaDisplay>(`${this.baseURL}/dropdown/clientes-varios`);
+  }
 }
