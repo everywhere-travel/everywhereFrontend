@@ -26,13 +26,13 @@
               <div>
                 <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">Registro Maestro de Auditoría</h1>
                 <p class="text-slate-300 text-sm mt-1">
-                  Pista de auditoría centralizada: trazabilidad de todas las acciones, usuarios, estados previos y nuevos
+                  Pista de trazabilidad centralizada: supervisión de cambios, creación de datos y seguridad para asesores y administradores
                 </p>
               </div>
             </div>
           </div>
           <button (click)="cargarAuditorias(); cargarEstadisticas();" 
-                  class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-medium transition-colors">
+                  class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-sm font-medium transition-colors shadow-sm">
             <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
             Actualizar
           </button>
@@ -79,24 +79,26 @@
 
           <!-- Selector de Módulo / Tabla -->
           <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Módulo / Tabla</label>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Módulo / Entidad</label>
             <select [(ngModel)]="selectedTabla" (change)="aplicarFiltros()"
                     class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
               <option value="">Todos los módulos</option>
-              <option *ngFor="let t of tablasDisponibles" [value]="t">{{ t }}</option>
+              <option *ngFor="let t of tablasDisponibles" [value]="t">
+                {{ getTablaInfo(t).label }} ({{ t }})
+              </option>
             </select>
           </div>
 
           <!-- Selector de Acción -->
           <div>
-            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Acción</label>
+            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Tipo de Acción</label>
             <select [(ngModel)]="selectedAccion" (change)="aplicarFiltros()"
                     class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
               <option value="">Todas las acciones</option>
-              <option value="CREACION">CREACIÓN (Insert)</option>
-              <option value="MODIFICACION">MODIFICACIÓN (Update)</option>
-              <option value="ELIMINACION">ELIMINACIÓN (Delete)</option>
-              <option value="CONSULTA">CONSULTA (Read)</option>
+              <option value="CREACION">CREACIÓN (Nuevo Registro)</option>
+              <option value="MODIFICACION">MODIFICACIÓN (Actualización)</option>
+              <option value="ELIMINACION">ELIMINACIÓN (Baja / Borrado)</option>
+              <option value="CONSULTA">CONSULTA (Lectura)</option>
             </select>
           </div>
 
@@ -118,7 +120,7 @@
         <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
           <button (click)="limpiarFiltros()" 
                   class="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-sm font-medium transition-colors">
-            <i class="fas fa-undo mr-1.5"></i> Limpiar
+            <i class="fas fa-undo mr-1.5"></i> Limpiar Filtros
           </button>
           <button (click)="aplicarFiltros()" 
                   class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
@@ -133,7 +135,7 @@
         <!-- Estado de Carga -->
         <div *ngIf="loading" class="p-12 text-center text-slate-500">
           <i class="fas fa-circle-notch fa-spin text-3xl text-blue-600 mb-3"></i>
-          <p class="text-sm">Consultando registros en la tabla maestra de auditoría...</p>
+          <p class="text-sm font-medium">Consultando registros en la tabla maestra de auditoría...</p>
         </div>
 
         <!-- Tabla de Datos -->
@@ -143,12 +145,12 @@
               <tr>
                 <th class="px-5 py-4">Fecha y Hora</th>
                 <th class="px-5 py-4">Usuario / Asesor</th>
-                <th class="px-5 py-4">Módulo / Tabla</th>
-                <th class="px-4 py-4 text-center">ID Reg.</th>
+                <th class="px-5 py-4">Módulo / Entidad</th>
+                <th class="px-3 py-4 text-center">ID Reg.</th>
                 <th class="px-4 py-4 text-center">Acción</th>
-                <th class="px-5 py-4">IP Origen</th>
-                <th class="px-5 py-4">Endpoint</th>
-                <th class="px-5 py-4 text-right">Detalle</th>
+                <th class="px-5 py-4">Resumen de Operación</th>
+                <th class="px-4 py-4 text-center">IP Origen</th>
+                <th class="px-5 py-4 text-right">Acción</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
@@ -162,47 +164,62 @@
 
                 <!-- Usuario -->
                 <td class="px-5 py-4 whitespace-nowrap">
-                  <div class="font-medium text-slate-900">{{ item.usuarioNombre || item.username || 'Sistema' }}</div>
-                  <div class="text-xs text-slate-500 font-mono">{{ item.username }}</div>
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs uppercase shadow-inner">
+                      {{ (item.usuarioNombre || item.username || 'S').charAt(0) }}
+                    </div>
+                    <div>
+                      <div class="font-medium text-slate-900 text-xs">{{ item.usuarioNombre || item.username || 'Sistema' }}</div>
+                      <div class="text-[11px] text-slate-400 font-mono">{{ item.username }}</div>
+                    </div>
+                  </div>
                 </td>
 
                 <!-- Módulo / Tabla -->
                 <td class="px-5 py-4 whitespace-nowrap">
-                  <span class="inline-flex items-center gap-1.5 font-medium text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md text-xs border border-slate-200">
-                    <i class="fas fa-database text-slate-400"></i>
-                    {{ item.tabla }}
+                  <span class="inline-flex items-center gap-1.5 font-medium px-2.5 py-1 rounded-lg text-xs border"
+                        [ngClass]="getTablaInfo(item.tabla).colorClass">
+                    <i class="fas" [ngClass]="getTablaInfo(item.tabla).icon"></i>
+                    {{ getTablaInfo(item.tabla).label }}
                   </span>
                 </td>
 
                 <!-- ID Registro -->
-                <td class="px-4 py-4 whitespace-nowrap text-center font-mono font-semibold text-slate-700">
-                  #{{ item.registroId }}
+                <td class="px-3 py-4 whitespace-nowrap text-center font-mono font-semibold text-slate-700 text-xs">
+                  <span class="px-2 py-0.5 bg-slate-100 rounded text-slate-600 border border-slate-200">
+                    #{{ item.registroId }}
+                  </span>
                 </td>
 
                 <!-- Badge de Acción -->
                 <td class="px-4 py-4 whitespace-nowrap text-center">
-                  <span class="inline-block px-2.5 py-1 text-xs font-semibold rounded-full border"
+                  <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full border"
                         [ngClass]="getBadgeClass(item.accion)">
+                    <i class="fas" [ngClass]="getAccionIcon(item.accion)"></i>
                     {{ item.accion }}
                   </span>
                 </td>
 
-                <!-- IP Origen -->
-                <td class="px-5 py-4 whitespace-nowrap font-mono text-xs text-slate-600">
-                  {{ item.ipOrigen || '-' }}
+                <!-- Resumen de Operación Legible -->
+                <td class="px-5 py-4 whitespace-nowrap text-xs text-slate-700">
+                  <span class="font-medium text-slate-800">
+                    {{ calcularResumenFila(item) }}
+                  </span>
                 </td>
 
-                <!-- Endpoint -->
-                <td class="px-5 py-4 whitespace-nowrap text-xs text-slate-500 font-mono max-w-xs truncate" [title]="item.endpoint">
-                  {{ item.endpoint || '-' }}
+                <!-- IP Origen -->
+                <td class="px-4 py-4 whitespace-nowrap text-center font-mono text-[11px] text-slate-500">
+                  <span class="px-2 py-0.5 bg-slate-50 rounded border border-slate-200" [title]="'Endpoint: ' + (item.endpoint || '-')">
+                    {{ item.ipOrigen || '-' }}
+                  </span>
                 </td>
 
                 <!-- Botón de Inspección -->
                 <td class="px-5 py-4 whitespace-nowrap text-right">
                   <button (click)="abrirDetalle(item)"
-                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-medium border border-blue-200 transition-colors">
-                    <i class="fas fa-code-compare"></i>
-                    Ver Diff
+                          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 rounded-lg text-xs font-medium border border-blue-200 hover:border-blue-600 transition-all shadow-sm">
+                    <i class="fas fa-eye"></i>
+                    Ver Detalle
                   </button>
                 </td>
               </tr>
@@ -247,126 +264,503 @@
 </div>
 
 <!-- ========================================================================= -->
-<!-- MODAL DE VISUALIZACIÓN DE CAMBIOS (DIFF & AUDIT TRAIL) -->
+<!-- MODAL DE VISUALIZACIÓN AMIGABLE DE AUDITORÍA (APTO PARA USUARIOS) -->
 <!-- ========================================================================= -->
 <div *ngIf="modalAbierto" 
      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
   
-  <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+  <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden">
     
     <!-- Modal Header -->
-    <div class="px-6 py-5 bg-gradient-to-r from-slate-900 to-indigo-950 text-white flex justify-between items-center">
+    <div class="px-6 py-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-900 text-white flex justify-between items-center">
       <div>
         <div class="flex items-center gap-3">
-          <span class="px-2.5 py-0.5 text-xs font-bold rounded-full uppercase"
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full uppercase border border-white/20"
                 [ngClass]="getBadgeClass(detalleSeleccionado?.accion || '')">
+            <i class="fas" [ngClass]="getAccionIcon(detalleSeleccionado?.accion || '')"></i>
             {{ detalleSeleccionado?.accion }}
           </span>
-          <h2 class="text-lg font-bold text-white">
-            Evento de Auditoría: {{ detalleSeleccionado?.tabla }} #{{ detalleSeleccionado?.registroId }}
+          <h2 class="text-lg font-bold text-white tracking-wide">
+            {{ getTablaInfo(detalleSeleccionado?.tabla || '').label }} 
+            <span class="text-slate-300 font-mono text-sm">#{{ detalleSeleccionado?.registroId }}</span>
           </h2>
         </div>
-        <p class="text-xs text-slate-300 mt-1">
-          Por: <strong class="text-white">{{ detalleSeleccionado?.usuarioNombre || detalleSeleccionado?.username }}</strong> 
-          • {{ formatFecha(detalleSeleccionado?.fechaHora || '') }}
-          • IP: {{ detalleSeleccionado?.ipOrigen }}
+        <p class="text-xs text-slate-300 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span><i class="far fa-user mr-1 text-blue-300"></i> Por: <strong class="text-white">{{ detalleSeleccionado?.usuarioNombre || detalleSeleccionado?.username }}</strong></span>
+          <span>•</span>
+          <span><i class="far fa-clock mr-1 text-blue-300"></i> {{ formatFecha(detalleSeleccionado?.fechaHora || '') }}</span>
+          <span>•</span>
+          <span><i class="fas fa-network-wired mr-1 text-blue-300"></i> IP: {{ detalleSeleccionado?.ipOrigen }}</span>
         </p>
       </div>
-      <button (click)="cerrarModal()" class="text-slate-400 hover:text-white text-xl p-1 transition-colors">
+      <button (click)="cerrarModal()" class="text-slate-400 hover:text-white text-xl p-2 rounded-lg hover:bg-white/10 transition-colors">
         <i class="fas fa-times"></i>
       </button>
     </div>
 
     <!-- Modal Content -->
-    <div class="flex-1 overflow-y-auto p-6 space-y-4">
+    <div class="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50">
 
-      <div *ngIf="loadingModal" class="p-12 text-center text-slate-500">
-        <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-2"></i>
-        <p class="text-sm">Cargando diferencias de auditoría...</p>
+      <!-- Estado de Carga -->
+      <div *ngIf="loadingModal" class="p-16 text-center text-slate-500">
+        <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-3"></i>
+        <p class="text-sm font-medium">Interpretando y preparando datos de auditoría...</p>
       </div>
 
-      <div *ngIf="!loadingModal">
+      <div *ngIf="!loadingModal" class="space-y-5">
+
+        <!-- Banner de Resumen Ejecutivo Visual -->
+        <div class="p-4 rounded-xl border flex items-start gap-4 transition-all"
+             [ngClass]="{
+               'bg-emerald-50 border-emerald-200 text-emerald-900': resumenEvento?.esCreacion,
+               'bg-blue-50 border-blue-200 text-blue-900': resumenEvento?.esModificacion,
+               'bg-rose-50 border-rose-200 text-rose-900': resumenEvento?.esEliminacion,
+               'bg-purple-50 border-purple-200 text-purple-900': resumenEvento?.esConsulta
+             }">
+          <div class="p-2.5 rounded-lg flex-shrink-0"
+               [ngClass]="{
+                 'bg-emerald-200 text-emerald-800': resumenEvento?.esCreacion,
+                 'bg-blue-200 text-blue-800': resumenEvento?.esModificacion,
+                 'bg-rose-200 text-rose-800': resumenEvento?.esEliminacion,
+                 'bg-purple-200 text-purple-800': resumenEvento?.esConsulta
+               }">
+            <i class="fas text-lg" [ngClass]="getAccionIcon(detalleSeleccionado?.accion || '')"></i>
+          </div>
+          <div class="flex-1">
+            <h3 class="font-bold text-sm">{{ resumenEvento?.titulo }}</h3>
+            <p class="text-xs mt-0.5 opacity-90 leading-relaxed">{{ resumenEvento?.descripcion }}</p>
+          </div>
+        </div>
 
         <!-- Selector de Pestañas del Modal -->
-        <div class="flex border-b border-slate-200 mb-4">
-          <button (click)="activeModalTab = 'diff'"
-                  [class.border-blue-600]="activeModalTab === 'diff'"
-                  [class.text-blue-600]="activeModalTab === 'diff'"
-                  class="px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition-colors">
-            <i class="fas fa-code-compare mr-1.5"></i> Cambios Realizados (Diff)
+        <div class="flex flex-wrap border-b border-slate-200 gap-2">
+          
+          <!-- Pestaña 1: Cambios o Ficha según acción -->
+          <button (click)="activeModalTab = 'cambios'"
+                  [class.border-blue-600]="activeModalTab === 'cambios'"
+                  [class.text-blue-600]="activeModalTab === 'cambios'"
+                  class="px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition-colors inline-flex items-center gap-2">
+            <i class="fas" [ngClass]="resumenEvento?.esCreacion ? 'fa-file-lines' : (resumenEvento?.esEliminacion ? 'fa-file-lines' : 'fa-code-compare')"></i>
+            <span>
+              {{ resumenEvento?.esCreacion ? 'Datos Registrados (' + propiedadesCreadas.length + ')' : 
+                 (resumenEvento?.esEliminacion ? 'Datos Eliminados (' + propiedadesEliminadas.length + ')' : 
+                 'Cambios Realizados (' + parsedDiffList.length + ')') }}
+            </span>
           </button>
+
+          <!-- Pestaña 2: Estado Previo -->
           <button (click)="activeModalTab = 'previo'"
                   [class.border-blue-600]="activeModalTab === 'previo'"
                   [class.text-blue-600]="activeModalTab === 'previo'"
-                  class="px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition-colors">
-            <i class="fas fa-history mr-1.5"></i> Estado Previo (Antes)
+                  class="px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition-colors inline-flex items-center gap-2">
+            <i class="fas fa-history"></i>
+            <span>Estado Anterior (Antes)</span>
+            <span *ngIf="propiedadesPrevias.length > 0" class="text-[11px] px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-700">
+              {{ propiedadesPrevias.length }}
+            </span>
           </button>
+
+          <!-- Pestaña 3: Estado Resultante -->
           <button (click)="activeModalTab = 'nuevo'"
                   [class.border-blue-600]="activeModalTab === 'nuevo'"
                   [class.text-blue-600]="activeModalTab === 'nuevo'"
-                  class="px-4 py-2 text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition-colors">
-            <i class="fas fa-check-circle mr-1.5"></i> Estado Nuevo (Ahora)
+                  class="px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition-colors inline-flex items-center gap-2">
+            <i class="fas fa-check-circle"></i>
+            <span>Estado Resultante (Ahora)</span>
+            <span *ngIf="propiedadesNuevas.length > 0" class="text-[11px] px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-700">
+              {{ propiedadesNuevas.length }}
+            </span>
+          </button>
+
+          <!-- Pestaña 4: Seguridad y Trazabilidad -->
+          <button (click)="activeModalTab = 'seguridad'"
+                  [class.border-blue-600]="activeModalTab === 'seguridad'"
+                  [class.text-blue-600]="activeModalTab === 'seguridad'"
+                  class="px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-600 hover:text-slate-900 transition-colors inline-flex items-center gap-2">
+            <i class="fas fa-shield-halved"></i>
+            <span>Seguridad y Red</span>
           </button>
         </div>
 
-        <!-- Pestaña 1: Vista Comparativa de Cambios (Diff) -->
-        <div *ngIf="activeModalTab === 'diff'">
-          <div *ngIf="parsedDiffList.length > 0" class="border border-slate-200 rounded-xl overflow-hidden">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-100 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
-                <tr>
-                  <th class="px-4 py-3 w-1/4">Campo Modificado</th>
-                  <th class="px-4 py-3 w-3/8 text-rose-700 bg-rose-50/50">Valor Anterior</th>
-                  <th class="px-4 py-3 w-3/8 text-emerald-700 bg-emerald-50/50">Valor Nuevo</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100 font-mono">
-                <tr *ngFor="let diff of parsedDiffList">
-                  <td class="px-4 py-3 font-semibold text-slate-900 bg-slate-50/50">{{ diff.campo }}</td>
-                  <td class="px-4 py-3 bg-rose-50/30 text-rose-800 break-all">
-                    <span class="inline-block px-1.5 py-0.5 bg-rose-100 rounded mr-1 text-[11px]">-</span>
-                    {{ diff.antes }}
-                  </td>
-                  <td class="px-4 py-3 bg-emerald-50/30 text-emerald-800 break-all">
-                    <span class="inline-block px-1.5 py-0.5 bg-emerald-100 rounded mr-1 text-[11px]">+</span>
-                    {{ diff.ahora }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- ================================================================= -->
+        <!-- PESTAÑA 1: CAMBIOS REALIZADOS / DATOS REGISTRADOS                 -->
+        <!-- ================================================================= -->
+        <div *ngIf="activeModalTab === 'cambios'" class="space-y-4">
+
+          <!-- Subcaso 1: MODIFICACIÓN (Diff Claro y Legible) -->
+          <div *ngIf="resumenEvento?.esModificacion">
+            
+            <!-- Barra de búsqueda en cambios -->
+            <div *ngIf="parsedDiffList.length > 0" class="flex justify-between items-center gap-4 mb-3">
+              <div class="relative flex-1 max-w-sm">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" [(ngModel)]="filtroCampos"
+                       placeholder="Filtrar por campo o valor..."
+                       class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <span class="text-xs text-slate-500">
+                Mostrando <strong>{{ getDiffFiltrado().length }}</strong> de <strong>{{ parsedDiffList.length }}</strong> cambios
+              </span>
+            </div>
+
+            <!-- Tabla Comparativa Limpia -->
+            <div *ngIf="getDiffFiltrado().length > 0" class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-100 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
+                  <tr>
+                    <th class="px-5 py-3 w-1/3">Campo Afectado</th>
+                    <th class="px-5 py-3 w-1/3 text-rose-800 bg-rose-50/60 border-l border-r border-rose-100">
+                      <i class="fas fa-minus-circle mr-1 text-rose-600"></i> Valor Anterior (Antes)
+                    </th>
+                    <th class="px-5 py-3 w-1/3 text-emerald-800 bg-emerald-50/60">
+                      <i class="fas fa-plus-circle mr-1 text-emerald-600"></i> Valor Nuevo (Ahora)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr *ngFor="let diff of getDiffFiltrado()" class="hover:bg-slate-50/60 transition-colors">
+                    
+                    <!-- Campo con nombre legible y clave técnica -->
+                    <td class="px-5 py-3.5 bg-slate-50/30">
+                      <div class="font-bold text-slate-900 text-xs">{{ diff.campoLegible }}</div>
+                      <div class="text-[11px] text-slate-400 font-mono mt-0.5">{{ diff.campoOriginal }}</div>
+                    </td>
+
+                    <!-- Valor Anterior -->
+                    <td class="px-5 py-3.5 bg-rose-50/20 text-rose-900 border-l border-r border-rose-100/60 break-words">
+                      <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-rose-100/60 border border-rose-200 text-rose-900 font-medium text-xs">
+                        <span class="text-rose-600 font-bold">-</span>
+                        <span>{{ diff.antesFormateado }}</span>
+                      </div>
+                    </td>
+
+                    <!-- Valor Nuevo -->
+                    <td class="px-5 py-3.5 bg-emerald-50/20 text-emerald-900 break-words">
+                      <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-100/60 border border-emerald-200 text-emerald-900 font-medium text-xs">
+                        <span class="text-emerald-600 font-bold">+</span>
+                        <span>{{ diff.ahoraFormateado }}</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Sin coincidencias del filtro -->
+            <div *ngIf="parsedDiffList.length > 0 && getDiffFiltrado().length === 0" class="p-8 text-center bg-white rounded-xl border border-slate-200 text-slate-500">
+              <i class="fas fa-filter text-2xl text-slate-300 mb-2"></i>
+              <p class="text-xs">No se encontraron campos que coincidan con "{{ filtroCampos }}".</p>
+            </div>
+
+            <!-- Sin diferencias registradas -->
+            <div *ngIf="parsedDiffList.length === 0" class="p-8 bg-white rounded-xl border border-slate-200 text-center">
+              <i class="fas fa-info-circle text-3xl text-blue-500 mb-2"></i>
+              <h4 class="font-semibold text-slate-800 text-sm">Actualización Registrada Sin Modificación de Campos Auditados</h4>
+              <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                La solicitud se ejecutó con éxito pero los valores recibidos eran idénticos o no modificaron campos específicos. Puedes revisar el estado en las pestañas "Estado Anterior" y "Estado Resultante".
+              </p>
+            </div>
           </div>
 
-          <div *ngIf="parsedDiffList.length === 0" class="p-6 bg-slate-50 rounded-xl border border-slate-200 text-center">
-            <i class="fas fa-info-circle text-2xl text-blue-500 mb-2"></i>
-            <p class="text-sm font-medium text-slate-700">Sin diferencias específicas campo por campo</p>
-            <p class="text-xs text-slate-500 mt-1">
-              {{ detalleSeleccionado?.cambiosDiff || 'Para operaciones de creación o consulta se registra el snapshot completo en las pestañas adyacentes.' }}
-            </p>
+          <!-- Subcaso 2: CREACIÓN (Ficha de Datos Registrados) -->
+          <div *ngIf="resumenEvento?.esCreacion">
+            
+            <div class="flex justify-between items-center gap-4 mb-3">
+              <div class="relative flex-1 max-w-sm">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" [(ngModel)]="filtroCampos"
+                       placeholder="Filtrar datos registrados..."
+                       class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <span class="text-xs text-slate-500">
+                Mostrando <strong>{{ getPropiedadesFiltradas(propiedadesCreadas).length }}</strong> de <strong>{{ propiedadesCreadas.length }}</strong> datos
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div *ngFor="let prop of getPropiedadesFiltradas(propiedadesCreadas)"
+                   class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-blue-300 transition-colors">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-bold text-slate-800">{{ prop.etiqueta }}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">{{ prop.claveOriginal }}</span>
+                </div>
+                <div class="mt-2 text-xs font-medium text-slate-900 break-words">
+                  <span *ngIf="prop.tipo === 'booleano'" class="px-2 py-0.5 rounded text-[11px] font-semibold"
+                        [ngClass]="prop.valorOriginal ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'">
+                    {{ prop.valorFormateado }}
+                  </span>
+                  <span *ngIf="prop.tipo === 'moneda'" class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold text-xs border border-blue-200">
+                    {{ prop.valorFormateado }}
+                  </span>
+                  <span *ngIf="prop.tipo === 'cifrado'" class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 text-xs border border-amber-200">
+                    {{ prop.valorFormateado }}
+                  </span>
+                  <span *ngIf="prop.tipo === 'vacio'" class="text-slate-400 italic">
+                    {{ prop.valorFormateado }}
+                  </span>
+                  <span *ngIf="prop.tipo !== 'booleano' && prop.tipo !== 'moneda' && prop.tipo !== 'cifrado' && prop.tipo !== 'vacio'">
+                    {{ prop.valorFormateado }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="propiedadesCreadas.length === 0" class="p-8 bg-white rounded-xl border border-slate-200 text-center text-slate-500 text-xs">
+              No se recibieron atributos específicos en la creación.
+            </div>
+          </div>
+
+          <!-- Subcaso 3: ELIMINACIÓN (Ficha de Datos que Fueron Eliminados) -->
+          <div *ngIf="resumenEvento?.esEliminacion">
+            
+            <div class="flex justify-between items-center gap-4 mb-3">
+              <div class="relative flex-1 max-w-sm">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" [(ngModel)]="filtroCampos"
+                       placeholder="Filtrar datos eliminados..."
+                       class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <span class="text-xs text-slate-500">
+                Mostrando <strong>{{ getPropiedadesFiltradas(propiedadesEliminadas).length }}</strong> de <strong>{{ propiedadesEliminadas.length }}</strong> datos
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div *ngFor="let prop of getPropiedadesFiltradas(propiedadesEliminadas)"
+                   class="bg-white p-3.5 rounded-xl border border-rose-200 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-bold text-slate-800">{{ prop.etiqueta }}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">{{ prop.claveOriginal }}</span>
+                </div>
+                <div class="mt-2 text-xs font-medium text-slate-800 break-words">
+                  {{ prop.valorFormateado }}
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="propiedadesEliminadas.length === 0" class="p-8 bg-white rounded-xl border border-slate-200 text-center text-slate-500 text-xs">
+              No se conservó snapshot de datos previos para este registro eliminado.
+            </div>
+          </div>
+
+          <!-- Subcaso 4: CONSULTA -->
+          <div *ngIf="resumenEvento?.esConsulta" class="bg-white p-6 rounded-xl border border-slate-200">
+            <h4 class="font-bold text-slate-800 text-sm mb-2">Detalle de la Consulta Realizada</h4>
+            <p class="text-xs text-slate-600 leading-relaxed">{{ detalleSeleccionado?.cambiosDiff || 'Consulta de lectura general.' }}</p>
           </div>
         </div>
 
-        <!-- Pestaña 2: Estado Previo Completo -->
-        <div *ngIf="activeModalTab === 'previo'">
-          <div class="relative bg-slate-900 text-rose-300 p-4 rounded-xl font-mono text-xs overflow-x-auto max-h-96">
-            <div class="text-slate-500 text-[10px] uppercase mb-2">Snapshot Previo a la Modificación:</div>
-            <pre>{{ formatJson(detalleSeleccionado?.datosPrevios) }}</pre>
+        <!-- ================================================================= -->
+        <!-- PESTAÑA 2: ESTADO PREVIO (ANTES)                                  -->
+        <!-- ================================================================= -->
+        <div *ngIf="activeModalTab === 'previo'" class="space-y-4">
+          
+          <!-- Controles de la Pestaña -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Snapshot Previo a la Operación</h4>
+              <p class="text-xs text-slate-500">Datos existentes en la base de datos antes del cambio</p>
+            </div>
+            
+            <!-- Selector de Modo de Visualización (Amigable vs JSON) -->
+            <div class="inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+              <button (click)="modoVistaSnapshot = 'amigable'"
+                      [class.bg-blue-600]="modoVistaSnapshot === 'amigable'"
+                      [class.text-white]="modoVistaSnapshot === 'amigable'"
+                      [class.text-slate-700]="modoVistaSnapshot !== 'amigable'"
+                      class="px-3 py-1 text-xs font-semibold rounded-md transition-colors inline-flex items-center gap-1.5">
+                <i class="fas fa-list-check"></i>
+                Vista Ficha
+              </button>
+              <button (click)="modoVistaSnapshot = 'json'"
+                      [class.bg-blue-600]="modoVistaSnapshot === 'json'"
+                      [class.text-white]="modoVistaSnapshot === 'json'"
+                      [class.text-slate-700]="modoVistaSnapshot !== 'json'"
+                      class="px-3 py-1 text-xs font-semibold rounded-md transition-colors inline-flex items-center gap-1.5">
+                <i class="fas fa-code"></i>
+                Código JSON
+              </button>
+            </div>
+          </div>
+
+          <!-- Modo 1: Ficha Organizada para Usuarios -->
+          <div *ngIf="modoVistaSnapshot === 'amigable'">
+            
+            <div *ngIf="propiedadesPrevias.length > 0" class="flex justify-between items-center gap-4 mb-3">
+              <div class="relative flex-1 max-w-sm">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" [(ngModel)]="filtroCampos"
+                       placeholder="Filtrar atributos previos..."
+                       class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <span class="text-xs text-slate-500">
+                Mostrando <strong>{{ getPropiedadesFiltradas(propiedadesPrevias).length }}</strong> de <strong>{{ propiedadesPrevias.length }}</strong> datos
+              </span>
+            </div>
+
+            <div *ngIf="propiedadesPrevias.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div *ngFor="let prop of getPropiedadesFiltradas(propiedadesPrevias)"
+                   class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-bold text-slate-800">{{ prop.etiqueta }}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">{{ prop.claveOriginal }}</span>
+                </div>
+                <div class="mt-2 text-xs font-medium text-slate-900 break-words">
+                  {{ prop.valorFormateado }}
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="propiedadesPrevias.length === 0" class="p-10 bg-white rounded-xl border border-slate-200 text-center text-slate-500">
+              <i class="fas fa-info-circle text-2xl text-slate-400 mb-2"></i>
+              <p class="text-xs font-medium">No existe estado previo registrado para esta operación.</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">En operaciones de creación inicial, el registro no tenía datos antes de ser creado.</p>
+            </div>
+          </div>
+
+          <!-- Modo 2: Código JSON Técnico -->
+          <div *ngIf="modoVistaSnapshot === 'json'" class="relative">
+            <div class="flex justify-end mb-2">
+              <button (click)="copiarJson(detalleSeleccionado?.datosPrevios)"
+                      class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-medium inline-flex items-center gap-1.5 transition-colors">
+                <i class="fas" [ngClass]="copiadoJson ? 'fa-check text-emerald-400' : 'fa-copy'"></i>
+                <span>{{ copiadoJson ? '¡Copiado!' : 'Copiar JSON' }}</span>
+              </button>
+            </div>
+            <pre class="bg-slate-900 text-rose-300 p-4 rounded-xl font-mono text-xs overflow-x-auto max-h-96 shadow-inner">{{ formatJson(detalleSeleccionado?.datosPrevios) }}</pre>
           </div>
         </div>
 
-        <!-- Pestaña 3: Estado Nuevo Completo -->
-        <div *ngIf="activeModalTab === 'nuevo'">
-          <div class="relative bg-slate-900 text-emerald-300 p-4 rounded-xl font-mono text-xs overflow-x-auto max-h-96">
-            <div class="text-slate-500 text-[10px] uppercase mb-2">Snapshot Resultante tras la Modificación:</div>
-            <pre>{{ formatJson(detalleSeleccionado?.datosNuevos) }}</pre>
+        <!-- ================================================================= -->
+        <!-- PESTAÑA 3: ESTADO RESULTANTE (AHORA)                              -->
+        <!-- ================================================================= -->
+        <div *ngIf="activeModalTab === 'nuevo'" class="space-y-4">
+          
+          <!-- Controles de la Pestaña -->
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Snapshot Resultante de la Operación</h4>
+              <p class="text-xs text-slate-500">Estado consolidado en la base de datos tras la operación</p>
+            </div>
+            
+            <!-- Selector de Modo de Visualización (Amigable vs JSON) -->
+            <div class="inline-flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
+              <button (click)="modoVistaSnapshot = 'amigable'"
+                      [class.bg-blue-600]="modoVistaSnapshot === 'amigable'"
+                      [class.text-white]="modoVistaSnapshot === 'amigable'"
+                      [class.text-slate-700]="modoVistaSnapshot !== 'amigable'"
+                      class="px-3 py-1 text-xs font-semibold rounded-md transition-colors inline-flex items-center gap-1.5">
+                <i class="fas fa-list-check"></i>
+                Vista Ficha
+              </button>
+              <button (click)="modoVistaSnapshot = 'json'"
+                      [class.bg-blue-600]="modoVistaSnapshot === 'json'"
+                      [class.text-white]="modoVistaSnapshot === 'json'"
+                      [class.text-slate-700]="modoVistaSnapshot !== 'json'"
+                      class="px-3 py-1 text-xs font-semibold rounded-md transition-colors inline-flex items-center gap-1.5">
+                <i class="fas fa-code"></i>
+                Código JSON
+              </button>
+            </div>
+          </div>
+
+          <!-- Modo 1: Ficha Organizada para Usuarios -->
+          <div *ngIf="modoVistaSnapshot === 'amigable'">
+            
+            <div *ngIf="propiedadesNuevas.length > 0" class="flex justify-between items-center gap-4 mb-3">
+              <div class="relative flex-1 max-w-sm">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" [(ngModel)]="filtroCampos"
+                       placeholder="Filtrar atributos nuevos..."
+                       class="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <span class="text-xs text-slate-500">
+                Mostrando <strong>{{ getPropiedadesFiltradas(propiedadesNuevas).length }}</strong> de <strong>{{ propiedadesNuevas.length }}</strong> datos
+              </span>
+            </div>
+
+            <div *ngIf="propiedadesNuevas.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div *ngFor="let prop of getPropiedadesFiltradas(propiedadesNuevas)"
+                   class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-bold text-slate-800">{{ prop.etiqueta }}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">{{ prop.claveOriginal }}</span>
+                </div>
+                <div class="mt-2 text-xs font-medium text-slate-900 break-words">
+                  {{ prop.valorFormateado }}
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="propiedadesNuevas.length === 0" class="p-10 bg-white rounded-xl border border-slate-200 text-center text-slate-500">
+              <i class="fas fa-info-circle text-2xl text-slate-400 mb-2"></i>
+              <p class="text-xs font-medium">No existe estado nuevo registrado para esta operación.</p>
+              <p class="text-[11px] text-slate-400 mt-0.5">En operaciones de eliminación, el registro ya no posee estado nuevo.</p>
+            </div>
+          </div>
+
+          <!-- Modo 2: Código JSON Técnico -->
+          <div *ngIf="modoVistaSnapshot === 'json'" class="relative">
+            <div class="flex justify-end mb-2">
+              <button (click)="copiarJson(detalleSeleccionado?.datosNuevos)"
+                      class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-medium inline-flex items-center gap-1.5 transition-colors">
+                <i class="fas" [ngClass]="copiadoJson ? 'fa-check text-emerald-400' : 'fa-copy'"></i>
+                <span>{{ copiadoJson ? '¡Copiado!' : 'Copiar JSON' }}</span>
+              </button>
+            </div>
+            <pre class="bg-slate-900 text-emerald-300 p-4 rounded-xl font-mono text-xs overflow-x-auto max-h-96 shadow-inner">{{ formatJson(detalleSeleccionado?.datosNuevos) }}</pre>
           </div>
         </div>
 
-        <!-- Metadatos de Red y Solicitud -->
-        <div class="mt-4 p-3 bg-slate-100 rounded-lg text-xs text-slate-600 flex flex-wrap gap-4 justify-between font-mono">
-          <div><strong>Endpoint:</strong> {{ detalleSeleccionado?.endpoint || '-' }}</div>
-          <div><strong>IP:</strong> {{ detalleSeleccionado?.ipOrigen }}</div>
-          <div class="truncate max-w-sm" [title]="detalleSeleccionado?.userAgent">
-            <strong>Agente:</strong> {{ detalleSeleccionado?.userAgent || '-' }}
+        <!-- ================================================================= -->
+        <!-- PESTAÑA 4: SEGURIDAD Y TRAZABILIDAD                               -->
+        <!-- ================================================================= -->
+        <div *ngIf="activeModalTab === 'seguridad'" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- IP Origen -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                <i class="fas fa-network-wired text-blue-500"></i>
+                <span>Dirección IP Origen</span>
+              </div>
+              <div class="text-sm font-bold text-slate-900 font-mono">{{ detalleSeleccionado?.ipOrigen || '127.0.0.1' }}</div>
+              <p class="text-[11px] text-slate-400 mt-1">Dirección de red desde la cual se autenticó y ejecutó la solicitud.</p>
+            </div>
+
+            <!-- Endpoint REST -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                <i class="fas fa-link text-indigo-500"></i>
+                <span>Ruta del Endpoint</span>
+              </div>
+              <div class="text-sm font-bold text-slate-900 font-mono break-all">{{ detalleSeleccionado?.endpoint || '-' }}</div>
+              <p class="text-[11px] text-slate-400 mt-1">Servicio backend invocado mediante la API REST.</p>
+            </div>
+
+            <!-- Navegador y Dispositivo -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                <i class="fas fa-laptop text-emerald-500"></i>
+                <span>Navegador y Sistema</span>
+              </div>
+              <div class="text-sm font-bold text-slate-900">{{ parseUserAgent(detalleSeleccionado?.userAgent) }}</div>
+              <div class="text-[10px] text-slate-400 font-mono mt-1 break-all">{{ detalleSeleccionado?.userAgent || '-' }}</div>
+            </div>
+
+            <!-- Operador Responsable -->
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+              <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                <i class="fas fa-user-shield text-purple-500"></i>
+                <span>Operador Responsable</span>
+              </div>
+              <div class="text-sm font-bold text-slate-900">{{ detalleSeleccionado?.usuarioNombre || 'Sistema' }}</div>
+              <p class="text-[11px] text-slate-500 mt-1">
+                Cuenta: <strong class="font-mono text-slate-700">{{ detalleSeleccionado?.username }}</strong> 
+                (ID Usuario: #{{ detalleSeleccionado?.usuarioId || 'N/A' }})
+              </p>
+            </div>
+
           </div>
         </div>
 
@@ -375,9 +769,12 @@
     </div>
 
     <!-- Modal Footer -->
-    <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+    <div class="px-6 py-4 bg-slate-100 border-t border-slate-200 flex justify-between items-center">
+      <div class="text-xs text-slate-500">
+        ID de Auditoría: <strong class="font-mono text-slate-700">#{{ detalleSeleccionado?.id }}</strong>
+      </div>
       <button (click)="cerrarModal()" 
-              class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-medium transition-colors">
+              class="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors shadow-sm">
         Cerrar
       </button>
     </div>

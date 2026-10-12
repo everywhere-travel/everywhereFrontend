@@ -1,4 +1,5 @@
 export const environment = {
   production: false,
-  baseURL: 'http://localhost:8080/api/v1'
+  baseURL: 'https://api.travel-l1ist.online/api/v1'
 };
+

@@ -102,16 +102,14 @@
         </div>
 
         <!-- Form Options -->
-        <!--
         <div class="form-options">
           <label class="checkbox-container">
             <input type="checkbox" formControlName="rememberMe">
             <span class="checkmark"></span>
             <span class="checkbox-label">Mantener sesión iniciada</span>
           </label>
-          <a href="#" class="forgot-link">¿Olvidaste tu contraseña?</a>
+          <button type="button" class="forgot-link-btn" (click)="openRecoveryModal()">¿Olvidaste tu contraseña?</button>
         </div>
-        -->
 
         <!-- Global Error Message -->
         <div class="alert alert-error" *ngIf="errorMessage">
@@ -166,6 +164,249 @@
           </a>
         </div>-->
         <p class="copyright">© 2026 Everywhere Travel. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Recuperación de Contraseña -->
+  <div class="recovery-modal-backdrop" *ngIf="showRecoveryModal" (click)="closeRecoveryModal()">
+    <div class="recovery-modal-card" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="recovery-modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title">Recuperar Contraseña</h3>
+            <p class="modal-subtitle" *ngIf="recoveryStep === 1">Paso 1 de 2: Verificación de Identidad</p>
+            <p class="modal-subtitle" *ngIf="recoveryStep === 2">Paso 2 de 2: Restablecer Contraseña</p>
+            <p class="modal-subtitle" *ngIf="recoveryStep === 3">¡Proceso Completado!</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" (click)="closeRecoveryModal()" title="Cerrar modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="recovery-modal-body">
+        
+        <!-- Alerta de Error -->
+        <div class="modal-alert modal-alert-error" *ngIf="recoveryErrorMessage">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span>{{ recoveryErrorMessage }}</span>
+        </div>
+
+        <!-- Alerta de Info / Éxito temporal -->
+        <div class="modal-alert modal-alert-success" *ngIf="recoverySuccessMessage && recoveryStep !== 3">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>{{ recoverySuccessMessage }}</span>
+        </div>
+
+        <!-- PASO 1: Ingreso de correo electrónico -->
+        <div *ngIf="recoveryStep === 1" class="step-container">
+          <p class="step-desc">
+            Ingresa tu correo electrónico registrado. Te enviaremos un código de seguridad de 6 dígitos con vigencia de 15 minutos para validar tu cuenta.
+          </p>
+
+          <div class="form-field">
+            <label class="field-label">Correo Electrónico <span class="required">*</span></label>
+            <div class="input-container">
+              <div class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <input
+                type="email"
+                [(ngModel)]="recoveryEmail"
+                placeholder="ejemplo@everywheretravel.com"
+                class="form-input"
+                (keydown.enter)="sendRecoveryCode()"
+                [disabled]="isSendingRecoveryCode"
+              />
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="closeRecoveryModal()" [disabled]="isSendingRecoveryCode">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="sendRecoveryCode()"
+              [disabled]="isSendingRecoveryCode || !recoveryEmail"
+            >
+              <span *ngIf="!isSendingRecoveryCode" class="btn-text-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13"/>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+                <span>Enviar Código</span>
+              </span>
+              <span *ngIf="isSendingRecoveryCode" class="btn-text-icon">
+                <div class="modal-spinner"></div>
+                <span>Enviando código...</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PASO 2: Ingreso de código de 6 dígitos y nueva clave -->
+        <div *ngIf="recoveryStep === 2" class="step-container">
+          <div class="email-sent-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>Código enviado a: <strong>{{ recoveryEmail }}</strong></span>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Código de Verificación (6 dígitos) <span class="required">*</span></label>
+            <div class="input-container">
+              <input
+                type="text"
+                [(ngModel)]="recoveryCode"
+                maxlength="6"
+                placeholder="000000"
+                class="form-input code-input"
+                [disabled]="isResettingPassword"
+              />
+            </div>
+            <p class="field-hint">Revisa tu bandeja de entrada o spam. El código vence en 15 minutos.</p>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Nueva Contraseña <span class="required">*</span></label>
+            <div class="input-container">
+              <div class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11"/>
+                </svg>
+              </div>
+              <input
+                [type]="showRecoveryPassword ? 'text' : 'password'"
+                [(ngModel)]="recoveryNewPassword"
+                placeholder="Mínimo 6 caracteres"
+                class="form-input"
+                [disabled]="isResettingPassword"
+              />
+              <button type="button" class="password-toggle" (click)="toggleRecoveryPassword()">
+                <svg *ngIf="!showRecoveryPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg *ngIf="showRecoveryPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Confirmar Nueva Contraseña <span class="required">*</span></label>
+            <div class="input-container">
+              <div class="input-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11"/>
+                </svg>
+              </div>
+              <input
+                [type]="showRecoveryConfirmPassword ? 'text' : 'password'"
+                [(ngModel)]="recoveryConfirmPassword"
+                placeholder="Repite la nueva contraseña"
+                class="form-input"
+                [disabled]="isResettingPassword"
+                (keydown.enter)="submitResetPassword()"
+              />
+              <button type="button" class="password-toggle" (click)="toggleRecoveryConfirmPassword()">
+                <svg *ngIf="!showRecoveryConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg *ngIf="showRecoveryConfirmPassword" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="step2-footer-links">
+            <button type="button" class="link-btn" (click)="goToStep1()" [disabled]="isResettingPassword">
+              ← Cambiar correo
+            </button>
+            <button type="button" class="link-btn" (click)="sendRecoveryCode()" [disabled]="isResettingPassword || isSendingRecoveryCode">
+              {{ isSendingRecoveryCode ? 'Reenviando...' : 'Reenviar código' }}
+            </button>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" (click)="closeRecoveryModal()" [disabled]="isResettingPassword">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="submitResetPassword()"
+              [disabled]="isResettingPassword || !recoveryCode || !recoveryNewPassword || !recoveryConfirmPassword"
+            >
+              <span *ngIf="!isResettingPassword" class="btn-text-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                <span>Restablecer Contraseña</span>
+              </span>
+              <span *ngIf="isResettingPassword" class="btn-text-icon">
+                <div class="modal-spinner"></div>
+                <span>Actualizando...</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PASO 3: Confirmación de éxito -->
+        <div *ngIf="recoveryStep === 3" class="step-container success-container">
+          <div class="success-icon-badge">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+
+          <h4 class="success-heading">¡Contraseña Restablecida!</h4>
+          <p class="success-subheading">
+            Tu contraseña ha sido actualizada exitosamente. Ya puedes iniciar sesión con tus nuevas credenciales.
+          </p>
+
+          <div class="modal-actions" style="justify-content: center; margin-top: 1.5rem;">
+            <button type="button" class="btn-primary" (click)="closeRecoveryModal()" style="min-width: 220px;">
+              <span>Iniciar Sesión Ahora</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
